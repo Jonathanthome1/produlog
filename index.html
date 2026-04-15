@@ -874,6 +874,10 @@ function atualizarTela(){
   if(tela==='s-adm') renderAdm(tabAtiva);
   if(tela==='s-contagem-home') renderContagemHome();
   if(tela==='s-contagem-hist') renderContagemHist();
+  if(tela==='s-presenca-reg-conf') renderPresencaReg('conf');
+  if(tela==='s-presenca-reg-coz') renderPresencaReg('coz');
+  if(tela==='s-presenca-reg-emb') renderPresencaReg('emb');
+  if(tela==='s-contagem-lanc') renderContagemLanc();
 }
 
 function hoje(){return new Date().toLocaleDateString('pt-BR');}
@@ -2225,11 +2229,19 @@ function renderContagemLanc(){
       });
       html+=`</div>`;
     }
-    html+=`<div style="display:flex;align-items:center;gap:8px;margin-top:8px;">
-      <input type="number" id="cnt-inp-${item.cod}" placeholder="${contado?'+ somar':'Qtd'}" min="0" inputmode="numeric"
-        style="flex:1;font-size:15px;padding:8px;border-radius:8px;border:1px solid #0891b2;background:var(--bg-primary);color:var(--text-primary);font-family:inherit;" />
-      <button onclick="adicionarContagem('${codEsc}','${nomeEsc}')"
-        style="background:#0891b2;color:white;border:none;border-radius:8px;padding:8px 14px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;">${contado?'+ Somar':'Confirmar'}</button>
+    html+=`<div style="margin-top:8px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:${contado?'6px':'0'};">
+        <input type="number" id="cnt-inp-${item.cod}" placeholder="${contado?'+ somar':'Qtd'}" min="0" inputmode="numeric"
+          style="flex:1;font-size:15px;padding:8px;border-radius:8px;border:1px solid #0891b2;background:var(--bg-primary);color:var(--text-primary);font-family:inherit;" />
+        <button onclick="adicionarContagem('${codEsc}','${nomeEsc}')"
+          style="background:#0891b2;color:white;border:none;border-radius:8px;padding:8px 14px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;">${contado?'+ Somar':'Confirmar'}</button>
+      </div>
+      ${contado?`<div style="display:flex;align-items:center;gap:8px;">
+        <input type="number" id="cnt-sub-${item.cod}" placeholder="Subtrair qtd" min="0" inputmode="numeric"
+          style="flex:1;font-size:14px;padding:8px;border-radius:8px;border:1px solid #c62828;background:var(--bg-primary);color:var(--text-primary);font-family:inherit;" />
+        <button onclick="subtrairContagem('${codEsc}')"
+          style="background:#c62828;color:white;border:none;border-radius:8px;padding:8px 14px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;">− Ajustar</button>
+      </div>`:''}
     </div>
     </div>`;
   });
@@ -2261,6 +2273,28 @@ async function adicionarContagem(cod, nome){
         itens:contagemAtual.itens,hora:agora(),timestamp:Date.now()
       });
       contagemAtual.firestoreId=ref.id;
+    }
+    inp.value='';
+    renderContagemLanc();
+  }catch(e){alert('Erro ao salvar.');console.error(e);}
+}
+
+async function subtrairContagem(cod){
+  const inp=document.getElementById('cnt-sub-'+cod);
+  if(!inp)return;
+  const val=parseInt(inp.value)||0;
+  if(val<=0){alert('Informe a quantidade a subtrair.');return;}
+  const reg=contagemAtual.itens[cod];
+  if(!reg){alert('Item não encontrado.');return;}
+  const novoTotal=Math.max(0,(reg.total||0)-val);
+  reg.total=novoTotal;
+  reg.parciais.push({qtd:-val,hora:agora()});
+  contagemAtual.itens[cod]=reg;
+  try{
+    if(contagemAtual.firestoreId){
+      await updateDoc(doc(db,'contagens',contagemAtual.firestoreId),{
+        itens:contagemAtual.itens,editadoEm:agora()
+      });
     }
     inp.value='';
     renderContagemLanc();
@@ -2317,7 +2351,7 @@ window.selecionarDataEmb=selecionarDataEmb; window.irParaEmbalagem=irParaEmbalag
 window.toggleEmb=toggleEmb; window.toggleAjuste=toggleAjuste; window.confirmarAjuste=confirmarAjuste;
 window.selecionarDataExp=selecionarDataExp; window.irParaExpedicao=irParaExpedicao;
 window.adicionarLiberacao=adicionarLiberacao;
-window.tab=tab; window.toggleConf=toggleConf; window.admFiltrar=admFiltrar; window.toggleEditProd=toggleEditProd; window.salvarEditProd=salvarEditProd; window.toggleEditRecheio=toggleEditRecheio; window.salvarEditRecheio=salvarEditRecheio; window.renderMeusReg=renderMeusReg; window.renderCozReg=renderCozReg; window.abrirPresenca=abrirPresenca; window.salvarPresenca=salvarPresenca; window.voltarPresenca=voltarPresenca; window.renderPresencaForm=renderPresencaForm; window.selecionarDataPresenca=selecionarDataPresenca; window.selecionarDataPresencaManual=selecionarDataPresencaManual; window.adicionarColaborador=adicionarColaborador; window.removerColab=removerColab; window.updateColab=updateColab; window.renderPresencaReg=renderPresencaReg; window.abrirContagem=abrirContagem; window.adicionarContagem=adicionarContagem; window.renderContagemHist=renderContagemHist; window.verDetalheContagem=verDetalheContagem; window.renderContagemLanc=renderContagemLanc; window.renderContagemHome=renderContagemHome; window.toggleEditParcial=toggleEditParcial; window.salvarEditParcial=salvarEditParcial; window.excluirRegistro=excluirRegistro; window.gerarExcel=gerarExcel; window.renderPresencaForm=renderPresencaForm; window.goToAdmin=goToAdmin; window.sairAdmin=sairAdmin; window.backFromArea=backFromArea;
+window.tab=tab; window.toggleConf=toggleConf; window.admFiltrar=admFiltrar; window.toggleEditProd=toggleEditProd; window.salvarEditProd=salvarEditProd; window.toggleEditRecheio=toggleEditRecheio; window.salvarEditRecheio=salvarEditRecheio; window.renderMeusReg=renderMeusReg; window.renderCozReg=renderCozReg; window.abrirPresenca=abrirPresenca; window.salvarPresenca=salvarPresenca; window.voltarPresenca=voltarPresenca; window.renderPresencaForm=renderPresencaForm; window.selecionarDataPresenca=selecionarDataPresenca; window.selecionarDataPresencaManual=selecionarDataPresencaManual; window.adicionarColaborador=adicionarColaborador; window.removerColab=removerColab; window.updateColab=updateColab; window.renderPresencaReg=renderPresencaReg; window.abrirContagem=abrirContagem; window.subtrairContagem=subtrairContagem; window.adicionarContagem=adicionarContagem; window.renderContagemHist=renderContagemHist; window.verDetalheContagem=verDetalheContagem; window.renderContagemLanc=renderContagemLanc; window.renderContagemHome=renderContagemHome; window.toggleEditParcial=toggleEditParcial; window.salvarEditParcial=salvarEditParcial; window.excluirRegistro=excluirRegistro; window.gerarExcel=gerarExcel; window.renderPresencaForm=renderPresencaForm; window.goToAdmin=goToAdmin; window.sairAdmin=sairAdmin; window.backFromArea=backFromArea;
 </script>
 </body>
 </html>
