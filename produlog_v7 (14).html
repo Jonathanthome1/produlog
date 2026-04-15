@@ -1,0 +1,2144 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#2B2FA8" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>ProduLog · Monte Castelo</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    :root {
+      --mc-azul: #2B2FA8; --mc-azul-medio: #4448c4; --mc-azul-claro: #eeeffe;
+      --mc-dourado: #F5A623; --mc-dourado-claro: #fff8ec;
+      --mc-verde: #1a7a4a; --mc-verde-claro: #e8f5e9;
+      --mc-roxo: #6b21a8; --mc-roxo-claro: #f3e8ff;
+      --mc-laranja: #c2410c; --mc-laranja-claro: #fff7ed;
+      --mc-vermelho: #b91c1c; --mc-vermelho-claro: #fef2f2;
+      --bg-primary: #ffffff; --bg-secondary: #f5f5f5; --bg-tertiary: #f0f0f0;
+      --text-primary: #1a1a1a; --text-secondary: #6b6b6b;
+      --border: rgba(0,0,0,0.12); --border-md: rgba(0,0,0,0.2);
+    }
+    html, body { height: 100%; background: #e8e8e8; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+    .app-frame { max-width: 430px; margin: 0 auto; background: var(--bg-secondary); min-height: 100vh; box-shadow: 0 0 40px rgba(0,0,0,0.15); }
+    .screen { display: none; }
+    .screen.active { display: flex; flex-direction: column; min-height: 100vh; }
+    .topbar { background: var(--mc-azul); color: white; padding: 14px 16px; padding-top: max(14px, env(safe-area-inset-top)); display: flex; align-items: center; gap: 10px; position: sticky; top: 0; z-index: 10; }
+    .topbar.verde { background: var(--mc-verde); }
+    .topbar.laranja { background: var(--mc-laranja); }
+    .topbar.roxo { background: var(--mc-roxo); }
+    .topbar-title { font-size: 16px; font-weight: 600; }
+    .topbar-sub { font-size: 12px; opacity: 0.8; margin-top: 1px; }
+    .back-btn { background: none; border: none; color: white; font-size: 24px; cursor: pointer; padding: 0; line-height: 1; flex-shrink: 0; }
+    .topbar-right { margin-left: auto; background: none; border: none; color: rgba(255,255,255,0.85); font-size: 12px; cursor: pointer; font-family: inherit; }
+    .content { flex: 1; padding: 14px; background: var(--bg-tertiary); overflow-y: auto; padding-bottom: max(20px, env(safe-area-inset-bottom)); }
+    .card { background: var(--bg-primary); border-radius: 14px; border: 0.5px solid var(--border); padding: 14px; margin-bottom: 10px; }
+    .card-label { font-size: 11px; color: var(--text-secondary); margin-bottom: 6px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+    input[type=text], input[type=number], input[type=password], input[type=date], select { width: 100%; font-size: 16px; padding: 11px 12px; border-radius: 10px; border: 0.5px solid var(--border-md); background: var(--bg-primary); color: var(--text-primary); font-family: inherit; -webkit-appearance: none; appearance: none; }
+    input:focus, select:focus { outline: none; border-color: var(--mc-azul-medio); box-shadow: 0 0 0 3px rgba(68,72,196,0.15); }
+    .btn { width: 100%; padding: 14px; border-radius: 12px; border: none; font-size: 16px; font-weight: 600; cursor: pointer; font-family: inherit; transition: opacity 0.1s, transform 0.1s; }
+    .btn:active { opacity: 0.82; transform: scale(0.98); }
+    .btn-primary { background: var(--mc-azul); color: white; }
+    .btn-verde { background: var(--mc-verde); color: white; }
+    .btn-laranja { background: var(--mc-laranja); color: white; }
+    .btn-roxo { background: var(--mc-roxo); color: white; }
+    .btn-disabled { background: #b0b3e0; color: white; cursor: not-allowed; }
+    .btn-secondary { background: var(--bg-secondary); color: var(--text-primary); border: 0.5px solid var(--border-md); }
+    .btn-sm-outline { background: none; border: 1px solid var(--mc-azul-medio); color: var(--mc-azul); font-size: 12px; padding: 5px 10px; border-radius: 8px; cursor: pointer; font-family: inherit; white-space: nowrap; }
+    .btn-sm-green { background: #4caf50; color: white; font-size: 13px; padding: 7px 14px; border-radius: 8px; border: none; cursor: pointer; font-family: inherit; font-weight: 600; }
+    .btn-sm-laranja { background: var(--mc-laranja); color: white; font-size: 13px; padding: 7px 14px; border-radius: 8px; border: none; cursor: pointer; font-family: inherit; font-weight: 600; }
+    .input-unit { display: flex; align-items: center; gap: 8px; }
+    .input-unit input { flex: 1; }
+    .unit-label { font-size: 13px; color: var(--text-secondary); background: var(--bg-secondary); border: 0.5px solid var(--border); border-radius: 10px; padding: 11px 10px; white-space: nowrap; }
+
+    /* PIN LOGIN */
+    .pin-screen { background: var(--mc-azul); min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px; }
+    .pin-screen.verde { background: var(--mc-verde); }
+    .pin-screen.laranja { background: var(--mc-laranja); }
+    .pin-screen.roxo { background: var(--mc-roxo); }
+    .pin-logo { text-align: center; margin-bottom: 32px; }
+    .pin-empresa { color: white; font-size: 22px; font-weight: 700; }
+    .pin-sub { color: rgba(255,255,255,0.7); font-size: 13px; margin-top: 4px; }
+    .pin-setor { color: rgba(255,255,255,0.9); font-size: 16px; font-weight: 600; margin-top: 12px; background: rgba(255,255,255,0.15); border-radius: 10px; padding: 8px 20px; display: inline-block; }
+    .pin-dots { display: flex; gap: 14px; justify-content: center; margin: 28px 0; }
+    .pin-dot { width: 18px; height: 18px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.5); background: transparent; transition: background 0.15s; }
+    .pin-dot.filled { background: white; border-color: white; }
+    .pin-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; width: 100%; max-width: 280px; }
+    .pin-btn { background: rgba(255,255,255,0.15); border: none; border-radius: 14px; color: white; font-size: 24px; font-weight: 600; padding: 18px; cursor: pointer; font-family: inherit; transition: background 0.1s; }
+    .pin-btn:active { background: rgba(255,255,255,0.35); }
+    .pin-btn.del { font-size: 18px; }
+    .pin-err { color: rgba(255,100,100,0.9); font-size: 13px; text-align: center; margin-top: 12px; min-height: 20px; }
+    .pin-back { background: none; border: none; color: rgba(255,255,255,0.6); font-size: 13px; cursor: pointer; font-family: inherit; margin-top: 20px; }
+
+    .logo-area { background: var(--mc-azul); padding: max(32px, calc(env(safe-area-inset-top) + 24px)) 24px 28px; text-align: center; border-bottom: 4px solid var(--mc-dourado); }
+    .logo-empresa { color: white; font-size: 26px; font-weight: 700; }
+    .logo-sub-empresa { color: var(--mc-dourado); font-size: 15px; font-style: italic; margin-top: 5px; }
+    .logo-app-tag { color: rgba(255,255,255,0.5); font-size: 11px; margin-top: 14px; letter-spacing: 0.07em; text-transform: uppercase; }
+
+    .home-btn { display: flex; align-items: center; gap: 14px; background: var(--bg-primary); border-radius: 14px; border: 0.5px solid var(--border); border-left: 3px solid var(--mc-dourado); padding: 16px; margin-bottom: 10px; cursor: pointer; width: 100%; text-align: left; font-family: inherit; }
+    .home-btn:active { background: var(--bg-secondary); }
+    .home-btn.azul { border-left-color: var(--mc-azul); }
+    .home-btn.verde { border-left-color: var(--mc-verde); }
+    .home-btn.laranja { border-left-color: var(--mc-laranja); }
+    .home-btn.roxo { border-left-color: var(--mc-roxo); }
+    .hb-icon { width: 46px; height: 46px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 22px; flex-shrink: 0; }
+    .hb-azul { background: var(--mc-azul-claro); }
+    .hb-dourado { background: var(--mc-dourado-claro); }
+    .hb-verde { background: var(--mc-verde-claro); }
+    .hb-laranja { background: var(--mc-laranja-claro); }
+    .hb-roxo { background: var(--mc-roxo-claro); }
+    .hb-title { font-size: 15px; font-weight: 600; color: var(--text-primary); }
+    .hb-desc { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
+
+    .banner { border-radius: 10px; padding: 11px 14px; font-size: 13px; margin-bottom: 10px; }
+    .banner-ok { background: #e8f5e9; border: 0.5px solid #81c784; color: #2e7d32; }
+    .banner-err { background: #ffebee; border: 0.5px solid #ef9a9a; color: #c62828; }
+    .banner-info { background: var(--mc-azul-claro); border: 0.5px solid #9095d4; color: var(--mc-azul); }
+    .banner-info-verde { background: var(--mc-verde-claro); border: 0.5px solid #81c784; color: var(--mc-verde); }
+    .banner-info-laranja { background: var(--mc-laranja-claro); border: 0.5px solid #fdba74; color: var(--mc-laranja); }
+    .banner-dourado { background: var(--mc-dourado-claro); border: 0.5px solid var(--mc-dourado); color: #7a4f00; }
+
+    .produto-item { display: flex; align-items: center; padding: 12px; border-radius: 10px; border: 0.5px solid var(--border); margin-bottom: 6px; cursor: pointer; background: var(--bg-primary); }
+    .produto-item:active { background: var(--bg-secondary); }
+    .produto-item.sel { border-color: var(--mc-azul-medio); background: var(--mc-azul-claro); }
+    .produto-item.sel-verde { border-color: var(--mc-verde); background: var(--mc-verde-claro); }
+    .produto-name { flex: 1; font-size: 14px; color: var(--text-primary); }
+    .produto-check-mark { font-size: 15px; color: var(--mc-azul); display: none; }
+    .produto-check-mark.verde { color: var(--mc-verde); }
+    .produto-item.sel .produto-check-mark,
+    .produto-item.sel-verde .produto-check-mark { display: block; }
+    .produto-list { max-height: 50vh; overflow-y: auto; }
+
+    .produto-sel-card { background: var(--mc-azul-claro); border: 0.5px solid #9095d4; border-left: 3px solid var(--mc-azul); border-radius: 10px; padding: 10px 14px; margin-bottom: 10px; }
+    .produto-sel-label { font-size: 11px; color: var(--mc-azul-medio); text-transform: uppercase; letter-spacing: 0.04em; font-weight: 600; }
+    .produto-sel-nome { font-size: 15px; font-weight: 600; color: var(--mc-azul); margin-top: 3px; }
+    .produto-gram-info { font-size: 12px; color: #5558b8; margin-top: 4px; }
+
+    .date-btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
+    .date-btn { padding: 13px 8px; border-radius: 12px; border: 1.5px solid var(--border); background: var(--bg-primary); cursor: pointer; text-align: center; font-family: inherit; }
+    .date-btn.sel { border-color: var(--mc-azul); background: var(--mc-azul-claro); }
+    .date-btn.sel-verde { border-color: var(--mc-verde); background: var(--mc-verde-claro); }
+    .date-btn-label { font-size: 13px; font-weight: 600; color: var(--text-primary); }
+    .date-btn.sel .date-btn-label { color: var(--mc-azul); }
+    .date-btn.sel-verde .date-btn-label { color: var(--mc-verde); }
+    .date-btn-date { font-size: 11px; color: var(--text-secondary); margin-top: 3px; }
+    .date-manual-toggle { font-size: 13px; color: var(--mc-azul-medio); background: none; border: none; cursor: pointer; font-family: inherit; padding: 8px 0; display: block; width: 100%; text-align: center; margin-top: 4px; }
+
+    .tab-bar { display: flex; border-bottom: 0.5px solid var(--border); background: var(--bg-primary); position: sticky; top: 52px; z-index: 9; overflow-x: auto; }
+    .tab { flex: 1; min-width: 65px; padding: 10px 4px; font-size: 11px; text-align: center; cursor: pointer; color: var(--text-secondary); border-bottom: 2px solid transparent; border-left: none; border-right: none; border-top: none; font-family: inherit; background: none; white-space: nowrap; }
+    .tab.active { color: var(--mc-azul); border-bottom-color: var(--mc-dourado); font-weight: 600; }
+
+    .metric-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
+    .metric-card { background: var(--mc-azul); border-radius: 12px; padding: 14px; }
+    .metric-card.verde { background: var(--mc-verde); }
+    .metric-card.roxo { background: var(--mc-roxo); }
+    .metric-card.laranja { background: var(--mc-laranja); }
+    .metric-num { font-size: 22px; font-weight: 700; color: white; }
+    .metric-lbl { font-size: 11px; color: rgba(255,255,255,0.7); margin-top: 2px; }
+
+    .progresso-bar-wrap { background: var(--bg-secondary); border-radius: 99px; height: 10px; margin: 8px 0 4px; overflow: hidden; }
+    .progresso-bar { height: 100%; border-radius: 99px; transition: width 0.4s ease; }
+
+    /* EMBALAGEM / EXPEDIÇÃO items */
+    .emb-date-list { display: flex; flex-direction: column; gap: 6px; }
+    .emb-date-item { display: flex; align-items: center; gap: 12px; padding: 13px 14px; border-radius: 12px; border: 1.5px solid var(--border); background: var(--bg-primary); cursor: pointer; font-family: inherit; text-align: left; width: 100%; }
+    .emb-date-item:active { background: var(--bg-secondary); }
+    .emb-date-item.sel { border-color: var(--mc-azul); background: var(--mc-azul-claro); }
+    .emb-date-item.sem-registros { opacity: 0.4; cursor: default; }
+    .emb-date-item-left { flex: 1; }
+    .emb-date-item-label { font-size: 14px; font-weight: 600; color: var(--text-primary); }
+    .emb-date-item.sel .emb-date-item-label { color: var(--mc-azul); }
+    .emb-date-item-sub { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
+    .emb-date-status { display: flex; align-items: center; gap: 5px; }
+    .badge-pendente-emb { background: #fff3cd; color: #856404; border-radius: 99px; padding: 3px 10px; font-size: 11px; font-weight: 600; white-space: nowrap; }
+    .badge-completo-emb { background: #d1e7dd; color: #0a3622; border-radius: 99px; padding: 3px 10px; font-size: 11px; font-weight: 600; white-space: nowrap; }
+    .badge-vazio-emb { background: var(--bg-secondary); color: var(--text-secondary); border-radius: 99px; padding: 3px 10px; font-size: 11px; white-space: nowrap; }
+    .dot-pendente { width: 8px; height: 8px; border-radius: 50%; background: var(--mc-dourado); flex-shrink: 0; }
+    .dot-laranja { width: 8px; height: 8px; border-radius: 50%; background: var(--mc-laranja); flex-shrink: 0; }
+
+    .emb-item { background: var(--bg-primary); border: 0.5px solid var(--border); border-radius: 12px; padding: 13px 14px; margin-bottom: 8px; }
+    .emb-item.done { border-left: 3px solid #4caf50; }
+    .emb-item.done-parcial { border-left: 3px solid var(--mc-laranja); }
+    .emb-item-header { display: flex; align-items: center; gap: 10px; }
+    .emb-check-btn { width: 32px; height: 32px; border-radius: 50%; border: 2px solid var(--mc-azul-medio); background: var(--bg-primary); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+    .emb-check-btn.done { background: #4caf50; border-color: #4caf50; color: white; }
+    .emb-check-btn.laranja { background: var(--mc-laranja); border-color: var(--mc-laranja); color: white; }
+    .emb-item-info { flex: 1; min-width: 0; }
+    .emb-item-nome { font-size: 14px; font-weight: 600; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .emb-item-qtd { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
+    .emb-item-actions { display: none; margin-top: 10px; padding-top: 10px; border-top: 0.5px solid var(--border); align-items: center; gap: 8px; flex-wrap: wrap; }
+    .emb-item-actions.show { display: flex; }
+    .emb-input-qtd { width: 80px; font-size: 15px; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--mc-azul-medio); background: var(--bg-primary); color: var(--text-primary); font-family: inherit; }
+
+    /* EXPEDIÇÃO - parciais */
+    .exp-parcial-list { margin-top: 8px; }
+    .exp-parcial-item { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 0.5px solid var(--border); font-size: 12px; color: var(--text-secondary); }
+    .exp-parcial-item:last-child { border-bottom: none; }
+    .exp-parcial-qtd { font-weight: 700; color: var(--mc-laranja); }
+    .exp-add-form { display: flex; align-items: center; gap: 8px; margin-top: 10px; padding-top: 10px; border-top: 0.5px solid var(--border); }
+
+    .reg-item { background: var(--bg-primary); border: 0.5px solid var(--border); border-left: 3px solid var(--mc-azul-claro); border-radius: 12px; padding: 13px; margin-bottom: 8px; }
+    .reg-item.verde { border-left-color: #81c784; }
+    .reg-item.laranja { border-left-color: #fdba74; }
+    .reg-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px; }
+    .reg-produto { font-size: 14px; font-weight: 600; color: var(--text-primary); flex: 1; margin-right: 8px; }
+    .reg-hora { font-size: 11px; color: var(--text-secondary); white-space: nowrap; }
+    .reg-detalhe { font-size: 12px; color: var(--text-secondary); line-height: 1.7; }
+
+    .badge { font-size: 11px; border-radius: 6px; padding: 3px 8px; font-weight: 600; white-space: nowrap; }
+    .badge-pend { background: #fff3cd; color: #856404; }
+    .badge-ok { background: #d1e7dd; color: #0a3622; }
+    .badge-neg { background: #f8d7da; color: #842029; }
+    .badge-pos { background: #d1e7dd; color: #0a3622; }
+    .badge-emb { background: #d1e7dd; color: #0a3622; }
+    .badge-parcial { background: #fff3cd; color: #856404; }
+    .badge-exp { background: var(--mc-laranja-claro); color: var(--mc-laranja); }
+
+    .quebra-table { width: 100%; font-size: 12px; border-collapse: collapse; margin-top: 8px; }
+    .quebra-table th { font-size: 10px; color: var(--text-primary); font-weight: 600; text-align: left; padding: 4px 6px; border-bottom: 0.5px solid var(--border); }
+    .quebra-table td { padding: 6px 6px; vertical-align: middle; color: var(--text-primary); }
+    .quebra-table tr:not(:last-child) td { border-bottom: 0.5px solid var(--border); }
+
+    .resumo-row { display: flex; justify-content: space-between; align-items: center; padding: 9px 0; border-bottom: 0.5px solid var(--border); font-size: 13px; }
+    .resumo-row:last-child { border-bottom: none; }
+    .resumo-nome { flex: 1; margin-right: 8px; color: var(--text-primary); }
+    .resumo-val { font-weight: 700; color: var(--mc-azul); }
+    .resumo-val.verde { color: var(--mc-verde); }
+    .resumo-val.roxo { color: var(--mc-roxo); }
+
+    .confirm-row { display: flex; align-items: center; gap: 10px; padding: 11px 0; border-bottom: 0.5px solid var(--border); }
+    .confirm-check { width: 24px; height: 24px; border-radius: 50%; border: 1.5px solid var(--border-md); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 13px; flex-shrink: 0; background: var(--bg-primary); }
+    .confirm-check.chk { background: var(--mc-azul); border-color: var(--mc-azul); color: white; }
+
+    .empty { text-align: center; padding: 40px 20px; color: var(--text-secondary); font-size: 14px; line-height: 1.6; }
+    .op-stat-card { background: var(--mc-azul); border-radius: 14px; padding: 20px; margin-bottom: 12px; border-bottom: 3px solid var(--mc-dourado); }
+    .op-stat-card.verde { background: var(--mc-verde); }
+    .op-stat-card.laranja { background: var(--mc-laranja); }
+    .op-stat-num { font-size: 40px; font-weight: 700; color: white; }
+    .op-stat-lbl { font-size: 13px; color: rgba(255,255,255,0.7); margin-top: 2px; }
+    .emb-data-badge { background: rgba(255,255,255,0.18); border-radius: 8px; padding: 3px 12px; font-size: 12px; color: white; margin-left: auto; cursor: pointer; border: none; font-family: inherit; }
+
+    .loading-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(43,47,168,0.92); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 999; }
+    .loading-spinner { width: 48px; height: 48px; border: 4px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.8s linear infinite; margin-bottom: 16px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-text { color: white; font-size: 14px; opacity: 0.85; }
+    .section-divider { font-size: 11px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; margin: 14px 0 8px; padding-left: 2px; }
+
+
+    .edit-form input { font-size: 14px; padding: 8px 10px; }
+    @media (prefers-color-scheme: dark) {
+      :root { --bg-primary: #1c1c1e; --bg-secondary: #2c2c2e; --bg-tertiary: #242426; --text-primary: #f2f2f7; --text-secondary: #8e8e93; --border: rgba(255,255,255,0.1); --border-md: rgba(255,255,255,0.18); }
+      body { background: #000; }
+    }
+  </style>
+</head>
+<body>
+<div class="app-frame">
+
+  <div class="loading-overlay" id="loading">
+    <div class="loading-spinner"></div>
+    <div class="loading-text">Conectando ao servidor...</div>
+  </div>
+
+  <!-- TELA INICIAL -->
+  <div class="screen" id="s-inicio">
+    <div class="logo-area">
+      <div class="logo-empresa">Monte Castelo</div>
+      <div class="logo-sub-empresa">Panificadora</div>
+      <div class="logo-app-tag">ProduLog · Controle de Produção</div>
+    </div>
+    <div style="flex:1; padding:20px 16px; background:var(--bg-tertiary);">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;">
+        <div style="flex:1;height:1px;background:var(--mc-dourado);opacity:0.3;"></div>
+        <div style="font-size:11px;font-weight:600;color:var(--mc-dourado);text-transform:uppercase;letter-spacing:0.06em;">Selecione seu setor</div>
+        <div style="flex:1;height:1px;background:var(--mc-dourado);opacity:0.3;"></div>
+      </div>
+      <button class="home-btn azul" onclick="abrirPin('confeitaria')">
+        <div class="hb-icon hb-azul">🥐</div>
+        <div style="flex:1;"><div class="hb-title">Confeitaria</div><div class="hb-desc">Lançar produção e massas</div></div>
+        <span style="color:var(--text-secondary);font-size:20px;">›</span>
+      </button>
+      <button class="home-btn verde" onclick="abrirPin('cozinha')">
+        <div class="hb-icon hb-verde">🍳</div>
+        <div style="flex:1;"><div class="hb-title">Cozinha</div><div class="hb-desc">Lançar produção de recheios</div></div>
+        <span style="color:var(--text-secondary);font-size:20px;">›</span>
+      </button>
+      <button class="home-btn" onclick="abrirPin('embalagem')">
+        <div class="hb-icon" style="background:#e8f5e9;">📦</div>
+        <div style="flex:1;"><div class="hb-title">Embalagem</div><div class="hb-desc">Confirmar embalagem dos produtos</div></div>
+        <span style="color:var(--text-secondary);font-size:20px;">›</span>
+      </button>
+      <button class="home-btn laranja" onclick="abrirPin('expedicao')">
+        <div class="hb-icon hb-laranja">🚚</div>
+        <div style="flex:1;"><div class="hb-title">Expedição</div><div class="hb-desc">Liberação para câmara fria</div></div>
+        <span style="color:var(--text-secondary);font-size:20px;">›</span>
+      </button>
+      <button class="home-btn" style="border-left-color:#0891b2;" onclick="abrirPin('contagem')">
+        <div class="hb-icon" style="background:#ecfeff;">📋</div>
+        <div style="flex:1;"><div class="hb-title">Contagem</div><div class="hb-desc">Contagem mensal de estoque</div></div>
+        <span style="color:var(--text-secondary);font-size:20px;">›</span>
+      </button>
+      <button class="home-btn roxo" onclick="abrirPin('admin')">
+        <div class="hb-icon hb-roxo">📊</div>
+        <div style="flex:1;"><div class="hb-title">Administrativo</div><div class="hb-desc">Relatórios e controle geral</div></div>
+        <span style="color:var(--text-secondary);font-size:20px;">›</span>
+      </button>
+      <div style="text-align:center;margin-top:16px;font-size:11px;color:var(--text-secondary);">Monte Castelo Panificadora · v6.0</div>
+    </div>
+  </div>
+
+  <!-- PIN LOGIN -->
+  <div class="screen" id="s-pin">
+    <div class="pin-screen" id="pin-bg">
+      <div class="pin-logo">
+        <div class="pin-empresa">Monte Castelo</div>
+        <div class="pin-sub">Panificadora</div>
+        <div class="pin-setor" id="pin-setor-nome">Confeitaria</div>
+      </div>
+      <div class="pin-dots" id="pin-dots">
+        <div class="pin-dot" id="d0"></div>
+        <div class="pin-dot" id="d1"></div>
+        <div class="pin-dot" id="d2"></div>
+        <div class="pin-dot" id="d3"></div>
+      </div>
+      <div class="pin-grid">
+        <button class="pin-btn" onclick="pinDigit('1')">1</button>
+        <button class="pin-btn" onclick="pinDigit('2')">2</button>
+        <button class="pin-btn" onclick="pinDigit('3')">3</button>
+        <button class="pin-btn" onclick="pinDigit('4')">4</button>
+        <button class="pin-btn" onclick="pinDigit('5')">5</button>
+        <button class="pin-btn" onclick="pinDigit('6')">6</button>
+        <button class="pin-btn" onclick="pinDigit('7')">7</button>
+        <button class="pin-btn" onclick="pinDigit('8')">8</button>
+        <button class="pin-btn" onclick="pinDigit('9')">9</button>
+        <button class="pin-btn" style="opacity:0;" disabled></button>
+        <button class="pin-btn" onclick="pinDigit('0')">0</button>
+        <button class="pin-btn del" onclick="pinDel()">⌫</button>
+      </div>
+      <div class="pin-err" id="pin-err"></div>
+      <button class="pin-back" onclick="goTo('s-inicio')">← Voltar</button>
+    </div>
+  </div>
+
+  <!-- CONFEITARIA HOME -->
+  <div class="screen" id="s-conf-home">
+    <div class="topbar">
+      <div style="flex:1;"><div class="topbar-title">Confeitaria 🥐</div><div class="topbar-sub" id="conf-date"></div></div>
+      <button class="topbar-right" onclick="window.adminMode?window.goTo('s-adm-hub'):window.goTo('s-inicio')">Sair</button>
+    </div>
+    <div class="content">
+      <div id="conf-banner" class="banner banner-ok" style="display:none;">✓ Registro salvo!</div>
+      <div class="op-stat-card">
+        <div class="op-stat-num" id="conf-count">0</div>
+        <div class="op-stat-lbl">lançamentos hoje</div>
+      </div>
+      <div class="section-divider">O que deseja lançar?</div>
+      <button class="home-btn azul" onclick="iniciarNovoReg()">
+        <div class="hb-icon hb-azul">📋</div>
+        <div style="flex:1;"><div class="hb-title">Lançamento de Produção</div><div class="hb-desc">Registrar produtos produzidos</div></div>
+        <span style="color:var(--text-secondary);font-size:20px;">›</span>
+      </button>
+      <button class="home-btn azul" onclick="goTo('s-massa-data')">
+        <div class="hb-icon" style="background:#e3f2fd;">⚖️</div>
+        <div style="flex:1;"><div class="hb-title">Produção de Massas</div><div class="hb-desc">Registrar kg de massa produzido</div></div>
+        <span style="color:var(--text-secondary);font-size:20px;">›</span>
+      </button>
+      <button class="btn btn-secondary" style="margin-top:4px;margin-bottom:12px;" onclick="goTo('s-meus-reg')">Ver registros de produção</button>
+      <div class="section-divider">Equipe</div>
+      <button class="home-btn azul" onclick="abrirPresenca('conf')">
+        <div class="hb-icon" style="background:#e8eaff;">👥</div>
+        <div style="flex:1;"><div class="hb-title">Registro de Presença</div><div class="hb-desc" id="presenca-conf-status">Registrar equipe do dia</div></div>
+        <span style="color:var(--text-secondary);font-size:20px;">›</span>
+      </button>
+      <button class="btn btn-secondary" style="margin-top:4px;" onclick="goTo('s-presenca-reg-conf')">Ver registros de presença</button>
+    </div>
+  </div>
+
+  <!-- PASSO 1: DATA PRODUÇÃO -->
+  <div class="screen" id="s-sel-data">
+    <div class="topbar">
+      <button class="back-btn" onclick="goTo('s-conf-home')">‹</button>
+      <div><div class="topbar-title">Novo registro</div><div class="topbar-sub">Passo 1 de 3 — Data</div></div>
+    </div>
+    <div class="content">
+      <div class="card">
+        <div class="card-label">Qual é o dia desta produção?</div>
+        <div class="date-btn-grid" id="date-btn-grid"></div>
+        <button class="date-manual-toggle" onclick="toggleManual('manual-date-wrap')">Outra data →</button>
+        <div id="manual-date-wrap" style="display:none;margin-top:8px;">
+          <input type="date" id="input-data-manual" onchange="selecionarDataManual('prod')" />
+        </div>
+      </div>
+      <div id="data-sel-banner" class="banner banner-info" style="display:none;"></div>
+      <button id="btn-prox-data" class="btn btn-disabled" onclick="irParaProduto()">Próximo →</button>
+    </div>
+  </div>
+
+  <!-- PASSO 2: PRODUTO -->
+  <div class="screen" id="s-novo-reg">
+    <div class="topbar">
+      <button class="back-btn" onclick="goTo('s-sel-data')">‹</button>
+      <div><div class="topbar-title">Novo registro</div><div class="topbar-sub">Passo 2 de 3 — Produto</div></div>
+    </div>
+    <div class="content">
+      <div id="data-sel-banner2" class="banner banner-info" style="margin-bottom:10px;"></div>
+      <div class="card">
+        <div class="card-label">Buscar produto</div>
+        <input type="text" id="srch" placeholder="Digite o nome..." oninput="filtrar()" autocomplete="off" />
+      </div>
+      <div class="card" style="padding:10px;">
+        <div class="produto-list" id="prod-list"></div>
+      </div>
+      <button id="btn-prox" class="btn btn-disabled" onclick="irQtd()">Próximo →</button>
+    </div>
+  </div>
+
+  <!-- PASSO 3: QUANTIDADES -->
+  <div class="screen" id="s-qtd">
+    <div class="topbar">
+      <button class="back-btn" onclick="goTo('s-novo-reg')">‹</button>
+      <div><div class="topbar-title">Novo registro</div><div class="topbar-sub">Passo 3 de 3 — Quantidades</div></div>
+    </div>
+    <div class="content">
+      <div class="produto-sel-card">
+        <div class="produto-sel-label">Produto · <span id="ps-data-label"></span></div>
+        <div class="produto-sel-nome" id="ps-nome"></div>
+        <div class="produto-gram-info" id="ps-info"></div>
+      </div>
+      <div class="card">
+        <div class="card-label">Quantidade produzida</div>
+        <div class="input-unit">
+          <input type="number" id="i-qtd" placeholder="0" min="0" inputmode="numeric" oninput="calcPrev()" />
+          <span class="unit-label">unidades</span>
+        </div>
+      </div>
+      <div id="prev-card" class="banner banner-info" style="display:none;"></div>
+      <div class="card">
+        <div class="card-label" id="lbl-massa">Massa utilizada</div>
+        <div class="input-unit">
+          <input type="number" id="i-massa" placeholder="0" min="0" inputmode="decimal" step="0.001" />
+          <span class="unit-label">kg</span>
+        </div>
+      </div>
+      <div class="card" id="card-r1" style="display:none;">
+        <div class="card-label" id="lbl-r1">Recheio</div>
+        <div class="input-unit">
+          <input type="number" id="i-r1" placeholder="0" min="0" inputmode="decimal" step="0.001" />
+          <span class="unit-label">kg</span>
+        </div>
+      </div>
+      <div class="card" id="card-r2" style="display:none;">
+        <div class="card-label" id="lbl-r2">Recheio 2</div>
+        <div class="input-unit">
+          <input type="number" id="i-r2" placeholder="0" min="0" inputmode="decimal" step="0.001" />
+          <span class="unit-label">kg</span>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-label">Observação (opcional)</div>
+        <input type="text" id="i-obs" placeholder="Ex: retrabalho, sobra de lote..." />
+      </div>
+      <button class="btn btn-primary" id="btn-salvar" onclick="salvar()">Salvar registro ✓</button>
+    </div>
+  </div>
+
+  <!-- MEUS REGISTROS -->
+  <div class="screen" id="s-meus-reg">
+    <div class="topbar">
+      <button class="back-btn" onclick="goTo('s-conf-home')">‹</button>
+      <div><div class="topbar-title">Registros de produção</div><div class="topbar-sub" id="mr-sub"></div></div>
+    </div>
+    <div class="content" id="mr-content"></div>
+  </div>
+
+  <!-- MASSAS: DATA -->
+  <div class="screen" id="s-massa-data">
+    <div class="topbar">
+      <button class="back-btn" onclick="goTo('s-conf-home')">‹</button>
+      <div><div class="topbar-title">Produção de Massas</div><div class="topbar-sub">Passo 1 de 2 — Data</div></div>
+    </div>
+    <div class="content">
+      <div class="card">
+        <div class="card-label">Qual é o dia desta produção?</div>
+        <div class="date-btn-grid" id="massa-date-grid"></div>
+        <button class="date-manual-toggle" onclick="toggleManual('massa-manual-wrap')">Outra data →</button>
+        <div id="massa-manual-wrap" style="display:none;margin-top:8px;">
+          <input type="date" id="massa-input-data" onchange="selecionarDataManual('massa')" />
+        </div>
+      </div>
+      <div id="massa-data-banner" class="banner banner-info" style="display:none;"></div>
+      <button id="btn-prox-massa-data" class="btn btn-disabled" onclick="irParaMassa()">Próximo →</button>
+    </div>
+  </div>
+
+  <!-- MASSAS: LANÇAMENTO -->
+  <div class="screen" id="s-massa-lanc">
+    <div class="topbar">
+      <button class="back-btn" onclick="goTo('s-massa-data')">‹</button>
+      <div><div class="topbar-title">Produção de Massas</div><div class="topbar-sub">Passo 2 de 2 — Lançamento</div></div>
+    </div>
+    <div class="content">
+      <div id="massa-data-banner2" class="banner banner-info" style="margin-bottom:10px;"></div>
+      <div class="card">
+        <div class="card-label">Selecionar massa</div>
+        <div class="produto-list" id="massa-list"></div>
+      </div>
+      <div id="massa-sel-card" style="display:none;" class="produto-sel-card">
+        <div class="produto-sel-label">Massa selecionada</div>
+        <div class="produto-sel-nome" id="massa-sel-nome"></div>
+      </div>
+      <div class="card" id="massa-qtd-card" style="display:none;">
+        <div class="card-label">Quantidade produzida</div>
+        <div class="input-unit">
+          <input type="number" id="massa-qtd" placeholder="0" min="0" inputmode="decimal" step="0.001" />
+          <span class="unit-label">kg</span>
+        </div>
+      </div>
+      <div class="card" id="massa-obs-card" style="display:none;">
+        <div class="card-label">Observação (opcional)</div>
+        <input type="text" id="massa-obs" placeholder="Ex: lote extra..." />
+      </div>
+      <button class="btn btn-primary" id="btn-salvar-massa" style="display:none;" onclick="salvarMassa()">Salvar lançamento ✓</button>
+    </div>
+  </div>
+
+  <!-- COZINHA HOME -->
+  <div class="screen" id="s-coz-home">
+    <div class="topbar verde">
+      <div style="flex:1;"><div class="topbar-title">Cozinha 🍳</div><div class="topbar-sub" id="coz-date"></div></div>
+      <button class="topbar-right" onclick="window.adminMode?window.goTo('s-adm-hub'):window.goTo('s-inicio')">Sair</button>
+    </div>
+    <div class="content">
+      <div id="coz-banner" class="banner banner-ok" style="display:none;">✓ Registro salvo!</div>
+      <div class="op-stat-card verde">
+        <div class="op-stat-num" id="coz-count">0</div>
+        <div class="op-stat-lbl">lançamentos hoje</div>
+      </div>
+      <button class="btn btn-verde" style="margin-bottom:10px;" onclick="goTo('s-recheio-data')">+ Lançar produção de recheio</button>
+      <button class="btn btn-secondary" style="margin-bottom:10px;" onclick="goTo('s-coz-reg')">Ver registros</button>
+      <button class="home-btn verde" onclick="abrirPresenca('coz')">
+        <div class="hb-icon hb-verde">👥</div>
+        <div style="flex:1;"><div class="hb-title">Registro de Presença</div><div class="hb-desc" id="presenca-coz-status">Registrar equipe do dia</div></div>
+        <span style="color:var(--text-secondary);font-size:20px;">›</span>
+      </button>
+      <button class="btn btn-secondary" style="margin-top:4px;" onclick="goTo('s-presenca-reg-coz')">Ver registros de presença</button>
+    </div>
+  </div>
+
+  <!-- RECHEIO: DATA -->
+  <div class="screen" id="s-recheio-data">
+    <div class="topbar verde">
+      <button class="back-btn" onclick="goTo('s-coz-home')">‹</button>
+      <div><div class="topbar-title">Produção de Recheio</div><div class="topbar-sub">Passo 1 de 2 — Data</div></div>
+    </div>
+    <div class="content">
+      <div class="card">
+        <div class="card-label">Qual é o dia desta produção?</div>
+        <div class="date-btn-grid" id="recheio-date-grid"></div>
+        <button class="date-manual-toggle" onclick="toggleManual('recheio-manual-wrap')">Outra data →</button>
+        <div id="recheio-manual-wrap" style="display:none;margin-top:8px;">
+          <input type="date" id="recheio-input-data" onchange="selecionarDataManual('recheio')" />
+        </div>
+      </div>
+      <div id="recheio-data-banner" class="banner banner-info-verde" style="display:none;"></div>
+      <button id="btn-prox-recheio-data" class="btn btn-disabled" onclick="irParaRecheio()">Próximo →</button>
+    </div>
+  </div>
+
+  <!-- RECHEIO: LANÇAMENTO -->
+  <div class="screen" id="s-recheio-lanc">
+    <div class="topbar verde">
+      <button class="back-btn" onclick="goTo('s-recheio-data')">‹</button>
+      <div><div class="topbar-title">Produção de Recheio</div><div class="topbar-sub">Passo 2 de 2 — Lançamento</div></div>
+    </div>
+    <div class="content">
+      <div id="recheio-data-banner2" class="banner banner-info-verde" style="margin-bottom:10px;"></div>
+      <div class="card">
+        <div class="card-label">Selecionar recheio</div>
+        <div class="produto-list" id="recheio-list"></div>
+      </div>
+      <div id="recheio-sel-card" style="display:none;" class="produto-sel-card" style="border-left-color:var(--mc-verde);background:var(--mc-verde-claro);">
+        <div class="produto-sel-label" style="color:var(--mc-verde);">Recheio selecionado</div>
+        <div class="produto-sel-nome" id="recheio-sel-nome" style="color:var(--mc-verde);"></div>
+      </div>
+      <div class="card" id="recheio-qtd-card" style="display:none;">
+        <div class="card-label">Quantidade produzida</div>
+        <div class="input-unit">
+          <input type="number" id="recheio-qtd" placeholder="0" min="0" inputmode="decimal" step="0.001" />
+          <span class="unit-label">kg</span>
+        </div>
+      </div>
+      <div class="card" id="recheio-obs-card" style="display:none;">
+        <div class="card-label">Observação (opcional)</div>
+        <input type="text" id="recheio-obs" placeholder="Ex: lote extra..." />
+      </div>
+      <button class="btn btn-verde" id="btn-salvar-recheio" style="display:none;" onclick="salvarRecheio()">Salvar lançamento ✓</button>
+    </div>
+  </div>
+
+  <!-- COZINHA REGISTROS -->
+  <div class="screen" id="s-coz-reg">
+    <div class="topbar verde">
+      <button class="back-btn" onclick="goTo('s-coz-home')">‹</button>
+      <div><div class="topbar-title">Registros de recheio</div><div class="topbar-sub" id="coz-reg-sub"></div></div>
+    </div>
+    <div class="content" id="coz-reg-content"></div>
+  </div>
+
+  <!-- EMBALAGEM: SELECIONAR DATA -->
+  <div class="screen" id="s-emb-sel-data">
+    <div class="topbar">
+      <button class="back-btn" onclick="window.adminMode?window.goTo('s-adm-hub'):window.goTo('s-inicio')">‹</button>
+      <div><div class="topbar-title">Embalagem 📦</div><div class="topbar-sub">Selecione o dia</div></div>
+    </div>
+    <div class="content" id="emb-sel-content-wrap">
+      <div id="emb-sel-content"></div>
+      <div style="margin-top:14px;">
+        <div class="section-divider">Equipe</div>
+        <button class="home-btn" onclick="abrirPresenca('emb')" style="border-left-color:var(--mc-azul);">
+          <div class="hb-icon" style="background:#e8eaff;">👥</div>
+          <div style="flex:1;"><div class="hb-title">Registro de Presença</div><div class="hb-desc" id="presenca-emb-status">Registrar equipe do dia</div></div>
+          <span style="color:var(--text-secondary);font-size:20px;">›</span>
+        </button>
+        <button class="btn btn-secondary" style="margin-top:4px;" onclick="goTo('s-presenca-reg-emb')">Ver registros de presença</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- EMBALAGEM: CHECKLIST -->
+  <div class="screen" id="s-emb-home">
+    <div class="topbar">
+      <div style="flex:1;"><div class="topbar-title">Embalagem 📦</div><div class="topbar-sub" id="emb-data-topbar"></div></div>
+      <button class="emb-data-badge" onclick="abrirPresenca('emb')" style="margin-right:6px;">👥</button><button class="emb-data-badge" onclick="goTo('s-emb-sel-data')">Trocar dia</button>
+    </div>
+    <div class="content" id="emb-content"></div>
+  </div>
+
+
+
+  <!-- PRESENÇA: FORM (shared, rendered dynamically) -->
+  <div class="screen" id="s-presenca-form">
+    <div class="topbar" id="presenca-form-topbar">
+      <button class="back-btn" id="presenca-form-back" onclick="voltarPresenca()">‹</button>
+      <div><div class="topbar-title">Registro de Presença</div><div class="topbar-sub" id="presenca-form-sub"></div></div>
+    </div>
+    <div class="content" id="presenca-form-content"></div>
+  </div>
+
+  <!-- PRESENÇA: REGISTROS CONF -->
+  <div class="screen" id="s-presenca-reg-conf">
+    <div class="topbar">
+      <button class="back-btn" onclick="goTo('s-conf-home')">‹</button>
+      <div><div class="topbar-title">Presenças — Confeitaria</div><div class="topbar-sub" id="preg-conf-sub"></div></div>
+    </div>
+    <div class="content" id="preg-conf-content"></div>
+  </div>
+
+  <!-- PRESENÇA: REGISTROS COZ -->
+  <div class="screen" id="s-presenca-reg-coz">
+    <div class="topbar verde">
+      <button class="back-btn" onclick="goTo('s-coz-home')">‹</button>
+      <div><div class="topbar-title">Presenças — Cozinha</div><div class="topbar-sub" id="preg-coz-sub"></div></div>
+    </div>
+    <div class="content" id="preg-coz-content"></div>
+  </div>
+
+  <!-- PRESENÇA: REGISTROS EMB -->
+  <div class="screen" id="s-presenca-reg-emb">
+    <div class="topbar">
+      <button class="back-btn" onclick="goTo('s-emb-sel-data')">‹</button>
+      <div><div class="topbar-title">Presenças — Embalagem</div><div class="topbar-sub" id="preg-emb-sub"></div></div>
+    </div>
+    <div class="content" id="preg-emb-content"></div>
+  </div>
+
+  <!-- EXPEDIÇÃO: SELECIONAR DATA -->
+  <div class="screen" id="s-exp-sel-data">
+    <div class="topbar laranja">
+      <button class="back-btn" onclick="window.adminMode?window.goTo('s-adm-hub'):window.goTo('s-inicio')">‹</button>
+      <div><div class="topbar-title">Expedição 🚚</div><div class="topbar-sub">Selecione o dia</div></div>
+    </div>
+    <div class="content" id="exp-sel-content"></div>
+  </div>
+
+  <!-- EXPEDIÇÃO: LIBERAÇÃO -->
+  <div class="screen" id="s-exp-home">
+    <div class="topbar laranja">
+      <div style="flex:1;"><div class="topbar-title">Expedição 🚚</div><div class="topbar-sub" id="exp-data-topbar"></div></div>
+      <button class="emb-data-badge" onclick="goTo('s-exp-sel-data')">Trocar dia</button>
+    </div>
+    <div class="content" id="exp-content"></div>
+  </div>
+
+
+  <!-- ADMIN HUB -->
+  <div class="screen" id="s-adm-hub">
+    <div class="topbar roxo">
+      <div style="flex:1;"><div class="topbar-title">Administrativo 📊</div><div class="topbar-sub">Acesso total</div></div>
+      <button class="topbar-right" onclick="sairAdmin()">Sair</button>
+    </div>
+    <div class="content">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;">
+        <div style="flex:1;height:1px;background:var(--mc-roxo);opacity:0.3;"></div>
+        <div style="font-size:11px;font-weight:600;color:var(--mc-roxo);text-transform:uppercase;letter-spacing:0.06em;">Acesso rápido</div>
+        <div style="flex:1;height:1px;background:var(--mc-roxo);opacity:0.3;"></div>
+      </div>
+      <button class="home-btn azul" onclick="goToAdmin('s-conf-home')">
+        <div class="hb-icon hb-azul">🥐</div>
+        <div style="flex:1;"><div class="hb-title">Confeitaria</div><div class="hb-desc">Lançamento de produção e massas</div></div>
+        <span style="color:var(--text-secondary);font-size:20px;">›</span>
+      </button>
+      <button class="home-btn verde" onclick="goToAdmin('s-coz-home')">
+        <div class="hb-icon hb-verde">🍳</div>
+        <div style="flex:1;"><div class="hb-title">Cozinha</div><div class="hb-desc">Lançamento de recheios</div></div>
+        <span style="color:var(--text-secondary);font-size:20px;">›</span>
+      </button>
+      <button class="home-btn" onclick="goToAdmin('s-emb-sel-data')">
+        <div class="hb-icon" style="background:#e8f5e9;">📦</div>
+        <div style="flex:1;"><div class="hb-title">Embalagem</div><div class="hb-desc">Checklist de embalagem</div></div>
+        <span style="color:var(--text-secondary);font-size:20px;">›</span>
+      </button>
+      <button class="home-btn laranja" onclick="goToAdmin('s-exp-sel-data')">
+        <div class="hb-icon hb-laranja">🚚</div>
+        <div style="flex:1;"><div class="hb-title">Expedição</div><div class="hb-desc">Liberação para câmara fria</div></div>
+        <span style="color:var(--text-secondary);font-size:20px;">›</span>
+      </button>
+      <button class="home-btn roxo" onclick="goTo('s-adm')">
+        <div class="hb-icon hb-roxo">📈</div>
+        <div style="flex:1;"><div class="hb-title">Relatórios e Controle</div><div class="hb-desc">Resumos, quebras e confirmações</div></div>
+        <span style="color:var(--text-secondary);font-size:20px;">›</span>
+      </button>
+    </div>
+  </div>
+
+
+  <!-- CONTAGEM HOME -->
+  <div class="screen" id="s-contagem-home">
+    <div class="topbar" style="background:#0891b2;">
+      <div style="flex:1;"><div class="topbar-title">Contagem 📋</div><div class="topbar-sub" id="cont-date"></div></div>
+      <button class="topbar-right" onclick="window.adminMode?goTo('s-adm-hub'):goTo('s-inicio')">Sair</button>
+    </div>
+    <div class="content">
+      <div class="card" style="background:#0891b2;border:none;border-bottom:3px solid var(--mc-dourado);margin-bottom:14px;">
+        <div style="font-size:13px;color:rgba(255,255,255,0.7);">Contagens realizadas</div>
+        <div style="font-size:36px;font-weight:700;color:white;" id="cont-total">0</div>
+      </div>
+      <div class="section-divider">Selecione o grupo</div>
+      <button class="home-btn" style="border-left-color:#0891b2;" onclick="abrirContagem('Materia Prima')">
+        <div class="hb-icon" style="background:#ecfeff;">🧪</div>
+        <div style="flex:1;"><div class="hb-title">Matéria Prima</div><div class="hb-desc" id="cont-badge-Materia Prima">139 itens</div></div>
+        <span style="color:var(--text-secondary);font-size:20px;">›</span>
+      </button>
+      <button class="home-btn" style="border-left-color:#0891b2;" onclick="abrirContagem('Produto Acabado')">
+        <div class="hb-icon" style="background:#ecfeff;">✅</div>
+        <div style="flex:1;"><div class="hb-title">Produto Acabado</div><div class="hb-desc" id="cont-badge-Produto Acabado">170 itens</div></div>
+        <span style="color:var(--text-secondary);font-size:20px;">›</span>
+      </button>
+      <button class="home-btn" style="border-left-color:#0891b2;" onclick="abrirContagem('Plastico')">
+        <div class="hb-icon" style="background:#ecfeff;">🛍️</div>
+        <div style="flex:1;"><div class="hb-title">Plásticos</div><div class="hb-desc" id="cont-badge-Plastico">54 itens</div></div>
+        <span style="color:var(--text-secondary);font-size:20px;">›</span>
+      </button>
+      <button class="home-btn" style="border-left-color:#0891b2;" onclick="abrirContagem('Kits Confeitaria')">
+        <div class="hb-icon" style="background:#ecfeff;">🎁</div>
+        <div style="flex:1;"><div class="hb-title">Kits Confeitaria</div><div class="hb-desc" id="cont-badge-Kits Confeitaria">41 itens</div></div>
+        <span style="color:var(--text-secondary);font-size:20px;">›</span>
+      </button>
+      <button class="home-btn" style="border-left-color:#0891b2;" onclick="abrirContagem('Kits Quadra')">
+        <div class="hb-icon" style="background:#ecfeff;">🎁</div>
+        <div style="flex:1;"><div class="hb-title">Kits Quadra</div><div class="hb-desc" id="cont-badge-Kits Quadra">27 itens</div></div>
+        <span style="color:var(--text-secondary);font-size:20px;">›</span>
+      </button>
+      <button class="btn btn-secondary" style="margin-top:8px;" onclick="goTo('s-contagem-hist')">📂 Ver histórico de contagens</button>
+    </div>
+  </div>
+
+  <!-- CONTAGEM: LANÇAMENTO -->
+  <div class="screen" id="s-contagem-lanc">
+    <div class="topbar" style="background:#0891b2;">
+      <button class="back-btn" onclick="goTo('s-contagem-home')">‹</button>
+      <div><div class="topbar-title" id="cont-lanc-title">Contagem</div><div class="topbar-sub" id="cont-lanc-sub"></div></div>
+    </div>
+    <div class="content" id="cont-lanc-content"></div>
+  </div>
+
+  <!-- CONTAGEM: HISTÓRICO -->
+  <div class="screen" id="s-contagem-hist">
+    <div class="topbar" style="background:#0891b2;">
+      <button class="back-btn" onclick="goTo('s-contagem-home')">‹</button>
+      <div><div class="topbar-title">Histórico de Contagens</div><div class="topbar-sub" id="cont-hist-sub"></div></div>
+    </div>
+    <div class="content" id="cont-hist-content"></div>
+  </div>
+
+  <!-- ADMIN DASHBOARD -->
+  <div class="screen" id="s-adm">
+    <div class="topbar roxo">
+      <div style="flex:1;"><div class="topbar-title">Administrativo</div><div class="topbar-sub" id="adm-sub"></div></div>
+      <button class="topbar-right" onclick="goTo('s-inicio')">Sair</button>
+    </div>
+    <div class="tab-bar">
+      <button class="tab active" onclick="tab('resumo',this)">Resumo</button>
+      <button class="tab" onclick="tab('massas',this)">Massas</button>
+      <button class="tab" onclick="tab('recheios',this)">Recheios</button>
+      <button class="tab" onclick="tab('embalagem',this)">Embalagem</button>
+      <button class="tab" onclick="tab('expedicao',this)">Expedição</button>
+      <button class="tab" onclick="tab('producao',this)">Produção</button>
+      <button class="tab" onclick="tab('quebras',this)">Quebras</button>
+      <button class="tab" onclick="tab('presenca',this)">Presença</button>
+      <button class="tab" onclick="tab('exportar',this)">Exportar</button>
+    </div>
+    <div class="content" id="adm-content"></div>
+  </div>
+
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDY5ma_NbCmZ2dyXUjKm6GZQ3ibhwgcdmI",
+  authDomain: "montecastelo-a0764.firebaseapp.com",
+  projectId: "montecastelo-a0764",
+  storageBucket: "montecastelo-a0764.firebasestorage.app",
+  messagingSenderId: "158891969912",
+  appId: "1:158891969912:web:0541e828e0e0743cef0c8d"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+// PINs por setor
+const CONTAGEM_ITENS = {"Materia Prima": [{"cod": "14001", "nome": "AMIDO DE MILHO SACO 25KG"}, {"cod": "14003", "nome": "AÇUCAR CONCENTRADO"}, {"cod": "14004", "nome": "AÇUCAR CRISTAL"}, {"cod": "14005", "nome": "AÇUCAR REFINADO"}, {"cod": "14006", "nome": "AIPIM"}, {"cod": "14007", "nome": "ALFACE"}, {"cod": "14008", "nome": "ALHO"}, {"cod": "14009", "nome": "AMACIANTE DE CARNE"}, {"cod": "14010", "nome": "ARROZ"}, {"cod": "14011", "nome": "BATATA"}, {"cod": "14012", "nome": "BATATA DOCE"}, {"cod": "14013", "nome": "BETERRABA"}, {"cod": "14014", "nome": "BROCOLIS"}, {"cod": "14015", "nome": "CACAU EM PÓ - BLACK"}, {"cod": "14016", "nome": "CACHAÇA"}, {"cod": "14017", "nome": "CAFÉ"}, {"cod": "14018", "nome": "CALDO DE CARNE"}, {"cod": "14019", "nome": "CALDO DE GALINHA"}, {"cod": "14020", "nome": "CALDO DE LEGUMES"}, {"cod": "14021", "nome": "CANELA"}, {"cod": "14022", "nome": "CATCHUP"}, {"cod": "14023", "nome": "CEBOLA"}, {"cod": "14024", "nome": "CENOURA"}, {"cod": "14025", "nome": "CHEDDAR"}, {"cod": "14026", "nome": "CHOCOLATE AO LEITE EM BARRA 24GR"}, {"cod": "14028", "nome": "CHUCHU"}, {"cod": "14029", "nome": "CORANTE AMARELO GEMA"}, {"cod": "14030", "nome": "CORANTE CARAMELO"}, {"cod": "14031", "nome": "COUVE FLOR"}, {"cod": "14032", "nome": "COUVE MANTEIGA"}, {"cod": "14033", "nome": "CARNE ACEM"}, {"cod": "14034", "nome": "COXA SOBRECOXA"}, {"cod": "14035", "nome": "DOCE DE LEITE"}, {"cod": "14038", "nome": "ERVA DOCE"}, {"cod": "14039", "nome": "ESPINAFRE"}, {"cod": "14040", "nome": "ESSENCIA DE BAUNILHA"}, {"cod": "14041", "nome": "ESSENCIA DE QUEIJO"}, {"cod": "14042", "nome": "ESSENCIA MANTEIGA"}, {"cod": "14043", "nome": "FARINHA BELONI"}, {"cod": "14045", "nome": "FARINHA DE MILHO MÉDIA"}, {"cod": "14046", "nome": "FARINHA DE ROSCA"}, {"cod": "14047", "nome": "FARINHA DE TRIGO SUPER"}, {"cod": "14048", "nome": "FARINHA FIBRA DE TRIGO"}, {"cod": "14049", "nome": "FARINHA INTEGRAL"}, {"cod": "14050", "nome": "FARINHA MANDIOCA"}, {"cod": "14051", "nome": "FARINHA MIX PRIFAL"}, {"cod": "14052", "nome": "FARINHA M DIAS"}, {"cod": "14053", "nome": "FEIJÃO PRETO"}, {"cod": "14054", "nome": "FERMENTO DOCE"}, {"cod": "14055", "nome": "FERMENTO EM PÓ"}, {"cod": "14056", "nome": "FERMENTO FLASHMANN"}, {"cod": "14057", "nome": "FERMENTO ITAIQUARA"}, {"cod": "14058", "nome": "FILÉ PEITO DE FRANGO"}, {"cod": "14059", "nome": "FLOCOS DE BATATA"}, {"cod": "14060", "nome": "FRUTAS CRISTALIZADAS"}, {"cod": "14061", "nome": "GOIABADA"}, {"cod": "14062", "nome": "GOTAS PINGO CHOCOLATE"}, {"cod": "14063", "nome": "GRANOLA 7 CEREAIS"}, {"cod": "14064", "nome": "HORTELA"}, {"cod": "14065", "nome": "LEITE"}, {"cod": "14066", "nome": "LENTILHA"}, {"cod": "14067", "nome": "LINGUIÇA CALABRESA MÉDIA"}, {"cod": "14068", "nome": "MARGARINA COAMO"}, {"cod": "14069", "nome": "MARGARINA FOLHADA"}, {"cod": "14070", "nome": "MILHO"}, {"cod": "14071", "nome": "MISTURA AUSTRALIANO"}, {"cod": "14073", "nome": "MISTURA DE PÃO DE QUEIJO RECHEADO 6520"}, {"cod": "14074", "nome": "MISTURA PARA PÃO DE QUEIJO NORMAL"}, {"cod": "14075", "nome": "MISTURA PRA CUCA ALEMA"}, {"cod": "14076", "nome": "MOLHO INGLES"}, {"cod": "14077", "nome": "MOLHO REFOGADO"}, {"cod": "14078", "nome": "MOLHO SHOYO"}, {"cod": "14079", "nome": "MORANGA CABUTIA"}, {"cod": "14080", "nome": "MOSTARDA"}, {"cod": "14081", "nome": "NOZ MOSCADA"}, {"cod": "14082", "nome": "OLEO DE SOJA"}, {"cod": "14083", "nome": "OLEO EMULSIFICANTE"}, {"cod": "14084", "nome": "OREGANO"}, {"cod": "14085", "nome": "OVO EM PÓ"}, {"cod": "14086", "nome": "OVO IN NATURA"}, {"cod": "14088", "nome": "PAPRICA DOCE"}, {"cod": "14089", "nome": "PEPINO"}, {"cod": "14090", "nome": "PIMENTA MOÍDA BRANCA"}, {"cod": "14091", "nome": "PIMENTAO"}, {"cod": "14092", "nome": "POLVILHO AZEDO"}, {"cod": "14093", "nome": "PRESUNTO"}, {"cod": "14094", "nome": "PROTEINA DE SOJA SABOR CEBOLA E SALSA"}, {"cod": "14095", "nome": "PROTEINA DE SOJA SABOR PICANHA"}, {"cod": "14096", "nome": "PROTEINA DE SOJA TEXTURIZADA CARAMELO"}, {"cod": "14097", "nome": "PROTEINA DE SOJA TEXTURIZADA NATURAL"}, {"cod": "14098", "nome": "QUEIJO MINAS (MEIA CURA)"}, {"cod": "14099", "nome": "QUEIJO MUSSARELA"}, {"cod": "14100", "nome": "QUEIJO TROPICAL (PARMESÃO)"}, {"cod": "14102", "nome": "RABANETE"}, {"cod": "14103", "nome": "REFORÇADOR(MELHORADOR)"}, {"cod": "14104", "nome": "REPOLHO"}, {"cod": "14105", "nome": "REQUEIJÃO (VALE DO PARDO)"}, {"cod": "14107", "nome": "RETARDADOR"}, {"cod": "14108", "nome": "RUCULA"}, {"cod": "14109", "nome": "SAL"}, {"cod": "14110", "nome": "SAL GROSSO"}, {"cod": "14111", "nome": "SALSICHA EXCELSIOR"}, {"cod": "14112", "nome": "SEMENTE DE LINHAÇA"}, {"cod": "14113", "nome": "SOBREPALETA SUINA"}, {"cod": "14114", "nome": "SORO DE LEITE EM PO"}, {"cod": "14115", "nome": "TEMPERO VERDE"}, {"cod": "14116", "nome": "TOMATE"}, {"cod": "14117", "nome": "TRIGO PARA KIBE"}, {"cod": "14118", "nome": "VAGEM"}, {"cod": "14119", "nome": "VINAGRE ALCOOL 750 ML"}, {"cod": "14122", "nome": "MASSA ESPAGUETE"}, {"cod": "14124", "nome": "SORBATO DE POTASSIO"}, {"cod": "14125", "nome": "CARNE COXAO"}, {"cod": "14132", "nome": "OVO EM GALAO"}, {"cod": "14133", "nome": "PROTEINA DE SOJA TEXTURIZADA NATURAL (EM FLOCOS)"}, {"cod": "14134", "nome": "PROTEINA DE SOJA TEXTURIZADA NATURAL RED BORDO"}, {"cod": "14137", "nome": "FARINHA ESTRELA"}, {"cod": "14138", "nome": "FARINHA PADEIRO"}, {"cod": "14139", "nome": "LINGUIÇA CALABRESA FINA"}, {"cod": "14140", "nome": "FARINHA ANACONDA"}, {"cod": "14141", "nome": "MOLHO BARBECUE"}, {"cod": "14142", "nome": "LIMAO"}, {"cod": "14143", "nome": "MAÇA"}, {"cod": "14144", "nome": "PIMENTA VERMELHA"}, {"cod": "14145", "nome": "MANJERONA"}, {"cod": "14146", "nome": "CHOCOLATE AO LEITE EM BARRA 6GR"}, {"cod": "14147", "nome": "MARGARINA VIGOR (AMELIA)"}, {"cod": "14148", "nome": "SALSICHA NOBRE/PENA BRANCA"}, {"cod": "14149", "nome": "MARGARINA CREMOSA 60% (REFEITÓRIO)"}, {"cod": "14150", "nome": "OLEO OVAM25 (OLEO ALIMENTICIO)"}, {"cod": "14151", "nome": "PIMENTA DEDO DE MOÇA"}, {"cod": "14152", "nome": "PIMENTA MOÍDA PRETA"}, {"cod": "14153", "nome": "REQUEIJÃO (AMARILIS)"}, {"cod": "1505", "nome": "FARINHA DE MILHO FINA"}, {"cod": "2233", "nome": "EMULSIFICANTE - INATIVO"}, {"cod": "2555", "nome": "MELHORADOR BIOPAN - INATIVO"}, {"cod": "3968", "nome": "AMIDO ESPECIAL PODIUM (AMIDO PARA RECHEIO)"}, {"cod": "14120", "nome": "COLORAU"}, {"cod": "14121", "nome": "CREME DE LEITE"}], "Produto Acabado": [{"cod": "122", "nome": "CUCA FRUTAS 320GR"}, {"cod": "130", "nome": "CUCA ALEMÃ 320GR"}, {"cod": "132", "nome": "CUECA VIRADA 40GR"}, {"cod": "145", "nome": "CUCA CHOCOLATE 320GR"}, {"cod": "154", "nome": "CUCA COLONIAL 400GR"}, {"cod": "155", "nome": "CUECA VIRADA GRANDE 44GR"}, {"cod": "259", "nome": "PALMIER - ORELHA DE MACACO"}, {"cod": "261", "nome": "MASSA FOLHADA"}, {"cod": "267", "nome": "ROLO MASSA FOLHADA"}, {"cod": "3", "nome": "PÃO FIBRAS 75GR"}, {"cod": "4", "nome": "PÃO MASSA DOCE 75GR"}, {"cod": "6", "nome": "PÃO DE MILHO - BOLA 75GR"}, {"cod": "101", "nome": "PÃO MASSA FORNEADO"}, {"cod": "105", "nome": "PÃO FOLHADO 88GR"}, {"cod": "107", "nome": "PÃO FIBRAS -  PRETO 75GR"}, {"cod": "108", "nome": "PÃO FIBRAS - BOLA 75GR"}, {"cod": "111", "nome": "PÃO MASSA DOCE - CÃO 135GR"}, {"cod": "112", "nome": "PÃO DE XIS 120GR"}, {"cod": "114", "nome": "PÃO MASSA DOCE ANIVERSARIO 45GR"}, {"cod": "115", "nome": "PÃO VOVÓ 88GR"}, {"cod": "117", "nome": "PÃO GAJETA 88GR"}, {"cod": "118", "nome": "PÃO BAGUETE COM FIBRAS 155GR"}, {"cod": "123", "nome": "PÃO TRANÇA 270GR"}, {"cod": "124", "nome": "PÃO MASSA DOCE HAMBURGUER 90GR"}, {"cod": "126", "nome": "PÃO DOCE BRIOCHE 60GR"}, {"cod": "127", "nome": "PÃO DE SONHO MINI 44GR"}, {"cod": "128", "nome": "PÃO DE SONHO 70GR"}, {"cod": "129", "nome": "PÃO CARACOL 88GR"}, {"cod": "134", "nome": "PÃO RAMINHO 37GR"}, {"cod": "138", "nome": "PÃO DE BATATA 75GR"}, {"cod": "139", "nome": "PÃO DE CENOURA 75GR"}, {"cod": "14", "nome": "PÃO DE MILHO - SALGADO (CACETINHO) 75GR"}, {"cod": "140", "nome": "PÃO DE LEITE 500GR"}, {"cod": "142", "nome": "PÃO DE MILHO SALGADO 500GR"}, {"cod": "143", "nome": "PÃO FIBRAS 500GR"}, {"cod": "144", "nome": "PÃO 7 GRÃOS 500GR"}, {"cod": "148", "nome": "PÃO AIPIM 500GR"}, {"cod": "150", "nome": "PÃO CASEIRO 500GR"}, {"cod": "153", "nome": "PÃO MILHO DOCE 500GR"}, {"cod": "159", "nome": "PÃO DONUT 44GR"}, {"cod": "201", "nome": "ROSCA DE POLVILHO 250GR"}, {"cod": "21", "nome": "PÃO BRIOCHE 500GR"}, {"cod": "25", "nome": "PÃO CENOURA 500GR"}, {"cod": "26", "nome": "PÃO DE BATATA 500GR"}, {"cod": "266", "nome": "ROLO MASSA DE PAO-SEMI FOLHADA"}, {"cod": "186", "nome": "PÃO DE QUEIJO RECH. FRANGO 58GR"}, {"cod": "187", "nome": "PÃO DE QUEIJO RECH. REQUEIJÃO 58GR"}, {"cod": "188", "nome": "PÃO DE QUEIJO RECH. GOIABADA  58GR"}, {"cod": "189", "nome": "DESATIVADO - PÃO DE QUEIJO RECH. CHOCOLATE 58GR"}, {"cod": "197", "nome": "PÃO DE QUEIJO 90GR"}, {"cod": "198", "nome": "PÃO DE QUEIJO 65GR 1KG GONDOLA"}, {"cod": "199", "nome": "PÃO DE QUEIJO 25GR"}, {"cod": "200", "nome": "PÃO DE QUEIJO 65GR"}, {"cod": "403", "nome": "PÃO DE QUEIJO RECH. GOIABADA 400GR (RECEITARIA)"}, {"cod": "5", "nome": "PÃO FRANCES SOVADO 88GR"}, {"cod": "7", "nome": "PÃO FRANCES DE QUARTO (250)"}, {"cod": "106", "nome": "PÃO FRANCES MINI 6/8 54GR"}, {"cod": "110", "nome": "PÃO FRANCES BAGUETE 155GR"}, {"cod": "119", "nome": "PÃO FRANCES PREMIUM 75GR"}, {"cod": "12", "nome": "PÃO FRANCES BOLA 75GR"}, {"cod": "120", "nome": "PÃO FRANCES PREMIUM 10/12"}, {"cod": "147", "nome": "PÃO FRANCES 500GR"}, {"cod": "160", "nome": "PÃO FRANCES PREMIUM PLUS"}, {"cod": "31", "nome": "PAO FRANCES PREMIUM 6,6KG CARDOSO EMB. PRETA"}, {"cod": "32", "nome": "PÃO FRANCES BOLA CARDOSO 6,6KG"}, {"cod": "247", "nome": "POLENTINHA DE QUEIJO"}, {"cod": "248", "nome": "MINI TRAVISSEIRINHO CALABRESA"}, {"cod": "249", "nome": "MINI EMPADA PRESUNTO E QUEIJO"}, {"cod": "250", "nome": "MINI COXINHA DE FRANGO"}, {"cod": "251", "nome": "MINI CROQUETE CARNE"}, {"cod": "252", "nome": "MINI KIBE"}, {"cod": "253", "nome": "MINI TRAVISSEIRINHO  PRESUNTO/QUEIJO"}, {"cod": "254", "nome": "MINI BOLINHA DE QUEIJO"}, {"cod": "255", "nome": "MINI EMPADA FRANGO FOLHADA"}, {"cod": "256", "nome": "MINI CACHORRO FOLHADO"}, {"cod": "257", "nome": "MINI CHURROS DOCE DE LEITE"}, {"cod": "260", "nome": "MINI RISOLES FRANGO"}, {"cod": "262", "nome": "MINI CROQUETE CARNE C/ REQUEIJÃO"}, {"cod": "264", "nome": "MINI EMPANADINHO DE SALSICHA FRITO"}, {"cod": "265", "nome": "MINI CROQUETE DE FRANGO C/ REQUEIJÃO"}, {"cod": "268", "nome": "MINI RISOLES PRESUNTO"}, {"cod": "269", "nome": "BOLINHA DE AIPIM C/ CALABRESA"}, {"cod": "270", "nome": "MINI POLENTINHA DE CALABRESA"}, {"cod": "275", "nome": "MINI RISOLES CARNE"}, {"cod": "278", "nome": "MINI FOLHADO FRANGO"}, {"cod": "279", "nome": "MINI FOLHADO PRESUNTO QUEIJO"}, {"cod": "280", "nome": "MINI FOLHADO GOIABADA"}, {"cod": "281", "nome": "MINI PASTEL DE CARNE"}, {"cod": "282", "nome": "DOGUINHO"}, {"cod": "288", "nome": "CALABRINHO"}, {"cod": "289", "nome": "MINI PASTEL DE QUEIJO"}, {"cod": "290", "nome": "MINI PASTEL DE FRANGO"}, {"cod": "850", "nome": "(C&F) MINI COXINHA DE FRANGO"}, {"cod": "854", "nome": "(C&F) MINI BOLINHA DE QUEIJO"}, {"cod": "857", "nome": "(C&F) MINI CHURROS DOCE DE LEITE"}, {"cod": "860", "nome": "(C&F) MINI RISOLES FRANGO"}, {"cod": "862", "nome": "(C&F) MINI CROQUETE CARNE C/ REQUEIJÃO"}, {"cod": "864", "nome": "(C&F) MINI EMPANADINHO DE SALSICHA"}, {"cod": "865", "nome": "(C&F) MINI CROQUETE DE FRANGO C/ REQUEIJÃO"}, {"cod": "870", "nome": "(C&F) MINI POLENTINHA DE CALABRESA"}, {"cod": "875", "nome": "(C&F) MINI RISOLES CARNE"}, {"cod": "1501", "nome": "KIT AMOSTRA EMPANADA"}, {"cod": "203", "nome": "FOLHADO CARNE E CHEDDAR (10 UN C/ 150GR CX C/ 1,50KG)"}, {"cod": "204", "nome": "FOLHADO CARNE REQUEIJÃO (10 UN C/ 150GR CX C/ 1,50KG)"}, {"cod": "205", "nome": "FOLHADO CALABRESA REQUEIJAO (10UN C/ 150GR CX C/ 1,50KG)"}, {"cod": "206", "nome": "FOLHADO FRANGO REQUEIJÃO (10 UN C/ 150GR CX C/ 1,50KG)"}, {"cod": "207", "nome": "FOLHADO FRANGO CHEDDAR (10 UN C/ 150GR CX C/ 1,50KG)"}, {"cod": "208", "nome": "FOLHADO FRANGO (10 UN C/ 150GR CX C/ 1,50KG)"}, {"cod": "209", "nome": "FOLHADO CARNE (10 UN C/ 150GR CX C/ 1,50KG)"}, {"cod": "210", "nome": "FOLHADO CALABRESA (10 UN C/ 150GR CX C/ 1,50KG)"}, {"cod": "211", "nome": "FOLHADO PRESUNTO QUEIJO (10 UN C/ 150GR CX C/ 1,50KG)"}, {"cod": "212", "nome": "EMPADA FRANGO (10 UN C/ 150GR CX C/ 1,50KG)"}, {"cod": "213", "nome": "EMPADA CARNE (10 UN C/ 150GR CX C/ 1,50KG)"}, {"cod": "214", "nome": "EMPADA FRANGO REQUEIJÃO (10 UN C/ 150GR CX C/ 1,50KG)"}, {"cod": "215", "nome": "CACHORRO FOLHADO (10 UN C/ 150GR CX C/ 1,50KG)"}, {"cod": "216", "nome": "FOLHADO CHOCOLATE (10 UN C/ 125GR CX C/ 1,25KG)"}, {"cod": "226", "nome": "CACHORRO ALEMÃO (10 UN C/ 150GR CX C/ 1,50KG)"}, {"cod": "227", "nome": "FOLHADO DE STROGONOFF (10 UN C/ 150GR CX C/ 1,50KG)"}, {"cod": "228", "nome": "COXINHA DE FRANGO (CX C/ 10 UNID DE 170GR)"}, {"cod": "229", "nome": "RISOLES DE FRANGO GRANDE (150GR UN/PCT COM 1,5KG)"}, {"cod": "230", "nome": "RISOLES DE CARNE GRANDE  (150GR UN/PCT COM 1,5KG)"}, {"cod": "231", "nome": "SALGADOS CROQUETE (CX C/ 10UNID DE 110GR)"}, {"cod": "233", "nome": "CROISSANT CHOCOLATE (10 UN C/ 125GR CX C/ 1,25KG)"}, {"cod": "235", "nome": "CROISSANT (10 UN C/ 125GR CX C/ 1,25KG)"}, {"cod": "237", "nome": "PASTEL CASEIRO SABOR CARNE (06 UN C/ 170GR PCT C/ 1,02KG)"}, {"cod": "240", "nome": "EMPADA CARNE REQUEIJÃO (10 UN C/ 150GR CX C/ 1,5KG)"}, {"cod": "241", "nome": "EMPANADO DE SALSICHA FRITO (10 UN C/ 150GR CX C/ 1,50KG)"}, {"cod": "242", "nome": "RISOLES DE PRESUNTO GRANDE (150GR UN/PCT COM 1,5KG)"}, {"cod": "244", "nome": "EMPADA PRESUNTO QUEIJO (10 UN C/ 150GR CX C/ 1,5KG)"}, {"cod": "292", "nome": "MINI CROISSANT PREMIUM FRANGO"}, {"cod": "293", "nome": "MINI CROISSANT PREMIUM PRESUNTO"}, {"cod": "294", "nome": "MINI CROISSANT PREMIUM GOIABADA"}, {"cod": "295", "nome": "MINI CROISSANT PREMIUM CHOCOLATE"}, {"cod": "300", "nome": "MINI CROISSANT FRANGO"}, {"cod": "301", "nome": "MINI CROISSANT PRESUNTO"}, {"cod": "302", "nome": "MINI CROISSANT GOIABADA"}, {"cod": "303", "nome": "MINI CROISSANT CHOCOLATE PRETO"}, {"cod": "304", "nome": "MINI CROISSANT COCO"}, {"cod": "305", "nome": "MINI STRUDEL MAÇÃ/CANELA"}, {"cod": "306", "nome": "MINI CROISSANT CHOCOLATE BRANCO"}, {"cod": "350", "nome": "PASTEL CASEIRO SABOR QUEIJO (06 UN C/ 170GR PCT C/ 1,02KG)"}, {"cod": "351", "nome": "PASTEL CASEIRO SABOR CALABRESA (06 UN C/ 170GR PCT C/ 1,02KG)"}, {"cod": "353", "nome": "PASTEL CASEIRO SABOR FRANGO (06 UN C/ 170GR PCT C/ 1,02KG)"}, {"cod": "357", "nome": "EMPANADA FRANGO REQUEIJÃO (10 UN C/ 180GR CX C/ 1,80KG)"}, {"cod": "358", "nome": "EMPANADA CALABRESA (10 UN C/ 180GR CX C/ 1,80KG)"}, {"cod": "359", "nome": "EMPANADA QUEIJO (10 UN C/ 180GR CX C/ 1,80KG)"}, {"cod": "360", "nome": "EMPANADA COSTELINHA C/ BARBECUE (10 UN C/ 180GR CX C/ 1,80KG)"}, {"cod": "361", "nome": "EMPANADA CARNE (10 UN C/ 180GR CX C/ 1,80KG)"}, {"cod": "362", "nome": "EMPANADA BROCOLIS (10 UN C/ 180GR CX C/ 1,80KG)"}, {"cod": "364", "nome": "CROISSANT FRANGO (10 UN C/ 140GR CX C/ 1,4KG)"}, {"cod": "365", "nome": "CROISSANT PRESUNTO (10 UN C/ 140GR CX C/ 1,4KG)"}, {"cod": "366", "nome": "CROISSANT GOIABADA (10 UN C/ 140GR CX C/ 1,4KG)"}, {"cod": "500", "nome": "BAURU FOLHADO (10 UN C/ 150GR CX C/ 1,50KG)"}, {"cod": "501", "nome": "FAGOTTO (CALABRINHO CALABRESA CHEDDAR) (10 UN C/ 150GR CX C/ 1,50KG)"}, {"cod": "502", "nome": "HAMBURGÃO CARNE CHEDDAR (10 UN C/ 180GR CX C/ 1,80KG)"}, {"cod": "803", "nome": "(C&F) FOLHADO CARNE E CHEDDAR"}, {"cod": "804", "nome": "(C&F) FOLHADO CARNE REQUEIJÃO"}, {"cod": "806", "nome": "(C&F) FOLHADO FRANGO REQUEIJÃO"}, {"cod": "807", "nome": "(C&F) FOLHADO FRANGO CHEDDAR"}, {"cod": "814", "nome": "(C&F) EMPADA FRANGO REQUEIJÃO"}, {"cod": "815", "nome": "(C&F) CACHORRO FOLHADO"}, {"cod": "826", "nome": "(C&F) CACHORRO ALEMÃO"}, {"cod": "829", "nome": "(C&F) RISOLES DE FRANGO GRANDE"}, {"cod": "830", "nome": "(C&F) RISOLES DE CARNE GRANDE"}, {"cod": "837", "nome": "(C&F) PASTEL CASEIRO SABOR CARNE"}, {"cod": "841", "nome": "(C&F) EMPANADO DE SALSICHA FRITO"}, {"cod": "844", "nome": "(C&F) EMPADA PRESUNTO QUEIJO"}, {"cod": "953", "nome": "(C&F) PASTEL CASEIRO SABOR FRANGO"}, {"cod": "957", "nome": "(C&F) EMPANADA FRANGO CREMOSO"}, {"cod": "960", "nome": "(C&F) EMPANADA COSTELINHA C/ BARBECUE"}], "Plastico": [{"cod": "14500", "nome": "BOBINA 1KG PICOTADA C/ 12 UNID"}, {"cod": "14501", "nome": "CAIXA DE ALUMINIO D7 KIT"}, {"cod": "14503", "nome": "CAIXA DE PAPELÃO Nº 3 21X13,5X20"}, {"cod": "14505", "nome": "DILUENTE V730D 750ML"}, {"cod": "14506", "nome": "ETIQUETA 100 X 80 AMARELA C/SERRILHA ("}, {"cod": "14507", "nome": "ETIQUETA 100 X 80 AZUL CLARO C/SERRILH"}, {"cod": "14508", "nome": "ETIQUETA 100 X 80 BRANCA C/SERRILHA (B"}, {"cod": "14509", "nome": "ETIQUETA 100 X 80 LARANJA C/SERRILHA ("}, {"cod": "14510", "nome": "ETIQUETA 100 X 80 VERMELHA C/SERRILHA"}, {"cod": "14511", "nome": "ETIQUETA 50 X 25 2 COL BRANCA"}, {"cod": "14513", "nome": "FILME STRETCH"}, {"cod": "14514", "nome": "FITA PP"}, {"cod": "14515", "nome": "PLASTICO FILME 10/12 AZUL 8KG"}, {"cod": "14516", "nome": "PLASTICO FILME 10/12 PREMIUM CINZA"}, {"cod": "14517", "nome": "PLASTICO FILME 10/12 VERMELHO"}, {"cod": "14518", "nome": "PLASTICO FILME 6/8 AZUL"}, {"cod": "14519", "nome": "PLASTICO FILME 6/8 PREMIUM ROXO"}, {"cod": "14520", "nome": "PLASTICO FILME 6/8 VERMELHO"}, {"cod": "14521", "nome": "PLASTICO FILME CARDOSO 6,6KG AZUL"}, {"cod": "14522", "nome": "PLASTICO FILME CARDOSO 6,6KG PREMIUM"}, {"cod": "14523", "nome": "PLASTICO FILME PANITT 8KG"}, {"cod": "14524", "nome": "PLASTICO FILME 6/8 BOLA 8KG LARANJA 73 X 62"}, {"cod": "14525", "nome": "RIBBON 110 X 74 RESINA Z"}, {"cod": "14528", "nome": "SACO AVULSO 6/8 AZUL 3,2KG"}, {"cod": "14529", "nome": "SACO AVULSO 6/8 VERMELHO 8KG"}, {"cod": "14530", "nome": "SACO AVULSO BOLINHA DE QUEIJO"}, {"cod": "14531", "nome": "SACO AVULSO CHURROS DOCE DE LEITE COM CHOCOLATE"}, {"cod": "14532", "nome": "SACO AVULSO CHURROS DOCE LEITE"}, {"cod": "14534", "nome": "SACO AVULSO CROQUETE"}, {"cod": "14535", "nome": "DESATIVADO - SACO AVULSO CROQUETE COM REQUEIJÃO"}, {"cod": "14537", "nome": "SACO AVULSO KIBE"}, {"cod": "14540", "nome": "SACO AVULSO MINI CACHORRO"}, {"cod": "14542", "nome": "SACO AVULSO PALMIER"}, {"cod": "14545", "nome": "SACO AVULSO PÃO FRANCÊS AZUL 3,5 DIVERSOS"}, {"cod": "14548", "nome": "SACO CAPA FARDO"}, {"cod": "14551", "nome": "SACO PLÁSTICO TRANSPARENTE 21X30X008"}, {"cod": "14552", "nome": "SACO PLÁSTICO TRANSPARENTE 32X46X008"}, {"cod": "14554", "nome": "SACO TRANSPARENTE PEBD + PET 31X31"}, {"cod": "14556", "nome": "CAIXA DE PAPELÃO Nº6 240 X 160 X 200"}, {"cod": "14557", "nome": "BANDEJA NP-15 BAIXA QUATRO LUGARES C/100"}, {"cod": "14558", "nome": "ROTULO 100 X 243 RECEITARIA"}, {"cod": "14560", "nome": "FILME SEPARADOR PASTEL 59CM"}, {"cod": "14565", "nome": "TAMPA CAIXA DE ALUMINIO D7 (100)"}, {"cod": "14566", "nome": "PLASTICO FILME MASSINHA MARROM"}, {"cod": "14567", "nome": "PLASTICO FILME INTEGRAL AZUL"}, {"cod": "14568", "nome": "ETIQUETA 50 X 50 COL BRANCA"}, {"cod": "14569", "nome": "PLASTICO FILME PÃO QUEIJO 65GR VERDE"}, {"cod": "14570", "nome": "PLASTICO FILME PÃO QUEIJO 90GR LILAS"}, {"cod": "14571", "nome": "SACO TRANSPARENTE 31X31 TARJA+LISTRA AZUL"}, {"cod": "14572", "nome": "SACO TRANSPARENTE 31X31 TARJA+LISTRA AMARELA"}, {"cod": "14573", "nome": "SACO TRANSPARENTE 31X31 TARJA+LISTRA LARANJA"}, {"cod": "14574", "nome": "SACO PLÁSTICO TRANSPARENTE 21X30X008 TARJA+LISTRA AZUL"}, {"cod": "14575", "nome": "SACO PLÁSTICO TRANSPARENTE 21X30X008 TARJA+LISTRA AMARELO"}, {"cod": "14576", "nome": "SACO PLÁSTICO TRANSPARENTE 21X30X008 TARJA+LISTRA LARANJA"}], "Kits Confeitaria": [{"cod": "15026", "nome": "KIT MASSA FOLHADA"}, {"cod": "15039", "nome": "KIT MASSA UNIVERSAL NORMAL"}, {"cod": "15040", "nome": "KIT PÃO DE QUEIJO"}, {"cod": "15041", "nome": "KIT PÃO DE QUEIJO RECHEADO"}, {"cod": "15042", "nome": "KIT RECHEIO CROQUETE FRANGO"}, {"cod": "15043", "nome": "KIT MASSA CHURROS"}, {"cod": "15044", "nome": "KIT MASSA UNIVERSAL BOLINHA AIPIM"}, {"cod": "15045", "nome": "KIT MASSA CROISSANT"}, {"cod": "15047", "nome": "KIT MASSA PASTEL (PASTEL GRANDE)"}, {"cod": "15048", "nome": "KIT MASSA PASTEL LISA (PASTEL PEQUENO)"}, {"cod": "15049", "nome": "KIT MASSA POLENTINHA"}, {"cod": "15050", "nome": "KIT RECHEIO DE CROQUETE CARNE"}, {"cod": "15051", "nome": "KIT RECHEIO DE KIBE"}, {"cod": "15052", "nome": "KIT MASSA DOG"}, {"cod": "15053", "nome": "KIT RECHEIO DE FRANGO"}, {"cod": "15054", "nome": "KIT RECHEIO DE CARNE"}, {"cod": "15055", "nome": "KIT RECHEIO STROGONOFF"}, {"cod": "15056", "nome": "KIT RECHEIO BROCOLIS EMPANADA"}, {"cod": "15058", "nome": "KIT RECHEIO CARNE PASTEL"}, {"cod": "15059", "nome": "KIT RECHEIO PRESUNTO QUEIJO REQUEIJAO"}, {"cod": "15060", "nome": "KIT RECHEIO DE CALABRESA QUEIJO REQUEIJAO"}, {"cod": "15061", "nome": "KIT RECHEIO CALABRESA COM REQUEIJÃO"}, {"cod": "15062", "nome": "KIT RECHEIO PRESUNTO E REQUEIJÃO"}, {"cod": "15064", "nome": "KIT RECHEIO MINI PASTEL CARNE"}, {"cod": "15065", "nome": "KIT PÃO FOLHADO - CONFEITARIA"}, {"cod": "15071", "nome": "KIT RECHEIO PRESUNTO QUEIJO PASTEL CASEIRO"}, {"cod": "15072", "nome": "KIT RECHEIO QUEIJOS PASTEL CASEIRO"}, {"cod": "15073", "nome": "KIT RECHEIO CALABRESA PASTEL CASEIRO"}, {"cod": "15074", "nome": "KIT MASSA EMPANADA"}, {"cod": "15075", "nome": "KIT MASSA RISOLES"}, {"cod": "15076", "nome": "KIT RECHEIO DE CARNE RISOLES"}, {"cod": "15077", "nome": "KIT RECHEIO QUEIJOS MINI PASTEL"}, {"cod": "15078", "nome": "KIT RECHEIO COSTELA BARBECUE"}, {"cod": "15080", "nome": "KIT MASSA SONHO"}, {"cod": "15081", "nome": "KIT RECHEIO FRANGO CROISSANT"}, {"cod": "15082", "nome": "KIT RECHEIO CARNE EMPANADA"}, {"cod": "15083", "nome": "KIT RECHEIO QUEIJO EMPANADA"}, {"cod": "15084", "nome": "KIT RECHEIO CALABRESA EMPANADA"}, {"cod": "15085", "nome": "KIT MASSA FOLHADA MINI"}, {"cod": "15086", "nome": "KIT RECHEIO DE MINI RISOLES CARNE"}, {"cod": "4001", "nome": "KIT RECHEIO DE FRANGO - KG"}], "Kits Quadra": [{"cod": "15012", "nome": "KIT PÃO DE BATATA"}, {"cod": "15013", "nome": "KIT BRIOCHE"}, {"cod": "15015", "nome": "KIT PÃO DE CENOURA"}, {"cod": "15016", "nome": "KIT CUCA ALEMÃ"}, {"cod": "15017", "nome": "KIT CUCA CHOCOLATE"}, {"cod": "15018", "nome": "KIT CUCA COLONIAL"}, {"cod": "15019", "nome": "KIT CUCA FRUTAS"}, {"cod": "15020", "nome": "KIT CUECA VIRADA"}, {"cod": "15021", "nome": "KIT MASSA ESPECIAL DONUTS E CUECA"}, {"cod": "15022", "nome": "KIT INTEGRAL"}, {"cod": "15023", "nome": "KIT PÃO DE LEITE"}, {"cod": "15024", "nome": "KIT MASSA DOCE"}, {"cod": "15025", "nome": "KIT MASSA ESPECIAL"}, {"cod": "15027", "nome": "KIT PÃO DE MILHO DOCE"}, {"cod": "15028", "nome": "KIT PÃO DE MILHO SALGADO (CACETINHO)"}, {"cod": "15030", "nome": "KIT MASSA ESPECIAL MINI SONHO"}, {"cod": "15031", "nome": "KIT PÃO FOLHADO"}, {"cod": "15032", "nome": "KIT PÃO PRETO"}, {"cod": "15033", "nome": "KIT RAMINHO"}, {"cod": "15034", "nome": "KIT ROSCA DE POLVILHO"}, {"cod": "15035", "nome": "KIT SOVADO"}, {"cod": "15036", "nome": "KIT GAJETA VOVO"}, {"cod": "15005", "nome": "KIT PREMIUM 6/8 G"}, {"cod": "15009", "nome": "KIT PÃO 7 GRÃOS"}, {"cod": "15010", "nome": "KIT PÃO DE AIPIM"}, {"cod": "15014", "nome": "KIT PÃO CASEIRO"}, {"cod": "15029", "nome": "KIT PÃO DE MILHO SALGADO"}]};
+
+const PINS = { confeitaria:'1234', cozinha:'5678', embalagem:'9101', expedicao:'1314', admin:'2504', contagem:'0000' };
+const CORES = { confeitaria:'', cozinha:'verde', embalagem:'', expedicao:'laranja', admin:'roxo', contagem:'roxo' };
+const NOMES = { confeitaria:'Confeitaria 🥐', cozinha:'Cozinha 🍳', embalagem:'Embalagem 📦', expedicao:'Expedição 🚚', admin:'Administrativo 📊', contagem:'Contagem 📋' };
+const DESTINOS = { confeitaria:'s-conf-home', cozinha:'s-coz-home', embalagem:'s-emb-sel-data', expedicao:'s-exp-sel-data', admin:'s-adm-hub', contagem:'s-contagem-home' };
+
+let pinAtual = '';
+let setorAtivo = '';
+let pinBuffer = '';
+
+const MASSAS = ['Massa Universal','Massa Folhada','Massa Folhada Mini','Massa Dog','Massa Pastel de Carne Grande','Massa Pão De Queijo Recheado','Massa Empanada','Recheio De Croquete De Carne','Massa Kibe','Massa Croquete de Frango','Massa Croissant','Massa Churros','Massa Pão De Queijo PURO','Massa Risoles','Massa Polentinha de Milho','Kit Pão Folhado - Confeitaria','Massa Bolinha De Aipim','Massa Mini Pastel de Carne (Lisa)'];
+const RECHEIOS = ['Recheio de Frango','Recheio de Carne','Recheio Calabresa Requeijão','Recheio Calabresa Queijo','Recheio Presunto Queijo Requeijão','Recheio Strogonoff','Recheio De Carne Risoles','Recheio Pastel De Carne','Recheio De Queijos - Pastel Caseiro','Recheio Presunto e Requeijão','Recheio Mini Risoles Carne','Recheio Mini Pastel de Carne','Recheio Queijo - Mini Pastel','Recheio Frango Croissant','Recheio Calabresa - Pastel Caseiro','Recheio Calabresa Empanada','Recheio Queijo Empanada','Recheio Lombo Barbecue','Recheio Carne Empanada','Recheio Brocolis Empanada'];
+const PRODUTOS = [{"nome":"EMPANADO DE SALSICHA","grMassa":100,"tipoMassa":"Massa Universal","tipoRecheio":null,"grRecheio":0,"tipoRecheio2":"Salsicha Pena Branca","grRecheio2":50},{"nome":"MINI EMPANADINHO DE SALSICHA","grMassa":15,"tipoMassa":"Massa Universal","tipoRecheio":null,"grRecheio":0,"tipoRecheio2":"Salsicha Pena Branca","grRecheio2":5},{"nome":"CACHORRO FOLHADO","grMassa":100,"tipoMassa":"Massa Folhada","tipoRecheio":null,"grRecheio":0,"tipoRecheio2":"Salsicha Excelsior","grRecheio2":50},{"nome":"CACHORRO ALEMÃO","grMassa":100,"tipoMassa":"Massa Folhada","tipoRecheio":null,"grRecheio":0,"tipoRecheio2":"Salsicha Excelsior","grRecheio2":50},{"nome":"MINI CACHORRO FOLHADO","grMassa":13,"tipoMassa":"Massa Folhada Mini","tipoRecheio":null,"grRecheio":0,"tipoRecheio2":"Salsicha Excelsior","grRecheio2":8},{"nome":"DOGUINHO","grMassa":26,"tipoMassa":"Massa Dog","tipoRecheio":null,"grRecheio":0,"tipoRecheio2":"Salsicha Excelsior","grRecheio2":18},{"nome":"MINI ENROLADINHO DE SALSICHA - MASSA PASTEL","grMassa":10,"tipoMassa":"Massa Pastel de Carne Grande","tipoRecheio":null,"grRecheio":0,"tipoRecheio2":"Salsicha Excelsior","grRecheio2":15},{"nome":"ENROLADO DE SALSICHA - MASSA PASTEL","grMassa":40,"tipoMassa":"Massa Pastel de Carne Grande","tipoRecheio":null,"grRecheio":0,"tipoRecheio2":"Salsicha Excelsior","grRecheio2":50},{"nome":"PÃO DE QUEIJO RECH. FRANGO","grMassa":50,"tipoMassa":"Massa Pão De Queijo Recheado","tipoRecheio":"Recheio de Frango","grRecheio":7,"tipoRecheio2":"Requeijão Amarilis","grRecheio2":1},{"nome":"EMPANADA FRANGO CREMOSO","grMassa":100,"tipoMassa":"Massa Empanada","tipoRecheio":"Recheio de Frango","grRecheio":70,"tipoRecheio2":"Requeijão Amarilis","grRecheio2":20},{"nome":"PÃO DE QUEIJO RECH. REQUEIJÃO","grMassa":50,"tipoMassa":"Massa Pão De Queijo Recheado","tipoRecheio":null,"grRecheio":0,"tipoRecheio2":"Requeijão (Vale do Pardo)","grRecheio2":10},{"nome":"FOLHADO CARNE REQUEIJÃO","grMassa":100,"tipoMassa":"Massa Folhada","tipoRecheio":"Recheio de Carne","grRecheio":40,"tipoRecheio2":"Requeijão (Vale do Pardo)","grRecheio2":10},{"nome":"FOLHADO CALABRESA REQUEIJÃO","grMassa":100,"tipoMassa":"Massa Folhada","tipoRecheio":"Recheio Calabresa Requeijão","grRecheio":40,"tipoRecheio2":"Requeijão (Vale do Pardo)","grRecheio2":10},{"nome":"FOLHADO FRANGO REQUEIJÃO","grMassa":100,"tipoMassa":"Massa Folhada","tipoRecheio":"Recheio de Frango","grRecheio":40,"tipoRecheio2":"Requeijão (Vale do Pardo)","grRecheio2":10},{"nome":"EMPADA FRANGO REQUEIJÃO","grMassa":100,"tipoMassa":"Massa Folhada","tipoRecheio":"Recheio de Frango","grRecheio":40,"tipoRecheio2":"Requeijão (Vale do Pardo)","grRecheio2":10},{"nome":"RISOLES DE FRANGO GRANDE","grMassa":110,"tipoMassa":"Massa Universal","tipoRecheio":"Recheio de Frango","grRecheio":40,"tipoRecheio2":"Requeijão (Vale do Pardo)","grRecheio2":5.3},{"nome":"EMPADA CARNE REQUEIJÃO","grMassa":100,"tipoMassa":"Massa Folhada","tipoRecheio":"Recheio de Carne","grRecheio":40,"tipoRecheio2":"Requeijão (Vale do Pardo)","grRecheio2":10},{"nome":"MINI KIBE","grMassa":18,"tipoMassa":"Massa Kibe","tipoRecheio":null,"grRecheio":0,"tipoRecheio2":"Requeijão (Vale do Pardo)","grRecheio2":2},{"nome":"CALABRINHO","grMassa":26,"tipoMassa":"Massa Dog","tipoRecheio":null,"grRecheio":0,"tipoRecheio2":"Linguiça Calabresa Grande","grRecheio2":18},{"nome":"PÃO DE QUEIJO RECH. GOIABADA","grMassa":50,"tipoMassa":"Massa Pão De Queijo Recheado","tipoRecheio":null,"grRecheio":0,"tipoRecheio2":"Goiabada Forneavel emulzint","grRecheio2":10},{"nome":"MINI FOLHADO GOIABADA","grMassa":15,"tipoMassa":"Massa Folhada Mini","tipoRecheio":null,"grRecheio":0,"tipoRecheio2":"Goiabada Forneavel emulzint","grRecheio2":5},{"nome":"MINI CHURROS DOCE DE LEITE","grMassa":16,"tipoMassa":"Massa Churros","tipoRecheio":null,"grRecheio":0,"tipoRecheio2":"Doce de Leite Frimesa","grRecheio2":4},{"nome":"FOLHADO CHOCOLATE","grMassa":100,"tipoMassa":"Massa Folhada","tipoRecheio":null,"grRecheio":0,"tipoRecheio2":"Chocolate em barra 24gr","grRecheio2":25},{"nome":"FOLHADO CARNE E CHEDDAR","grMassa":100,"tipoMassa":"Massa Folhada","tipoRecheio":"Recheio de Carne","grRecheio":40,"tipoRecheio2":"Cheddar","grRecheio2":10},{"nome":"FOLHADO FRANGO CHEDDAR","grMassa":100,"tipoMassa":"Massa Folhada","tipoRecheio":"Recheio de Frango","grRecheio":40,"tipoRecheio2":"Cheddar","grRecheio2":10},{"nome":"PÃO DE QUEIJO 90GR","grMassa":90,"tipoMassa":"Massa Pão De Queijo PURO","tipoRecheio":null,"grRecheio":0,"tipoRecheio2":null,"grRecheio2":0},{"nome":"PÃO DE QUEIJO 65GR","grMassa":65,"tipoMassa":"Massa Pão De Queijo PURO","tipoRecheio":null,"grRecheio":0,"tipoRecheio2":null,"grRecheio2":0},{"nome":"PÃO DE QUEIJO 25GR","grMassa":25,"tipoMassa":"Massa Pão De Queijo PURO","tipoRecheio":null,"grRecheio":0,"tipoRecheio2":null,"grRecheio2":0},{"nome":"FOLHADO FRANGO","grMassa":100,"tipoMassa":"Massa Folhada","tipoRecheio":"Recheio de Frango","grRecheio":50,"tipoRecheio2":null,"grRecheio2":0},{"nome":"FOLHADO CARNE","grMassa":100,"tipoMassa":"Massa Folhada","tipoRecheio":"Recheio de Carne","grRecheio":50,"tipoRecheio2":null,"grRecheio2":0},{"nome":"FOLHADO CALABRESA","grMassa":100,"tipoMassa":"Massa Folhada","tipoRecheio":"Recheio Calabresa Queijo","grRecheio":50,"tipoRecheio2":null,"grRecheio2":0},{"nome":"FOLHADO PRESUNTO QUEIJO","grMassa":100,"tipoMassa":"Massa Folhada","tipoRecheio":"Recheio Presunto Queijo Requeijão","grRecheio":50,"tipoRecheio2":null,"grRecheio2":0},{"nome":"EMPADA FRANGO","grMassa":100,"tipoMassa":"Massa Folhada","tipoRecheio":"Recheio de Frango","grRecheio":50,"tipoRecheio2":null,"grRecheio2":0},{"nome":"EMPADA CARNE","grMassa":100,"tipoMassa":"Massa Folhada","tipoRecheio":"Recheio de Carne","grRecheio":50,"tipoRecheio2":null,"grRecheio2":0},{"nome":"COXINHA DE FRANGO","grMassa":119,"tipoMassa":"Massa Universal","tipoRecheio":"Recheio de Frango","grRecheio":49,"tipoRecheio2":null,"grRecheio2":0},{"nome":"RISOLES DE CARNE GRANDE","grMassa":110,"tipoMassa":"Massa Risoles","tipoRecheio":"Recheio De Carne Risoles","grRecheio":40,"tipoRecheio2":null,"grRecheio2":0},{"nome":"CROISSANT","grMassa":125,"tipoMassa":"Massa Croissant","tipoRecheio":null,"grRecheio":0,"tipoRecheio2":null,"grRecheio2":0},{"nome":"PASTEL CASEIRO SABOR CARNE","grMassa":100,"tipoMassa":"Massa Pastel De Carne Grande","tipoRecheio":"Recheio Pastel De Carne","grRecheio":70,"tipoRecheio2":null,"grRecheio2":0},{"nome":"RISOLES DE PRESUNTO GRANDE","grMassa":110,"tipoMassa":"Massa Risoles","tipoRecheio":"Recheio Presunto Queijo Requeijão","grRecheio":40,"tipoRecheio2":null,"grRecheio2":0},{"nome":"EMPADA PRESUNTO QUEIJO","grMassa":100,"tipoMassa":"Massa Folhada","tipoRecheio":"Recheio Presunto Queijo Requeijão","grRecheio":50,"tipoRecheio2":null,"grRecheio2":0},{"nome":"MINI COXINHA DE FRANGO","grMassa":15,"tipoMassa":"Massa Universal","tipoRecheio":"Recheio de Frango","grRecheio":4,"tipoRecheio2":null,"grRecheio2":0},{"nome":"MINI BOLINHA DE QUEIJO","grMassa":16,"tipoMassa":"Massa Universal","tipoRecheio":"Recheio De Queijos - Pastel Caseiro","grRecheio":3,"tipoRecheio2":null,"grRecheio2":0},{"nome":"MINI RISOLES FRANGO","grMassa":20,"tipoMassa":"Massa Risoles","tipoRecheio":"Recheio de Frango","grRecheio":10,"tipoRecheio2":null,"grRecheio2":0},{"nome":"MINI RISOLES CARNE","grMassa":20,"tipoMassa":"Massa Risoles","tipoRecheio":"Recheio Mini Risoles Carne","grRecheio":10,"tipoRecheio2":null,"grRecheio2":0},{"nome":"MINI FOLHADO FRANGO","grMassa":15,"tipoMassa":"Massa Folhada Mini","tipoRecheio":"Recheio de Frango","grRecheio":7,"tipoRecheio2":null,"grRecheio2":0},{"nome":"MINI PASTEL DE CARNE","grMassa":23,"tipoMassa":"Massa Mini Pastel de Carne (Lisa)","tipoRecheio":"Recheio Mini Pastel de Carne","grRecheio":10,"tipoRecheio2":null,"grRecheio2":0},{"nome":"MINI PASTEL DE FRANGO","grMassa":20,"tipoMassa":"Massa Mini Pastel de Carne (Lisa)","tipoRecheio":"Recheio De Frango","grRecheio":10,"tipoRecheio2":null,"grRecheio2":0},{"nome":"PASTEL CASEIRO SABOR FRANGO","grMassa":100,"tipoMassa":"Massa Pastel de Carne Grande","tipoRecheio":"Recheio de Frango","grRecheio":70,"tipoRecheio2":null,"grRecheio2":0},{"nome":"EMPANADA CARNE","grMassa":100,"tipoMassa":"Massa Empanada","tipoRecheio":"Recheio Carne Empanada","grRecheio":80,"tipoRecheio2":null,"grRecheio2":0},{"nome":"CROISSANT FRANGO","grMassa":100,"tipoMassa":"Massa Croissant","tipoRecheio":"Recheio Frango Croissant","grRecheio":40,"tipoRecheio2":null,"grRecheio2":0},{"nome":"PASTEL MEIA LUA","grMassa":64,"tipoMassa":"Massa Pastel De Carne Grande","tipoRecheio":"Recheio Pastel De Carne","grRecheio":60,"tipoRecheio2":null,"grRecheio2":0}];
+
+let prodSel=null, dataSel=null, dataSelEmb=null, dataSelExp=null, tabAtiva='resumo';
+let massaSel=null, dataMassa=null, recheioSel=null, dataRecheio=null;
+let registros=[], regMassas=[], regRecheios=[];
+
+// Listeners Firestore
+onSnapshot(query(collection(db,'registros'),orderBy('timestamp','desc')), snap=>{
+  try{
+    registros=snap.docs.map(d=>({'firestoreId':d.id,...d.data()}));
+    atualizarTela();
+  }catch(e){ console.error('registros snap:',e); }
+}, err=>{ console.error('registros err:',err); });
+onSnapshot(query(collection(db,'massas'),orderBy('timestamp','desc')), snap=>{
+  try{
+    regMassas=snap.docs.map(d=>({'firestoreId':d.id,...d.data()}));
+    atualizarTela();
+  }catch(e){ console.error('massas snap:',e); }
+}, err=>{ console.error('massas err:',err); });
+onSnapshot(query(collection(db,'recheios'),orderBy('timestamp','desc')), snap=>{
+  try{
+    regRecheios=snap.docs.map(d=>({'firestoreId':d.id,...d.data()}));
+    atualizarTela();
+  }catch(e){ console.error('recheios snap:',e); }
+}, err=>{ console.error('recheios err:',err); });
+
+// Fallback: show app after 4s even if Firebase is slow
+setTimeout(()=>{
+  const loading=document.getElementById('loading');
+  if(loading.style.display!=='none'){
+    loading.style.display='none';
+    goTo('s-inicio');
+  }
+},4000);
+
+function atualizarTela(){
+  document.getElementById('loading').style.display='none';
+  const tela=document.querySelector('.screen.active')?.id;
+  if(!tela||tela==='loading'){ goTo('s-inicio'); return; }
+  if(tela==='s-conf-home') renderConfHome();
+  if(tela==='s-coz-home') renderCozHome();
+  if(tela==='s-emb-home') renderEmbalagem();
+  if(tela==='s-emb-sel-data') renderSelDataEmb();
+  if(tela==='s-exp-home') renderExpedicao();
+  if(tela==='s-exp-sel-data') renderSelDataExp();
+  if(tela==='s-meus-reg') renderMeusReg();
+  if(tela==='s-coz-reg') renderCozReg();
+  if(tela==='s-adm') renderAdm(tabAtiva);
+}
+
+function hoje(){return new Date().toLocaleDateString('pt-BR');}
+function agora(){return new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});}
+function diasUteis(n){const dias=[];const d=new Date();while(dias.length<n){if(d.getDay()!==0&&d.getDay()!==6)dias.push(new Date(d));d.setDate(d.getDate()-1);}return dias;}
+function fmtData(d){return d.toLocaleDateString('pt-BR');}
+function labelDia(i){return['Hoje','Ontem','Anteontem'][i]||null;}
+function diaSemana(d){return['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'][d.getDay()];}
+function nomeDiaSemana(d){return['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'][d.getDay()];}
+function sortDatas(arr){return arr.sort((a,b)=>b.split('/').reverse().join('-').localeCompare(a.split('/').reverse().join('-')));}
+
+// ===== PIN =====
+function abrirPin(setor){
+  setorAtivo=setor; pinBuffer='';
+  document.getElementById('pin-setor-nome').textContent=NOMES[setor];
+  const bg=document.getElementById('pin-bg');
+  bg.className='pin-screen '+(CORES[setor]||'');
+  document.getElementById('pin-err').textContent='';
+  atualizarDots();
+  goTo('s-pin');
+}
+function atualizarDots(){
+  for(let i=0;i<4;i++) document.getElementById(`d${i}`).className='pin-dot'+(i<pinBuffer.length?' filled':'');
+}
+function pinDigit(d){
+  if(pinBuffer.length>=4)return;
+  pinBuffer+=d;
+  atualizarDots();
+  if(pinBuffer.length===4) verificarPin();
+}
+function pinDel(){
+  pinBuffer=pinBuffer.slice(0,-1);
+  atualizarDots();
+  document.getElementById('pin-err').textContent='';
+}
+function verificarPin(){
+  if(pinBuffer===PINS[setorAtivo]){
+    goTo(DESTINOS[setorAtivo]);
+  } else {
+    document.getElementById('pin-err').textContent='PIN incorreto. Tente novamente.';
+    pinBuffer='';
+    setTimeout(()=>{ atualizarDots(); document.getElementById('pin-err').textContent=''; },1200);
+  }
+}
+
+function goTo(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0);
+  if(id==='s-conf-home') renderConfHome();
+  if(id==='s-coz-home') renderCozHome();
+  if(id==='s-sel-data') renderDateGrid('date-btn-grid',dataSel,'prod');
+  if(id==='s-massa-data') renderDateGrid('massa-date-grid',dataMassa,'massa');
+  if(id==='s-recheio-data') renderDateGrid('recheio-date-grid',dataRecheio,'recheio');
+  if(id==='s-massa-lanc') renderMassaList();
+  if(id==='s-recheio-lanc') renderRecheioList();
+  if(id==='s-emb-sel-data') renderSelDataEmb();
+  if(id==='s-exp-sel-data') renderSelDataExp();
+  if(id==='s-meus-reg') renderMeusReg();
+  if(id==='s-coz-reg') renderCozReg();
+  if(id==='s-emb-home') renderEmbalagem();
+  if(id==='s-exp-home') renderExpedicao();
+  if(id==='s-adm') renderAdm(tabAtiva);
+  if(tela==='s-contagem-home') renderContagemHome();
+  if(tela==='s-contagem-hist') renderContagemHist();
+  if(id==='s-presenca-form') renderPresencaForm();
+  if(id==='s-presenca-reg-conf') renderPresencaReg('conf');
+  if(id==='s-contagem-home') renderContagemHome();
+  if(id==='s-contagem-lanc') renderContagemLanc();
+  if(id==='s-contagem-hist') renderContagemHist();
+  if(id==='s-presenca-reg-coz') renderPresencaReg('coz');
+  if(id==='s-presenca-reg-emb') renderPresencaReg('emb');
+}
+
+function renderConfHome(){
+  document.getElementById('conf-date').textContent=hoje();
+  document.getElementById('conf-count').textContent=registros.filter(r=>r.data===hoje()).length;
+}
+function renderCozHome(){
+  document.getElementById('coz-date').textContent=hoje();
+  document.getElementById('coz-count').textContent=regRecheios.filter(r=>r.data===hoje()).length;
+}
+
+function renderDateGrid(gridId,selData,tipo){
+  const dias=diasUteis(3);
+  const selClass=tipo==='recheio'?'sel-verde':'sel';
+  document.getElementById(gridId).innerHTML=dias.map((d,i)=>`
+    <button class="date-btn ${selData===fmtData(d)?selClass:''}" onclick="selecionarDataTipo('${fmtData(d)}','${tipo}')">
+      <div class="date-btn-label">${labelDia(i)||diaSemana(d)}</div>
+      <div class="date-btn-date">${fmtData(d)}</div>
+    </button>`).join('');
+}
+function selecionarDataTipo(data,tipo){
+  if(tipo==='prod'){dataSel=data;renderDateGrid('date-btn-grid',dataSel,'prod');document.getElementById('data-sel-banner').style.display='block';document.getElementById('data-sel-banner').textContent=`Data selecionada: ${data}`;document.getElementById('btn-prox-data').className='btn btn-primary';}
+  if(tipo==='massa'){dataMassa=data;renderDateGrid('massa-date-grid',dataMassa,'massa');document.getElementById('massa-data-banner').style.display='block';document.getElementById('massa-data-banner').textContent=`Data selecionada: ${data}`;document.getElementById('btn-prox-massa-data').className='btn btn-primary';}
+  if(tipo==='recheio'){dataRecheio=data;renderDateGrid('recheio-date-grid',dataRecheio,'recheio');document.getElementById('recheio-data-banner').style.display='block';document.getElementById('recheio-data-banner').textContent=`Data selecionada: ${data}`;document.getElementById('btn-prox-recheio-data').className='btn btn-verde';}
+}
+function toggleManual(id){const w=document.getElementById(id);w.style.display=w.style.display==='none'?'block':'none';}
+function selecionarDataManual(tipo){
+  let val='';
+  if(tipo==='prod')val=document.getElementById('input-data-manual').value;
+  if(tipo==='massa')val=document.getElementById('massa-input-data').value;
+  if(tipo==='recheio')val=document.getElementById('recheio-input-data').value;
+  if(!val)return;
+  const[y,m,d]=val.split('-');selecionarDataTipo(`${d}/${m}/${y}`,tipo);
+}
+
+// ===== PRODUÇÃO =====
+function iniciarNovoReg(){dataSel=null;prodSel=null;goTo('s-sel-data');}
+function irParaProduto(){
+  if(!dataSel)return;
+  prodSel=null;document.getElementById('srch').value='';
+  document.getElementById('data-sel-banner2').textContent=`Produção de: ${dataSel}`;
+  atualizarBotaoProx();filtrar();goTo('s-novo-reg');
+}
+function atualizarBotaoProx(){
+  const btn=document.getElementById('btn-prox');
+  btn.className=prodSel?'btn btn-primary':'btn btn-disabled';
+  btn.onclick=prodSel?irQtd:null;
+}
+function filtrar(){
+  const q=(document.getElementById('srch').value||'').toLowerCase().trim();
+  const lista=document.getElementById('prod-list');
+  const filt=PRODUTOS.filter(p=>p.grMassa>0&&p.nome.toLowerCase().includes(q));
+  if(!filt.length){lista.innerHTML='<div class="empty">Nenhum produto encontrado</div>';return;}
+  lista.innerHTML=filt.map(p=>`
+    <div class="produto-item ${prodSel&&prodSel.nome===p.nome?'sel':''}" onclick="selProd('${p.nome.replace(/'/g,"\\'")}')">
+      <span class="produto-name">${p.nome}</span><span class="produto-check-mark">✓</span>
+    </div>`).join('');
+}
+function selProd(nome){
+  prodSel=PRODUTOS.find(p=>p.nome===nome)||null;filtrar();atualizarBotaoProx();
+  const s=document.querySelector('#prod-list .sel');if(s)s.scrollIntoView({block:'nearest'});
+}
+function irQtd(){
+  if(!prodSel)return;
+  document.getElementById('ps-data-label').textContent=dataSel;
+  document.getElementById('ps-nome').textContent=prodSel.nome;
+  let info=`Padrão/un → massa: ${prodSel.grMassa}g`;
+  if(prodSel.tipoRecheio&&prodSel.grRecheio>0)info+=` · ${prodSel.tipoRecheio}: ${prodSel.grRecheio}g`;
+  if(prodSel.tipoRecheio2&&prodSel.grRecheio2>0)info+=` · ${prodSel.tipoRecheio2}: ${prodSel.grRecheio2}g`;
+  document.getElementById('ps-info').textContent=info;
+  ['i-qtd','i-massa','i-r1','i-r2','i-obs'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('prev-card').style.display='none';
+  document.getElementById('lbl-massa').textContent=prodSel.tipoMassa||'Massa';
+  const hasR1=prodSel.tipoRecheio&&prodSel.grRecheio>0;
+  const hasR2=prodSel.tipoRecheio2&&prodSel.grRecheio2>0;
+  document.getElementById('card-r1').style.display=hasR1?'block':'none';
+  document.getElementById('card-r2').style.display=hasR2?'block':'none';
+  if(hasR1)document.getElementById('lbl-r1').textContent=prodSel.tipoRecheio;
+  if(hasR2)document.getElementById('lbl-r2').textContent=prodSel.tipoRecheio2;
+  goTo('s-qtd');
+}
+function calcPrev(){
+  const qtd=parseInt(document.getElementById('i-qtd').value)||0;
+  const prev=document.getElementById('prev-card');
+  if(!qtd||!prodSel){prev.style.display='none';return;}
+  let txt=`Previsão para ${qtd} un → massa: ${(prodSel.grMassa*qtd/1000).toFixed(3)} kg`;
+  if(prodSel.tipoRecheio&&prodSel.grRecheio>0)txt+=` · ${(prodSel.grRecheio*qtd/1000).toFixed(3)} kg`;
+  if(prodSel.tipoRecheio2&&prodSel.grRecheio2>0)txt+=` · ${(prodSel.grRecheio2*qtd/1000).toFixed(3)} kg`;
+  prev.textContent=txt;prev.style.display='block';
+}
+async function salvar(){
+  const qtd=parseInt(document.getElementById('i-qtd').value)||0;
+  const massa=parseFloat(document.getElementById('i-massa').value)||0;
+  const r1=parseFloat(document.getElementById('i-r1').value)||0;
+  const r2=parseFloat(document.getElementById('i-r2').value)||0;
+  const obs=document.getElementById('i-obs').value;
+  if(!qtd||!massa){alert('Preencha a quantidade e a massa.');return;}
+  const btn=document.getElementById('btn-salvar');
+  btn.textContent='Salvando...';btn.className='btn btn-disabled';
+  const mE=prodSel.grMassa*qtd/1000,r1E=prodSel.grRecheio*qtd/1000,r2E=prodSel.grRecheio2*qtd/1000;
+  try {
+    await addDoc(collection(db,'registros'),{
+      produto:prodSel.nome,prodData:prodSel,qtd,massa,r1,r2,obs,
+      hora:agora(),data:dataSel,confirmado:false,timestamp:Date.now(),
+      quebra:{massaEsp:mE,massaReal:massa,difMassa:massa-mE,r1Esp:r1E,r1Real:r1,difR1:r1-r1E,r2Esp:r2E,r2Real:r2,difR2:r2-r2E},
+      embalagem:{feito:false,qtdEmbalada:0,qtdProduzida:qtd},
+      expedicao:{parciais:[],totalLiberado:0}
+    });
+    document.getElementById('conf-banner').textContent='✓ Registro de produção salvo!';
+    document.getElementById('conf-banner').style.display='block';
+    setTimeout(()=>{document.getElementById('conf-banner').style.display='none';},3000);
+    goTo('s-conf-home');
+  } catch(e){alert('Erro ao salvar.');btn.textContent='Salvar registro ✓';btn.className='btn btn-primary';}
+}
+function renderMeusReg(dataFiltro){
+  const datas=sortDatas([...new Set(registros.map(r=>r.data))]);
+  const df = dataFiltro || window._mrData || (datas[0]||hoje());
+  window._mrData = df;
+  document.getElementById('mr-sub').textContent=`${registros.length} registro(s) total`;
+  const el=document.getElementById('mr-content');
+  if(!registros.length){el.innerHTML='<div class="empty">Nenhum registro ainda.</div>';return;}
+
+  const selectHtml=`<div style="margin-bottom:12px;">
+    <select onchange="renderMeusReg(this.value)" style="font-size:15px;padding:10px 12px;border-radius:10px;border:0.5px solid var(--border-md);background:var(--bg-primary);color:var(--text-primary);width:100%;font-family:inherit;">
+      ${datas.map(d=>`<option value="${d}" ${d===df?'selected':''}>${d}</option>`).join('')}
+    </select>
+  </div>`;
+
+  const regs=registros.filter(r=>r.data===df);
+  const itens = regs.map(r=>{
+    const hasR1=r.prodData&&r.prodData.tipoRecheio&&r.prodData.grRecheio>0;
+    const hasR2=r.prodData&&r.prodData.tipoRecheio2&&r.prodData.grRecheio2>0;
+    const editInfo=r.editadoEm?`<div style="font-size:11px;color:var(--mc-dourado);margin-top:4px;">✏️ Editado às ${r.editadoEm}</div>`:'';
+    return `<div class="reg-item" id="reg-${r.firestoreId}">
+      <div class="reg-header">
+        <span class="reg-produto">${r.produto}</span>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span class="reg-hora">${r.hora}</span>
+          <button class="btn-sm-outline" onclick="toggleEditProd('${r.firestoreId}')">Editar</button>
+        </div>
+      </div>
+      <div class="reg-detalhe">Qtd: <strong>${r.qtd} un</strong> · Massa: <strong>${r.massa} kg</strong>${r.r1>0?` · R1: <strong>${r.r1} kg</strong>`:''}${r.r2>0?` · R2: <strong>${r.r2} kg</strong>`:''}${r.obs?`<br><em>${r.obs}</em>`:''}</div>
+      ${editInfo}
+      <div class="edit-form" id="edit-${r.firestoreId}" style="display:none;margin-top:10px;padding-top:10px;border-top:0.5px solid var(--border);">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+          <div>
+            <div class="card-label">Qtd produzida</div>
+            <div class="input-unit"><input type="number" id="eq-qtd-${r.firestoreId}" value="${r.qtd}" min="0" inputmode="numeric" style="font-size:14px;padding:8px;" /><span class="unit-label" style="padding:8px 6px;">un</span></div>
+          </div>
+          <div>
+            <div class="card-label">${r.prodData?r.prodData.tipoMassa:'Massa'}</div>
+            <div class="input-unit"><input type="number" id="eq-massa-${r.firestoreId}" value="${r.massa}" min="0" step="0.001" inputmode="decimal" style="font-size:14px;padding:8px;" /><span class="unit-label" style="padding:8px 6px;">kg</span></div>
+          </div>
+        </div>
+        ${hasR1?`<div style="margin-bottom:8px;">
+          <div class="card-label">${r.prodData.tipoRecheio}</div>
+          <div class="input-unit"><input type="number" id="eq-r1-${r.firestoreId}" value="${r.r1||0}" min="0" step="0.001" inputmode="decimal" style="font-size:14px;padding:8px;" /><span class="unit-label" style="padding:8px 6px;">kg</span></div>
+        </div>`:''}
+        ${hasR2?`<div style="margin-bottom:8px;">
+          <div class="card-label">${r.prodData.tipoRecheio2}</div>
+          <div class="input-unit"><input type="number" id="eq-r2-${r.firestoreId}" value="${r.r2||0}" min="0" step="0.001" inputmode="decimal" style="font-size:14px;padding:8px;" /><span class="unit-label" style="padding:8px 6px;">kg</span></div>
+        </div>`:''}
+        <div style="margin-bottom:8px;">
+          <div class="card-label">Observação</div>
+          <input type="text" id="eq-obs-${r.firestoreId}" value="${r.obs||''}" placeholder="Observação..." style="font-size:14px;padding:8px;" />
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button style="flex:1;padding:10px;border-radius:10px;border:0.5px solid var(--border-md);background:var(--bg-secondary);font-family:inherit;font-size:14px;cursor:pointer;" onclick="toggleEditProd('${r.firestoreId}')">Cancelar</button>
+          <button style="flex:1;padding:10px;border-radius:10px;border:none;background:var(--mc-azul);color:white;font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;" id="eq-btn-${r.firestoreId}" onclick="salvarEditProd('${r.firestoreId}')">Salvar</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+
+  el.innerHTML = selectHtml + (regs.length ? itens : '<div class="empty">Sem registros nesta data.</div>');
+}
+function toggleEditProd(fid){
+  const el=document.getElementById(`edit-${fid}`);
+  el.style.display=el.style.display==='none'?'block':'none';
+}
+
+async function salvarEditProd(fid){
+  const reg=registros.find(r=>r.firestoreId===fid);
+  if(!reg)return;
+  const qtd=parseInt(document.getElementById(`eq-qtd-${fid}`).value)||0;
+  const massa=parseFloat(document.getElementById(`eq-massa-${fid}`).value)||0;
+  const r1El=document.getElementById(`eq-r1-${fid}`);
+  const r2El=document.getElementById(`eq-r2-${fid}`);
+  const r1=r1El?parseFloat(r1El.value)||0:reg.r1||0;
+  const r2=r2El?parseFloat(r2El.value)||0:reg.r2||0;
+  const obs=document.getElementById(`eq-obs-${fid}`).value;
+  if(!qtd||!massa){alert('Qtd e massa são obrigatórios.');return;}
+  const btn=document.getElementById(`eq-btn-${fid}`);
+  btn.textContent='Salvando...';btn.disabled=true;
+  // Recalculate quebra
+  const p=reg.prodData;
+  const mE=p.grMassa*qtd/1000, r1E=p.grRecheio*qtd/1000, r2E=p.grRecheio2*qtd/1000;
+  try{
+    await updateDoc(doc(db,'registros',fid),{
+      qtd, massa, r1, r2, obs,
+      quebra:{massaEsp:mE,massaReal:massa,difMassa:massa-mE,r1Esp:r1E,r1Real:r1,difR1:r1-r1E,r2Esp:r2E,r2Real:r2,difR2:r2-r2E},
+      'embalagem.qtdProduzida': qtd,
+      editadoEm: agora()
+    });
+  } catch(e){alert('Erro ao salvar.');btn.textContent='Salvar';btn.disabled=false;}
+}
+
+// ===== MASSAS =====
+function irParaMassa(){
+  if(!dataMassa)return;massaSel=null;
+  document.getElementById('massa-data-banner2').textContent=`Produção de: ${dataMassa}`;
+  renderMassaList();goTo('s-massa-lanc');
+}
+function renderMassaList(){
+  document.getElementById('massa-list').innerHTML=MASSAS.map(m=>`
+    <div class="produto-item ${massaSel===m?'sel':''}" onclick="selMassa('${m.replace(/'/g,"\\'")}')">
+      <span class="produto-name">${m}</span><span class="produto-check-mark">✓</span>
+    </div>`).join('');
+}
+function selMassa(nome){
+  massaSel=nome;renderMassaList();
+  document.getElementById('massa-sel-nome').textContent=nome;
+  document.getElementById('massa-sel-card').style.display='block';
+  document.getElementById('massa-qtd-card').style.display='block';
+  document.getElementById('massa-obs-card').style.display='block';
+  document.getElementById('btn-salvar-massa').style.display='block';
+  document.getElementById('massa-qtd').value='';
+  document.getElementById('massa-obs').value='';
+}
+async function salvarMassa(){
+  const qtd=parseFloat(document.getElementById('massa-qtd').value)||0;
+  const obs=document.getElementById('massa-obs').value;
+  if(!qtd){alert('Informe a quantidade em kg.');return;}
+  const btn=document.getElementById('btn-salvar-massa');
+  btn.textContent='Salvando...';btn.className='btn btn-disabled';
+  try {
+    await addDoc(collection(db,'massas'),{massa:massaSel,qtdKg:qtd,obs,hora:agora(),data:dataMassa,timestamp:Date.now()});
+    document.getElementById('conf-banner').textContent='✓ Produção de massa salva!';
+    document.getElementById('conf-banner').style.display='block';
+    setTimeout(()=>{document.getElementById('conf-banner').style.display='none';},3000);
+    massaSel=null;dataMassa=null;goTo('s-conf-home');
+  } catch(e){alert('Erro ao salvar.');btn.textContent='Salvar lançamento ✓';btn.className='btn btn-primary';}
+}
+
+// ===== RECHEIOS =====
+function irParaRecheio(){
+  if(!dataRecheio)return;recheioSel=null;
+  document.getElementById('recheio-data-banner2').textContent=`Produção de: ${dataRecheio}`;
+  renderRecheioList();goTo('s-recheio-lanc');
+}
+function renderRecheioList(){
+  document.getElementById('recheio-list').innerHTML=RECHEIOS.map(r=>`
+    <div class="produto-item ${recheioSel===r?'sel-verde':''}" onclick="selRecheio('${r.replace(/'/g,"\\'")}')">
+      <span class="produto-name">${r}</span><span class="produto-check-mark verde">✓</span>
+    </div>`).join('');
+}
+function selRecheio(nome){
+  recheioSel=nome;renderRecheioList();
+  document.getElementById('recheio-sel-nome').textContent=nome;
+  document.getElementById('recheio-sel-card').style.display='block';
+  document.getElementById('recheio-qtd-card').style.display='block';
+  document.getElementById('recheio-obs-card').style.display='block';
+  document.getElementById('btn-salvar-recheio').style.display='block';
+  document.getElementById('recheio-qtd').value='';
+  document.getElementById('recheio-obs').value='';
+}
+async function salvarRecheio(){
+  const qtd=parseFloat(document.getElementById('recheio-qtd').value)||0;
+  const obs=document.getElementById('recheio-obs').value;
+  if(!qtd){alert('Informe a quantidade em kg.');return;}
+  const btn=document.getElementById('btn-salvar-recheio');
+  btn.textContent='Salvando...';btn.className='btn btn-disabled';
+  try {
+    await addDoc(collection(db,'recheios'),{recheio:recheioSel,qtdKg:qtd,obs,hora:agora(),data:dataRecheio,timestamp:Date.now()});
+    document.getElementById('coz-banner').textContent='✓ Produção de recheio salva!';
+    document.getElementById('coz-banner').style.display='block';
+    setTimeout(()=>{document.getElementById('coz-banner').style.display='none';},3000);
+    recheioSel=null;dataRecheio=null;goTo('s-coz-home');
+  } catch(e){alert('Erro ao salvar.');btn.textContent='Salvar lançamento ✓';btn.className='btn btn-verde';}
+}
+function renderCozReg(dataFiltro){
+  const datas=sortDatas([...new Set(regRecheios.map(r=>r.data))]);
+  const df = dataFiltro || window._cozData || (datas[0]||hoje());
+  window._cozData = df;
+  document.getElementById('coz-reg-sub').textContent=`${regRecheios.length} registro(s) total`;
+  const el=document.getElementById('coz-reg-content');
+  if(!regRecheios.length){el.innerHTML='<div class="empty">Nenhum registro ainda.</div>';return;}
+
+  const selectHtml=`<div style="margin-bottom:12px;">
+    <select onchange="renderCozReg(this.value)" style="font-size:15px;padding:10px 12px;border-radius:10px;border:0.5px solid var(--border-md);background:var(--bg-primary);color:var(--text-primary);width:100%;font-family:inherit;">
+      ${datas.map(d=>`<option value="${d}" ${d===df?'selected':''}>${d}</option>`).join('')}
+    </select>
+  </div>`;
+
+  const regs=regRecheios.filter(r=>r.data===df);
+  const itens = regs.map(r=>{
+    const editInfo=r.editadoEm?`<div style="font-size:11px;color:var(--mc-verde);margin-top:4px;">✏️ Editado às ${r.editadoEm}</div>`:'';
+    return `<div class="reg-item verde" id="regr-${r.firestoreId}">
+      <div class="reg-header">
+        <span class="reg-produto">${r.recheio}</span>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span class="reg-hora">${r.hora}</span>
+          <button style="background:none;border:1px solid var(--mc-verde);color:var(--mc-verde);font-size:12px;padding:5px 10px;border-radius:8px;cursor:pointer;font-family:inherit;" onclick="toggleEditRecheio('${r.firestoreId}')">Editar</button>
+        </div>
+      </div>
+      <div class="reg-detalhe"><strong>${r.qtdKg} kg</strong>${r.obs?` · <em>${r.obs}</em>`:''}</div>
+      ${editInfo}
+      <div id="editr-${r.firestoreId}" style="display:none;margin-top:10px;padding-top:10px;border-top:0.5px solid var(--border);">
+        <div style="margin-bottom:8px;">
+          <div class="card-label">Quantidade produzida</div>
+          <div class="input-unit"><input type="number" id="er-qtd-${r.firestoreId}" value="${r.qtdKg}" min="0" step="0.001" inputmode="decimal" style="font-size:14px;padding:8px;" /><span class="unit-label" style="padding:8px 6px;">kg</span></div>
+        </div>
+        <div style="margin-bottom:8px;">
+          <div class="card-label">Observação</div>
+          <input type="text" id="er-obs-${r.firestoreId}" value="${r.obs||''}" placeholder="Observação..." style="font-size:14px;padding:8px;" />
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button style="flex:1;padding:10px;border-radius:10px;border:0.5px solid var(--border-md);background:var(--bg-secondary);font-family:inherit;font-size:14px;cursor:pointer;" onclick="toggleEditRecheio('${r.firestoreId}')">Cancelar</button>
+          <button style="flex:1;padding:10px;border-radius:10px;border:none;background:var(--mc-verde);color:white;font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;" id="er-btn-${r.firestoreId}" onclick="salvarEditRecheio('${r.firestoreId}')">Salvar</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+
+  el.innerHTML = selectHtml + (regs.length ? itens : '<div class="empty">Sem registros nesta data.</div>');
+}
+function toggleEditRecheio(fid){
+  const el=document.getElementById(`editr-${fid}`);
+  el.style.display=el.style.display==='none'?'block':'none';
+}
+
+async function salvarEditRecheio(fid){
+  const qtd=parseFloat(document.getElementById(`er-qtd-${fid}`).value)||0;
+  const obs=document.getElementById(`er-obs-${fid}`).value;
+  if(!qtd){alert('Informe a quantidade.');return;}
+  const btn=document.getElementById(`er-btn-${fid}`);
+  btn.textContent='Salvando...';btn.disabled=true;
+  try{
+    await updateDoc(doc(db,'recheios',fid),{qtdKg:qtd, obs, editadoEm:agora()});
+  } catch(e){alert('Erro ao salvar.');btn.textContent='Salvar';btn.disabled=false;}
+}
+
+// ===== EMBALAGEM =====
+function statusEmbalagem(data){
+  const regs=registros.filter(r=>r.data===data);
+  if(!regs.length)return'vazio';
+  const feitos=regs.filter(r=>r.embalagem&&r.embalagem.feito).length;
+  return feitos===regs.length?'completo':'pendente';
+}
+function renderSelDataEmb(){
+  const dias=diasUteis(10);
+  const el=document.getElementById('emb-sel-content');
+  const pend=dias.filter(d=>statusEmbalagem(fmtData(d))==='pendente');
+  let alert='';
+  if(pend.length>0)alert=`<div class="banner" style="background:#fff3cd;border:0.5px solid #f5a623;color:#7a4f00;margin-bottom:12px;">⚠️ <strong>${pend.length} dia(s)</strong> com produtos pendentes de embalagem</div>`;
+  const listHtml=dias.map((d,i)=>{
+    const data=fmtData(d);const status=statusEmbalagem(data);
+    const regs=registros.filter(r=>r.data===data);
+    const feitos=regs.filter(r=>r.embalagem&&r.embalagem.feito).length;
+    const total=regs.length;const isSel=dataSelEmb===data;
+    let badge='',dot='';
+    if(status==='pendente'){const p=total-feitos;badge=`<span class="badge-pendente-emb">⏳ ${p} pendente${p>1?'s':''}</span>`;dot=`<div class="dot-pendente"></div>`;}
+    else if(status==='completo')badge=`<span class="badge-completo-emb">✓ completo</span>`;
+    else badge=`<span class="badge-vazio-emb">sem registros</span>`;
+    const lbl=labelDia(i);const nome=lbl?`${lbl} · ${nomeDiaSemana(d)}`:`${nomeDiaSemana(d)}`;
+    const clk=status!=='vazio';
+    return `<button class="emb-date-item ${isSel?'sel':''} ${!clk?'sem-registros':''}"
+      onclick="${clk?`selecionarDataEmb('${data}')`:''}" ${!clk?'disabled':''}>
+      <div class="emb-date-item-left"><div class="emb-date-item-label">${nome}</div><div class="emb-date-item-sub">${data}${total>0?` · ${total} produto(s)`:''}</div></div>
+      <div class="emb-date-status">${dot}${badge}</div></button>`;
+  }).join('');
+  el.innerHTML=alert+`<div class="emb-date-list">${listHtml}</div>`;
+  if(dataSelEmb)el.innerHTML+=`<div style="margin-top:14px;"><button class="btn btn-primary" onclick="irParaEmbalagem()">Ver produtos de ${dataSelEmb} →</button></div>`;
+}
+function selecionarDataEmb(data){dataSelEmb=data;renderSelDataEmb();}
+function irParaEmbalagem(){if(!dataSelEmb)return;goTo('s-emb-home');}
+function renderEmbalagem(){
+  document.getElementById('emb-data-topbar').textContent=dataSelEmb||hoje();
+  const el=document.getElementById('emb-content');
+  const regs=registros.filter(r=>r.data===dataSelEmb);
+  if(!regs.length){el.innerHTML='<div class="empty">Nenhum produto lançado neste dia.</div>';return;}
+  const total=regs.length,feitos=regs.filter(r=>r.embalagem&&r.embalagem.feito).length;
+  const pct=Math.round(feitos/total*100);const barColor=pct===100?'#4caf50':'var(--mc-dourado)';
+  el.innerHTML=`
+    <div class="card" style="margin-bottom:12px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+        <div style="font-size:13px;font-weight:600;color:var(--mc-azul);">Progresso do dia</div>
+        <div style="font-size:22px;font-weight:700;color:${barColor};">${pct}%</div>
+      </div>
+      <div class="progresso-bar-wrap"><div class="progresso-bar" style="width:${pct}%;background:${barColor};"></div></div>
+      <div style="font-size:12px;color:var(--text-secondary);margin-top:4px;">${feitos} de ${total} produto(s) embalados</div>
+    </div>
+    ${regs.map(r=>{
+      const emb=r.embalagem||{feito:false,qtdEmbalada:0};const done=emb.feito;
+      return `<div class="emb-item ${done?'done':''}">
+        <div class="emb-item-header">
+          <div class="emb-check-btn ${done?'done':''}" onclick="toggleEmb('${r.firestoreId}',${r.qtd})">${done?'✓':''}</div>
+          <div class="emb-item-info">
+            <div class="emb-item-nome">${r.produto}</div>
+            <div class="emb-item-qtd">Produzido: <strong>${r.qtd} un</strong>${done?` · Embalado: <strong>${emb.qtdEmbalada} un</strong>`:''}${done&&emb.qtdEmbalada<r.qtd?` <span style="color:#c62828;font-size:11px;">(−${r.qtd-emb.qtdEmbalada})</span>`:''}</div>
+          </div>
+          <button class="btn-sm-outline" onclick="toggleAjuste('${r.firestoreId}',${r.qtd},${emb.qtdEmbalada||r.qtd})">Ajustar</button>
+        </div>
+        <div class="emb-item-actions" id="ajuste-${r.firestoreId}">
+          <span style="font-size:13px;color:var(--text-secondary);white-space:nowrap;">Qtd embalada:</span>
+          <input type="number" class="emb-input-qtd" id="input-emb-${r.firestoreId}" value="${emb.qtdEmbalada||r.qtd}" min="0" inputmode="numeric" />
+          <button class="btn-sm-green" onclick="confirmarAjuste('${r.firestoreId}',${r.qtd})">OK</button>
+        </div>
+      </div>`;
+    }).join('')}`;
+}
+async function toggleEmb(fid,qtdProd){
+  const reg=registros.find(r=>r.firestoreId===fid);
+  const emb=reg.embalagem||{feito:false,qtdEmbalada:0};
+  const novoFeito=!emb.feito;
+  const novaQtd=novoFeito?(emb.qtdEmbalada>0?emb.qtdEmbalada:qtdProd):0;
+  await updateDoc(doc(db,'registros',fid),{embalagem:{feito:novoFeito,qtdEmbalada:novaQtd,qtdProduzida:qtdProd}});
+}
+function toggleAjuste(fid,qtdProd,qtdAtual){
+  const el=document.getElementById(`ajuste-${fid}`);el.classList.toggle('show');
+  if(el.classList.contains('show'))document.getElementById(`input-emb-${fid}`).value=qtdAtual;
+}
+async function confirmarAjuste(fid,qtdProd){
+  const val=parseInt(document.getElementById(`input-emb-${fid}`).value)||0;
+  await updateDoc(doc(db,'registros',fid),{embalagem:{feito:true,qtdEmbalada:val,qtdProduzida:qtdProd}});
+}
+
+// ===== EXPEDIÇÃO =====
+function statusExpedicao(data){
+  const regs=registros.filter(r=>r.data===data&&r.embalagem&&r.embalagem.feito);
+  if(!regs.length)return'vazio';
+  const completos=regs.filter(r=>{
+    const exp=r.expedicao||{parciais:[],totalLiberado:0};
+    return exp.totalLiberado>=(r.embalagem.qtdEmbalada||r.qtd);
+  }).length;
+  return completos===regs.length?'completo':'pendente';
+}
+function renderSelDataExp(){
+  const dias=diasUteis(10);
+  const el=document.getElementById('exp-sel-content');
+  const pend=dias.filter(d=>statusExpedicao(fmtData(d))==='pendente');
+  let alert='';
+  if(pend.length>0)alert=`<div class="banner banner-info-laranja" style="margin-bottom:12px;">⚠️ <strong>${pend.length} dia(s)</strong> com produtos pendentes de liberação</div>`;
+  const listHtml=dias.map((d,i)=>{
+    const data=fmtData(d);const status=statusExpedicao(data);
+    const regs=registros.filter(r=>r.data===data&&r.embalagem&&r.embalagem.feito);
+    const total=regs.length;const isSel=dataSelExp===data;
+    let badge='',dot='';
+    if(status==='pendente'){const p=regs.filter(r=>{const exp=r.expedicao||{totalLiberado:0};return exp.totalLiberado<(r.embalagem.qtdEmbalada||r.qtd);}).length;badge=`<span class="badge-pendente-emb">⏳ ${p} pendente${p>1?'s':''}</span>`;dot=`<div class="dot-laranja"></div>`;}
+    else if(status==='completo')badge=`<span class="badge-completo-emb">✓ completo</span>`;
+    else badge=`<span class="badge-vazio-emb">sem embalados</span>`;
+    const lbl=labelDia(i);const nome=lbl?`${lbl} · ${nomeDiaSemana(d)}`:`${nomeDiaSemana(d)}`;
+    const clk=status!=='vazio';
+    return `<button class="emb-date-item ${isSel?'sel':''} ${!clk?'sem-registros':''}"
+      onclick="${clk?`selecionarDataExp('${data}')`:''}" ${!clk?'disabled':''}>
+      <div class="emb-date-item-left"><div class="emb-date-item-label">${nome}</div><div class="emb-date-item-sub">${data}${total>0?` · ${total} produto(s) embalado(s)`:''}</div></div>
+      <div class="emb-date-status">${dot}${badge}</div></button>`;
+  }).join('');
+  el.innerHTML=alert+`<div class="emb-date-list">${listHtml}</div>`;
+  if(dataSelExp)el.innerHTML+=`<div style="margin-top:14px;"><button class="btn btn-laranja" onclick="irParaExpedicao()">Ver produtos de ${dataSelExp} →</button></div>`;
+}
+function selecionarDataExp(data){dataSelExp=data;renderSelDataExp();}
+function irParaExpedicao(){if(!dataSelExp)return;goTo('s-exp-home');}
+function renderExpedicao(){
+  document.getElementById('exp-data-topbar').textContent=dataSelExp||hoje();
+  const el=document.getElementById('exp-content');
+  // Apenas produtos já embalados
+  const regs=registros.filter(r=>r.data===dataSelExp&&r.embalagem&&r.embalagem.feito);
+  if(!regs.length){el.innerHTML='<div class="empty">Nenhum produto embalado neste dia ainda.</div>';return;}
+  const total=regs.length;
+  const completos=regs.filter(r=>{
+    const exp=r.expedicao||{totalLiberado:0};
+    return exp.totalLiberado>=(r.embalagem.qtdEmbalada||r.qtd);
+  }).length;
+  const pct=Math.round(completos/total*100);
+  const barColor=pct===100?'#4caf50':'var(--mc-laranja)';
+  el.innerHTML=`
+    <div class="card" style="margin-bottom:12px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+        <div style="font-size:13px;font-weight:600;color:var(--mc-laranja);">Liberações do dia</div>
+        <div style="font-size:22px;font-weight:700;color:${barColor};">${pct}%</div>
+      </div>
+      <div class="progresso-bar-wrap"><div class="progresso-bar" style="width:${pct}%;background:${barColor};"></div></div>
+      <div style="font-size:12px;color:var(--text-secondary);margin-top:4px;">${completos} de ${total} produto(s) totalmente liberados</div>
+    </div>
+    ${regs.map(r=>{
+      const exp=r.expedicao||{parciais:[],totalLiberado:0};
+      const qtdEmb=r.embalagem.qtdEmbalada||r.qtd;
+      const totalLib=exp.totalLiberado||0;
+      const restante=qtdEmb-totalLib;
+      const concluido=totalLib>=qtdEmb;
+      return `<div class="emb-item ${concluido?'done':totalLib>0?'done-parcial':''}">
+        <div class="emb-item-header">
+          <div class="emb-check-btn ${concluido?'done':totalLib>0?'laranja':''}" style="font-size:12px;">${concluido?'✓':totalLib>0?totalLib:''}</div>
+          <div class="emb-item-info">
+            <div class="emb-item-nome">${r.produto}</div>
+            <div class="emb-item-qtd">
+              Embalado: <strong>${qtdEmb} un</strong> · Liberado: <strong style="color:${concluido?'#4caf50':'var(--mc-laranja)'};">${totalLib} un</strong>
+              ${!concluido?` · Restante: <strong>${restante}</strong>`:''}
+            </div>
+          </div>
+        </div>
+        ${exp.parciais&&exp.parciais.length>0?`
+          <div class="exp-parcial-list">
+            ${exp.parciais.map((p,i)=>`<div class="exp-parcial-item" id="parcial-row-${r.firestoreId}-${i}">
+              <span>${p.hora}${p.editadoEm?' <em style="font-size:10px;">(edit. '+p.editadoEm+')</em>':''}</span>
+              <div style="display:flex;align-items:center;gap:8px;">
+                <span class="exp-parcial-qtd">+${p.qtd} un</span>
+                <button onclick="toggleEditParcial('${r.firestoreId}',${i},${p.qtd})" style="background:none;border:1px solid var(--mc-laranja);color:var(--mc-laranja);font-size:11px;padding:2px 8px;border-radius:6px;cursor:pointer;font-family:inherit;">Editar</button>
+              </div>
+            </div>`).join('')}
+          </div>`:''
+        }
+        ${!concluido?`
+          <div class="exp-add-form">
+            <span style="font-size:13px;color:var(--text-secondary);white-space:nowrap;">Liberar:</span>
+            <input type="number" class="emb-input-qtd" id="exp-input-${r.firestoreId}" placeholder="${restante}" min="1" max="${restante}" inputmode="numeric" style="border-color:var(--mc-laranja);" />
+            <button class="btn-sm-laranja" onclick="adicionarLiberacao('${r.firestoreId}',${qtdEmb})">Confirmar</button>
+          </div>`:''
+        }
+      </div>`;
+    }).join('')}`;
+}
+async function adicionarLiberacao(fid,qtdEmb){
+  const val=parseInt(document.getElementById(`exp-input-${fid}`).value)||0;
+  if(val<=0){alert('Informe a quantidade a liberar.');return;}
+  const reg=registros.find(r=>r.firestoreId===fid);
+  const exp=reg.expedicao||{parciais:[],totalLiberado:0};
+  const parciais=[...(exp.parciais||[]),{qtd:val,hora:agora()}];
+  const totalLiberado=Math.min((exp.totalLiberado||0)+val,qtdEmb);
+  await updateDoc(doc(db,'registros',fid),{expedicao:{parciais,totalLiberado}});
+}
+
+// ===== PRESENÇA =====
+let presencas = {};
+let setorPresencaAtivo = '';
+let colaboradoresTemp = []; // [{nome, status, obs}]
+let dataPresencaAtiva = null;
+
+onSnapshot(collection(db,'presencas'), snap=>{
+  try {
+    presencas={};
+    snap.docs.forEach(d=>{ presencas[d.id]={firestoreId:d.id,...d.data()}; });
+    atualizarBadgesPresenca();
+    atualizarTela();
+  } catch(e){ console.error('presencas snap error:', e); }
+}, err=>{ console.error('presencas listener error:', err); });
+
+function atualizarBadgesPresenca(){
+  ['conf','coz','emb'].forEach(s=>{
+    const el=document.getElementById(`presenca-${s}-status`);
+    if(!el)return;
+    const rec=Object.values(presencas).find(r=>r.setor_key===s&&r.data===hoje());
+    if(rec) el.textContent=`Hoje: ${rec.presentes}/${rec.escalados} presentes`;
+    else el.textContent='Registrar equipe do dia';
+  });
+}
+
+function abrirPresenca(setor){
+  setorPresencaAtivo=setor;
+  dataPresencaAtiva=null;
+  colaboradoresTemp=[];
+  // Setup topbar color
+  const tb=document.getElementById('presenca-form-topbar');
+  const nomes={conf:'Confeitaria 🥐',coz:'Cozinha 🍳',emb:'Embalagem 📦'};
+  document.getElementById('presenca-form-sub').textContent=nomes[setor];
+  tb.className='topbar'+(setor==='coz'?' verde':'');
+  renderPresencaForm();
+  goTo('s-presenca-form');
+}
+
+function voltarPresenca(){
+  const back={conf:'s-conf-home',coz:'s-coz-home',emb:'s-emb-sel-data'};
+  goTo(back[setorPresencaAtivo]||'s-inicio');
+}
+
+function renderPresencaForm(){
+  const el=document.getElementById('presenca-form-content');
+  if(!el)return;
+  const dias=diasUteis(3);
+  const dfAtual=dataPresencaAtiva;
+  const rec=dfAtual?Object.values(presencas).find(r=>r.setor_key===setorPresencaAtivo&&r.data===dfAtual):null;
+
+  // If we have a record and no temp data yet, load it
+  if(rec&&colaboradoresTemp.length===0&&dfAtual){
+    colaboradoresTemp=(rec.colaboradores||[]).map(c=>({...c}));
+  }
+
+  const dateGrid=dias.map((d,i)=>`
+    <button class="date-btn ${dfAtual===fmtData(d)?'sel':''}" onclick="selecionarDataPresenca('${fmtData(d)}')">
+      <div class="date-btn-label">${labelDia(i)||diaSemana(d)}</div>
+      <div class="date-btn-date">${fmtData(d)}</div>
+    </button>`).join('');
+
+  el.innerHTML=`
+    ${rec?`<div class="banner banner-ok">✓ Presença já registrada neste dia — você pode editar abaixo.</div>`:''}
+    <div class="card">
+      <div class="card-label">Selecionar data</div>
+      <div class="date-btn-grid">${dateGrid}</div>
+      <button class="date-manual-toggle" onclick="toggleManual('pr-manual-wrap')">Outra data →</button>
+      <div id="pr-manual-wrap" style="display:none;margin-top:8px;">
+        <input type="date" id="pr-input-data" onchange="selecionarDataPresencaManual()" />
+      </div>
+    </div>
+    ${dfAtual?`
+    <div class="card">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <div>
+          <div class="card-label">Total escalados</div>
+          <input type="number" id="pr-escalados" value="${rec?rec.escalados:''}" placeholder="Ex: 8" min="0" inputmode="numeric" />
+        </div>
+        <div>
+          <div class="card-label">Total presentes</div>
+          <input type="number" id="pr-presentes" value="${rec?rec.presentes:''}" placeholder="Ex: 7" min="0" inputmode="numeric" />
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+        <div class="card-label" style="margin-bottom:0;">Ocorrências</div>
+        <button onclick="adicionarColaborador()" style="background:var(--mc-azul);color:white;border:none;border-radius:8px;padding:6px 12px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">+ Adicionar</button>
+      </div>
+      <div id="pr-colaboradores-list">
+        ${colaboradoresTemp.length===0?'<div style="color:var(--text-secondary);font-size:13px;text-align:center;padding:10px 0;">Nenhuma ocorrência registrada</div>':
+          colaboradoresTemp.map((c,i)=>renderColabRow(i,c)).join('')}
+      </div>
+    </div>
+    <button class="btn btn-primary" id="pr-btn-salvar" onclick="salvarPresenca()">Salvar presença ✓</button>
+    `:'<div class="empty" style="padding:20px 0;">Selecione uma data para continuar</div>'}
+  `;
+}
+
+function renderColabRow(i, c){
+  return `<div id="colab-row-${i}" style="display:grid;grid-template-columns:1fr auto;gap:8px;margin-bottom:10px;padding-bottom:10px;border-bottom:0.5px solid var(--border);">
+    <div>
+      <input type="text" id="colab-nome-${i}" value="${c.nome||''}" placeholder="Nome do colaborador" style="font-size:14px;padding:8px;margin-bottom:6px;" oninput="updateColab(${i},'nome',this.value)" />
+      <select id="colab-status-${i}" style="font-size:14px;padding:8px;margin-bottom:6px;" onchange="updateColab(${i},'status',this.value)">
+        <option value="Faltou" ${c.status==='Faltou'?'selected':''}>❌ Faltou</option>
+        <option value="Saiu mais cedo" ${c.status==='Saiu mais cedo'?'selected':''}>🕐 Saiu mais cedo</option>
+      </select>
+      <input type="text" id="colab-obs-${i}" value="${c.obs||''}" placeholder="Observação (opcional)" style="font-size:14px;padding:8px;" oninput="updateColab(${i},'obs',this.value)" />
+    </div>
+    <button onclick="removerColab(${i})" style="background:#fee2e2;color:#c62828;border:none;border-radius:8px;width:36px;align-self:start;margin-top:2px;cursor:pointer;font-size:16px;padding:6px 0;">×</button>
+  </div>`;
+}
+
+function updateColab(i, field, val){
+  if(colaboradoresTemp[i]) colaboradoresTemp[i][field]=val;
+}
+
+function adicionarColaborador(){
+  colaboradoresTemp.push({nome:'',status:'Faltou',obs:''});
+  renderPresencaForm();
+  // Re-populate values after re-render
+  setTimeout(()=>{
+    colaboradoresTemp.forEach((c,i)=>{
+      const n=document.getElementById(`colab-nome-${i}`);
+      const s=document.getElementById(`colab-status-${i}`);
+      const o=document.getElementById(`colab-obs-${i}`);
+      if(n)n.value=c.nome||'';
+      if(s)s.value=c.status||'Faltou';
+      if(o)o.value=c.obs||'';
+    });
+  },50);
+}
+
+function removerColab(i){
+  // Save current values before removing
+  colaboradoresTemp.forEach((c,idx)=>{
+    const n=document.getElementById(`colab-nome-${idx}`);
+    const s=document.getElementById(`colab-status-${idx}`);
+    const o=document.getElementById(`colab-obs-${idx}`);
+    if(n)c.nome=n.value;
+    if(s)c.status=s.value;
+    if(o)c.obs=o.value;
+  });
+  colaboradoresTemp.splice(i,1);
+  renderPresencaForm();
+  setTimeout(()=>{
+    colaboradoresTemp.forEach((c,i)=>{
+      const n=document.getElementById(`colab-nome-${i}`);
+      const s=document.getElementById(`colab-status-${i}`);
+      const o=document.getElementById(`colab-obs-${i}`);
+      if(n)n.value=c.nome||'';
+      if(s)s.value=c.status||'Faltou';
+      if(o)o.value=c.obs||'';
+    });
+  },50);
+}
+
+function selecionarDataPresenca(data){
+  // Save any temp colab values before switching date
+  colaboradoresTemp.forEach((c,i)=>{
+    const n=document.getElementById(`colab-nome-${i}`);
+    const s=document.getElementById(`colab-status-${i}`);
+    const o=document.getElementById(`colab-obs-${i}`);
+    if(n)c.nome=n.value;
+    if(s)c.status=s.value;
+    if(o)c.obs=o.value;
+  });
+  dataPresencaAtiva=data;
+  colaboradoresTemp=[];
+  renderPresencaForm();
+}
+
+function selecionarDataPresencaManual(){
+  const val=document.getElementById('pr-input-data').value;
+  if(!val)return;
+  const[y,m,d]=val.split('-');
+  selecionarDataPresenca(`${d}/${m}/${y}`);
+}
+
+async function salvarPresenca(){
+  // Collect current field values
+  colaboradoresTemp.forEach((c,i)=>{
+    const n=document.getElementById(`colab-nome-${i}`);
+    const s=document.getElementById(`colab-status-${i}`);
+    const o=document.getElementById(`colab-obs-${i}`);
+    if(n)c.nome=n.value;
+    if(s)c.status=s.value;
+    if(o)c.obs=o.value;
+  });
+  const escalados=parseInt(document.getElementById('pr-escalados')?.value)||0;
+  const presentes=parseInt(document.getElementById('pr-presentes')?.value)||0;
+  if(!escalados){alert('Informe o total de colaboradores escalados.');return;}
+  if(!dataPresencaAtiva){alert('Selecione uma data.');return;}
+  const btn=document.getElementById('pr-btn-salvar');
+  if(btn){btn.textContent='Salvando...';btn.disabled=true;}
+  const setorNomes={conf:'Confeitaria',coz:'Cozinha',emb:'Embalagem'};
+  const key=`${setorPresencaAtivo}_${dataPresencaAtiva.replace(/\//g,'-')}`;
+  const colabs=colaboradoresTemp.filter(c=>c.nome.trim());
+  try{
+    const {setDoc} = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
+    await setDoc(doc(db,'presencas',key),{
+      escalados,presentes,
+      colaboradores:colabs,
+      setor:setorNomes[setorPresencaAtivo],
+      setor_key:setorPresencaAtivo,
+      data:dataPresencaAtiva,
+      hora:agora(),
+      editadoEm:agora()
+    },{merge:true});
+    voltarPresenca();
+  }catch(e){
+    console.error(e);
+    alert('Erro ao salvar.');
+    if(btn){btn.textContent='Salvar presença ✓';btn.disabled=false;}
+  }
+}
+
+// ===== REGISTROS DE PRESENÇA =====
+function renderPresencaReg(setor){
+  const contentId=`preg-${setor}-content`;
+  const subId=`preg-${setor}-sub`;
+  const el=document.getElementById(contentId);
+  const sub=document.getElementById(subId);
+  if(!el)return;
+  const recs=sortDatas([...new Set(
+    Object.values(presencas).filter(r=>r.setor_key===setor).map(r=>r.data)
+  )]);
+  if(sub) sub.textContent=`${recs.length} dia(s) registrado(s)`;
+  if(!recs.length){el.innerHTML='<div class="empty">Nenhuma presença registrada ainda.</div>';return;}
+  const cor=setor==='coz'?'var(--mc-verde)':'var(--mc-azul)';
+  el.innerHTML=recs.map(data=>{
+    const rec=Object.values(presencas).find(r=>r.setor_key===setor&&r.data===data);
+    if(!rec)return'';
+    const faltas=(rec.colaboradores||[]).filter(c=>c.status==='Faltou').length;
+    const saidas=(rec.colaboradores||[]).filter(c=>c.status==='Saiu mais cedo').length;
+    return `<div class="reg-item" style="border-left-color:${cor};">
+      <div class="reg-header">
+        <span class="reg-produto">${data}</span>
+        <span class="reg-hora">${rec.hora}</span>
+      </div>
+      <div style="display:flex;gap:12px;margin:6px 0;">
+        <span style="font-size:13px;">👥 <strong>${rec.presentes}/${rec.escalados}</strong> presentes</span>
+        ${faltas>0?`<span style="font-size:13px;color:#c62828;">❌ ${faltas} falta(s)</span>`:''}
+        ${saidas>0?`<span style="font-size:13px;color:var(--mc-laranja);">🕐 ${saidas} saída(s)</span>`:''}
+      </div>
+      ${rec.colaboradores&&rec.colaboradores.length>0?`
+        <div style="margin-top:6px;padding-top:6px;border-top:0.5px solid var(--border);">
+          ${rec.colaboradores.map(c=>`<div style="font-size:12px;color:var(--text-secondary);padding:3px 0;">
+            <strong style="color:var(--text-primary);">${c.nome}</strong> — ${c.status==='Faltou'?'❌':'🕐'} ${c.status}${c.obs?` · ${c.obs}`:''}
+          </div>`).join('')}
+        </div>`:''}
+      ${rec.editadoEm?`<div style="font-size:11px;color:var(--mc-dourado);margin-top:4px;">✏️ Atualizado às ${rec.editadoEm}</div>`:''}
+    </div>`;
+  }).join('');
+}
+
+// ===== EXPEDIÇÃO: EDITAR PARCIAL =====
+function toggleEditParcial(fid, idx, qtdAtual){
+  const elId=`edit-parcial-${fid}-${idx}`;
+  const existing=document.getElementById(elId);
+  // close any open editors first
+  document.querySelectorAll('[id^="edit-parcial-"]').forEach(e=>{if(e.id!==elId)e.remove();});
+  if(existing){existing.remove();return;}
+  const row=document.getElementById(`parcial-row-${fid}-${idx}`);
+  if(!row)return;
+  const editDiv=document.createElement('div');
+  editDiv.id=elId;
+  editDiv.style.cssText='display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:0.5px solid var(--border);';
+  editDiv.innerHTML=`
+    <span style="font-size:12px;color:var(--text-secondary);white-space:nowrap;">Nova qtd:</span>
+    <input type="number" value="${qtdAtual}" min="1" inputmode="numeric" id="inp-parcial-${fid}-${idx}" style="width:70px;font-size:14px;padding:6px 8px;border-radius:8px;border:1px solid var(--mc-laranja);background:var(--bg-primary);color:var(--text-primary);font-family:inherit;" />
+    <button onclick="salvarEditParcial('${fid}',${idx})" style="background:var(--mc-laranja);color:white;border:none;border-radius:8px;padding:6px 12px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">OK</button>
+    <button onclick="document.getElementById('${elId}').remove()" style="background:var(--bg-secondary);border:0.5px solid var(--border-md);border-radius:8px;padding:6px 10px;font-size:13px;cursor:pointer;font-family:inherit;">✕</button>
+  `;
+  row.after(editDiv);
+}
+
+async function salvarEditParcial(fid, idx){
+  const inp=document.getElementById(`inp-parcial-${fid}-${idx}`);
+  const novaQtd=parseInt(inp.value)||0;
+  if(novaQtd<=0){alert('Informe uma quantidade válida.');return;}
+  const reg=registros.find(r=>r.firestoreId===fid);
+  if(!reg)return;
+  const exp=reg.expedicao||{parciais:[],totalLiberado:0};
+  const parciais=[...(exp.parciais||[])];
+  const qtdAntiga=parciais[idx].qtd;
+  parciais[idx]={...parciais[idx],qtd:novaQtd,editadoEm:agora()};
+  const totalLiberado=(exp.totalLiberado||0)-qtdAntiga+novaQtd;
+  const qtdEmb=reg.embalagem?.qtdEmbalada||reg.qtd;
+  await updateDoc(doc(db,'registros',fid),{expedicao:{parciais,totalLiberado:Math.min(Math.max(totalLiberado,0),qtdEmb)}});
+}
+
+// ===== EXCLUIR REGISTROS =====
+async function excluirRegistro(colecao, fid, nome){
+  if(!confirm(`Excluir "${nome}"?\nEssa ação não pode ser desfeita.`))return;
+  const {deleteDoc} = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
+  await deleteDoc(doc(db,colecao,fid));
+}
+
+// ===== ADMIN =====
+function tab(t,el){tabAtiva=t;document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));el.classList.add('active');renderAdm(t);}
+function fmt(v){return(Math.round(v*1000)/1000).toFixed(3);}
+function difBadge(d){
+  if(Math.abs(d)<0.0005)return'<span style="font-size:11px;color:var(--text-secondary);">ok</span>';
+  const s=d>0?'+':'';return`<span class="badge ${d>0?'badge-neg':'badge-pos'}">${s}${fmt(d)} kg</span>`;
+}
+function makeSelect(id,datas,selected,tab){
+  if(!datas.length) return '<div style="color:var(--text-secondary);font-size:13px;margin-bottom:10px;">Sem dados ainda.</div>';
+  const opts=datas.map(d=>`<option value="${d}" ${d===selected?'selected':''}>${d}</option>`).join('');
+  return `<div style="margin-bottom:10px;"><select id="${id}" onchange="admFiltrar('${tab}',this.value)" style="font-size:14px;">${opts}</select></div>`;
+}
+
+function renderAdm(t){
+  const h=hoje();document.getElementById('adm-sub').textContent=h;
+  const el=document.getElementById('adm-content');
+  const datasReg=sortDatas([...new Set(registros.map(r=>r.data))]);
+  const datasMassa=sortDatas([...new Set(regMassas.map(r=>r.data))]);
+  const datasRecheio=sortDatas([...new Set(regRecheios.map(r=>r.data))]);
+
+  // Store selected date per tab so filter persists
+  if(!window._admDatas) window._admDatas={};
+  const df = window._admDatas[t] || h;
+
+
+
+  if(t==='resumo'){
+    const rH=registros.filter(r=>r.data===h);
+    const mH=regMassas.filter(r=>r.data===h);
+    const rhH=regRecheios.filter(r=>r.data===h);
+    const tQ=rH.reduce((s,r)=>s+r.qtd,0);
+    const tMkg=mH.reduce((s,r)=>s+r.qtdKg,0);
+    const tRkg=rhH.reduce((s,r)=>s+r.qtdKg,0);
+    const embF=rH.filter(r=>r.embalagem&&r.embalagem.feito).length;
+    const embPct=rH.length?Math.round(embF/rH.length*100):0;
+    const expF=rH.filter(r=>{const exp=r.expedicao||{totalLiberado:0};return exp.totalLiberado>=(r.embalagem?.qtdEmbalada||r.qtd)&&r.embalagem?.feito;}).length;
+    const expTotal=rH.filter(r=>r.embalagem&&r.embalagem.feito).length;
+    const expPct=expTotal?Math.round(expF/expTotal*100):0;
+    el.innerHTML=`
+      <div style="font-size:11px;font-weight:600;color:var(--mc-dourado);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:10px;">Resumo de hoje — ${h}</div>
+      <div class="metric-grid">
+        <div class="metric-card"><div class="metric-num">${tQ}</div><div class="metric-lbl">Unidades produzidas</div></div>
+        <div class="metric-card"><div class="metric-num">${embPct}%</div><div class="metric-lbl">Embalagem concluída</div></div>
+        <div class="metric-card laranja"><div class="metric-num">${expPct}%</div><div class="metric-lbl">Expedição concluída</div></div>
+        <div class="metric-card verde"><div class="metric-num">${tMkg.toFixed(1)} kg</div><div class="metric-lbl">Massas produzidas</div></div>
+        <div class="metric-card roxo"><div class="metric-num">${tRkg.toFixed(1)} kg</div><div class="metric-lbl">Recheios produzidos</div></div>
+        <div class="metric-card"><div class="metric-num">${rH.filter(r=>!r.confirmado).length}</div><div class="metric-lbl">Lançamentos pendentes</div></div>
+      </div>
+      <div class="card">
+        <div style="font-size:13px;font-weight:600;color:var(--mc-azul);margin-bottom:10px;">Confirmar lançamentos</div>
+        ${!rH.length?'<div style="color:var(--text-secondary);font-size:13px;">Nenhum registro hoje.</div>':
+          rH.map(r=>`<div class="confirm-row">
+            <div class="confirm-check ${r.confirmado?'chk':''}" onclick="toggleConf('${r.firestoreId}',${!r.confirmado})">${r.confirmado?'✓':''}</div>
+            <div style="flex:1;"><div style="font-size:13px;font-weight:600;">${r.produto}</div><div style="font-size:11px;color:var(--text-secondary);">${r.qtd} un · ${r.hora}</div></div>
+            <span class="badge ${r.confirmado?'badge-ok':'badge-pend'}">${r.confirmado?'ok':'pendente'}</span>
+          </div>`).join('')}
+      </div>`;
+  }
+  else if(t==='massas'){
+    el.innerHTML = makeSelect('sel-massa-adm', datasMassa, df, 'massas');
+    if(!regMassas.length){el.innerHTML+='<div class="empty">Nenhuma massa lançada ainda.</div>';return;}
+    const filt=regMassas.filter(r=>r.data===df);
+    const agrup={};filt.forEach(r=>{if(!agrup[r.massa])agrup[r.massa]=0;agrup[r.massa]+=r.qtdKg;});
+    const sorted=Object.entries(agrup).sort((a,b)=>b[1]-a[1]);
+    const totalKg=filt.reduce((s,r)=>s+r.qtdKg,0);
+    el.innerHTML+=`
+      <div class="card" style="margin-bottom:10px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+          <div style="font-size:13px;font-weight:600;color:var(--mc-azul);">Total de massas</div>
+          <div style="font-size:18px;font-weight:700;color:var(--mc-azul);">${totalKg.toFixed(1)} kg</div>
+        </div>
+        ${sorted.map(([n,v])=>`<div class="resumo-row"><span class="resumo-nome">${n}</span><span class="resumo-val">${v.toFixed(3)} kg</span></div>`).join('')}
+        ${!sorted.length?'<div style="color:var(--text-secondary);font-size:13px;">Sem lançamentos nesta data.</div>':''}
+      </div>
+      <div class="section-divider">Lançamentos detalhados</div>
+      ${filt.map(r=>`<div class="reg-item"><div class="reg-header"><span class="reg-produto">${r.massa}</span><span class="reg-hora">${r.hora}</span></div>
+        <div class="reg-detalhe">${r.qtdKg} kg${r.obs?` · <em>${r.obs}</em>`:''}</div></div>`).join('')}`;
+  }
+  else if(t==='recheios'){
+    el.innerHTML = makeSelect('sel-recheio-adm', datasRecheio, df, 'recheios');
+    if(!regRecheios.length){el.innerHTML+='<div class="empty">Nenhum recheio lançado ainda.</div>';return;}
+    const filt=regRecheios.filter(r=>r.data===df);
+    const agrup={};filt.forEach(r=>{if(!agrup[r.recheio])agrup[r.recheio]=0;agrup[r.recheio]+=r.qtdKg;});
+    const sorted=Object.entries(agrup).sort((a,b)=>b[1]-a[1]);
+    const totalKg=filt.reduce((s,r)=>s+r.qtdKg,0);
+    el.innerHTML+=`
+      <div class="card" style="margin-bottom:10px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+          <div style="font-size:13px;font-weight:600;color:var(--mc-roxo);">Total de recheios</div>
+          <div style="font-size:18px;font-weight:700;color:var(--mc-roxo);">${totalKg.toFixed(1)} kg</div>
+        </div>
+        ${sorted.map(([n,v])=>`<div class="resumo-row"><span class="resumo-nome">${n}</span><span class="resumo-val roxo">${v.toFixed(3)} kg</span></div>`).join('')}
+        ${!sorted.length?'<div style="color:var(--text-secondary);font-size:13px;">Sem lançamentos nesta data.</div>':''}
+      </div>
+      <div class="section-divider">Lançamentos detalhados</div>
+      ${filt.map(r=>`<div class="reg-item verde"><div class="reg-header"><span class="reg-produto">${r.recheio}</span><span class="reg-hora">${r.hora}</span></div>
+        <div class="reg-detalhe">${r.qtdKg} kg${r.obs?` · <em>${r.obs}</em>`:''}</div></div>`).join('')}`;
+  }
+  else if(t==='embalagem'){
+    if(!registros.length){el.innerHTML='<div class="empty">Nenhum registro ainda.</div>';return;}
+    el.innerHTML = makeSelect('sel-emb-adm', datasReg, df, 'embalagem');
+    const filt=registros.filter(r=>r.data===df);
+    const total=filt.length,feitos=filt.filter(r=>r.embalagem&&r.embalagem.feito).length;
+    const pct=total?Math.round(feitos/total*100):0;
+    el.innerHTML+=`
+      <div class="card" style="margin-bottom:10px;">
+        <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+          <div style="font-size:13px;font-weight:600;color:var(--mc-azul);">Progresso de embalagem</div>
+          <div style="font-size:20px;font-weight:700;color:var(--mc-dourado);">${pct}%</div>
+        </div>
+        <div class="progresso-bar-wrap"><div class="progresso-bar" style="width:${pct}%;background:var(--mc-dourado);"></div></div>
+        <div style="font-size:12px;color:var(--text-secondary);margin-top:4px;">${feitos} de ${total} produto(s)</div>
+      </div>
+      ${!filt.length?'<div class="empty">Sem registros.</div>':
+        filt.map(r=>{
+          const emb=r.embalagem||{qtdEmbalada:0,feito:false};const diff=emb.feito?(emb.qtdEmbalada-r.qtd):null;
+          const eb=emb.feito?(diff<0?`<span class="badge badge-parcial">parcial (${emb.qtdEmbalada}/${r.qtd})</span>`:'<span class="badge badge-emb">embalado ✓</span>'):'<span class="badge badge-pend">pendente</span>';
+          return `<div class="reg-item"><div class="reg-header"><span class="reg-produto">${r.produto}</span>${eb}</div>
+            <div class="reg-detalhe" style="margin-top:4px;">Produzido: <strong>${r.qtd} un</strong>${emb.feito?` · Embalado: <strong>${emb.qtdEmbalada} un</strong>`:''}${emb.feito&&diff!==0?` <span style="color:${diff<0?'#c62828':'#2e7d32'};font-size:11px;">(${diff>0?'+':''}${diff} un)</span>`:''}</div></div>`;
+        }).join('')}`;
+  }
+  else if(t==='expedicao'){
+    if(!registros.length){el.innerHTML='<div class="empty">Nenhum registro ainda.</div>';return;}
+    el.innerHTML = makeSelect('sel-exp-adm', datasReg, df, 'expedicao');
+    const filt=registros.filter(r=>r.data===df&&r.embalagem&&r.embalagem.feito);
+    const total=filt.length;
+    const completos=filt.filter(r=>{const exp=r.expedicao||{totalLiberado:0};return exp.totalLiberado>=(r.embalagem.qtdEmbalada||r.qtd);}).length;
+    const pct=total?Math.round(completos/total*100):0;
+    el.innerHTML+=`
+      <div class="card" style="margin-bottom:10px;">
+        <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+          <div style="font-size:13px;font-weight:600;color:var(--mc-laranja);">Progresso de expedição</div>
+          <div style="font-size:20px;font-weight:700;color:var(--mc-laranja);">${pct}%</div>
+        </div>
+        <div class="progresso-bar-wrap"><div class="progresso-bar" style="width:${pct}%;background:var(--mc-laranja);"></div></div>
+        <div style="font-size:12px;color:var(--text-secondary);margin-top:4px;">${completos} de ${total} produto(s) totalmente liberados</div>
+      </div>
+      ${!filt.length?'<div class="empty">Sem produtos embalados nesta data.</div>':
+        filt.map(r=>{
+          const exp=r.expedicao||{parciais:[],totalLiberado:0};
+          const qtdEmb=r.embalagem.qtdEmbalada||r.qtd;
+          const totalLib=exp.totalLiberado||0;
+          const concluido=totalLib>=qtdEmb;
+          const eb=concluido?'<span class="badge badge-exp">liberado ✓</span>':totalLib>0?`<span class="badge badge-parcial">parcial (${totalLib}/${qtdEmb})</span>`:'<span class="badge badge-pend">pendente</span>';
+          return `<div class="reg-item laranja"><div class="reg-header"><span class="reg-produto">${r.produto}</span>${eb}</div>
+            <div class="reg-detalhe" style="margin-top:4px;">Embalado: <strong>${qtdEmb} un</strong> · Liberado: <strong style="color:${concluido?'#4caf50':'var(--mc-laranja)'};">${totalLib} un</strong>${!concluido?` · Restante: <strong>${qtdEmb-totalLib}</strong>`:''}
+            ${exp.parciais&&exp.parciais.length>0?`<br>${exp.parciais.map(p=>`<span style="margin-right:8px;">${p.hora}: +${p.qtd} un</span>`).join('')}`:''}
+            </div></div>`;
+        }).join('')}`;
+  }
+  else if(t==='producao'){
+    if(!registros.length){el.innerHTML='<div class="empty">Nenhum registro ainda.</div>';return;}
+    el.innerHTML = makeSelect('sel-prod-adm', datasReg, df, 'producao');
+    const filt=registros.filter(r=>r.data===df);
+    el.innerHTML+=!filt.length?'<div class="empty">Sem registros.</div>':
+      filt.map(r=>`<div class="reg-item"><div class="reg-header"><span class="reg-produto">${r.produto}</span><span class="badge ${r.confirmado?'badge-ok':'badge-pend'}">${r.confirmado?'ok':'pend.'}</span></div>
+        <div class="reg-detalhe" style="margin-top:5px;">${r.hora} · <strong>${r.qtd}</strong> un<br>
+          Massa: <strong>${r.massa} kg</strong> | Esp: ${fmt(r.quebra.massaEsp)} kg | ${difBadge(r.quebra.difMassa)}
+          ${r.r1>0?`<br>R1: <strong>${r.r1} kg</strong> | Esp: ${fmt(r.quebra.r1Esp)} kg | ${difBadge(r.quebra.difR1)}`:''}
+          ${r.obs?`<br><em>${r.obs}</em>`:''}
+        </div></div>`).join('');
+  }
+  else if(t==='quebras'){
+    if(!registros.length){el.innerHTML='<div class="empty">Nenhum registro ainda.</div>';return;}
+    el.innerHTML = makeSelect('sel-qb-adm', datasReg, df, 'quebras');
+    const filt=registros.filter(r=>r.data===df);
+    el.innerHTML+=!filt.length?'<div class="empty">Sem registros.</div>':
+      filt.map(r=>`<div class="reg-item"><div class="reg-header"><span class="reg-produto">${r.produto}</span><span style="font-size:11px;color:var(--text-secondary);">${r.hora}</span></div>
+        <div style="font-size:12px;color:var(--text-secondary);margin-bottom:6px;">${r.qtd} unidades</div>
+        <table class="quebra-table">
+          <tr><th>Ingrediente</th><th>Esperado</th><th>Real</th><th>Quebra</th></tr>
+          <tr><td>${r.prodData.tipoMassa||'Massa'}</td><td>${fmt(r.quebra.massaEsp)} kg</td><td>${fmt(r.quebra.massaReal)} kg</td><td>${difBadge(r.quebra.difMassa)}</td></tr>
+          ${r.r1>0?`<tr><td>${r.prodData.tipoRecheio}</td><td>${fmt(r.quebra.r1Esp)} kg</td><td>${fmt(r.quebra.r1Real)} kg</td><td>${difBadge(r.quebra.difR1)}</td></tr>`:''}
+          ${r.r2>0?`<tr><td>${r.prodData.tipoRecheio2}</td><td>${fmt(r.quebra.r2Esp)} kg</td><td>${fmt(r.quebra.r2Real)} kg</td><td>${difBadge(r.quebra.difR2)}</td></tr>`:''}
+        </table></div>`).join('');
+  }
+
+  else if(t==='presenca'){
+    const datasP=sortDatas([...new Set(Object.values(presencas).map(r=>r.data))]);
+    const dfP=window._admDatas&&window._admDatas['presenca']||(datasP[0]||hoje());
+    el.innerHTML=makeSelect('sel-presenca-adm',datasP,dfP,'presenca');
+    if(!datasP.length){el.innerHTML+='<div class="empty">Nenhuma presença registrada ainda.</div>';return;}
+    const setores=['Confeitaria','Cozinha','Embalagem'];
+    const filtP=Object.values(presencas).filter(r=>r.data===dfP).sort((a,b)=>(a.setor||'').localeCompare(b.setor||''));
+    el.innerHTML+=`
+      <div class="metric-grid" style="margin-top:4px;">
+        ${filtP.map(r=>`
+          <div class="metric-card" style="grid-column:span 2;">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <div style="font-size:14px;font-weight:600;color:white;">${r.setor}</div>
+              <div style="font-size:12px;color:rgba(255,255,255,0.7);">${r.hora}</div>
+            </div>
+            <div style="font-size:22px;font-weight:700;color:white;margin-top:6px;">${r.presentes}<span style="font-size:14px;font-weight:400;opacity:0.7;">/${r.escalados} presentes</span></div>
+            ${r.presentes<r.escalados?`<div style="font-size:12px;color:#fbbf24;margin-top:4px;">⚠️ ${r.escalados-r.presentes} falta(s)</div>`:''}
+            ${r.obs?`<div style="font-size:12px;color:rgba(255,255,255,0.7);margin-top:4px;">${r.obs}</div>`:''}
+          </div>`).join('')}
+        ${setores.filter(s=>!filtP.find(r=>r.setor===s)).map(s=>`
+          <div class="metric-card" style="grid-column:span 2;opacity:0.5;">
+            <div style="font-size:14px;font-weight:600;color:white;">${s}</div>
+            <div style="font-size:13px;color:rgba(255,255,255,0.6);margin-top:4px;">Sem registro nesta data</div>
+          </div>`).join('')}
+      </div>`;
+  }
+  else if(t==='exportar'){
+    el.innerHTML=`
+      <div class="card">
+        <div style="font-size:14px;font-weight:600;color:var(--mc-roxo);margin-bottom:12px;">Exportar dados para Excel</div>
+        <div class="card-label">Período</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">
+          <div>
+            <div style="font-size:11px;color:var(--text-secondary);margin-bottom:4px;">Data inicial</div>
+            <input type="date" id="exp-inicio" style="font-size:14px;padding:10px;" />
+          </div>
+          <div>
+            <div style="font-size:11px;color:var(--text-secondary);margin-bottom:4px;">Data final</div>
+            <input type="date" id="exp-fim" style="font-size:14px;padding:10px;" />
+          </div>
+        </div>
+        <button class="btn" style="background:var(--mc-roxo);color:white;margin-bottom:8px;" onclick="gerarExcel()">📥 Baixar Excel</button>
+        <div style="font-size:12px;color:var(--text-secondary);margin-top:6px;">A planilha terá abas separadas por setor: Produção, Massas, Recheios, Embalagem, Expedição e Presença.</div>
+      </div>`;
+    // Set default dates: last 30 days
+    const hoje2=new Date();const inicio=new Date();inicio.setDate(hoje2.getDate()-30);
+    document.getElementById('exp-inicio').value=inicio.toISOString().split('T')[0];
+    document.getElementById('exp-fim').value=hoje2.toISOString().split('T')[0];
+  }
+}
+
+async function gerarExcel(){
+  const btn=event.target;
+  btn.textContent='Gerando...';btn.disabled=true;
+  try{
+    const inicioVal=document.getElementById('exp-inicio').value;
+    const fimVal=document.getElementById('exp-fim').value;
+    if(!inicioVal||!fimVal){alert('Selecione o período.');btn.textContent='📥 Baixar Excel';btn.disabled=false;return;}
+    // Convert dd/mm/yyyy filter
+    const dtIni=new Date(inicioVal+'T00:00:00');
+    const dtFim=new Date(fimVal+'T23:59:59');
+    function inRange(dataStr){
+      if(!dataStr)return false;
+      const parts=dataStr.split('/');
+      if(parts.length!==3)return false;
+      const d=new Date(`${parts[2]}-${parts[1]}-${parts[0]}T12:00:00`);
+      return d>=dtIni&&d<=dtFim;
+    }
+
+    // Load SheetJS
+    await new Promise((res,rej)=>{
+      if(window.XLSX){res();return;}
+      const s=document.createElement('script');
+      s.src='https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';
+      s.onload=res;s.onerror=rej;
+      document.head.appendChild(s);
+    });
+
+    const wb=XLSX.utils.book_new();
+
+    // ABA 1: PRODUÇÃO
+    const prod=registros.filter(r=>inRange(r.data));
+    const prodRows=[['Data','Hora','Produto','Qtd Produzida','Massa Usada (kg)','Massa Esperada (kg)','Quebra Massa (kg)','Recheio 1 (kg)','Recheio 2 (kg)','Qtd Embalada','Qtd Expedida','Confirmado','Observação','Editado em']];
+    prod.forEach(r=>{
+      const emb=r.embalagem||{};
+      const exp=r.expedicao||{totalLiberado:0};
+      prodRows.push([r.data,r.hora,r.produto,r.qtd,r.massa,(r.quebra?.massaEsp||0).toFixed(3),(r.quebra?.difMassa||0).toFixed(3),r.r1||0,r.r2||0,emb.qtdEmbalada||0,exp.totalLiberado||0,r.confirmado?'Sim':'Não',r.obs||'',r.editadoEm||'']);
+    });
+    XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(prodRows),'Produção');
+
+    // ABA 2: MASSAS
+    const mass=regMassas.filter(r=>inRange(r.data));
+    const massRows=[['Data','Hora','Tipo de Massa','Quantidade (kg)','Observação','Editado em']];
+    mass.forEach(r=>massRows.push([r.data,r.hora,r.massa,r.qtdKg,r.obs||'',r.editadoEm||'']));
+    XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(massRows),'Massas');
+
+    // ABA 3: RECHEIOS
+    const rech=regRecheios.filter(r=>inRange(r.data));
+    const rechRows=[['Data','Hora','Tipo de Recheio','Quantidade (kg)','Observação','Editado em']];
+    rech.forEach(r=>rechRows.push([r.data,r.hora,r.recheio,r.qtdKg,r.obs||'',r.editadoEm||'']));
+    XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(rechRows),'Recheios');
+
+    // ABA 4: EMBALAGEM
+    const embRows=[['Data','Hora','Produto','Qtd Produzida','Qtd Embalada','Diferença','Status']];
+    prod.forEach(r=>{
+      const emb=r.embalagem||{};
+      const diff=(emb.qtdEmbalada||0)-r.qtd;
+      embRows.push([r.data,r.hora,r.produto,r.qtd,emb.qtdEmbalada||0,diff,emb.feito?'Embalado':'Pendente']);
+    });
+    XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(embRows),'Embalagem');
+
+    // ABA 5: EXPEDIÇÃO
+    const expRows=[['Data','Hora','Produto','Qtd Embalada','Total Liberado','Restante','Liberações Parciais','Status']];
+    prod.filter(r=>r.embalagem?.feito).forEach(r=>{
+      const exp=r.expedicao||{parciais:[],totalLiberado:0};
+      const qtdEmb=r.embalagem?.qtdEmbalada||r.qtd;
+      const parcStr=(exp.parciais||[]).map(p=>`${p.hora}: +${p.qtd}`).join(' | ');
+      expRows.push([r.data,r.hora,r.produto,qtdEmb,exp.totalLiberado||0,qtdEmb-(exp.totalLiberado||0),parcStr,exp.totalLiberado>=qtdEmb?'Liberado':'Pendente']);
+    });
+    XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(expRows),'Expedição');
+
+    // ABA 6: PRESENÇA
+    const presRows=[['Data','Hora','Setor','Escalados','Presentes','Faltas','Observações']];
+    Object.values(presencas).filter(r=>inRange(r.data)).sort((a,b)=>a.data.localeCompare(b.data)).forEach(r=>{
+      presRows.push([r.data,r.hora,r.setor,r.escalados,r.presentes,(r.escalados-r.presentes),r.obs||'']);
+    });
+    XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(presRows),'Presença');
+
+    // ABA 7: CONTAGEM
+    const contRows=[['Data','Hora','Grupo','Código','Produto','Total Contado','Lançamentos Parciais']];
+    contagens.filter(c=>inRange(c.data)).forEach(c=>{
+      Object.entries(c.itens||{}).forEach(([cod,reg])=>{
+        const parcStr=(reg.parciais||[]).map(p=>`${p.hora}: +${p.qtd}`).join(' | ');
+        contRows.push([c.data,c.hora,c.grupo,cod,reg.nome,reg.total,parcStr]);
+      });
+    });
+    XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(contRows),'Contagem');
+
+    // Download
+    const fileName=`MonteCastelo_${inicioVal}_${fimVal}.xlsx`;
+    XLSX.writeFile(wb,fileName);
+  }catch(e){console.error(e);alert('Erro ao gerar Excel.');}
+  btn.textContent='📥 Baixar Excel';btn.disabled=false;
+}
+
+
+
+function admFiltrar(tab, data){
+  if(!window._admDatas) window._admDatas={};
+  window._admDatas[tab] = data;
+  renderAdm(tab);
+}
+
+async function toggleConf(fid,val){await updateDoc(doc(db,'registros',fid),{confirmado:val});}
+
+
+// Admin mode: navigates any area without PIN, with back to hub
+window.adminMode = false;
+let adminMode = false;
+function goToAdmin(id) {
+  adminMode = true;
+  window.adminMode = true;
+  goTo(id);
+}
+function sairAdmin() {
+  adminMode = false;
+  window.adminMode = false;
+  goTo('s-inicio');
+}
+// Override back buttons for admin: return to hub instead of splash/home
+function backFromArea(defaultScreen) {
+  if (adminMode) { goTo('s-adm-hub'); } else { goTo(defaultScreen); }
+}
+
+window.goTo=goTo; window.abrirPin=abrirPin; window.pinDigit=pinDigit; window.pinDel=pinDel;
+window.iniciarNovoReg=iniciarNovoReg; window.toggleManual=toggleManual;
+window.selecionarDataTipo=selecionarDataTipo; window.selecionarDataManual=selecionarDataManual;
+window.irParaProduto=irParaProduto; window.filtrar=filtrar; window.selProd=selProd;
+window.irQtd=irQtd; window.calcPrev=calcPrev; window.salvar=salvar;
+window.irParaMassa=irParaMassa; window.selMassa=selMassa; window.salvarMassa=salvarMassa;
+window.irParaRecheio=irParaRecheio; window.selRecheio=selRecheio; window.salvarRecheio=salvarRecheio;
+window.selecionarDataEmb=selecionarDataEmb; window.irParaEmbalagem=irParaEmbalagem;
+window.toggleEmb=toggleEmb; window.toggleAjuste=toggleAjuste; window.confirmarAjuste=confirmarAjuste;
+window.selecionarDataExp=selecionarDataExp; window.irParaExpedicao=irParaExpedicao;
+window.adicionarLiberacao=adicionarLiberacao;
+window.tab=tab; window.toggleConf=toggleConf; window.admFiltrar=admFiltrar; window.toggleEditProd=toggleEditProd; window.salvarEditProd=salvarEditProd; window.toggleEditRecheio=toggleEditRecheio; window.salvarEditRecheio=salvarEditRecheio; window.renderMeusReg=renderMeusReg; window.renderCozReg=renderCozReg; window.abrirPresenca=abrirPresenca; window.salvarPresenca=salvarPresenca; window.voltarPresenca=voltarPresenca; window.renderPresencaForm=renderPresencaForm; window.selecionarDataPresenca=selecionarDataPresenca; window.selecionarDataPresencaManual=selecionarDataPresencaManual; window.adicionarColaborador=adicionarColaborador; window.removerColab=removerColab; window.updateColab=updateColab; window.renderPresencaReg=renderPresencaReg; window.abrirContagem=abrirContagem; window.adicionarContagem=adicionarContagem; window.editarUltimoParcial=editarUltimoParcial; window.renderContagemHist=renderContagemHist; window.verDetalheContagem=verDetalheContagem; window.renderContagemLanc=renderContagemLanc; window.toggleEditParcial=toggleEditParcial; window.salvarEditParcial=salvarEditParcial; window.excluirRegistro=excluirRegistro; window.gerarExcel=gerarExcel; window.renderPresencaForm=renderPresencaForm; window.goToAdmin=goToAdmin; window.sairAdmin=sairAdmin; window.backFromArea=backFromArea;
+</script>
+</body>
+</html>
