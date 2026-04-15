@@ -339,7 +339,14 @@
         <div style="flex:1;"><div class="hb-title">Produção de Massas</div><div class="hb-desc">Registrar kg de massa produzido</div></div>
         <span style="color:var(--text-secondary);font-size:20px;">›</span>
       </button>
-      <button class="btn btn-secondary" style="margin-top:4px;" onclick="goTo('s-meus-reg')">Ver registros de produção</button>
+      <button class="btn btn-secondary" style="margin-top:4px;margin-bottom:12px;" onclick="goTo('s-meus-reg')">Ver registros de produção</button>
+      <div class="section-divider">Equipe</div>
+      <button class="home-btn azul" onclick="abrirPresenca('conf')">
+        <div class="hb-icon" style="background:#e8eaff;">👥</div>
+        <div style="flex:1;"><div class="hb-title">Registro de Presença</div><div class="hb-desc" id="presenca-conf-status">Registrar equipe do dia</div></div>
+        <span style="color:var(--text-secondary);font-size:20px;">›</span>
+      </button>
+      <button class="btn btn-secondary" style="margin-top:4px;" onclick="goTo('s-presenca-reg-conf')">Ver registros de presença</button>
     </div>
   </div>
 
