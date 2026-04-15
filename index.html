@@ -872,6 +872,8 @@ function atualizarTela(){
   if(tela==='s-meus-reg') renderMeusReg();
   if(tela==='s-coz-reg') renderCozReg();
   if(tela==='s-adm') renderAdm(tabAtiva);
+  if(tela==='s-contagem-home') renderContagemHome();
+  if(tela==='s-contagem-hist') renderContagemHist();
 }
 
 function hoje(){return new Date().toLocaleDateString('pt-BR');}
@@ -939,9 +941,7 @@ function goTo(id){
   if(tela==='s-contagem-hist') renderContagemHist();
   if(id==='s-presenca-form') renderPresencaForm();
   if(id==='s-presenca-reg-conf') renderPresencaReg('conf');
-  if(id==='s-contagem-home') renderContagemHome();
-  if(id==='s-contagem-lanc') renderContagemLanc();
-  if(id==='s-contagem-hist') renderContagemHist();
+
   if(id==='s-presenca-reg-coz') renderPresencaReg('coz');
   if(id==='s-presenca-reg-emb') renderPresencaReg('emb');
 }
@@ -2127,6 +2127,185 @@ function backFromArea(defaultScreen) {
   if (adminMode) { goTo('s-adm-hub'); } else { goTo(defaultScreen); }
 }
 
+
+// ===== CONTAGEM =====
+let contagemAtual = {};
+let contagemGrupoAtivo = '';
+let contagemSrch = '';
+let contagens = [];
+
+onSnapshot(query(collection(db,'contagens'),orderBy('timestamp','desc')), snap=>{
+  try{
+    contagens=snap.docs.map(d=>({firestoreId:d.id,...d.data()}));
+    atualizarTela();
+  }catch(e){ console.error('contagens snap:',e); }
+}, err=>{ console.error('contagens err:',err); });
+
+function renderContagemHome(){
+  document.getElementById('cont-date').textContent=hoje();
+  document.getElementById('cont-total').textContent=contagens.length;
+  const grupos=['Materia Prima','Produto Acabado','Plastico','Kits Confeitaria','Kits Quadra'];
+  grupos.forEach(g=>{
+    const el=document.getElementById('cont-badge-'+g);
+    if(!el)return;
+    const qtdItens=CONTAGEM_ITENS[g]?.length||0;
+    const recHoje=contagens.find(c=>c.grupo===g&&c.data===hoje());
+    if(recHoje){
+      const contados=Object.keys(recHoje.itens||{}).length;
+      el.textContent='Hoje: '+contados+'/'+qtdItens+' contados';
+    } else {
+      el.textContent=qtdItens+' itens';
+    }
+  });
+}
+
+function grupoNome(g){
+  const map={'Materia Prima':'Matéria Prima','Produto Acabado':'Produto Acabado','Plastico':'Plásticos','Kits Confeitaria':'Kits Confeitaria','Kits Quadra':'Kits Quadra'};
+  return map[g]||g;
+}
+
+function abrirContagem(grupo){
+  contagemGrupoAtivo=grupo;
+  contagemSrch='';
+  const hoje2=hoje();
+  const recExist=contagens.find(c=>c.grupo===grupo&&c.data===hoje2);
+  if(recExist){
+    contagemAtual={grupo,data:hoje2,firestoreId:recExist.firestoreId,itens:JSON.parse(JSON.stringify(recExist.itens||{}))};
+  } else {
+    contagemAtual={grupo,data:hoje2,firestoreId:null,itens:{}};
+  }
+  document.getElementById('cont-lanc-title').textContent=grupoNome(grupo);
+  renderContagemLanc();
+  goTo('s-contagem-lanc');
+}
+
+function renderContagemLanc(){
+  const itens=CONTAGEM_ITENS[contagemGrupoAtivo]||[];
+  const q=contagemSrch.toLowerCase();
+  const filtrados=q?itens.filter(i=>i.nome.toLowerCase().includes(q)||i.cod.includes(q)):itens;
+  const contados=Object.keys(contagemAtual.itens||{}).length;
+  const el=document.getElementById('cont-lanc-content');
+  if(!el)return;
+  document.getElementById('cont-lanc-sub').textContent=contados+'/'+itens.length+' contados · '+contagemAtual.data;
+  const pct=itens.length?Math.round(contados/itens.length*100):0;
+
+  let html=`<div class="card" style="margin-bottom:10px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+      <div style="font-size:13px;font-weight:600;color:#0891b2;">Progresso</div>
+      <div style="font-size:16px;font-weight:700;color:#0891b2;">${pct}%</div>
+    </div>
+    <div class="progresso-bar-wrap"><div class="progresso-bar" style="width:${pct}%;background:#0891b2;"></div></div>
+    <div style="font-size:12px;color:var(--text-secondary);margin-top:4px;">${contados} de ${itens.length} itens contados</div>
+  </div>
+  <div class="card" style="padding:10px;margin-bottom:10px;">
+    <input type="text" placeholder="Buscar produto..." value="${contagemSrch}"
+      oninput="contagemSrch=this.value;renderContagemLanc()"
+      style="font-size:15px;padding:10px;border-radius:10px;border:1px solid #0891b2;width:100%;font-family:inherit;background:var(--bg-primary);color:var(--text-primary);" autocomplete="off" />
+  </div>`;
+
+  filtrados.forEach(function(item){
+    const reg=contagemAtual.itens[item.cod];
+    const total=reg?reg.total:0;
+    const parciais=reg?reg.parciais:[];
+    const contado=total>0;
+    const codEsc=item.cod.replace(/'/g,"\'");
+    const nomeEsc=item.nome.replace(/'/g,"\'").replace(/"/g,'&quot;');
+    html+=`<div class="emb-item ${contado?'done':''}" style="${contado?'border-left-color:#0891b2;':''}">
+      <div class="emb-item-header">
+        <div class="emb-check-btn ${contado?'done':''}" style="${contado?'background:#0891b2;border-color:#0891b2;':''}">${contado?'✓':''}</div>
+        <div class="emb-item-info">
+          <div class="emb-item-nome">${item.nome}</div>
+          <div class="emb-item-qtd">Cód: ${item.cod}${contado?' · Total: <strong>'+total+'</strong>':' · Não contado'}</div>
+        </div>
+      </div>`;
+    if(parciais.length>0){
+      html+=`<div style="margin-top:6px;padding-top:6px;border-top:0.5px solid var(--border);font-size:12px;color:var(--text-secondary);">`;
+      parciais.forEach(function(p,i){
+        html+=`<span style="margin-right:10px;">${p.hora}: +${p.qtd}</span>`;
+      });
+      html+=`</div>`;
+    }
+    html+=`<div style="display:flex;align-items:center;gap:8px;margin-top:8px;">
+      <input type="number" id="cnt-inp-${item.cod}" placeholder="${contado?'+ somar':'Qtd'}" min="0" inputmode="numeric"
+        style="flex:1;font-size:15px;padding:8px;border-radius:8px;border:1px solid #0891b2;background:var(--bg-primary);color:var(--text-primary);font-family:inherit;" />
+      <button onclick="adicionarContagem('${codEsc}','${nomeEsc}')"
+        style="background:#0891b2;color:white;border:none;border-radius:8px;padding:8px 14px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;">${contado?'+ Somar':'Confirmar'}</button>
+    </div>
+    </div>`;
+  });
+
+  el.innerHTML=html;
+}
+
+async function adicionarContagem(cod, nome){
+  const inp=document.getElementById('cnt-inp-'+cod);
+  if(!inp){return;}
+  const val=parseInt(inp.value)||0;
+  if(val<=0){alert('Informe uma quantidade válida.');return;}
+  if(!contagemAtual.itens) contagemAtual.itens={};
+  const reg=contagemAtual.itens[cod]||{nome:nome,parciais:[],total:0};
+  reg.parciais.push({qtd:val,hora:agora()});
+  reg.total=(reg.total||0)+val;
+  reg.nome=nome;
+  contagemAtual.itens[cod]=reg;
+  try{
+    const {setDoc} = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
+    if(contagemAtual.firestoreId){
+      await updateDoc(doc(db,'contagens',contagemAtual.firestoreId),{
+        itens:contagemAtual.itens,editadoEm:agora()
+      });
+    } else {
+      const ref=doc(collection(db,'contagens'));
+      await setDoc(ref,{
+        grupo:contagemAtual.grupo,data:contagemAtual.data,
+        itens:contagemAtual.itens,hora:agora(),timestamp:Date.now()
+      });
+      contagemAtual.firestoreId=ref.id;
+    }
+    inp.value='';
+    renderContagemLanc();
+  }catch(e){alert('Erro ao salvar.');console.error(e);}
+}
+
+function renderContagemHist(){
+  const el=document.getElementById('cont-hist-content');
+  const sub=document.getElementById('cont-hist-sub');
+  if(sub)sub.textContent=contagens.length+' contagem(ns) salva(s)';
+  if(!contagens.length){el.innerHTML='<div class="empty">Nenhuma contagem realizada ainda.</div>';return;}
+  const porData={};
+  contagens.forEach(function(c){if(!porData[c.data])porData[c.data]=[];porData[c.data].push(c);});
+  const datasOrd=sortDatas(Object.keys(porData));
+  el.innerHTML=datasOrd.map(function(data){
+    const regs=porData[data];
+    return '<div class="section-divider">'+data+'</div>'+regs.map(function(c){
+      const contados=Object.keys(c.itens||{}).length;
+      const total=CONTAGEM_ITENS[c.grupo]?.length||0;
+      return '<div class="reg-item" style="border-left-color:#0891b2;">'+
+        '<div class="reg-header"><span class="reg-produto">'+grupoNome(c.grupo)+'</span><span class="reg-hora">'+c.hora+'</span></div>'+
+        '<div style="font-size:12px;color:var(--text-secondary);margin-top:4px;">'+contados+' de '+total+' itens contados</div>'+
+        '<button onclick="verDetalheContagem(this.dataset.fid)" data-fid="'+c.firestoreId+'" style="margin-top:8px;background:none;border:1px solid #0891b2;color:#0891b2;font-size:12px;padding:5px 12px;border-radius:8px;cursor:pointer;font-family:inherit;">Ver detalhes</button>'+
+        '</div>';
+    }).join('');
+  }).join('');
+}
+
+function verDetalheContagem(fid){
+  const c=contagens.find(function(x){return x.firestoreId===fid;});
+  if(!c)return;
+  const el=document.getElementById('cont-hist-content');
+  const itensArr=Object.entries(c.itens||{});
+  el.innerHTML='<button onclick="renderContagemHist()" style="background:none;border:1px solid #0891b2;color:#0891b2;font-size:13px;padding:7px 14px;border-radius:8px;cursor:pointer;font-family:inherit;margin-bottom:12px;">← Voltar</button>'+
+    '<div style="font-size:14px;font-weight:600;color:#0891b2;margin-bottom:10px;">'+grupoNome(c.grupo)+' · '+c.data+'</div>'+
+    itensArr.map(function(entry){
+      const cod=entry[0],reg=entry[1];
+      return '<div class="reg-item" style="border-left-color:#0891b2;">'+
+        '<div class="reg-header"><span class="reg-produto">'+reg.nome+'</span><span style="font-size:13px;font-weight:700;color:#0891b2;">'+reg.total+'</span></div>'+
+        '<div style="font-size:12px;color:var(--text-secondary);">'+
+        (reg.parciais||[]).map(function(p){return p.hora+': +'+p.qtd;}).join(' · ')+
+        '</div></div>';
+    }).join('');
+}
+
 window.goTo=goTo; window.abrirPin=abrirPin; window.pinDigit=pinDigit; window.pinDel=pinDel;
 window.iniciarNovoReg=iniciarNovoReg; window.toggleManual=toggleManual;
 window.selecionarDataTipo=selecionarDataTipo; window.selecionarDataManual=selecionarDataManual;
@@ -2138,7 +2317,7 @@ window.selecionarDataEmb=selecionarDataEmb; window.irParaEmbalagem=irParaEmbalag
 window.toggleEmb=toggleEmb; window.toggleAjuste=toggleAjuste; window.confirmarAjuste=confirmarAjuste;
 window.selecionarDataExp=selecionarDataExp; window.irParaExpedicao=irParaExpedicao;
 window.adicionarLiberacao=adicionarLiberacao;
-window.tab=tab; window.toggleConf=toggleConf; window.admFiltrar=admFiltrar; window.toggleEditProd=toggleEditProd; window.salvarEditProd=salvarEditProd; window.toggleEditRecheio=toggleEditRecheio; window.salvarEditRecheio=salvarEditRecheio; window.renderMeusReg=renderMeusReg; window.renderCozReg=renderCozReg; window.abrirPresenca=abrirPresenca; window.salvarPresenca=salvarPresenca; window.voltarPresenca=voltarPresenca; window.renderPresencaForm=renderPresencaForm; window.selecionarDataPresenca=selecionarDataPresenca; window.selecionarDataPresencaManual=selecionarDataPresencaManual; window.adicionarColaborador=adicionarColaborador; window.removerColab=removerColab; window.updateColab=updateColab; window.renderPresencaReg=renderPresencaReg; window.abrirContagem=abrirContagem; window.adicionarContagem=adicionarContagem; window.editarUltimoParcial=editarUltimoParcial; window.renderContagemHist=renderContagemHist; window.verDetalheContagem=verDetalheContagem; window.renderContagemLanc=renderContagemLanc; window.toggleEditParcial=toggleEditParcial; window.salvarEditParcial=salvarEditParcial; window.excluirRegistro=excluirRegistro; window.gerarExcel=gerarExcel; window.renderPresencaForm=renderPresencaForm; window.goToAdmin=goToAdmin; window.sairAdmin=sairAdmin; window.backFromArea=backFromArea;
+window.tab=tab; window.toggleConf=toggleConf; window.admFiltrar=admFiltrar; window.toggleEditProd=toggleEditProd; window.salvarEditProd=salvarEditProd; window.toggleEditRecheio=toggleEditRecheio; window.salvarEditRecheio=salvarEditRecheio; window.renderMeusReg=renderMeusReg; window.renderCozReg=renderCozReg; window.abrirPresenca=abrirPresenca; window.salvarPresenca=salvarPresenca; window.voltarPresenca=voltarPresenca; window.renderPresencaForm=renderPresencaForm; window.selecionarDataPresenca=selecionarDataPresenca; window.selecionarDataPresencaManual=selecionarDataPresencaManual; window.adicionarColaborador=adicionarColaborador; window.removerColab=removerColab; window.updateColab=updateColab; window.renderPresencaReg=renderPresencaReg; window.abrirContagem=abrirContagem; window.adicionarContagem=adicionarContagem; window.renderContagemHist=renderContagemHist; window.verDetalheContagem=verDetalheContagem; window.renderContagemLanc=renderContagemLanc; window.renderContagemHome=renderContagemHome; window.toggleEditParcial=toggleEditParcial; window.salvarEditParcial=salvarEditParcial; window.excluirRegistro=excluirRegistro; window.gerarExcel=gerarExcel; window.renderPresencaForm=renderPresencaForm; window.goToAdmin=goToAdmin; window.sairAdmin=sairAdmin; window.backFromArea=backFromArea;
 </script>
 </body>
 </html>
