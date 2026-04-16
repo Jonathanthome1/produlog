@@ -356,6 +356,12 @@
         <span style="color:var(--text-secondary);font-size:20px;">›</span>
       </button>
       <button class="btn btn-secondary" style="margin-top:4px;" onclick="goTo('s-presenca-reg-conf')">Ver registros de presença</button>
+      <div class="section-divider" style="margin-top:14px;">Equipamentos</div>
+      <button class="home-btn azul" onclick="abrirManut('conf')">
+        <div class="hb-icon" style="background:#fef3c7;">🔧</div>
+        <div style="flex:1;"><div class="hb-title">Manutenção de Máquinas</div><div class="hb-desc">Registrar manutenções e ocorrências</div></div>
+        <span style="color:var(--text-secondary);font-size:20px;">›</span>
+      </button>
     </div>
   </div>
 
@@ -527,6 +533,12 @@
         <span style="color:var(--text-secondary);font-size:20px;">›</span>
       </button>
       <button class="btn btn-secondary" style="margin-top:4px;" onclick="goTo('s-presenca-reg-coz')">Ver registros de presença</button>
+      <div class="section-divider" style="margin-top:14px;">Equipamentos</div>
+      <button class="home-btn verde" onclick="abrirManut('coz')">
+        <div class="hb-icon" style="background:#fef3c7;">🔧</div>
+        <div style="flex:1;"><div class="hb-title">Manutenção de Máquinas</div><div class="hb-desc">Registrar manutenções e ocorrências</div></div>
+        <span style="color:var(--text-secondary);font-size:20px;">›</span>
+      </button>
     </div>
   </div>
 
@@ -606,6 +618,12 @@
           <span style="color:var(--text-secondary);font-size:20px;">›</span>
         </button>
         <button class="btn btn-secondary" style="margin-top:4px;" onclick="goTo('s-presenca-reg-emb')">Ver registros de presença</button>
+        <div class="section-divider" style="margin-top:14px;">Equipamentos</div>
+        <button class="home-btn" onclick="abrirManut('emb')" style="border-left-color:var(--mc-azul);">
+          <div class="hb-icon" style="background:#fef3c7;">🔧</div>
+          <div style="flex:1;"><div class="hb-title">Manutenção de Máquinas</div><div class="hb-desc">Registrar manutenções e ocorrências</div></div>
+          <span style="color:var(--text-secondary);font-size:20px;">›</span>
+        </button>
       </div>
     </div>
   </div>
@@ -655,6 +673,91 @@
       <div><div class="topbar-title">Presenças — Embalagem</div><div class="topbar-sub" id="preg-emb-sub"></div></div>
     </div>
     <div class="content" id="preg-emb-content"></div>
+  </div>
+
+
+  <!-- MANUTENÇÃO: HOME (shared, setor passado via JS) -->
+  <div class="screen" id="s-manut-home">
+    <div class="topbar" id="manut-topbar">
+      <button class="back-btn" id="manut-back-btn" onclick="voltarManut()">‹</button>
+      <div><div class="topbar-title">Manutenção 🔧</div><div class="topbar-sub" id="manut-setor-sub"></div></div>
+    </div>
+    <div class="content" id="manut-home-content"></div>
+  </div>
+
+  <!-- MANUTENÇÃO: NOVA MÁQUINA -->
+  <div class="screen" id="s-manut-nova-maq">
+    <div class="topbar" id="manut-nova-topbar">
+      <button class="back-btn" onclick="goTo('s-manut-home')">‹</button>
+      <div><div class="topbar-title">Nova Máquina</div><div class="topbar-sub" id="manut-nova-sub"></div></div>
+    </div>
+    <div class="content">
+      <div class="card">
+        <div class="card-label">Nome da máquina</div>
+        <input type="text" id="manut-nova-nome" placeholder="Ex: Fritadeira 1, Forno Principal..." />
+      </div>
+      <div class="card">
+        <div class="card-label">Observação (opcional)</div>
+        <input type="text" id="manut-nova-obs" placeholder="Ex: Localização, modelo..." />
+      </div>
+      <button class="btn btn-primary" id="manut-nova-btn" onclick="salvarNovaMaquina()">Cadastrar máquina ✓</button>
+    </div>
+  </div>
+
+  <!-- MANUTENÇÃO: DETALHES MÁQUINA -->
+  <div class="screen" id="s-manut-maq">
+    <div class="topbar" id="manut-maq-topbar">
+      <button class="back-btn" onclick="goTo('s-manut-home')">‹</button>
+      <div><div class="topbar-title" id="manut-maq-title">Máquina</div><div class="topbar-sub" id="manut-maq-sub"></div></div>
+    </div>
+    <div class="content" id="manut-maq-content"></div>
+  </div>
+
+  <!-- MANUTENÇÃO: NOVO LANÇAMENTO -->
+  <div class="screen" id="s-manut-lanc">
+    <div class="topbar" id="manut-lanc-topbar">
+      <button class="back-btn" onclick="goTo('s-manut-maq')">‹</button>
+      <div><div class="topbar-title">Nova Manutenção</div><div class="topbar-sub" id="manut-lanc-maq"></div></div>
+    </div>
+    <div class="content">
+      <div class="card">
+        <div class="card-label">Data da manutenção</div>
+        <div class="date-btn-grid" id="manut-date-grid"></div>
+        <button class="date-manual-toggle" onclick="toggleManual('manut-manual-wrap')">Outra data →</button>
+        <div id="manut-manual-wrap" style="display:none;margin-top:8px;">
+          <input type="date" id="manut-input-data" onchange="selecionarDataManut()" />
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-label">Tipo de manutenção</div>
+        <select id="manut-tipo">
+          <option value="Preventiva">🔍 Preventiva</option>
+          <option value="Corretiva">🔧 Corretiva</option>
+        </select>
+      </div>
+      <div class="card">
+        <div class="card-label">Serviço realizado</div>
+        <input type="text" id="manut-servico" placeholder="Ex: Troca de óleo, ajuste de correia..." />
+      </div>
+      <div class="card">
+        <div class="card-label">Motivo / Problema identificado</div>
+        <input type="text" id="manut-motivo" placeholder="Ex: Ruído anormal, temperatura elevada..." />
+      </div>
+      <div class="card">
+        <div class="card-label">Tempo de máquina parada</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+          <div>
+            <div style="font-size:11px;color:var(--text-secondary);margin-bottom:4px;">Horas</div>
+            <input type="number" id="manut-horas" placeholder="0" min="0" inputmode="numeric" />
+          </div>
+          <div>
+            <div style="font-size:11px;color:var(--text-secondary);margin-bottom:4px;">Minutos</div>
+            <input type="number" id="manut-minutos" placeholder="0" min="0" max="59" inputmode="numeric" />
+          </div>
+        </div>
+      </div>
+      <button class="btn btn-primary" id="manut-lanc-btn" onclick="salvarManutencao()">Salvar manutenção ✓</button>
+    </div>
   </div>
 
   <!-- EXPEDIÇÃO: SELECIONAR DATA -->
@@ -814,6 +917,7 @@
       <button class="tab" onclick="tab('producao',this)">Produção</button>
       <button class="tab" onclick="tab('quebras',this)">Quebras</button>
       <button class="tab" onclick="tab('presenca',this)">Presença</button>
+      <button class="tab" onclick="tab('manutencao',this)">Manutenção</button>
       <button class="tab" onclick="tab('exportar',this)">Exportar</button>
     </div>
     <div class="content" id="adm-content"></div>
@@ -905,6 +1009,8 @@ function atualizarTela(){
   if(tela==='s-presenca-reg-coz') renderPresencaReg('coz');
   if(tela==='s-presenca-reg-emb') renderPresencaReg('emb');
   if(tela==='s-contagem-lanc') renderContagemLanc();
+  if(tela==='s-manut-home') renderManutHome();
+  if(tela==='s-manut-maq') renderMaquinaDetail();
 }
 
 function hoje(){return new Date().toLocaleDateString('pt-BR');}
@@ -1117,6 +1223,7 @@ function renderMeusReg(dataFiltro){
         <div style="display:flex;align-items:center;gap:8px;">
           <span class="reg-hora">${r.hora}</span>
           <button class="btn-sm-outline" onclick="toggleEditProd('${r.firestoreId}')">Editar</button>
+              <button class="btn-del-admin" onclick="excluirRegistro('registros','${r.firestoreId}','${r.produto}')" style="background:none;border:1px solid #ef9a9a;color:#c62828;font-size:12px;padding:5px 8px;border-radius:8px;cursor:pointer;font-family:inherit;">🗑 Excluir</button>
         </div>
       </div>
       <div class="reg-detalhe">Qtd: <strong>${r.qtd} un</strong> · Massa: <strong>${r.massa} kg</strong>${r.r1>0?` · R1: <strong>${r.r1} kg</strong>`:''}${r.r2>0?` · R2: <strong>${r.r2} kg</strong>`:''}${r.obs?`<br><em>${r.obs}</em>`:''}</div>
@@ -1997,6 +2104,38 @@ function renderAdm(t){
         </table></div>`).join('');
   }
 
+  else if(t==='manutencao'){
+    const datasM=sortDatas([...new Set(manutencoes.map(r=>r.data))]);
+    const dfM=window._admDatas&&window._admDatas['manutencao']||(datasM[0]||hoje());
+    el.innerHTML=makeSelect('sel-manut-adm',datasM,dfM,'manutencao');
+    if(!manutencoes.length){el.innerHTML+='<div class="empty">Nenhuma manutenção registrada ainda.</div>';return;}
+    const filtM=manutencoes.filter(r=>r.data===dfM);
+    const totalMins=filtM.reduce((s,r)=>s+(r.tempo_min||0),0);
+    const h=Math.floor(totalMins/60),mi=totalMins%60;
+    el.innerHTML+=`
+      <div class="metric-grid" style="margin-top:4px;">
+        <div class="metric-card"><div class="metric-num">${filtM.length}</div><div class="metric-lbl">Manutenções no dia</div></div>
+        <div class="metric-card laranja"><div class="metric-num">${h>0?h+'h ':''}${mi}min</div><div class="metric-lbl">Tempo parado total</div></div>
+        <div class="metric-card verde"><div class="metric-num">${filtM.filter(r=>r.tipo==='Preventiva').length}</div><div class="metric-lbl">Preventivas</div></div>
+        <div class="metric-card" style="background:var(--mc-vermelho,#b91c1c);"><div class="metric-num">${filtM.filter(r=>r.tipo==='Corretiva').length}</div><div class="metric-lbl">Corretivas</div></div>
+      </div>
+      ${filtM.map(r=>{
+        const hm=Math.floor((r.tempo_min||0)/60),mm=(r.tempo_min||0)%60;
+        const tc=r.tipo==='Corretiva'?'#c62828':'#2e7d32';
+        const tb=r.tipo==='Corretiva'?'#f8d7da':'#d1e7dd';
+        return `<div class="reg-item" style="border-left-color:${tc};">
+          <div class="reg-header">
+            <span class="reg-produto">${r.maquina_nome}</span>
+            <span style="background:${tb};color:${tc};border-radius:6px;padding:2px 8px;font-size:11px;font-weight:600;">${r.tipo}</span>
+          </div>
+          <div style="font-size:12px;color:var(--text-secondary);margin-top:2px;">${r.setor} · ${r.hora}</div>
+          <div style="font-size:13px;font-weight:500;margin-top:4px;">${r.servico}</div>
+          ${r.motivo?`<div style="font-size:12px;color:var(--text-secondary);">Motivo: ${r.motivo}</div>`:''}
+          ${r.tempo_min>0?`<div style="font-size:12px;color:var(--mc-laranja);">⏱ ${hm>0?hm+'h ':''}${mm}min parada</div>`:''}
+        </div>`;
+      }).join('')}`;
+  }
+
   else if(t==='presenca'){
     const datasP=sortDatas([...new Set(Object.values(presencas).map(r=>r.data))]);
     const dfP=window._admDatas&&window._admDatas['presenca']||(datasP[0]||hoje());
@@ -2125,7 +2264,14 @@ async function gerarExcel(){
     });
     XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(presRows),'Presença');
 
-    // ABA 7: CONTAGEM
+    // ABA 7: MANUTENÇÃO
+    const manutRows=[['Data','Hora','Setor','Máquina','Tipo','Serviço Realizado','Motivo/Problema','Tempo Parada (min)']];
+    manutencoes.filter(r=>inRange(r.data)).forEach(r=>{
+      manutRows.push([r.data,r.hora,r.setor,r.maquina_nome,r.tipo,r.servico,r.motivo||'',r.tempo_min||0]);
+    });
+    XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(manutRows),'Manutenção');
+
+    // ABA 8: CONTAGEM
     const contRows=[['Data','Hora','Grupo','Código','Produto','Total Contado','Lançamentos Parciais']];
     contagens.filter(c=>inRange(c.data)).forEach(c=>{
       Object.entries(c.itens||{}).forEach(([cod,reg])=>{
@@ -2408,6 +2554,209 @@ function verDetalheContagem(fid){
     }).join('');
 }
 
+
+// ===== MANUTENÇÃO =====
+let maquinas = [];
+let manutencoes = [];
+let manutSetorAtivo = '';
+let manutMaqAtiva = null; // {firestoreId, nome, setor_key, ...}
+let manutDataAtiva = null;
+
+const SETOR_CORES_MANUT = {conf:'', coz:'verde', emb:''};
+const SETOR_NOMES_MANUT = {conf:'Confeitaria', coz:'Cozinha', emb:'Embalagem'};
+
+onSnapshot(collection(db,'maquinas'), snap=>{
+  try{
+    maquinas=snap.docs.map(d=>({firestoreId:d.id,...d.data()}));
+    atualizarTela();
+  }catch(e){ console.error('maquinas snap:',e); }
+});
+
+onSnapshot(collection(db,'manutencoes'), snap=>{
+  try{
+    manutencoes=snap.docs.map(d=>({firestoreId:d.id,...d.data()})).sort((a,b)=>(b.timestamp||0)-(a.timestamp||0));
+    atualizarTela();
+  }catch(e){ console.error('manutencoes snap:',e); }
+});
+
+function voltarManut(){
+  const back={conf:'s-conf-home',coz:'s-coz-home',emb:'s-emb-sel-data'};
+  goTo(back[manutSetorAtivo]||'s-inicio');
+}
+
+function abrirManut(setor){
+  manutSetorAtivo=setor;
+  const cor=SETOR_CORES_MANUT[setor];
+  document.getElementById('manut-topbar').className='topbar'+(cor?' '+cor:'');
+  document.getElementById('manut-nova-topbar').className='topbar'+(cor?' '+cor:'');
+  document.getElementById('manut-maq-topbar').className='topbar'+(cor?' '+cor:'');
+  document.getElementById('manut-lanc-topbar').className='topbar'+(cor?' '+cor:'');
+  document.getElementById('manut-setor-sub').textContent=SETOR_NOMES_MANUT[setor];
+  document.getElementById('manut-nova-sub').textContent=SETOR_NOMES_MANUT[setor];
+  renderManutHome();
+  goTo('s-manut-home');
+}
+
+function renderManutHome(){
+  const el=document.getElementById('manut-home-content');
+  if(!el)return;
+  const maqSetor=maquinas.filter(m=>m.setor_key===manutSetorAtivo);
+  const cor=manutSetorAtivo==='coz'?'var(--mc-verde)':'var(--mc-azul)';
+  el.innerHTML=`
+    <button class="btn" style="background:${cor};color:white;margin-bottom:14px;" onclick="goTo('s-manut-nova-maq')">+ Cadastrar nova máquina</button>
+    ${!maqSetor.length?'<div class="empty">Nenhuma máquina cadastrada ainda.<br>Clique acima para adicionar.</div>':
+      '<div class="section-divider">Máquinas cadastradas</div>'+
+      maqSetor.map(m=>{
+        const mans=manutencoes.filter(x=>x.maquina_id===m.firestoreId);
+        const ultima=mans[0];
+        const totalMins=mans.reduce((s,x)=>s+(x.tempo_min||0),0);
+        const horas=Math.floor(totalMins/60);
+        const mins=totalMins%60;
+        return `<div class="reg-item" style="border-left-color:${cor};cursor:pointer;" onclick="abrirMaquina('${m.firestoreId}')">
+          <div class="reg-header">
+            <span class="reg-produto">${m.nome}</span>
+            <span style="font-size:11px;color:var(--text-secondary);">${mans.length} manut.</span>
+          </div>
+          <div style="font-size:12px;color:var(--text-secondary);margin-top:4px;">
+            ${ultima?`Última: ${ultima.data} · ${ultima.tipo}`:'Sem manutenções ainda'}
+            ${totalMins>0?` · ⏱ ${horas>0?horas+'h ':''}${mins}min parada total`:''}
+          </div>
+          ${m.obs?`<div style="font-size:12px;color:var(--text-secondary);font-style:italic;">${m.obs}</div>`:''}
+        </div>`;
+      }).join('')}
+  `;
+}
+
+async function salvarNovaMaquina(){
+  const nome=document.getElementById('manut-nova-nome').value.trim();
+  const obs=document.getElementById('manut-nova-obs').value.trim();
+  if(!nome){alert('Informe o nome da máquina.');return;}
+  const btn=document.getElementById('manut-nova-btn');
+  btn.textContent='Salvando...';btn.disabled=true;
+  try{
+    await addDoc(collection(db,'maquinas'),{
+      nome, obs, setor_key:manutSetorAtivo,
+      setor:SETOR_NOMES_MANUT[manutSetorAtivo],
+      timestamp:Date.now(), hora:agora()
+    });
+    document.getElementById('manut-nova-nome').value='';
+    document.getElementById('manut-nova-obs').value='';
+    goTo('s-manut-home');
+  }catch(e){alert('Erro ao salvar.');btn.textContent='Cadastrar máquina ✓';btn.disabled=false;}
+}
+
+function abrirMaquina(maqId){
+  manutMaqAtiva=maquinas.find(m=>m.firestoreId===maqId);
+  if(!manutMaqAtiva)return;
+  manutDataAtiva=null;
+  document.getElementById('manut-maq-title').textContent=manutMaqAtiva.nome;
+  renderMaquinaDetail();
+  goTo('s-manut-maq');
+}
+
+function renderMaquinaDetail(){
+  const el=document.getElementById('manut-maq-content');
+  const sub=document.getElementById('manut-maq-sub');
+  if(!el||!manutMaqAtiva)return;
+  const mans=manutencoes.filter(x=>x.maquina_id===manutMaqAtiva.firestoreId);
+  const totalMins=mans.reduce((s,x)=>s+(x.tempo_min||0),0);
+  const horas=Math.floor(totalMins/60);
+  const mins=totalMins%60;
+  if(sub)sub.textContent=mans.length+' manutenção(ões) registrada(s)';
+  const cor=manutSetorAtivo==='coz'?'var(--mc-verde)':'var(--mc-azul)';
+  el.innerHTML=`
+    <div class="card" style="border-left:3px solid ${cor};margin-bottom:12px;">
+      <div style="font-size:13px;font-weight:600;color:${cor};">${manutMaqAtiva.nome}</div>
+      ${manutMaqAtiva.obs?`<div style="font-size:12px;color:var(--text-secondary);">${manutMaqAtiva.obs}</div>`:''}
+      <div style="font-size:12px;color:var(--text-secondary);margin-top:6px;">
+        ${mans.length} manutenção(ões) · Total parada: <strong>${horas>0?horas+'h ':''}${mins}min</strong>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:10px;">
+        <span style="background:#d1e7dd;color:#0a3622;border-radius:6px;padding:3px 8px;font-size:11px;font-weight:600;">
+          ✓ ${mans.filter(x=>x.tipo==='Preventiva').length} preventivas
+        </span>
+        <span style="background:#f8d7da;color:#842029;border-radius:6px;padding:3px 8px;font-size:11px;font-weight:600;">
+          ⚠ ${mans.filter(x=>x.tipo==='Corretiva').length} corretivas
+        </span>
+      </div>
+    </div>
+    <button class="btn" style="background:${cor};color:white;margin-bottom:14px;" onclick="iniciarNovaManutencao()">+ Registrar manutenção</button>
+    <div class="section-divider">Histórico</div>
+    ${!mans.length?'<div class="empty">Nenhuma manutenção registrada ainda.</div>':
+      mans.map(m=>{
+        const h=Math.floor((m.tempo_min||0)/60);
+        const mi=(m.tempo_min||0)%60;
+        const tipoColor=m.tipo==='Corretiva'?'#c62828':'#2e7d32';
+        const tipoBg=m.tipo==='Corretiva'?'#f8d7da':'#d1e7dd';
+        return `<div class="reg-item" style="border-left-color:${tipoColor};">
+          <div class="reg-header">
+            <span class="reg-produto">${m.data}</span>
+            <div style="display:flex;align-items:center;gap:6px;">
+              <span style="background:${tipoBg};color:${tipoColor};border-radius:6px;padding:2px 8px;font-size:11px;font-weight:600;">${m.tipo}</span>
+              ${window.adminMode?`<button onclick="excluirRegistro('manutencoes','${m.firestoreId}','manutenção')" class="btn-del-admin" style="background:none;border:1px solid #ef9a9a;color:#c62828;font-size:11px;padding:2px 6px;border-radius:6px;cursor:pointer;font-family:inherit;">🗑</button>`:''}
+            </div>
+          </div>
+          <div style="font-size:13px;font-weight:500;color:var(--text-primary);margin-top:4px;">${m.servico}</div>
+          ${m.motivo?`<div style="font-size:12px;color:var(--text-secondary);margin-top:2px;">Motivo: ${m.motivo}</div>`:''}
+          ${m.tempo_min>0?`<div style="font-size:12px;color:var(--mc-laranja);margin-top:2px;">⏱ Tempo parada: ${h>0?h+'h ':''}${mi}min</div>`:''}
+          <div style="font-size:11px;color:var(--text-secondary);margin-top:4px;">${m.hora}</div>
+        </div>`;
+      }).join('')}
+  `;
+}
+
+function iniciarNovaManutencao(){
+  manutDataAtiva=null;
+  renderDateGrid('manut-date-grid', null, 'prod');
+  document.getElementById('manut-lanc-maq').textContent=manutMaqAtiva?.nome||'';
+  document.getElementById('manut-tipo').value='Preventiva';
+  document.getElementById('manut-servico').value='';
+  document.getElementById('manut-motivo').value='';
+  document.getElementById('manut-horas').value='';
+  document.getElementById('manut-minutos').value='';
+  document.getElementById('manut-lanc-btn').textContent='Salvar manutenção ✓';
+  document.getElementById('manut-lanc-btn').disabled=false;
+  goTo('s-manut-lanc');
+}
+
+function selecionarDataManut(){
+  const val=document.getElementById('manut-input-data').value;
+  if(!val)return;
+  const[y,m,d]=val.split('-');
+  manutDataAtiva=`${d}/${m}/${y}`;
+  renderDateGrid('manut-date-grid', manutDataAtiva, 'prod');
+}
+
+async function salvarManutencao(){
+  const tipo=document.getElementById('manut-tipo').value;
+  const servico=document.getElementById('manut-servico').value.trim();
+  const motivo=document.getElementById('manut-motivo').value.trim();
+  const horas=parseInt(document.getElementById('manut-horas').value)||0;
+  const minutos=parseInt(document.getElementById('manut-minutos').value)||0;
+  const tempoMin=horas*60+minutos;
+  // Get date from grid selection
+  const dias=diasUteis(3);
+  const dateGrid=document.getElementById('manut-date-grid');
+  const selBtn=dateGrid?.querySelector('.date-btn.sel');
+  if(selBtn&&!manutDataAtiva) manutDataAtiva=selBtn.querySelector('.date-btn-date')?.textContent||hoje();
+  if(!manutDataAtiva){alert('Selecione uma data.');return;}
+  if(!servico){alert('Descreva o serviço realizado.');return;}
+  if(!manutMaqAtiva){alert('Máquina não identificada.');return;}
+  const btn=document.getElementById('manut-lanc-btn');
+  btn.textContent='Salvando...';btn.disabled=true;
+  try{
+    await addDoc(collection(db,'manutencoes'),{
+      maquina_id:manutMaqAtiva.firestoreId,
+      maquina_nome:manutMaqAtiva.nome,
+      setor_key:manutSetorAtivo,
+      setor:SETOR_NOMES_MANUT[manutSetorAtivo],
+      tipo, servico, motivo, tempo_min:tempoMin,
+      data:manutDataAtiva, hora:agora(), timestamp:Date.now()
+    });
+    goTo('s-manut-maq');
+  }catch(e){alert('Erro ao salvar: '+e.message);btn.textContent='Salvar manutenção ✓';btn.disabled=false;}
+}
+
 window.goTo=goTo; window.abrirPin=abrirPin; window.pinDigit=pinDigit; window.pinDel=pinDel;
 window.iniciarNovoReg=iniciarNovoReg; window.toggleManual=toggleManual;
 window.selecionarDataTipo=selecionarDataTipo; window.selecionarDataManual=selecionarDataManual;
@@ -2419,7 +2768,7 @@ window.selecionarDataEmb=selecionarDataEmb; window.irParaEmbalagem=irParaEmbalag
 window.toggleEmb=toggleEmb; window.toggleAjuste=toggleAjuste; window.confirmarAjuste=confirmarAjuste;
 window.selecionarDataExp=selecionarDataExp; window.irParaExpedicao=irParaExpedicao;
 window.adicionarLiberacao=adicionarLiberacao;
-window.tab=tab; window.toggleConf=toggleConf; window.admFiltrar=admFiltrar; window.toggleEditProd=toggleEditProd; window.salvarEditProd=salvarEditProd; window.toggleEditRecheio=toggleEditRecheio; window.salvarEditRecheio=salvarEditRecheio; window.renderMeusReg=renderMeusReg; window.renderCozReg=renderCozReg; window.abrirPresenca=abrirPresenca; window.salvarPresenca=salvarPresenca; window.voltarPresenca=voltarPresenca; window.renderPresencaForm=renderPresencaForm; window.selecionarDataPresenca=selecionarDataPresenca; window.selecionarDataPresencaManual=selecionarDataPresencaManual; window.adicionarColaborador=adicionarColaborador; window.removerColab=removerColab; window.updateColab=updateColab; window.renderPresencaReg=renderPresencaReg; window.abrirContagem=abrirContagem; window.subtrairContagem=subtrairContagem; window.filtrarContagem=filtrarContagem; window.adicionarContagem=adicionarContagem; window.renderContagemHist=renderContagemHist; window.verDetalheContagem=verDetalheContagem; window.renderContagemLanc=renderContagemLanc; window.renderContagemHome=renderContagemHome; window.toggleEditParcial=toggleEditParcial; window.salvarEditParcial=salvarEditParcial; window.excluirRegistro=excluirRegistro; window.gerarExcel=gerarExcel; window.renderPresencaForm=renderPresencaForm; window.goToAdmin=goToAdmin; window.sairAdmin=sairAdmin; window.backFromArea=backFromArea;
+window.tab=tab; window.toggleConf=toggleConf; window.admFiltrar=admFiltrar; window.toggleEditProd=toggleEditProd; window.salvarEditProd=salvarEditProd; window.toggleEditRecheio=toggleEditRecheio; window.salvarEditRecheio=salvarEditRecheio; window.renderMeusReg=renderMeusReg; window.renderCozReg=renderCozReg; window.abrirPresenca=abrirPresenca; window.salvarPresenca=salvarPresenca; window.voltarPresenca=voltarPresenca; window.renderPresencaForm=renderPresencaForm; window.selecionarDataPresenca=selecionarDataPresenca; window.selecionarDataPresencaManual=selecionarDataPresencaManual; window.adicionarColaborador=adicionarColaborador; window.removerColab=removerColab; window.updateColab=updateColab; window.renderPresencaReg=renderPresencaReg; window.abrirContagem=abrirContagem; window.subtrairContagem=subtrairContagem; window.filtrarContagem=filtrarContagem; window.adicionarContagem=adicionarContagem; window.renderContagemHist=renderContagemHist; window.verDetalheContagem=verDetalheContagem; window.renderContagemLanc=renderContagemLanc; window.renderContagemHome=renderContagemHome; window.abrirManut=abrirManut; window.voltarManut=voltarManut; window.salvarNovaMaquina=salvarNovaMaquina; window.abrirMaquina=abrirMaquina; window.iniciarNovaManutencao=iniciarNovaManutencao; window.selecionarDataManut=selecionarDataManut; window.salvarManutencao=salvarManutencao; window.toggleEditParcial=toggleEditParcial; window.salvarEditParcial=salvarEditParcial; window.excluirRegistro=excluirRegistro; window.gerarExcel=gerarExcel; window.renderPresencaForm=renderPresencaForm; window.goToAdmin=goToAdmin; window.sairAdmin=sairAdmin; window.backFromArea=backFromArea;
 </script>
 </body>
 </html>
