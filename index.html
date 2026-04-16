@@ -686,12 +686,22 @@
       </div>
       <button class="home-btn azul" onclick="goToAdmin('s-conf-home')">
         <div class="hb-icon hb-azul">🥐</div>
-        <div style="flex:1;"><div class="hb-title">Confeitaria</div><div class="hb-desc">Lançamento de produção e massas</div></div>
+        <div style="flex:1;"><div class="hb-title">Confeitaria</div><div class="hb-desc">Produção e massas</div></div>
+        <span style="color:var(--text-secondary);font-size:20px;">›</span>
+      </button>
+      <button class="home-btn azul" onclick="goToAdmin('s-meus-reg')" style="border-left-color:#9095d4;">
+        <div class="hb-icon" style="background:#e8eaff;">📋</div>
+        <div style="flex:1;"><div class="hb-title">Registros — Confeitaria</div><div class="hb-desc">Ver e excluir registros de produção</div></div>
         <span style="color:var(--text-secondary);font-size:20px;">›</span>
       </button>
       <button class="home-btn verde" onclick="goToAdmin('s-coz-home')">
         <div class="hb-icon hb-verde">🍳</div>
         <div style="flex:1;"><div class="hb-title">Cozinha</div><div class="hb-desc">Lançamento de recheios</div></div>
+        <span style="color:var(--text-secondary);font-size:20px;">›</span>
+      </button>
+      <button class="home-btn verde" onclick="goToAdmin('s-coz-reg')" style="border-left-color:#4caf50;">
+        <div class="hb-icon" style="background:#e8f5e9;">📋</div>
+        <div style="flex:1;"><div class="hb-title">Registros — Cozinha</div><div class="hb-desc">Ver e excluir registros de recheio</div></div>
         <span style="color:var(--text-secondary);font-size:20px;">›</span>
       </button>
       <button class="home-btn" onclick="goToAdmin('s-emb-sel-data')">
@@ -1963,7 +1973,7 @@ function renderAdm(t){
     el.innerHTML = makeSelect('sel-prod-adm', datasReg, df, 'producao');
     const filt=registros.filter(r=>r.data===df);
     el.innerHTML+=!filt.length?'<div class="empty">Sem registros.</div>':
-      filt.map(r=>`<div class="reg-item"><div class="reg-header"><span class="reg-produto">${r.produto}</span><span class="badge ${r.confirmado?'badge-ok':'badge-pend'}">${r.confirmado?'ok':'pend.'}</span></div>
+      filt.map(r=>`<div class="reg-item"><div class="reg-header"><span class="reg-produto">${r.produto}</span><div style="display:flex;align-items:center;gap:6px;"><span class="badge ${r.confirmado?'badge-ok':'badge-pend'}">${r.confirmado?'ok':'pend.'}</span><button onclick="excluirRegistro('registros','${r.firestoreId}','${r.produto}')" style="background:none;border:1px solid #ef9a9a;color:#c62828;font-size:11px;padding:3px 7px;border-radius:6px;cursor:pointer;font-family:inherit;">🗑</button></div></div>
         <div class="reg-detalhe" style="margin-top:5px;">${r.hora} · <strong>${r.qtd}</strong> un<br>
           Massa: <strong>${r.massa} kg</strong> | Esp: ${fmt(r.quebra.massaEsp)} kg | ${difBadge(r.quebra.difMassa)}
           ${r.r1>0?`<br>R1: <strong>${r.r1} kg</strong> | Esp: ${fmt(r.quebra.r1Esp)} kg | ${difBadge(r.quebra.difR1)}`:''}
@@ -2214,28 +2224,43 @@ function abrirContagem(grupo){
 
 function renderContagemLanc(){
   const itens=CONTAGEM_ITENS[contagemGrupoAtivo]||[];
-  const q=contagemSrch.toLowerCase();
-  const filtrados=q?itens.filter(i=>i.nome.toLowerCase().includes(q)||i.cod.includes(q)):itens;
   const contados=Object.keys(contagemAtual.itens||{}).length;
   const el=document.getElementById('cont-lanc-content');
   if(!el)return;
-  document.getElementById('cont-lanc-sub').textContent=contados+'/'+itens.length+' contados · '+contagemAtual.data;
   const pct=itens.length?Math.round(contados/itens.length*100):0;
+  document.getElementById('cont-lanc-sub').textContent=contados+'/'+itens.length+' contados · '+contagemAtual.data;
 
-  let html=`<div class="card" style="margin-bottom:10px;">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
-      <div style="font-size:13px;font-weight:600;color:#0891b2;">Progresso</div>
-      <div style="font-size:16px;font-weight:700;color:#0891b2;">${pct}%</div>
+  // Only rebuild shell if not already rendered
+  if(!document.getElementById('cont-srch-input')){
+    el.innerHTML=`<div id="cont-progresso-card" class="card" style="margin-bottom:10px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+        <div style="font-size:13px;font-weight:600;color:#0891b2;">Progresso</div>
+        <div style="font-size:16px;font-weight:700;color:#0891b2;" id="cont-pct-label">${pct}%</div>
+      </div>
+      <div class="progresso-bar-wrap"><div class="progresso-bar" id="cont-pct-bar" style="width:${pct}%;background:#0891b2;"></div></div>
+      <div style="font-size:12px;color:var(--text-secondary);margin-top:4px;" id="cont-pct-sub">${contados} de ${itens.length} itens contados</div>
     </div>
-    <div class="progresso-bar-wrap"><div class="progresso-bar" style="width:${pct}%;background:#0891b2;"></div></div>
-    <div style="font-size:12px;color:var(--text-secondary);margin-top:4px;">${contados} de ${itens.length} itens contados</div>
-  </div>
-  <div class="card" style="padding:10px;margin-bottom:10px;">
-    <input type="text" placeholder="Buscar produto..." value="${contagemSrch}"
-      id="cont-srch-input" oninput="filtrarContagem(this.value)"
-      style="font-size:15px;padding:10px;border-radius:10px;border:1px solid #0891b2;width:100%;font-family:inherit;background:var(--bg-primary);color:var(--text-primary);" autocomplete="off" />
-  </div>`;
+    <div class="card" style="padding:10px;margin-bottom:10px;">
+      <input type="text" placeholder="Buscar produto..." id="cont-srch-input"
+        oninput="filtrarContagem(this.value)"
+        style="font-size:15px;padding:10px;border-radius:10px;border:1px solid #0891b2;width:100%;font-family:inherit;background:var(--bg-primary);color:var(--text-primary);" autocomplete="off" />
+    </div>
+    <div id="cont-itens-list"></div>`;
+  } else {
+    // Just update progress
+    const pb=document.getElementById('cont-pct-bar');
+    const pl=document.getElementById('cont-pct-label');
+    const ps=document.getElementById('cont-pct-sub');
+    if(pb)pb.style.width=pct+'%';
+    if(pl)pl.textContent=pct+'%';
+    if(ps)ps.textContent=contados+' de '+itens.length+' itens contados';
+  }
+  filtrarContagem(contagemSrch);
+}
 
+function _buildContagemItemsHtml(filtrados){
+
+  let html='';
   filtrados.forEach(function(item){
     const reg=contagemAtual.itens[item.cod];
     const total=reg?reg.total:0;
@@ -2275,59 +2300,17 @@ function renderContagemLanc(){
     </div>`;
   });
 
-  el.innerHTML=html;
+  return html;
 }
 
 function filtrarContagem(val){
-  contagemSrch=val;
-  // Only re-render the items list, not the whole content
+  contagemSrch=val||'';
   const itens=CONTAGEM_ITENS[contagemGrupoAtivo]||[];
-  const q=val.toLowerCase();
-  const filtrados=q?itens.filter(i=>i.nome.toLowerCase().includes(q)||i.cod.includes(q)):itens;
-  const contados=Object.keys(contagemAtual.itens||{}).length;
-  document.getElementById('cont-lanc-sub').textContent=contados+'/'+itens.length+' contados · '+contagemAtual.data;
-  let html='';
-  filtrados.forEach(function(item){
-    const reg=contagemAtual.itens[item.cod];
-    const total=reg?reg.total:0;
-    const parciais=reg?reg.parciais:[];
-    const contado=total>0;
-    const codEsc=item.cod.replace(/'/g,"\'");
-    const nomeEsc=item.nome.replace(/'/g,"\'").replace(/"/g,'&quot;');
-    html+=`<div class="emb-item ${contado?'done':''}" style="${contado?'border-left-color:#0891b2;':''}">
-      <div class="emb-item-header">
-        <div class="emb-check-btn ${contado?'done':''}" style="${contado?'background:#0891b2;border-color:#0891b2;':''}">${contado?'✓':''}</div>
-        <div class="emb-item-info">
-          <div class="emb-item-nome">${item.nome}</div>
-          <div class="emb-item-qtd">Cód: ${item.cod}${contado?' · Total: <strong>'+total+'</strong>':' · Não contado'}</div>
-        </div>
-      </div>`;
-    if(parciais.length>0){
-      html+=`<div style="margin-top:6px;padding-top:6px;border-top:0.5px solid var(--border);font-size:12px;color:var(--text-secondary);">`;
-      parciais.forEach(function(p){ html+=`<span style="margin-right:10px;">${p.hora}: ${p.qtd>0?'+':''}${p.qtd}</span>`; });
-      html+=`</div>`;
-    }
-    html+=`<div style="margin-top:8px;">
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:${contado?'6px':'0'};">
-        <input type="number" id="cnt-inp-${item.cod}" placeholder="${contado?'+ somar':'Qtd'}" min="0" inputmode="numeric"
-          style="flex:1;font-size:15px;padding:8px;border-radius:8px;border:1px solid #0891b2;background:var(--bg-primary);color:var(--text-primary);font-family:inherit;" />
-        <button onclick="adicionarContagem('${codEsc}','${nomeEsc}')"
-          style="background:#0891b2;color:white;border:none;border-radius:8px;padding:8px 14px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;">${contado?'+ Somar':'Confirmar'}</button>
-      </div>
-      ${contado?`<div style="display:flex;align-items:center;gap:8px;">
-        <input type="number" id="cnt-sub-${item.cod}" placeholder="Subtrair qtd" min="0" inputmode="numeric"
-          style="flex:1;font-size:14px;padding:8px;border-radius:8px;border:1px solid #c62828;background:var(--bg-primary);color:var(--text-primary);font-family:inherit;" />
-        <button onclick="subtrairContagem('${codEsc}')"
-          style="background:#c62828;color:white;border:none;border-radius:8px;padding:8px 14px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;">− Ajustar</button>
-      </div>`:''}
-    </div>
-    </div>`;
-  });
+  const q=contagemSrch.toLowerCase();
+  const filtrados=q?itens.filter(i=>i.nome.toLowerCase().includes(q)||i.cod.toLowerCase().includes(q)):itens;
   const listEl=document.getElementById('cont-itens-list');
-  if(listEl) listEl.innerHTML=html;
-  // Restore focus to search input
-  const srchEl=document.getElementById('cont-srch-input');
-  if(srchEl){ const pos=srchEl.value.length; srchEl.focus(); srchEl.setSelectionRange(pos,pos); }
+  if(!listEl)return;
+  listEl.innerHTML=_buildContagemItemsHtml(filtrados);
 }
 
 async function adicionarContagem(cod, nome){
