@@ -1084,6 +1084,24 @@ function goTo(id){
   if(id==='s-contagem-prod-acabado'){ renderContagemHome(); }
   if(id==='s-contagem-lanc') renderContagemLanc();
   if(id==='s-contagem-hist') renderContagemHist();
+  if(id==='s-manut-home') renderManutHome();
+  if(id==='s-manut-maq') renderMaquinaDetail();
+  if(id==='s-manut-nova-maq'){
+    _savingMaquina=false;
+    const b=document.getElementById('manut-nova-btn');
+    if(b){b.textContent='Cadastrar máquina ✓';b.disabled=false;}
+    const n=document.getElementById('manut-nova-nome');
+    const o=document.getElementById('manut-nova-obs');
+    if(n)n.value=''; if(o)o.value='';
+  }
+  if(id==='s-manut-lanc'){
+    const b=document.getElementById('manut-lanc-btn');
+    if(b){b.textContent='Salvar manutenção ✓';b.disabled=false;}
+    manutDataAtiva=null;
+    renderDateGrid('manut-date-grid',null,'prod');
+    const inputs=['manut-servico','manut-motivo','manut-horas','manut-minutos'];
+    inputs.forEach(id2=>{const el=document.getElementById(id2);if(el)el.value='';});
+  }
 }
 
 function renderConfHome(){
@@ -2627,11 +2645,15 @@ function renderManutHome(){
   `;
 }
 
+let _savingMaquina = false;
 async function salvarNovaMaquina(){
+  if(_savingMaquina){return;}
+  _savingMaquina=true;
   const nome=document.getElementById('manut-nova-nome').value.trim();
   const obs=document.getElementById('manut-nova-obs').value.trim();
   if(!nome){alert('Informe o nome da máquina.');return;}
   const btn=document.getElementById('manut-nova-btn');
+  if(!btn){alert('Erro: botão não encontrado.');return;}
   btn.textContent='Salvando...';btn.disabled=true;
   // Timeout safety - reset button after 8s if stuck
   const resetBtn=setTimeout(()=>{ btn.textContent='Cadastrar máquina ✓';btn.disabled=false; },8000);
@@ -2642,11 +2664,17 @@ async function salvarNovaMaquina(){
       timestamp:Date.now(), hora:agora()
     });
     clearTimeout(resetBtn);
-    document.getElementById('manut-nova-nome').value='';
-    document.getElementById('manut-nova-obs').value='';
+    try{
+      document.getElementById('manut-nova-nome').value='';
+      document.getElementById('manut-nova-obs').value='';
+    }catch(ex){}
+    _savingMaquina=false;
+    btn.textContent='Cadastrar máquina ✓';
+    btn.disabled=false;
     goTo('s-manut-home');
   }catch(e){
     clearTimeout(resetBtn);
+    _savingMaquina=false;
     console.error(e);
     alert('Erro ao salvar: '+e.message);
     btn.textContent='Cadastrar máquina ✓';btn.disabled=false;
