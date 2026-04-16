@@ -2633,16 +2633,24 @@ async function salvarNovaMaquina(){
   if(!nome){alert('Informe o nome da máquina.');return;}
   const btn=document.getElementById('manut-nova-btn');
   btn.textContent='Salvando...';btn.disabled=true;
+  // Timeout safety - reset button after 8s if stuck
+  const resetBtn=setTimeout(()=>{ btn.textContent='Cadastrar máquina ✓';btn.disabled=false; },8000);
   try{
     await addDoc(collection(db,'maquinas'),{
       nome, obs, setor_key:manutSetorAtivo,
       setor:SETOR_NOMES_MANUT[manutSetorAtivo],
       timestamp:Date.now(), hora:agora()
     });
+    clearTimeout(resetBtn);
     document.getElementById('manut-nova-nome').value='';
     document.getElementById('manut-nova-obs').value='';
     goTo('s-manut-home');
-  }catch(e){alert('Erro ao salvar.');btn.textContent='Cadastrar máquina ✓';btn.disabled=false;}
+  }catch(e){
+    clearTimeout(resetBtn);
+    console.error(e);
+    alert('Erro ao salvar: '+e.message);
+    btn.textContent='Cadastrar máquina ✓';btn.disabled=false;
+  }
 }
 
 function abrirMaquina(maqId){
@@ -2744,6 +2752,7 @@ async function salvarManutencao(){
   if(!manutMaqAtiva){alert('Máquina não identificada.');return;}
   const btn=document.getElementById('manut-lanc-btn');
   btn.textContent='Salvando...';btn.disabled=true;
+  const resetBtn2=setTimeout(()=>{ btn.textContent='Salvar manutenção ✓';btn.disabled=false; },8000);
   try{
     await addDoc(collection(db,'manutencoes'),{
       maquina_id:manutMaqAtiva.firestoreId,
@@ -2753,8 +2762,9 @@ async function salvarManutencao(){
       tipo, servico, motivo, tempo_min:tempoMin,
       data:manutDataAtiva, hora:agora(), timestamp:Date.now()
     });
+    clearTimeout(resetBtn2);
     goTo('s-manut-maq');
-  }catch(e){alert('Erro ao salvar: '+e.message);btn.textContent='Salvar manutenção ✓';btn.disabled=false;}
+  }catch(e){clearTimeout(resetBtn2);alert('Erro ao salvar: '+e.message);btn.textContent='Salvar manutenção ✓';btn.disabled=false;}
 }
 
 window.goTo=goTo; window.abrirPin=abrirPin; window.pinDigit=pinDigit; window.pinDel=pinDel;
