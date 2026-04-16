@@ -690,24 +690,16 @@
       </div>
       <button class="home-btn azul" onclick="goToAdmin('s-conf-home')">
         <div class="hb-icon hb-azul">🥐</div>
-        <div style="flex:1;"><div class="hb-title">Confeitaria</div><div class="hb-desc">Produção e massas</div></div>
+        <div style="flex:1;"><div class="hb-title">Confeitaria</div><div class="hb-desc">Lançamento de produção e massas</div></div>
         <span style="color:var(--text-secondary);font-size:20px;">›</span>
       </button>
-      <button class="home-btn azul" onclick="goToAdmin('s-meus-reg')" style="border-left-color:#9095d4;">
-        <div class="hb-icon" style="background:#e8eaff;">📋</div>
-        <div style="flex:1;"><div class="hb-title">Registros — Confeitaria</div><div class="hb-desc">Ver e excluir registros de produção</div></div>
-        <span style="color:var(--text-secondary);font-size:20px;">›</span>
-      </button>
+
       <button class="home-btn verde" onclick="goToAdmin('s-coz-home')">
         <div class="hb-icon hb-verde">🍳</div>
         <div style="flex:1;"><div class="hb-title">Cozinha</div><div class="hb-desc">Lançamento de recheios</div></div>
         <span style="color:var(--text-secondary);font-size:20px;">›</span>
       </button>
-      <button class="home-btn verde" onclick="goToAdmin('s-coz-reg')" style="border-left-color:#4caf50;">
-        <div class="hb-icon" style="background:#e8f5e9;">📋</div>
-        <div style="flex:1;"><div class="hb-title">Registros — Cozinha</div><div class="hb-desc">Ver e excluir registros de recheio</div></div>
-        <span style="color:var(--text-secondary);font-size:20px;">›</span>
-      </button>
+
       <button class="home-btn" onclick="goToAdmin('s-emb-sel-data')">
         <div class="hb-icon" style="background:#e8f5e9;">📦</div>
         <div style="flex:1;"><div class="hb-title">Embalagem</div><div class="hb-desc">Checklist de embalagem</div></div>
@@ -1289,6 +1281,7 @@ function renderCozReg(dataFiltro){
         <div style="display:flex;align-items:center;gap:8px;">
           <span class="reg-hora">${r.hora}</span>
           <button style="background:none;border:1px solid var(--mc-verde);color:var(--mc-verde);font-size:12px;padding:5px 10px;border-radius:8px;cursor:pointer;font-family:inherit;" onclick="toggleEditRecheio('${r.firestoreId}')">Editar</button>
+              <button class="btn-del-admin" onclick="excluirRegistro('recheios','${r.firestoreId}','${r.recheio}')" style="background:none;border:1px solid #ef9a9a;color:#c62828;font-size:12px;padding:5px 8px;border-radius:8px;cursor:pointer;font-family:inherit;">🗑 Excluir</button>
         </div>
       </div>
       <div class="reg-detalhe"><strong>${r.qtdKg} kg</strong>${r.obs?` · <em>${r.obs}</em>`:''}</div>
