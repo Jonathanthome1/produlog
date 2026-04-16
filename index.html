@@ -1098,7 +1098,7 @@ function goTo(id){
     const b=document.getElementById('manut-lanc-btn');
     if(b){b.textContent='Salvar manutenção ✓';b.disabled=false;}
     manutDataAtiva=null;
-    renderDateGrid('manut-date-grid',null,'prod');
+    renderManutDateGrid(null);
     const inputs=['manut-servico','manut-motivo','manut-horas','manut-minutos'];
     inputs.forEach(id2=>{const el=document.getElementById(id2);if(el)el.value='';});
   }
@@ -2743,7 +2743,7 @@ function renderMaquinaDetail(){
 
 function iniciarNovaManutencao(){
   manutDataAtiva=null;
-  renderDateGrid('manut-date-grid', null, 'prod');
+  renderManutDateGrid(null);
   document.getElementById('manut-lanc-maq').textContent=manutMaqAtiva?.nome||'';
   document.getElementById('manut-tipo').value='Preventiva';
   document.getElementById('manut-servico').value='';
@@ -2753,6 +2753,22 @@ function iniciarNovaManutencao(){
   document.getElementById('manut-lanc-btn').textContent='Salvar manutenção ✓';
   document.getElementById('manut-lanc-btn').disabled=false;
   goTo('s-manut-lanc');
+}
+
+function renderManutDateGrid(selData){
+  const dias=diasUteis(3);
+  const el=document.getElementById('manut-date-grid');
+  if(!el)return;
+  el.innerHTML=dias.map((d,i)=>`
+    <button class="date-btn ${selData===fmtData(d)?'sel':''}" onclick="selecionarDataManutBtn('${fmtData(d)}')">
+      <div class="date-btn-label">${labelDia(i)||diaSemana(d)}</div>
+      <div class="date-btn-date">${fmtData(d)}</div>
+    </button>`).join('');
+}
+
+function selecionarDataManutBtn(data){
+  manutDataAtiva=data;
+  renderManutDateGrid(data);
 }
 
 function selecionarDataManut(){
@@ -2770,11 +2786,7 @@ async function salvarManutencao(){
   const horas=parseInt(document.getElementById('manut-horas').value)||0;
   const minutos=parseInt(document.getElementById('manut-minutos').value)||0;
   const tempoMin=horas*60+minutos;
-  // Get date from grid selection
-  const dias=diasUteis(3);
-  const dateGrid=document.getElementById('manut-date-grid');
-  const selBtn=dateGrid?.querySelector('.date-btn.sel');
-  if(selBtn&&!manutDataAtiva) manutDataAtiva=selBtn.querySelector('.date-btn-date')?.textContent||hoje();
+  // Date is set by selecionarDataManutBtn or selecionarDataManut
   if(!manutDataAtiva){alert('Selecione uma data.');return;}
   if(!servico){alert('Descreva o serviço realizado.');return;}
   if(!manutMaqAtiva){alert('Máquina não identificada.');return;}
@@ -2806,7 +2818,7 @@ window.selecionarDataEmb=selecionarDataEmb; window.irParaEmbalagem=irParaEmbalag
 window.toggleEmb=toggleEmb; window.toggleAjuste=toggleAjuste; window.confirmarAjuste=confirmarAjuste;
 window.selecionarDataExp=selecionarDataExp; window.irParaExpedicao=irParaExpedicao;
 window.adicionarLiberacao=adicionarLiberacao;
-window.tab=tab; window.toggleConf=toggleConf; window.admFiltrar=admFiltrar; window.toggleEditProd=toggleEditProd; window.salvarEditProd=salvarEditProd; window.toggleEditRecheio=toggleEditRecheio; window.salvarEditRecheio=salvarEditRecheio; window.renderMeusReg=renderMeusReg; window.renderCozReg=renderCozReg; window.abrirPresenca=abrirPresenca; window.salvarPresenca=salvarPresenca; window.voltarPresenca=voltarPresenca; window.renderPresencaForm=renderPresencaForm; window.selecionarDataPresenca=selecionarDataPresenca; window.selecionarDataPresencaManual=selecionarDataPresencaManual; window.adicionarColaborador=adicionarColaborador; window.removerColab=removerColab; window.updateColab=updateColab; window.renderPresencaReg=renderPresencaReg; window.abrirContagem=abrirContagem; window.subtrairContagem=subtrairContagem; window.filtrarContagem=filtrarContagem; window.adicionarContagem=adicionarContagem; window.renderContagemHist=renderContagemHist; window.verDetalheContagem=verDetalheContagem; window.renderContagemLanc=renderContagemLanc; window.renderContagemHome=renderContagemHome; window.abrirManut=abrirManut; window.voltarManut=voltarManut; window.salvarNovaMaquina=salvarNovaMaquina; window.abrirMaquina=abrirMaquina; window.iniciarNovaManutencao=iniciarNovaManutencao; window.selecionarDataManut=selecionarDataManut; window.salvarManutencao=salvarManutencao; window.toggleEditParcial=toggleEditParcial; window.salvarEditParcial=salvarEditParcial; window.excluirRegistro=excluirRegistro; window.gerarExcel=gerarExcel; window.renderPresencaForm=renderPresencaForm; window.goToAdmin=goToAdmin; window.sairAdmin=sairAdmin; window.backFromArea=backFromArea;
+window.tab=tab; window.toggleConf=toggleConf; window.admFiltrar=admFiltrar; window.toggleEditProd=toggleEditProd; window.salvarEditProd=salvarEditProd; window.toggleEditRecheio=toggleEditRecheio; window.salvarEditRecheio=salvarEditRecheio; window.renderMeusReg=renderMeusReg; window.renderCozReg=renderCozReg; window.abrirPresenca=abrirPresenca; window.salvarPresenca=salvarPresenca; window.voltarPresenca=voltarPresenca; window.renderPresencaForm=renderPresencaForm; window.selecionarDataPresenca=selecionarDataPresenca; window.selecionarDataPresencaManual=selecionarDataPresencaManual; window.adicionarColaborador=adicionarColaborador; window.removerColab=removerColab; window.updateColab=updateColab; window.renderPresencaReg=renderPresencaReg; window.abrirContagem=abrirContagem; window.subtrairContagem=subtrairContagem; window.filtrarContagem=filtrarContagem; window.adicionarContagem=adicionarContagem; window.renderContagemHist=renderContagemHist; window.verDetalheContagem=verDetalheContagem; window.renderContagemLanc=renderContagemLanc; window.renderContagemHome=renderContagemHome; window.abrirManut=abrirManut; window.voltarManut=voltarManut; window.salvarNovaMaquina=salvarNovaMaquina; window.abrirMaquina=abrirMaquina; window.iniciarNovaManutencao=iniciarNovaManutencao; window.selecionarDataManut=selecionarDataManut; window.salvarManutencao=salvarManutencao; window.selecionarDataManutBtn=selecionarDataManutBtn; window.renderManutDateGrid=renderManutDateGrid; window.toggleEditParcial=toggleEditParcial; window.salvarEditParcial=salvarEditParcial; window.excluirRegistro=excluirRegistro; window.gerarExcel=gerarExcel; window.renderPresencaForm=renderPresencaForm; window.goToAdmin=goToAdmin; window.sairAdmin=sairAdmin; window.backFromArea=backFromArea;
 </script>
 </body>
 </html>
