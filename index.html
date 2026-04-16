@@ -357,6 +357,11 @@
       </button>
       <button class="btn btn-secondary" style="margin-top:4px;" onclick="goTo('s-presenca-reg-conf')">Ver registros de presença</button>
       <div class="section-divider" style="margin-top:14px;">Equipamentos</div>
+      <button class="home-btn" style="border-left-color:#6b21a8;" onclick="abrirPlano()">
+        <div class="hb-icon" style="background:#f3e8ff;">📅</div>
+        <div style="flex:1;"><div class="hb-title">Plano da Semana</div><div class="hb-desc">Calcular massas e recheios por dia</div></div>
+        <span style="color:var(--text-secondary);font-size:20px;">›</span>
+      </button>
       <button class="home-btn azul" onclick="abrirManut('conf')">
         <div class="hb-icon" style="background:#fef3c7;">🔧</div>
         <div style="flex:1;"><div class="hb-title">Manutenção de Máquinas</div><div class="hb-desc">Registrar manutenções e ocorrências</div></div>
@@ -420,7 +425,7 @@
         <div class="card-label">Quantidade produzida</div>
         <div class="input-unit">
           <input type="number" id="i-qtd" placeholder="0" min="0" inputmode="numeric" oninput="calcPrev()" />
-          <span class="unit-label">unidades</span>
+          <span class="unit-label">pacotes</span>
         </div>
       </div>
       <div id="prev-card" class="banner banner-info" style="display:none;"></div>
@@ -760,6 +765,17 @@
     </div>
   </div>
 
+
+  <!-- PLANO DA SEMANA -->
+  <div class="screen" id="s-plano">
+    <div class="topbar roxo">
+      <button class="back-btn" onclick="voltarPlano()">‹</button>
+      <div><div class="topbar-title">Plano da Semana</div><div class="topbar-sub" id="plano-sub">Confeitaria</div></div>
+      <button class="topbar-right" onclick="salvarPlano()">Salvar</button>
+    </div>
+    <div class="content" id="plano-content"></div>
+  </div>
+
   <!-- EXPEDIÇÃO: SELECIONAR DATA -->
   <div class="screen" id="s-exp-sel-data">
     <div class="topbar laranja">
@@ -918,6 +934,7 @@
       <button class="tab" onclick="tab('quebras',this)">Quebras</button>
       <button class="tab" onclick="tab('presenca',this)">Presença</button>
       <button class="tab" onclick="tab('manutencao',this)">Manutenção</button>
+      <button class="tab" onclick="tab('plano',this)">Plano</button>
       <button class="tab" onclick="tab('exportar',this)">Exportar</button>
     </div>
     <div class="content" id="adm-content"></div>
@@ -955,7 +972,7 @@ let pinBuffer = '';
 
 const MASSAS = ['Massa Universal','Massa Folhada','Massa Folhada Mini','Massa Dog','Massa Pastel de Carne Grande','Massa Pão De Queijo Recheado','Massa Empanada','Recheio De Croquete De Carne','Massa Kibe','Massa Croquete de Frango','Massa Croissant','Massa Churros','Massa Pão De Queijo PURO','Massa Risoles','Massa Polentinha de Milho','Kit Pão Folhado - Confeitaria','Massa Bolinha De Aipim','Massa Mini Pastel de Carne (Lisa)'];
 const RECHEIOS = ['Recheio de Frango','Recheio de Carne','Recheio Calabresa Requeijão','Recheio Calabresa Queijo','Recheio Presunto Queijo Requeijão','Recheio Strogonoff','Recheio De Carne Risoles','Recheio Pastel De Carne','Recheio De Queijos - Pastel Caseiro','Recheio Presunto e Requeijão','Recheio Mini Risoles Carne','Recheio Mini Pastel de Carne','Recheio Queijo - Mini Pastel','Recheio Frango Croissant','Recheio Calabresa - Pastel Caseiro','Recheio Calabresa Empanada','Recheio Queijo Empanada','Recheio Lombo Barbecue','Recheio Carne Empanada','Recheio Brocolis Empanada'];
-const PRODUTOS = [{"nome":"EMPANADO DE SALSICHA","grMassa":100,"tipoMassa":"Massa Universal","tipoRecheio":null,"grRecheio":0,"tipoRecheio2":"Salsicha Pena Branca","grRecheio2":50},{"nome":"MINI EMPANADINHO DE SALSICHA","grMassa":15,"tipoMassa":"Massa Universal","tipoRecheio":null,"grRecheio":0,"tipoRecheio2":"Salsicha Pena Branca","grRecheio2":5},{"nome":"CACHORRO FOLHADO","grMassa":100,"tipoMassa":"Massa Folhada","tipoRecheio":null,"grRecheio":0,"tipoRecheio2":"Salsicha Excelsior","grRecheio2":50},{"nome":"CACHORRO ALEMÃO","grMassa":100,"tipoMassa":"Massa Folhada","tipoRecheio":null,"grRecheio":0,"tipoRecheio2":"Salsicha Excelsior","grRecheio2":50},{"nome":"MINI CACHORRO FOLHADO","grMassa":13,"tipoMassa":"Massa Folhada Mini","tipoRecheio":null,"grRecheio":0,"tipoRecheio2":"Salsicha Excelsior","grRecheio2":8},{"nome":"DOGUINHO","grMassa":26,"tipoMassa":"Massa Dog","tipoRecheio":null,"grRecheio":0,"tipoRecheio2":"Salsicha Excelsior","grRecheio2":18},{"nome":"MINI ENROLADINHO DE SALSICHA - MASSA PASTEL","grMassa":10,"tipoMassa":"Massa Pastel de Carne Grande","tipoRecheio":null,"grRecheio":0,"tipoRecheio2":"Salsicha Excelsior","grRecheio2":15},{"nome":"ENROLADO DE SALSICHA - MASSA PASTEL","grMassa":40,"tipoMassa":"Massa Pastel de Carne Grande","tipoRecheio":null,"grRecheio":0,"tipoRecheio2":"Salsicha Excelsior","grRecheio2":50},{"nome":"PÃO DE QUEIJO RECH. FRANGO","grMassa":50,"tipoMassa":"Massa Pão De Queijo Recheado","tipoRecheio":"Recheio de Frango","grRecheio":7,"tipoRecheio2":"Requeijão Amarilis","grRecheio2":1},{"nome":"EMPANADA FRANGO CREMOSO","grMassa":100,"tipoMassa":"Massa Empanada","tipoRecheio":"Recheio de Frango","grRecheio":70,"tipoRecheio2":"Requeijão Amarilis","grRecheio2":20},{"nome":"PÃO DE QUEIJO RECH. REQUEIJÃO","grMassa":50,"tipoMassa":"Massa Pão De Queijo Recheado","tipoRecheio":null,"grRecheio":0,"tipoRecheio2":"Requeijão (Vale do Pardo)","grRecheio2":10},{"nome":"FOLHADO CARNE REQUEIJÃO","grMassa":100,"tipoMassa":"Massa Folhada","tipoRecheio":"Recheio de Carne","grRecheio":40,"tipoRecheio2":"Requeijão (Vale do Pardo)","grRecheio2":10},{"nome":"FOLHADO CALABRESA REQUEIJÃO","grMassa":100,"tipoMassa":"Massa Folhada","tipoRecheio":"Recheio Calabresa Requeijão","grRecheio":40,"tipoRecheio2":"Requeijão (Vale do Pardo)","grRecheio2":10},{"nome":"FOLHADO FRANGO REQUEIJÃO","grMassa":100,"tipoMassa":"Massa Folhada","tipoRecheio":"Recheio de Frango","grRecheio":40,"tipoRecheio2":"Requeijão (Vale do Pardo)","grRecheio2":10},{"nome":"EMPADA FRANGO REQUEIJÃO","grMassa":100,"tipoMassa":"Massa Folhada","tipoRecheio":"Recheio de Frango","grRecheio":40,"tipoRecheio2":"Requeijão (Vale do Pardo)","grRecheio2":10},{"nome":"RISOLES DE FRANGO GRANDE","grMassa":110,"tipoMassa":"Massa Universal","tipoRecheio":"Recheio de Frango","grRecheio":40,"tipoRecheio2":"Requeijão (Vale do Pardo)","grRecheio2":5.3},{"nome":"EMPADA CARNE REQUEIJÃO","grMassa":100,"tipoMassa":"Massa Folhada","tipoRecheio":"Recheio de Carne","grRecheio":40,"tipoRecheio2":"Requeijão (Vale do Pardo)","grRecheio2":10},{"nome":"MINI KIBE","grMassa":18,"tipoMassa":"Massa Kibe","tipoRecheio":null,"grRecheio":0,"tipoRecheio2":"Requeijão (Vale do Pardo)","grRecheio2":2},{"nome":"CALABRINHO","grMassa":26,"tipoMassa":"Massa Dog","tipoRecheio":null,"grRecheio":0,"tipoRecheio2":"Linguiça Calabresa Grande","grRecheio2":18},{"nome":"PÃO DE QUEIJO RECH. GOIABADA","grMassa":50,"tipoMassa":"Massa Pão De Queijo Recheado","tipoRecheio":null,"grRecheio":0,"tipoRecheio2":"Goiabada Forneavel emulzint","grRecheio2":10},{"nome":"MINI FOLHADO GOIABADA","grMassa":15,"tipoMassa":"Massa Folhada Mini","tipoRecheio":null,"grRecheio":0,"tipoRecheio2":"Goiabada Forneavel emulzint","grRecheio2":5},{"nome":"MINI CHURROS DOCE DE LEITE","grMassa":16,"tipoMassa":"Massa Churros","tipoRecheio":null,"grRecheio":0,"tipoRecheio2":"Doce de Leite Frimesa","grRecheio2":4},{"nome":"FOLHADO CHOCOLATE","grMassa":100,"tipoMassa":"Massa Folhada","tipoRecheio":null,"grRecheio":0,"tipoRecheio2":"Chocolate em barra 24gr","grRecheio2":25},{"nome":"FOLHADO CARNE E CHEDDAR","grMassa":100,"tipoMassa":"Massa Folhada","tipoRecheio":"Recheio de Carne","grRecheio":40,"tipoRecheio2":"Cheddar","grRecheio2":10},{"nome":"FOLHADO FRANGO CHEDDAR","grMassa":100,"tipoMassa":"Massa Folhada","tipoRecheio":"Recheio de Frango","grRecheio":40,"tipoRecheio2":"Cheddar","grRecheio2":10},{"nome":"PÃO DE QUEIJO 90GR","grMassa":90,"tipoMassa":"Massa Pão De Queijo PURO","tipoRecheio":null,"grRecheio":0,"tipoRecheio2":null,"grRecheio2":0},{"nome":"PÃO DE QUEIJO 65GR","grMassa":65,"tipoMassa":"Massa Pão De Queijo PURO","tipoRecheio":null,"grRecheio":0,"tipoRecheio2":null,"grRecheio2":0},{"nome":"PÃO DE QUEIJO 25GR","grMassa":25,"tipoMassa":"Massa Pão De Queijo PURO","tipoRecheio":null,"grRecheio":0,"tipoRecheio2":null,"grRecheio2":0},{"nome":"FOLHADO FRANGO","grMassa":100,"tipoMassa":"Massa Folhada","tipoRecheio":"Recheio de Frango","grRecheio":50,"tipoRecheio2":null,"grRecheio2":0},{"nome":"FOLHADO CARNE","grMassa":100,"tipoMassa":"Massa Folhada","tipoRecheio":"Recheio de Carne","grRecheio":50,"tipoRecheio2":null,"grRecheio2":0},{"nome":"FOLHADO CALABRESA","grMassa":100,"tipoMassa":"Massa Folhada","tipoRecheio":"Recheio Calabresa Queijo","grRecheio":50,"tipoRecheio2":null,"grRecheio2":0},{"nome":"FOLHADO PRESUNTO QUEIJO","grMassa":100,"tipoMassa":"Massa Folhada","tipoRecheio":"Recheio Presunto Queijo Requeijão","grRecheio":50,"tipoRecheio2":null,"grRecheio2":0},{"nome":"EMPADA FRANGO","grMassa":100,"tipoMassa":"Massa Folhada","tipoRecheio":"Recheio de Frango","grRecheio":50,"tipoRecheio2":null,"grRecheio2":0},{"nome":"EMPADA CARNE","grMassa":100,"tipoMassa":"Massa Folhada","tipoRecheio":"Recheio de Carne","grRecheio":50,"tipoRecheio2":null,"grRecheio2":0},{"nome":"COXINHA DE FRANGO","grMassa":119,"tipoMassa":"Massa Universal","tipoRecheio":"Recheio de Frango","grRecheio":49,"tipoRecheio2":null,"grRecheio2":0},{"nome":"RISOLES DE CARNE GRANDE","grMassa":110,"tipoMassa":"Massa Risoles","tipoRecheio":"Recheio De Carne Risoles","grRecheio":40,"tipoRecheio2":null,"grRecheio2":0},{"nome":"CROISSANT","grMassa":125,"tipoMassa":"Massa Croissant","tipoRecheio":null,"grRecheio":0,"tipoRecheio2":null,"grRecheio2":0},{"nome":"PASTEL CASEIRO SABOR CARNE","grMassa":100,"tipoMassa":"Massa Pastel De Carne Grande","tipoRecheio":"Recheio Pastel De Carne","grRecheio":70,"tipoRecheio2":null,"grRecheio2":0},{"nome":"RISOLES DE PRESUNTO GRANDE","grMassa":110,"tipoMassa":"Massa Risoles","tipoRecheio":"Recheio Presunto Queijo Requeijão","grRecheio":40,"tipoRecheio2":null,"grRecheio2":0},{"nome":"EMPADA PRESUNTO QUEIJO","grMassa":100,"tipoMassa":"Massa Folhada","tipoRecheio":"Recheio Presunto Queijo Requeijão","grRecheio":50,"tipoRecheio2":null,"grRecheio2":0},{"nome":"MINI COXINHA DE FRANGO","grMassa":15,"tipoMassa":"Massa Universal","tipoRecheio":"Recheio de Frango","grRecheio":4,"tipoRecheio2":null,"grRecheio2":0},{"nome":"MINI BOLINHA DE QUEIJO","grMassa":16,"tipoMassa":"Massa Universal","tipoRecheio":"Recheio De Queijos - Pastel Caseiro","grRecheio":3,"tipoRecheio2":null,"grRecheio2":0},{"nome":"MINI RISOLES FRANGO","grMassa":20,"tipoMassa":"Massa Risoles","tipoRecheio":"Recheio de Frango","grRecheio":10,"tipoRecheio2":null,"grRecheio2":0},{"nome":"MINI RISOLES CARNE","grMassa":20,"tipoMassa":"Massa Risoles","tipoRecheio":"Recheio Mini Risoles Carne","grRecheio":10,"tipoRecheio2":null,"grRecheio2":0},{"nome":"MINI FOLHADO FRANGO","grMassa":15,"tipoMassa":"Massa Folhada Mini","tipoRecheio":"Recheio de Frango","grRecheio":7,"tipoRecheio2":null,"grRecheio2":0},{"nome":"MINI PASTEL DE CARNE","grMassa":23,"tipoMassa":"Massa Mini Pastel de Carne (Lisa)","tipoRecheio":"Recheio Mini Pastel de Carne","grRecheio":10,"tipoRecheio2":null,"grRecheio2":0},{"nome":"MINI PASTEL DE FRANGO","grMassa":20,"tipoMassa":"Massa Mini Pastel de Carne (Lisa)","tipoRecheio":"Recheio De Frango","grRecheio":10,"tipoRecheio2":null,"grRecheio2":0},{"nome":"PASTEL CASEIRO SABOR FRANGO","grMassa":100,"tipoMassa":"Massa Pastel de Carne Grande","tipoRecheio":"Recheio de Frango","grRecheio":70,"tipoRecheio2":null,"grRecheio2":0},{"nome":"EMPANADA CARNE","grMassa":100,"tipoMassa":"Massa Empanada","tipoRecheio":"Recheio Carne Empanada","grRecheio":80,"tipoRecheio2":null,"grRecheio2":0},{"nome":"CROISSANT FRANGO","grMassa":100,"tipoMassa":"Massa Croissant","tipoRecheio":"Recheio Frango Croissant","grRecheio":40,"tipoRecheio2":null,"grRecheio2":0},{"nome":"PASTEL MEIA LUA","grMassa":64,"tipoMassa":"Massa Pastel De Carne Grande","tipoRecheio":"Recheio Pastel De Carne","grRecheio":60,"tipoRecheio2":null,"grRecheio2":0}];
+const PRODUTOS = [{"nome": "PÃO DE QUEIJO RECH. FRANGO", "pesoPct": 2000, "qtdPct": 35, "tipoMassa": "Massa Pão De Queijo Recheado", "grMassa": 50.0, "tipoRecheio": "Recheio de Frango", "grRecheio": 7.0, "tipoRecheio2": "Requeijão Amarilis", "grRecheio2": 1.0}, {"nome": "PÃO DE QUEIJO RECH. REQUEIJÃO", "pesoPct": 2000, "qtdPct": 40, "tipoMassa": "Massa Pão De Queijo Recheado", "grMassa": 50.0, "tipoRecheio": "", "grRecheio": 0, "tipoRecheio2": "Requeijão (Vale do Pardo)", "grRecheio2": 10.0}, {"nome": "PÃO DE QUEIJO RECH. GOIABADA", "pesoPct": 2000, "qtdPct": 40, "tipoMassa": "Massa Pão De Queijo Recheado", "grMassa": 50.0, "tipoRecheio": "", "grRecheio": 0, "tipoRecheio2": "Goiabada Forneavel emulzint", "grRecheio2": 10.0}, {"nome": "PÃO DE QUEIJO RECH. CHOCOLATE", "pesoPct": 2000, "qtdPct": 33, "tipoMassa": "Massa Pão De Queijo Recheado", "grMassa": 50.0, "tipoRecheio": "Teste Recheio Chocolate", "grRecheio": 10.0, "tipoRecheio2": "", "grRecheio2": 0}, {"nome": "PÃO DE QUEIJO 90GR", "pesoPct": 3500, "qtdPct": 39, "tipoMassa": "Massa Pão De Queijo PURO", "grMassa": 90.0, "tipoRecheio": "", "grRecheio": 0, "tipoRecheio2": "", "grRecheio2": 0}, {"nome": "PÃO DE QUEIJO 65GR 1KG GONDOLA", "pesoPct": 1000, "qtdPct": 15, "tipoMassa": "Massa Pão De Queijo PURO", "grMassa": 65.0, "tipoRecheio": "", "grRecheio": 0, "tipoRecheio2": "", "grRecheio2": 0}, {"nome": "PÃO DE QUEIJO 25GR", "pesoPct": 1000, "qtdPct": 40, "tipoMassa": "Massa Pão De Queijo PURO", "grMassa": 25.0, "tipoRecheio": "", "grRecheio": 0, "tipoRecheio2": "", "grRecheio2": 0}, {"nome": "PÃO DE QUEIJO 65GR", "pesoPct": 3500, "qtdPct": 54, "tipoMassa": "Massa Pão De Queijo PURO", "grMassa": 65.0, "tipoRecheio": "", "grRecheio": 0, "tipoRecheio2": "", "grRecheio2": 0}, {"nome": "FOLHADO CARNE E CHEDDAR", "pesoPct": 1500, "qtdPct": 11, "tipoMassa": "Massa Folhada", "grMassa": 100.0, "tipoRecheio": "Recheio de Carne", "grRecheio": 40.0, "tipoRecheio2": "Cheddar", "grRecheio2": 10.0}, {"nome": "FOLHADO CARNE REQUEIJÃO", "pesoPct": 1500, "qtdPct": 11, "tipoMassa": "Massa Folhada", "grMassa": 100.0, "tipoRecheio": "Recheio de Carne", "grRecheio": 40.0, "tipoRecheio2": "Requeijão (Vale do Pardo)", "grRecheio2": 10.0}, {"nome": "FOLHADO CALABRESA REQUEIJÃO", "pesoPct": 1500, "qtdPct": 11, "tipoMassa": "Massa Folhada", "grMassa": 100.0, "tipoRecheio": "Recheio Calabresa Requeijão", "grRecheio": 40.0, "tipoRecheio2": "Requeijão (Vale do Pardo)", "grRecheio2": 10.0}, {"nome": "FOLHADO FRANGO REQUEIJÃO", "pesoPct": 1500, "qtdPct": 11, "tipoMassa": "Massa Folhada", "grMassa": 100.0, "tipoRecheio": "Recheio de Frango", "grRecheio": 40.0, "tipoRecheio2": "Requeijão (Vale do Pardo)", "grRecheio2": 10.0}, {"nome": "FOLHADO FRANGO CHEDDAR", "pesoPct": 1500, "qtdPct": 11, "tipoMassa": "Massa Folhada", "grMassa": 100.0, "tipoRecheio": "Recheio de Frango", "grRecheio": 40.0, "tipoRecheio2": "Cheddar", "grRecheio2": 10.0}, {"nome": "FOLHADO FRANGO", "pesoPct": 1500, "qtdPct": 10, "tipoMassa": "Massa Folhada", "grMassa": 100.0, "tipoRecheio": "Recheio de Frango", "grRecheio": 50.0, "tipoRecheio2": "", "grRecheio2": 0}, {"nome": "FOLHADO CARNE", "pesoPct": 1500, "qtdPct": 10, "tipoMassa": "Massa Folhada", "grMassa": 100.0, "tipoRecheio": "Recheio de Carne", "grRecheio": 50.0, "tipoRecheio2": "", "grRecheio2": 0}, {"nome": "FOLHADO CALABRESA", "pesoPct": 1500, "qtdPct": 10, "tipoMassa": "Massa Folhada", "grMassa": 100.0, "tipoRecheio": "Recheio Calabresa Queijo", "grRecheio": 50.0, "tipoRecheio2": "", "grRecheio2": 0}, {"nome": "FOLHADO PRESUNTO QUEIJO", "pesoPct": 1500, "qtdPct": 10, "tipoMassa": "Massa Folhada", "grMassa": 100.0, "tipoRecheio": "Recheio Presunto Queijo Requeijão", "grRecheio": 50.0, "tipoRecheio2": "", "grRecheio2": 0}, {"nome": "EMPADA FRANGO", "pesoPct": 1500, "qtdPct": 10, "tipoMassa": "Massa Folhada", "grMassa": 100.0, "tipoRecheio": "Recheio de Frango", "grRecheio": 50.0, "tipoRecheio2": "", "grRecheio2": 0}, {"nome": "EMPADA CARNE", "pesoPct": 1500, "qtdPct": 10, "tipoMassa": "Massa Folhada", "grMassa": 100.0, "tipoRecheio": "Recheio de Carne", "grRecheio": 50.0, "tipoRecheio2": "", "grRecheio2": 0}, {"nome": "EMPADA FRANGO REQUEIJÃO", "pesoPct": 1500, "qtdPct": 11, "tipoMassa": "Massa Folhada", "grMassa": 100.0, "tipoRecheio": "Recheio de Frango", "grRecheio": 40.0, "tipoRecheio2": "Requeijão (Vale do Pardo)", "grRecheio2": 10.0}, {"nome": "CACHORRO FOLHADO", "pesoPct": 1500, "qtdPct": 15, "tipoMassa": "Massa Folhada", "grMassa": 100.0, "tipoRecheio": "", "grRecheio": 0, "tipoRecheio2": "Salsicha Excelsior", "grRecheio2": 50.0}, {"nome": "FOLHADO CHOCOLATE", "pesoPct": 1250, "qtdPct": 12, "tipoMassa": "Massa Folhada", "grMassa": 100.0, "tipoRecheio": "", "grRecheio": 0, "tipoRecheio2": "Chocolate em barra 24gr", "grRecheio2": 25.0}, {"nome": "CACHORRO ALEMÃO", "pesoPct": 1500, "qtdPct": 15, "tipoMassa": "Massa Folhada", "grMassa": 100.0, "tipoRecheio": "", "grRecheio": 0, "tipoRecheio2": "Salsicha Excelsior", "grRecheio2": 50.0}, {"nome": "FOLHADO DE STROGONOFF", "pesoPct": 1500, "qtdPct": 10, "tipoMassa": "Massa Folhada", "grMassa": 100.0, "tipoRecheio": "Recheio Strogonoff", "grRecheio": 50.0, "tipoRecheio2": "", "grRecheio2": 0}, {"nome": "COXINHA DE FRANGO", "pesoPct": 1700, "qtdPct": 10, "tipoMassa": "Massa Universal", "grMassa": 119.0, "tipoRecheio": "Recheio de Frango", "grRecheio": 49.0, "tipoRecheio2": "", "grRecheio2": 0}, {"nome": "RISOLES DE FRANGO GRANDE", "pesoPct": 1500, "qtdPct": 10, "tipoMassa": "Massa Universal", "grMassa": 110.0, "tipoRecheio": "Recheio de Frango", "grRecheio": 40.0, "tipoRecheio2": "Requeijão (Vale do Pardo)", "grRecheio2": 5.3}, {"nome": "RISOLES DE CARNE GRANDE", "pesoPct": 1500, "qtdPct": 10, "tipoMassa": "Massa Risoles", "grMassa": 110.0, "tipoRecheio": "Recheio De Carne Risoles", "grRecheio": 40.0, "tipoRecheio2": "", "grRecheio2": 0}, {"nome": "SALGADOS CROQUETE", "pesoPct": 1100, "qtdPct": 10, "tipoMassa": "Recheio De Croquete De Carne", "grMassa": 105.0, "tipoRecheio": "", "grRecheio": 0, "tipoRecheio2": "Requeijão (Vale do Pardo)", "grRecheio2": 10.0}, {"nome": "CROISSANT CHOCOLATE", "pesoPct": 1250, "qtdPct": 12, "tipoMassa": "Massa Croissant", "grMassa": 100.0, "tipoRecheio": "", "grRecheio": 0, "tipoRecheio2": "Chocolate em barra 24gr", "grRecheio2": 25.0}, {"nome": "CROISSANT", "pesoPct": 1250, "qtdPct": 10, "tipoMassa": "Massa Croissant", "grMassa": 125.0, "tipoRecheio": "", "grRecheio": 0, "tipoRecheio2": "", "grRecheio2": 0}, {"nome": "PASTEL CASEIRO SABOR CARNE", "pesoPct": 1020, "qtdPct": 6, "tipoMassa": "Massa Pastel De Carne Grande", "grMassa": 100.0, "tipoRecheio": "Recheio Pastel De Carne", "grRecheio": 70.0, "tipoRecheio2": "", "grRecheio2": 0}, {"nome": "EMPADA CARNE REQUEIJÃO", "pesoPct": 1500, "qtdPct": 11, "tipoMassa": "Massa Folhada", "grMassa": 100.0, "tipoRecheio": "Recheio de Carne", "grRecheio": 40.0, "tipoRecheio2": "Requeijão (Vale do Pardo)", "grRecheio2": 10.0}, {"nome": "EMPANADO DE SALSICHA", "pesoPct": 1500, "qtdPct": 15, "tipoMassa": "Massa Universal", "grMassa": 100.0, "tipoRecheio": "", "grRecheio": 0, "tipoRecheio2": "Salsicha Pena Branca", "grRecheio2": 50.0}, {"nome": "RISOLES DE PRESUNTO GRANDE", "pesoPct": 1500, "qtdPct": 10, "tipoMassa": "Massa Risoles", "grMassa": 110.0, "tipoRecheio": "Recheio Presunto Queijo Requeijão", "grRecheio": 40.0, "tipoRecheio2": "", "grRecheio2": 0}, {"nome": "EMPADA PRESUNTO QUEIJO", "pesoPct": 1500, "qtdPct": 10, "tipoMassa": "Massa Folhada", "grMassa": 100.0, "tipoRecheio": "Recheio Presunto Queijo Requeijão", "grRecheio": 50.0, "tipoRecheio2": "", "grRecheio2": 0}, {"nome": "POLENTINHA DE QUEIJO", "pesoPct": 1000, "qtdPct": 42, "tipoMassa": "Massa Polentinha de Milho", "grMassa": 19.0, "tipoRecheio": "Recheio De Queijos - Pastel Caseiro", "grRecheio": 5.0, "tipoRecheio2": "", "grRecheio2": 0}, {"nome": "MINI TRAVISSEIRINHO CALABRESA", "pesoPct": 1000, "qtdPct": 53, "tipoMassa": "Massa Universal", "grMassa": 15.0, "tipoRecheio": "Recheio Calabresa Requeijão", "grRecheio": 4.0, "tipoRecheio2": "", "grRecheio2": 0}, {"nome": "MINI EMPADA PRESUNTO E QUEIJO", "pesoPct": 1000, "qtdPct": 45, "tipoMassa": "Massa Folhada Mini", "grMassa": 15.0, "tipoRecheio": "Recheio Presunto e Requeijão", "grRecheio": 7.0, "tipoRecheio2": "", "grRecheio2": 0}, {"nome": "MINI COXINHA DE FRANGO", "pesoPct": 1000, "qtdPct": 53, "tipoMassa": "Massa Universal", "grMassa": 15.0, "tipoRecheio": "Recheio de Frango", "grRecheio": 4.0, "tipoRecheio2": "", "grRecheio2": 0}, {"nome": "MINI CROQUETE CARNE", "pesoPct": 1000, "qtdPct": 53, "tipoMassa": "Recheio De Croquete de Carne", "grMassa": 19.0, "tipoRecheio": "", "grRecheio": 0, "tipoRecheio2": "", "grRecheio2": 0}, {"nome": "MINI KIBE", "pesoPct": 1000, "qtdPct": 56, "tipoMassa": "Massa Kibe", "grMassa": 18.0, "tipoRecheio": "", "grRecheio": 0, "tipoRecheio2": "Requeijão (Vale do Pardo)", "grRecheio2": 2.0}, {"nome": "MINI TRAVISSEIRINHO  PRESUNTO/QUEIJO", "pesoPct": 1000, "qtdPct": 53, "tipoMassa": "Massa Universal", "grMassa": 15.0, "tipoRecheio": "Recheio Presunto e Requeijão", "grRecheio": 4.0, "tipoRecheio2": "", "grRecheio2": 0}, {"nome": "MINI BOLINHA DE QUEIJO", "pesoPct": 1000, "qtdPct": 53, "tipoMassa": "Massa Universal", "grMassa": 16.0, "tipoRecheio": "Recheio De Queijos - Pastel Caseiro", "grRecheio": 3.0, "tipoRecheio2": "", "grRecheio2": 0}, {"nome": "MINI EMPADA FRANGO FOLHADA", "pesoPct": 1000, "qtdPct": 45, "tipoMassa": "Massa Folhada Mini", "grMassa": 15.0, "tipoRecheio": "Recheio de Frango", "grRecheio": 7.0, "tipoRecheio2": "", "grRecheio2": 0}, {"nome": "MINI CACHORRO FOLHADO", "pesoPct": 1000, "qtdPct": 77, "tipoMassa": "Massa Folhada Mini", "grMassa": 13.0, "tipoRecheio": "", "grRecheio": 0, "tipoRecheio2": "Salsicha Excelsior", "grRecheio2": 8.0}, {"nome": "MINI CHURROS DOCE DE LEITE", "pesoPct": 1000, "qtdPct": 62, "tipoMassa": "Massa Churros", "grMassa": 16.0, "tipoRecheio": "", "grRecheio": 0, "tipoRecheio2": "Doce de Leite Frimesa", "grRecheio2": 4.0}, {"nome": "PALMIER - ORELHA DE MACACO", "pesoPct": 1000, "qtdPct": 53, "tipoMassa": "Massa Folhada Mini", "grMassa": 19.0, "tipoRecheio": "", "grRecheio": 0, "tipoRecheio2": "Açucar Cristal", "grRecheio2": 3.0}, {"nome": "MINI RISOLES FRANGO", "pesoPct": 1000, "qtdPct": 33, "tipoMassa": "Massa Risoles", "grMassa": 20.0, "tipoRecheio": "Recheio de Frango", "grRecheio": 10.0, "tipoRecheio2": "", "grRecheio2": 0}, {"nome": "MASSA FOLHADA", "pesoPct": 1000, "qtdPct": 1, "tipoMassa": "Massa Folhada", "grMassa": 1000.0, "tipoRecheio": "", "grRecheio": 0, "tipoRecheio2": "", "grRecheio2": 0}, {"nome": "MINI CROQUETE CARNE C/ REQUEIJÃO", "pesoPct": 1000, "qtdPct": 62, "tipoMassa": "Recheio De Croquete de Carne", "grMassa": 16.0, "tipoRecheio": "", "grRecheio": 0, "tipoRecheio2": "Requeijão (Vale do Pardo)", "grRecheio2": 4.0}, {"nome": "MINI EMPANADINHO DE SALSICHA", "pesoPct": 1000, "qtdPct": 67, "tipoMassa": "Massa Universal", "grMassa": 15.0, "tipoRecheio": "", "grRecheio": 0, "tipoRecheio2": "Salsicha Pena Branca", "grRecheio2": 5.0}, {"nome": "MINI CROQUETE DE FRANGO C/ REQUEIJÃO", "pesoPct": 1000, "qtdPct": 59, "tipoMassa": "Massa Croquete de Frango  ", "grMassa": 17.0, "tipoRecheio": "", "grRecheio": 0, "tipoRecheio2": "Requeijão (Vale do Pardo)", "grRecheio2": 3.0}, {"nome": "ROLO MASSA DE PAO-SEMI FOLHADA", "pesoPct": 2500, "qtdPct": 1, "tipoMassa": "Kit Pão Folhado - Confeitaria", "grMassa": 2500.0, "tipoRecheio": "", "grRecheio": 0, "tipoRecheio2": "", "grRecheio2": 0}, {"nome": "ROLO MASSA FOLHADA", "pesoPct": 2500, "qtdPct": 1, "tipoMassa": "Massa Folhada", "grMassa": 2500.0, "tipoRecheio": "", "grRecheio": 0, "tipoRecheio2": "", "grRecheio2": 0}, {"nome": "MINI RISOLES PRESUNTO", "pesoPct": 1000, "qtdPct": 33, "tipoMassa": "Massa Risoles", "grMassa": 20.0, "tipoRecheio": "Recheio Presunto Queijo Requeijão", "grRecheio": 10.0, "tipoRecheio2": "", "grRecheio2": 0}, {"nome": "BOLINHA DE AIPIM C/ CALABRESA", "pesoPct": 1000, "qtdPct": 50, "tipoMassa": "Massa Bolinha De Aipim", "grMassa": 16.0, "tipoRecheio": "Recheio Calabresa Requeijão", "grRecheio": 4.0, "tipoRecheio2": "", "grRecheio2": 0}, {"nome": "POLENTINHA DE CALABRESA", "pesoPct": 1000, "qtdPct": 42, "tipoMassa": "Massa Polentinha de Milho", "grMassa": 19.0, "tipoRecheio": "Recheio Calabresa Requeijão", "grRecheio": 5.0, "tipoRecheio2": "", "grRecheio2": 0}, {"nome": "MINI RISOLES CARNE", "pesoPct": 1000, "qtdPct": 33, "tipoMassa": "Massa Risoles", "grMassa": 20.0, "tipoRecheio": "Recheio Mini Risoles Carne", "grRecheio": 10.0, "tipoRecheio2": "", "grRecheio2": 0}, {"nome": "MINI FOLHADO FRANGO", "pesoPct": 1000, "qtdPct": 45, "tipoMassa": "Massa Folhada Mini", "grMassa": 15.0, "tipoRecheio": "Recheio de Frango", "grRecheio": 7.0, "tipoRecheio2": "", "grRecheio2": 0}, {"nome": "MINI FOLHADO PRESUNTO QUEIJO", "pesoPct": 1000, "qtdPct": 45, "tipoMassa": "Massa Folhada Mini", "grMassa": 15.0, "tipoRecheio": "Recheio Presunto e Requeijão", "grRecheio": 7.0, "tipoRecheio2": "", "grRecheio2": 0}, {"nome": "MINI FOLHADO GOIABADA", "pesoPct": 1000, "qtdPct": 45, "tipoMassa": "Massa Folhada Mini", "grMassa": 15.0, "tipoRecheio": "", "grRecheio": 0, "tipoRecheio2": "Goiabada Forneavel emulzint", "grRecheio2": 5.0}, {"nome": "MINI PASTEL DE CARNE", "pesoPct": 1000, "qtdPct": 30, "tipoMassa": "Massa Mini Pastel de Carne (Lisa)", "grMassa": 23.0, "tipoRecheio": "Recheio Mini Pastel de Carne", "grRecheio": 10.0, "tipoRecheio2": "", "grRecheio2": 0}, {"nome": "DOGUINHO", "pesoPct": 2000, "qtdPct": 77, "tipoMassa": "Massa Dog", "grMassa": 26.0, "tipoRecheio": "", "grRecheio": 0, "tipoRecheio2": "Salsicha Excelsior", "grRecheio2": 18.0}, {"nome": "CALABRINHO", "pesoPct": 2000, "qtdPct": 77, "tipoMassa": "Massa Dog", "grMassa": 26.0, "tipoRecheio": "", "grRecheio": 0, "tipoRecheio2": "Linguiça Calabresa Grande", "grRecheio2": 18.0}, {"nome": "MINI PASTEL DE QUEIJO", "pesoPct": 1000, "qtdPct": 33, "tipoMassa": "Massa Mini Pastel de Carne (Lisa)", "grMassa": 20.0, "tipoRecheio": "Recheio Queijo - Mini Pastel", "grRecheio": 10.0, "tipoRecheio2": "", "grRecheio2": 0}, {"nome": "MINI PASTEL DE FRANGO", "pesoPct": 1000, "qtdPct": 33, "tipoMassa": "Massa Mini Pastel de Carne (Lisa)", "grMassa": 20.0, "tipoRecheio": "Recheio De Frango", "grRecheio": 10.0, "tipoRecheio2": "", "grRecheio2": 0}, {"nome": "MINI ENROLADINHO DE SALSICHA - MASSA PASTEL", "pesoPct": 1000, "qtdPct": 100, "tipoMassa": "Massa Pastel de Carne Grande", "grMassa": 10.0, "tipoRecheio": "", "grRecheio": 0, "tipoRecheio2": "Salsicha Excelsior", "grRecheio2": 15.0}, {"nome": "MINI CROISSANT PREMIUM FRANGO", "pesoPct": 1000, "qtdPct": 32, "tipoMassa": "Massa Croissant", "grMassa": 25.0, "tipoRecheio": "Recheio Frango Croissant", "grRecheio": 6.0, "tipoRecheio2": "", "grRecheio2": 0}, {"nome": "MINI CROISSANT PREMIUM PRESUNTO", "pesoPct": 1000, "qtdPct": 32, "tipoMassa": "Massa Croissant", "grMassa": 25.0, "tipoRecheio": "Recheio Presunto Queijo Requeijão", "grRecheio": 6.0, "tipoRecheio2": "", "grRecheio2": 0}, {"nome": "MINI CROISSANT PREMIUM GOIABADA", "pesoPct": 1000, "qtdPct": 40, "tipoMassa": "Massa Croissant", "grMassa": 25.0, "tipoRecheio": "", "grRecheio": 0, "tipoRecheio2": "Goiabada Forneavel emulzint", "grRecheio2": 6.0}, {"nome": "MINI CROISSANT PREMIUM CHOCOLATE", "pesoPct": 1000, "qtdPct": 40, "tipoMassa": "Massa Croissant", "grMassa": 25.0, "tipoRecheio": "", "grRecheio": 0, "tipoRecheio2": "Chocolate em barra 24gr", "grRecheio2": 6.0}, {"nome": "PASTEL CASEIRO SABOR QUEIJO", "pesoPct": 1020, "qtdPct": 6, "tipoMassa": "Massa Pastel de Carne Grande", "grMassa": 100.0, "tipoRecheio": "Recheio De Queijos - Pastel Caseiro", "grRecheio": 70.0, "tipoRecheio2": "", "grRecheio2": 0}, {"nome": "PASTEL CASEIRO SABOR CALABRESA", "pesoPct": 1020, "qtdPct": 6, "tipoMassa": "Massa Pastel de Carne Grande", "grMassa": 100.0, "tipoRecheio": "Recheio Calabresa - Pastel Caseiro", "grRecheio": 70.0, "tipoRecheio2": "", "grRecheio2": 0}, {"nome": "PASTEL CASEIRO SABOR FRANGO", "pesoPct": 1020, "qtdPct": 6, "tipoMassa": "Massa Pastel de Carne Grande", "grMassa": 100.0, "tipoRecheio": "Recheio de Frango", "grRecheio": 70.0, "tipoRecheio2": "", "grRecheio2": 0}, {"nome": "EMPANADA FRANGO CREMOSO", "pesoPct": 1900, "qtdPct": 11, "tipoMassa": "Massa Empanada", "grMassa": 100.0, "tipoRecheio": "Recheio de Frango", "grRecheio": 70.0, "tipoRecheio2": "Requeijão Amarilis", "grRecheio2": 20.0}, {"nome": "EMPANADA CALABRESA", "pesoPct": 1800, "qtdPct": 10, "tipoMassa": "Massa Empanada", "grMassa": 100.0, "tipoRecheio": "Recheio Calabresa Empanada", "grRecheio": 80.0, "tipoRecheio2": "", "grRecheio2": 0}, {"nome": "EMPANADA QUEIJO", "pesoPct": 1800, "qtdPct": 10, "tipoMassa": "Massa Empanada", "grMassa": 100.0, "tipoRecheio": "Recheio Queijo Empanada", "grRecheio": 80.0, "tipoRecheio2": "", "grRecheio2": 0}, {"nome": "EMPANADA COSTELINHA C/ BARBECUE", "pesoPct": 1800, "qtdPct": 10, "tipoMassa": "Massa Empanada", "grMassa": 100.0, "tipoRecheio": "Recheio Lombo Barbecue", "grRecheio": 80.0, "tipoRecheio2": "", "grRecheio2": 0}, {"nome": "EMPANADA CARNE", "pesoPct": 1800, "qtdPct": 10, "tipoMassa": "Massa Empanada", "grMassa": 100.0, "tipoRecheio": "Recheio Carne Empanada", "grRecheio": 80.0, "tipoRecheio2": "", "grRecheio2": 0}, {"nome": "EMPANADA BROCOLIS", "pesoPct": 1800, "qtdPct": 10, "tipoMassa": "Massa Empanada", "grMassa": 100.0, "tipoRecheio": "Recheio Brocolis Empanada", "grRecheio": 80.0, "tipoRecheio2": "", "grRecheio2": 0}, {"nome": "ENROLADO DE SALSICHA - MASSA PASTEL", "pesoPct": 1000, "qtdPct": 25, "tipoMassa": "Massa Pastel de Carne Grande", "grMassa": 40.0, "tipoRecheio": "", "grRecheio": 0, "tipoRecheio2": "Salsicha Excelsior", "grRecheio2": 50.0}, {"nome": "CROISSANT FRANGO", "pesoPct": 1400, "qtdPct": 10, "tipoMassa": "Massa Croissant", "grMassa": 100.0, "tipoRecheio": "Recheio Frango Croissant", "grRecheio": 40.0, "tipoRecheio2": "", "grRecheio2": 0}, {"nome": "CROISSANT PRESUNTO", "pesoPct": 1400, "qtdPct": 10, "tipoMassa": "Massa Croissant", "grMassa": 100.0, "tipoRecheio": "Recheio Presunto Queijo Requeijão", "grRecheio": 40.0, "tipoRecheio2": "", "grRecheio2": 0}, {"nome": "CROISSANT GOIABADA", "pesoPct": 1400, "qtdPct": 14, "tipoMassa": "Massa Croissant", "grMassa": 100.0, "tipoRecheio": "", "grRecheio": 0, "tipoRecheio2": "Goiabada Forneavel emulzint", "grRecheio2": 40.0}];
 
 let prodSel=null, dataSel=null, dataSelEmb=null, dataSelExp=null, tabAtiva='resumo';
 let massaSel=null, dataMassa=null, recheioSel=null, dataRecheio=null;
@@ -1005,6 +1022,7 @@ function atualizarTela(){
   if(tela==='s-adm') renderAdm(tabAtiva);
   if(tela==='s-contagem-home') renderContagemHome();
   if(tela==='s-contagem-hist') renderContagemHist();
+  if(tela==='s-plano') renderPlano();
   if(tela==='s-presenca-reg-conf') renderPresencaReg('conf');
   if(tela==='s-presenca-reg-coz') renderPresencaReg('coz');
   if(tela==='s-presenca-reg-emb') renderPresencaReg('emb');
@@ -1084,6 +1102,7 @@ function goTo(id){
   if(id==='s-contagem-prod-acabado'){ renderContagemHome(); }
   if(id==='s-contagem-lanc') renderContagemLanc();
   if(id==='s-contagem-hist') renderContagemHist();
+  if(id==='s-plano') renderPlano();
   if(id==='s-manut-home') renderManutHome();
   if(id==='s-manut-maq') renderMaquinaDetail();
   if(id==='s-manut-nova-maq'){
@@ -1168,9 +1187,10 @@ function irQtd(){
   if(!prodSel)return;
   document.getElementById('ps-data-label').textContent=dataSel;
   document.getElementById('ps-nome').textContent=prodSel.nome;
-  let info=`Padrão/un → massa: ${prodSel.grMassa}g`;
-  if(prodSel.tipoRecheio&&prodSel.grRecheio>0)info+=` · ${prodSel.tipoRecheio}: ${prodSel.grRecheio}g`;
-  if(prodSel.tipoRecheio2&&prodSel.grRecheio2>0)info+=` · ${prodSel.tipoRecheio2}: ${prodSel.grRecheio2}g`;
+  const qtdPct=prodSel.qtdPct||1;
+  let info=`${qtdPct} un/pct · massa/un: ${prodSel.grMassa}g`;
+  if(prodSel.tipoRecheio&&prodSel.grRecheio>0)info+=` · ${prodSel.tipoRecheio}: ${prodSel.grRecheio}g/un`;
+  if(prodSel.tipoRecheio2&&prodSel.grRecheio2>0)info+=` · ${prodSel.tipoRecheio2}: ${prodSel.grRecheio2}g/un`;
   document.getElementById('ps-info').textContent=info;
   ['i-qtd','i-massa','i-r1','i-r2','i-obs'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('prev-card').style.display='none';
@@ -1184,12 +1204,14 @@ function irQtd(){
   goTo('s-qtd');
 }
 function calcPrev(){
-  const qtd=parseInt(document.getElementById('i-qtd').value)||0;
+  const pcts=parseInt(document.getElementById('i-qtd').value)||0;
   const prev=document.getElementById('prev-card');
-  if(!qtd||!prodSel){prev.style.display='none';return;}
-  let txt=`Previsão para ${qtd} un → massa: ${(prodSel.grMassa*qtd/1000).toFixed(3)} kg`;
-  if(prodSel.tipoRecheio&&prodSel.grRecheio>0)txt+=` · ${(prodSel.grRecheio*qtd/1000).toFixed(3)} kg`;
-  if(prodSel.tipoRecheio2&&prodSel.grRecheio2>0)txt+=` · ${(prodSel.grRecheio2*qtd/1000).toFixed(3)} kg`;
+  if(!pcts||!prodSel){prev.style.display='none';return;}
+  const qtdPct=prodSel.qtdPct||1;
+  const unidades=pcts*qtdPct;
+  let txt=`${pcts} pct × ${qtdPct} un = ${unidades} un → massa: ${(prodSel.grMassa*unidades/1000).toFixed(3)} kg`;
+  if(prodSel.tipoRecheio&&prodSel.grRecheio>0)txt+=` · ${prodSel.tipoRecheio}: ${(prodSel.grRecheio*unidades/1000).toFixed(3)} kg`;
+  if(prodSel.tipoRecheio2&&prodSel.grRecheio2>0)txt+=` · ${prodSel.tipoRecheio2}: ${(prodSel.grRecheio2*unidades/1000).toFixed(3)} kg`;
   prev.textContent=txt;prev.style.display='block';
 }
 async function salvar(){
@@ -1201,10 +1223,12 @@ async function salvar(){
   if(!qtd||!massa){alert('Preencha a quantidade e a massa.');return;}
   const btn=document.getElementById('btn-salvar');
   btn.textContent='Salvando...';btn.className='btn btn-disabled';
-  const mE=prodSel.grMassa*qtd/1000,r1E=prodSel.grRecheio*qtd/1000,r2E=prodSel.grRecheio2*qtd/1000;
+  const qtdPct=prodSel.qtdPct||1;
+  const unidades=qtd*qtdPct; // qtd = pacotes, unidades = total de unidades
+  const mE=prodSel.grMassa*unidades/1000,r1E=prodSel.grRecheio*unidades/1000,r2E=prodSel.grRecheio2*unidades/1000;
   try {
     await addDoc(collection(db,'registros'),{
-      produto:prodSel.nome,prodData:prodSel,qtd,massa,r1,r2,obs,
+      produto:prodSel.nome,prodData:prodSel,qtd,qtdPacotes:qtd,qtdUnidades:unidades,massa,r1,r2,obs,
       hora:agora(),data:dataSel,confirmado:false,timestamp:Date.now(),
       quebra:{massaEsp:mE,massaReal:massa,difMassa:massa-mE,r1Esp:r1E,r1Real:r1,difR1:r1-r1E,r2Esp:r2E,r2Real:r2,difR2:r2-r2E},
       embalagem:{feito:false,qtdEmbalada:0,qtdProduzida:qtd},
@@ -1244,7 +1268,7 @@ function renderMeusReg(dataFiltro){
               <button class="btn-del-admin" onclick="excluirRegistro('registros','${r.firestoreId}','${r.produto}')" style="background:none;border:1px solid #ef9a9a;color:#c62828;font-size:12px;padding:5px 8px;border-radius:8px;cursor:pointer;font-family:inherit;">🗑 Excluir</button>
         </div>
       </div>
-      <div class="reg-detalhe">Qtd: <strong>${r.qtd} un</strong> · Massa: <strong>${r.massa} kg</strong>${r.r1>0?` · R1: <strong>${r.r1} kg</strong>`:''}${r.r2>0?` · R2: <strong>${r.r2} kg</strong>`:''}${r.obs?`<br><em>${r.obs}</em>`:''}</div>
+      <div class="reg-detalhe">Qtd: <strong>${r.qtdPacotes||r.qtd} pct</strong> (${r.qtdUnidades||r.qtd} un) · Massa: <strong>${r.massa} kg</strong>${r.r1>0?` · R1: <strong>${r.r1} kg</strong>`:''}${r.r2>0?` · R2: <strong>${r.r2} kg</strong>`:''}${r.obs?`<br><em>${r.obs}</em>`:''}</div>
       ${editInfo}
       <div class="edit-form" id="edit-${r.firestoreId}" style="display:none;margin-top:10px;padding-top:10px;border-top:0.5px solid var(--border);">
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
@@ -2122,6 +2146,47 @@ function renderAdm(t){
         </table></div>`).join('');
   }
 
+  else if(t==='plano'){
+    if(!planos.length){el.innerHTML='<div class="empty">Nenhum plano cadastrado ainda.</div>';return;}
+    const semAtual=semanaAtual();
+    const semsDisp=[semAtual,...planos.map(p=>p.semana)].filter((v,i,a)=>a.indexOf(v)===i).slice(0,8);
+    const dfPlano=window._admDatas&&window._admDatas['plano']||(planos[0]?.semana||semAtual);
+    el.innerHTML=makeSelect('sel-plano-adm',semsDisp.map(s=>s),dfPlano,'plano').replace(/>${semsDisp[0]}</g,x=>x)+semsDisp.map(s=>`<option value="${s}">${semanaLabel(s)}</option>`).join('');
+    // Simple: rebuild with proper labels
+    el.innerHTML=`<div style="margin-bottom:12px;"><select id="sel-plano-adm" onchange="admFiltrar('plano',this.value)" style="font-size:14px;">${semsDisp.map(s=>`<option value="${s}" ${s===dfPlano?'selected':''}>${semanaLabel(s)}</option>`).join('')}</select></div>`;
+    const planoSel=planos.find(p=>p.semana===dfPlano);
+    if(!planoSel){el.innerHTML+='<div class="empty">Sem plano para esta semana.</div>';return;}
+    const dias=['Segunda','Terça','Quarta','Quinta','Sexta'];
+    dias.forEach(dia=>{
+      const itens=planoSel.itens[dia]||[];
+      if(!itens.length)return;
+      el.innerHTML+=`<div class="section-divider">${dia}-feira</div>`;
+      let totalMassa={},totalR1={},totalR2={};
+      itens.forEach(item=>{
+        const prod=PRODUTOS.find(p=>p.nome===item.nome);
+        if(!prod)return;
+        const un=(item.qtdPacotes||0)*(prod.qtdPct||1);
+        if(prod.tipoMassa&&prod.grMassa>0) totalMassa[prod.tipoMassa]=(totalMassa[prod.tipoMassa]||0)+prod.grMassa*un/1000;
+        if(prod.tipoRecheio&&prod.grRecheio>0) totalR1[prod.tipoRecheio]=(totalR1[prod.tipoRecheio]||0)+prod.grRecheio*un/1000;
+        if(prod.tipoRecheio2&&prod.grRecheio2>0) totalR2[prod.tipoRecheio2]=(totalR2[prod.tipoRecheio2]||0)+prod.grRecheio2*un/1000;
+        el.innerHTML+=`<div class="reg-item" style="border-left-color:var(--mc-roxo);">
+          <div class="reg-header"><span class="reg-produto">${item.nome}</span><span style="font-size:12px;color:var(--mc-roxo);font-weight:600;">${item.qtdPacotes} pct = ${un} un</span></div>
+          <div style="font-size:12px;color:var(--text-secondary);">
+            ${prod.tipoMassa?`Massa: ${(prod.grMassa*un/1000).toFixed(3)} kg`:''}
+            ${prod.tipoRecheio&&prod.grRecheio>0?` · R1: ${(prod.grRecheio*un/1000).toFixed(3)} kg`:''}
+            ${prod.tipoRecheio2&&prod.grRecheio2>0?` · R2: ${(prod.grRecheio2*un/1000).toFixed(3)} kg`:''}
+          </div>
+        </div>`;
+      });
+      el.innerHTML+=`<div class="card" style="margin-bottom:10px;border-left:3px solid var(--mc-roxo);">
+        <div style="font-size:11px;font-weight:600;color:var(--mc-roxo);text-transform:uppercase;margin-bottom:6px;">Total ${dia}</div>
+        ${Object.entries(totalMassa).map(([k,v])=>`<div style="font-size:12px;color:var(--text-secondary);">⚖️ ${k}: <strong>${v.toFixed(3)} kg</strong></div>`).join('')}
+        ${Object.entries(totalR1).map(([k,v])=>`<div style="font-size:12px;color:var(--text-secondary);">🍖 ${k}: <strong>${v.toFixed(3)} kg</strong></div>`).join('')}
+        ${Object.entries(totalR2).map(([k,v])=>`<div style="font-size:12px;color:var(--text-secondary);">➕ ${k}: <strong>${v.toFixed(3)} kg</strong></div>`).join('')}
+      </div>`;
+    });
+  }
+
   else if(t==='manutencao'){
     const datasM=sortDatas([...new Set(manutencoes.map(r=>r.data))]);
     const dfM=window._admDatas&&window._admDatas['manutencao']||(datasM[0]||hoje());
@@ -2282,7 +2347,22 @@ async function gerarExcel(){
     });
     XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(presRows),'Presença');
 
-    // ABA 7: MANUTENÇÃO
+    // ABA 7: PLANO DA SEMANA
+    const planoRows=[['Semana','Dia','Produto','Qtd Pacotes','Qtd Unidades','Massa Necessária (kg)','Recheio 1 (kg)','Recheio 2 (kg)']];
+    planos.forEach(pl=>{
+      const dias=['Segunda','Terça','Quarta','Quinta','Sexta'];
+      dias.forEach(dia=>{
+        (pl.itens[dia]||[]).forEach(item=>{
+          const prod=PRODUTOS.find(p=>p.nome===item.nome);
+          if(!prod)return;
+          const un=(item.qtdPacotes||0)*(prod.qtdPct||1);
+          planoRows.push([semanaLabel(pl.semana),dia+'-feira',item.nome,item.qtdPacotes,un,(prod.grMassa*un/1000).toFixed(3),(prod.grRecheio*un/1000).toFixed(3),(prod.grRecheio2*un/1000).toFixed(3)]);
+        });
+      });
+    });
+    XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(planoRows),'Plano da Semana');
+
+    // ABA 8: MANUTENÇÃO
     const manutRows=[['Data','Hora','Setor','Máquina','Tipo','Serviço Realizado','Motivo/Problema','Tempo Parada (min)']];
     manutencoes.filter(r=>inRange(r.data)).forEach(r=>{
       manutRows.push([r.data,r.hora,r.setor,r.maquina_nome,r.tipo,r.servico,r.motivo||'',r.tempo_min||0]);
@@ -2807,6 +2887,188 @@ async function salvarManutencao(){
   }catch(e){clearTimeout(resetBtn2);alert('Erro ao salvar: '+e.message);btn.textContent='Salvar manutenção ✓';btn.disabled=false;}
 }
 
+
+// ===== PLANO DA SEMANA =====
+let planos = []; // Firestore collection 'planos'
+let planoAtual = { semana:'', itens:{} }; // semana = "2026-W16", itens = {dia: [{produtoNome, qtdPacotes}]}
+let planoEditando = false;
+
+onSnapshot(collection(db,'planos'), snap=>{
+  try{
+    planos=snap.docs.map(d=>({firestoreId:d.id,...d.data()})).sort((a,b)=>(b.timestamp||0)-(a.timestamp||0));
+    atualizarTela();
+  }catch(e){ console.error('planos snap:',e); }
+});
+
+function semanaAtual(){
+  const d=new Date();
+  const jan1=new Date(d.getFullYear(),0,1);
+  const w=Math.ceil(((d-jan1)/86400000+jan1.getDay()+1)/7);
+  return d.getFullYear()+'-W'+String(w).padStart(2,'0');
+}
+
+function semanaLabel(semStr){
+  if(!semStr)return'';
+  // Get Monday of that week
+  const [yr,wk]=semStr.split('-W');
+  const jan1=new Date(parseInt(yr),0,1);
+  const days=(parseInt(wk)-1)*7-jan1.getDay()+1;
+  const mon=new Date(jan1);mon.setDate(jan1.getDate()+days);
+  const fri=new Date(mon);fri.setDate(mon.getDate()+4);
+  const fmt=d=>d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});
+  return `Semana ${wk}/${yr} (${fmt(mon)} – ${fmt(fri)})`;
+}
+
+function voltarPlano(){
+  goTo('s-conf-home');
+}
+
+function abrirPlano(){
+  const semAtual=semanaAtual();
+  const recExist=planos.find(p=>p.semana===semAtual);
+  if(recExist){
+    planoAtual={semana:semAtual, firestoreId:recExist.firestoreId, itens:JSON.parse(JSON.stringify(recExist.itens||{}))};
+  } else {
+    planoAtual={semana:semAtual, firestoreId:null, itens:{}};
+  }
+  document.getElementById('plano-sub').textContent=semanaLabel(semAtual);
+  renderPlano();
+  goTo('s-plano');
+}
+
+function renderPlano(){
+  const el=document.getElementById('plano-content');
+  if(!el)return;
+  const dias=['Segunda','Terça','Quarta','Quinta','Sexta'];
+  
+  // Selector de semana
+  const semsDisp=[semanaAtual(),...planos.map(p=>p.semana).filter(s=>s!==semanaAtual())].filter((v,i,a)=>a.indexOf(v)===i).slice(0,8);
+  
+  let html=`<div class="card" style="margin-bottom:12px;">
+    <div class="card-label">Semana</div>
+    <select onchange="trocarSemanaPlano(this.value)" style="font-size:14px;">
+      ${semsDisp.map(s=>`<option value="${s}" ${s===planoAtual.semana?'selected':''}>${semanaLabel(s)}</option>`).join('')}
+    </select>
+  </div>`;
+
+  dias.forEach(dia=>{
+    const itens=planoAtual.itens[dia]||[];
+    // Calculate totals
+    let totalMassa={}, totalR1={}, totalR2={};
+    itens.forEach(item=>{
+      const prod=PRODUTOS.find(p=>p.nome===item.nome);
+      if(!prod)return;
+      const un=(item.qtdPacotes||0)*(prod.qtdPct||1);
+      if(prod.tipoMassa&&prod.grMassa>0){
+        totalMassa[prod.tipoMassa]=(totalMassa[prod.tipoMassa]||0)+prod.grMassa*un/1000;
+      }
+      if(prod.tipoRecheio&&prod.grRecheio>0){
+        totalR1[prod.tipoRecheio]=(totalR1[prod.tipoRecheio]||0)+prod.grRecheio*un/1000;
+      }
+      if(prod.tipoRecheio2&&prod.grRecheio2>0){
+        totalR2[prod.tipoRecheio2]=(totalR2[prod.tipoRecheio2]||0)+prod.grRecheio2*un/1000;
+      }
+    });
+
+    html+=`<div class="card" style="margin-bottom:10px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+        <div style="font-size:14px;font-weight:600;color:var(--mc-roxo);">${dia}-feira</div>
+        <button onclick="adicionarItemPlano('${dia}')" style="background:var(--mc-roxo);color:white;border:none;border-radius:8px;padding:5px 12px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;">+ Produto</button>
+      </div>
+      ${itens.map((item,i)=>{
+        const prod=PRODUTOS.find(p=>p.nome===item.nome);
+        const un=prod?(item.qtdPacotes||0)*(prod.qtdPct||1):0;
+        return `<div style="display:grid;grid-template-columns:1fr auto auto;gap:6px;align-items:center;margin-bottom:8px;padding-bottom:8px;border-bottom:0.5px solid var(--border);">
+          <div>
+            <div style="font-size:13px;font-weight:500;">${item.nome}</div>
+            ${prod?`<div style="font-size:11px;color:var(--text-secondary);">${item.qtdPacotes} pct × ${prod.qtdPct||1} = ${un} un</div>`:''}
+          </div>
+          <input type="number" value="${item.qtdPacotes||0}" min="0" inputmode="numeric"
+            style="width:60px;font-size:14px;padding:6px;border-radius:8px;border:1px solid var(--mc-roxo);background:var(--bg-primary);color:var(--text-primary);font-family:inherit;"
+            onchange="atualizarQtdPlano('${dia}',${i},this.value)" />
+          <button onclick="removerItemPlano('${dia}',${i})" style="background:none;border:1px solid #ef9a9a;color:#c62828;border-radius:8px;padding:5px 8px;cursor:pointer;font-family:inherit;">×</button>
+        </div>`;
+      }).join('')}
+      ${itens.length===0?'<div style="font-size:13px;color:var(--text-secondary);text-align:center;padding:8px 0;">Nenhum produto. Clique em "+ Produto"</div>':''}
+      ${(Object.keys(totalMassa).length>0||Object.keys(totalR1).length>0||Object.keys(totalR2).length>0)?`
+        <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--mc-roxo);border-top-style:dashed;">
+          <div style="font-size:11px;font-weight:600;color:var(--mc-roxo);text-transform:uppercase;letter-spacing:0.04em;margin-bottom:6px;">Necessidade do dia</div>
+          ${Object.entries(totalMassa).map(([k,v])=>`<div style="font-size:12px;color:var(--text-secondary);margin-bottom:2px;">⚖️ <strong>${k}:</strong> ${v.toFixed(3)} kg</div>`).join('')}
+          ${Object.entries(totalR1).map(([k,v])=>`<div style="font-size:12px;color:var(--text-secondary);margin-bottom:2px;">🍖 <strong>${k}:</strong> ${v.toFixed(3)} kg</div>`).join('')}
+          ${Object.entries(totalR2).map(([k,v])=>`<div style="font-size:12px;color:var(--text-secondary);margin-bottom:2px;">➕ <strong>${k}:</strong> ${v.toFixed(3)} kg</div>`).join('')}
+        </div>`:''}
+    </div>`;
+  });
+
+  el.innerHTML=html;
+}
+
+function trocarSemanaPlano(semana){
+  const recExist=planos.find(p=>p.semana===semana);
+  if(recExist){
+    planoAtual={semana, firestoreId:recExist.firestoreId, itens:JSON.parse(JSON.stringify(recExist.itens||{}))};
+  } else {
+    planoAtual={semana, firestoreId:null, itens:{}};
+  }
+  document.getElementById('plano-sub').textContent=semanaLabel(semana);
+  renderPlano();
+}
+
+function adicionarItemPlano(dia){
+  // Show product search modal
+  const prod=prompt('Digite o nome do produto (ou parte):');
+  if(!prod)return;
+  const q=prod.toLowerCase();
+  const found=PRODUTOS.filter(p=>p.nome.toLowerCase().includes(q));
+  if(!found.length){alert('Produto não encontrado.');return;}
+  let escolha;
+  if(found.length===1){
+    escolha=found[0];
+  } else {
+    const nomes=found.slice(0,10).map((p,i)=>`${i+1}. ${p.nome} (${p.qtdPct||1} un/pct)`).join('\n');
+    const idx=parseInt(prompt(`Encontrados:\n${nomes}\n\nDigite o número:`));
+    if(!idx||idx<1||idx>found.length)return;
+    escolha=found[idx-1];
+  }
+  if(!planoAtual.itens[dia])planoAtual.itens[dia]=[];
+  planoAtual.itens[dia].push({nome:escolha.nome,qtdPacotes:0});
+  renderPlano();
+}
+
+function atualizarQtdPlano(dia,idx,val){
+  if(planoAtual.itens[dia]&&planoAtual.itens[dia][idx]){
+    planoAtual.itens[dia][idx].qtdPacotes=parseInt(val)||0;
+  }
+}
+
+function removerItemPlano(dia,idx){
+  if(planoAtual.itens[dia]){
+    planoAtual.itens[dia].splice(idx,1);
+    renderPlano();
+  }
+}
+
+async function salvarPlano(){
+  const btn=document.querySelector('#s-plano .topbar-right');
+  if(btn){btn.textContent='Salvando...';btn.disabled=true;}
+  try{
+    const {setDoc} = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
+    if(planoAtual.firestoreId){
+      await updateDoc(doc(db,'planos',planoAtual.firestoreId),{itens:planoAtual.itens,editadoEm:agora()});
+    } else {
+      const ref=doc(collection(db,'planos'));
+      await setDoc(ref,{semana:planoAtual.semana,itens:planoAtual.itens,hora:agora(),timestamp:Date.now()});
+      planoAtual.firestoreId=ref.id;
+    }
+    if(btn){btn.textContent='Salvar';btn.disabled=false;}
+    alert('Plano salvo!');
+  }catch(e){
+    console.error(e);
+    alert('Erro ao salvar: '+e.message);
+    if(btn){btn.textContent='Salvar';btn.disabled=false;}
+  }
+}
+
 window.goTo=goTo; window.abrirPin=abrirPin; window.pinDigit=pinDigit; window.pinDel=pinDel;
 window.iniciarNovoReg=iniciarNovoReg; window.toggleManual=toggleManual;
 window.selecionarDataTipo=selecionarDataTipo; window.selecionarDataManual=selecionarDataManual;
@@ -2818,7 +3080,7 @@ window.selecionarDataEmb=selecionarDataEmb; window.irParaEmbalagem=irParaEmbalag
 window.toggleEmb=toggleEmb; window.toggleAjuste=toggleAjuste; window.confirmarAjuste=confirmarAjuste;
 window.selecionarDataExp=selecionarDataExp; window.irParaExpedicao=irParaExpedicao;
 window.adicionarLiberacao=adicionarLiberacao;
-window.tab=tab; window.toggleConf=toggleConf; window.admFiltrar=admFiltrar; window.toggleEditProd=toggleEditProd; window.salvarEditProd=salvarEditProd; window.toggleEditRecheio=toggleEditRecheio; window.salvarEditRecheio=salvarEditRecheio; window.renderMeusReg=renderMeusReg; window.renderCozReg=renderCozReg; window.abrirPresenca=abrirPresenca; window.salvarPresenca=salvarPresenca; window.voltarPresenca=voltarPresenca; window.renderPresencaForm=renderPresencaForm; window.selecionarDataPresenca=selecionarDataPresenca; window.selecionarDataPresencaManual=selecionarDataPresencaManual; window.adicionarColaborador=adicionarColaborador; window.removerColab=removerColab; window.updateColab=updateColab; window.renderPresencaReg=renderPresencaReg; window.abrirContagem=abrirContagem; window.subtrairContagem=subtrairContagem; window.filtrarContagem=filtrarContagem; window.adicionarContagem=adicionarContagem; window.renderContagemHist=renderContagemHist; window.verDetalheContagem=verDetalheContagem; window.renderContagemLanc=renderContagemLanc; window.renderContagemHome=renderContagemHome; window.abrirManut=abrirManut; window.voltarManut=voltarManut; window.salvarNovaMaquina=salvarNovaMaquina; window.abrirMaquina=abrirMaquina; window.iniciarNovaManutencao=iniciarNovaManutencao; window.selecionarDataManut=selecionarDataManut; window.salvarManutencao=salvarManutencao; window.selecionarDataManutBtn=selecionarDataManutBtn; window.renderManutDateGrid=renderManutDateGrid; window.toggleEditParcial=toggleEditParcial; window.salvarEditParcial=salvarEditParcial; window.excluirRegistro=excluirRegistro; window.gerarExcel=gerarExcel; window.renderPresencaForm=renderPresencaForm; window.goToAdmin=goToAdmin; window.sairAdmin=sairAdmin; window.backFromArea=backFromArea;
+window.tab=tab; window.toggleConf=toggleConf; window.admFiltrar=admFiltrar; window.toggleEditProd=toggleEditProd; window.salvarEditProd=salvarEditProd; window.toggleEditRecheio=toggleEditRecheio; window.salvarEditRecheio=salvarEditRecheio; window.renderMeusReg=renderMeusReg; window.renderCozReg=renderCozReg; window.abrirPresenca=abrirPresenca; window.salvarPresenca=salvarPresenca; window.voltarPresenca=voltarPresenca; window.renderPresencaForm=renderPresencaForm; window.selecionarDataPresenca=selecionarDataPresenca; window.selecionarDataPresencaManual=selecionarDataPresencaManual; window.adicionarColaborador=adicionarColaborador; window.removerColab=removerColab; window.updateColab=updateColab; window.renderPresencaReg=renderPresencaReg; window.abrirContagem=abrirContagem; window.subtrairContagem=subtrairContagem; window.filtrarContagem=filtrarContagem; window.adicionarContagem=adicionarContagem; window.renderContagemHist=renderContagemHist; window.verDetalheContagem=verDetalheContagem; window.renderContagemLanc=renderContagemLanc; window.renderContagemHome=renderContagemHome; window.abrirManut=abrirManut; window.voltarManut=voltarManut; window.salvarNovaMaquina=salvarNovaMaquina; window.abrirMaquina=abrirMaquina; window.iniciarNovaManutencao=iniciarNovaManutencao; window.selecionarDataManut=selecionarDataManut; window.salvarManutencao=salvarManutencao; window.selecionarDataManutBtn=selecionarDataManutBtn; window.abrirPlano=abrirPlano; window.voltarPlano=voltarPlano; window.salvarPlano=salvarPlano; window.adicionarItemPlano=adicionarItemPlano; window.atualizarQtdPlano=atualizarQtdPlano; window.removerItemPlano=removerItemPlano; window.trocarSemanaPlano=trocarSemanaPlano; window.renderManutDateGrid=renderManutDateGrid; window.toggleEditParcial=toggleEditParcial; window.salvarEditParcial=salvarEditParcial; window.excluirRegistro=excluirRegistro; window.gerarExcel=gerarExcel; window.renderPresencaForm=renderPresencaForm; window.goToAdmin=goToAdmin; window.sairAdmin=sairAdmin; window.backFromArea=backFromArea;
 </script>
 </body>
 </html>
