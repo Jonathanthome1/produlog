@@ -866,21 +866,21 @@ let massaSel=null, dataMassa=null, recheioSel=null, dataRecheio=null;
 let registros=[], regMassas=[], regRecheios=[];
 
 // Listeners Firestore
-onSnapshot(query(collection(db,'registros'),orderBy('timestamp','desc')), snap=>{
+onSnapshot(collection(db,'registros'), snap=>{
   try{
-    registros=snap.docs.map(d=>({'firestoreId':d.id,...d.data()}));
+    registros=snap.docs.map(d=>({'firestoreId':d.id,...d.data()})).sort((a,b)=>(b.timestamp||0)-(a.timestamp||0));
     atualizarTela();
   }catch(e){ console.error('registros snap:',e); }
 }, err=>{ console.error('registros err:',err); });
-onSnapshot(query(collection(db,'massas'),orderBy('timestamp','desc')), snap=>{
+onSnapshot(collection(db,'massas'), snap=>{
   try{
-    regMassas=snap.docs.map(d=>({'firestoreId':d.id,...d.data()}));
+    regMassas=snap.docs.map(d=>({'firestoreId':d.id,...d.data()})).sort((a,b)=>(b.timestamp||0)-(a.timestamp||0));
     atualizarTela();
   }catch(e){ console.error('massas snap:',e); }
 }, err=>{ console.error('massas err:',err); });
-onSnapshot(query(collection(db,'recheios'),orderBy('timestamp','desc')), snap=>{
+onSnapshot(collection(db,'recheios'), snap=>{
   try{
-    regRecheios=snap.docs.map(d=>({'firestoreId':d.id,...d.data()}));
+    regRecheios=snap.docs.map(d=>({'firestoreId':d.id,...d.data()})).sort((a,b)=>(b.timestamp||0)-(a.timestamp||0));
     atualizarTela();
   }catch(e){ console.error('recheios snap:',e); }
 }, err=>{ console.error('recheios err:',err); });
@@ -2187,9 +2187,9 @@ let contagemGrupoAtivo = '';
 let contagemSrch = '';
 let contagens = [];
 
-onSnapshot(query(collection(db,'contagens'),orderBy('timestamp','desc')), snap=>{
+onSnapshot(collection(db,'contagens'), snap=>{
   try{
-    contagens=snap.docs.map(d=>({firestoreId:d.id,...d.data()}));
+    contagens=snap.docs.map(d=>({firestoreId:d.id,...d.data()})).sort((a,b)=>(b.timestamp||0)-(a.timestamp||0));
     atualizarTela();
   }catch(e){ console.error('contagens snap:',e); }
 }, err=>{ console.error('contagens err:',err); });
