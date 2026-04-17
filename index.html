@@ -2967,67 +2967,191 @@ function renderPlano(){
   if(!el)return;
   const dias=['Segunda','Terça','Quarta','Quinta','Sexta'];
   
-  // Selector de semana
-  const semsDisp=[semanaAtual(),...planos.map(p=>p.semana).filter(s=>s!==semanaAtual())].filter((v,i,a)=>a.indexOf(v)===i).slice(0,8);
+  const semsDisp=[semanaAtual(),...planos.map(p=>p.semana)].filter((v,i,a)=>a.indexOf(v)===i).slice(0,8);
   
-  let html=`<div class="card" style="margin-bottom:12px;">
-    <div class="card-label">Semana</div>
-    <select onchange="trocarSemanaPlano(this.value)" style="font-size:14px;">
-      ${semsDisp.map(s=>`<option value="${s}" ${s===planoAtual.semana?'selected':''}>${semanaLabel(s)}</option>`).join('')}
-    </select>
-  </div>`;
+  let html=`
+    <div class="card" style="margin-bottom:10px;">
+      <div class="card-label">Semana</div>
+      <select onchange="trocarSemanaPlano(this.value)" style="font-size:14px;">
+        ${semsDisp.map(s=>`<option value="${s}" ${s===planoAtual.semana?'selected':''}>${semanaLabel(s)}</option>`).join('')}
+      </select>
+    </div>
+
+    <div class="card" style="margin-bottom:10px;border-left:3px solid var(--mc-roxo);">
+      <div style="font-size:13px;font-weight:600;color:var(--mc-roxo);margin-bottom:8px;">📥 Importar plano do Excel</div>
+      <div style="font-size:12px;color:var(--text-secondary);margin-bottom:8px;">Cole o conteúdo copiado do Excel (formato: Dia | Código | Produto | Quantidade)</div>
+      <textarea id="plano-import-txt" placeholder="Segunda&#9;188&#9;FOLHADO FRANGO&#9;100&#10;Terça&#9;209&#9;FOLHADO CARNE&#9;150" 
+        style="width:100%;height:100px;font-size:13px;padding:8px;border-radius:8px;border:1px solid var(--mc-roxo);background:var(--bg-primary);color:var(--text-primary);font-family:monospace;resize:vertical;"></textarea>
+      <button onclick="importarPlanoPaste()" style="margin-top:8px;width:100%;padding:10px;background:var(--mc-roxo);color:white;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;">Importar →</button>
+      <div id="plano-import-result" style="margin-top:6px;font-size:12px;"></div>
+    </div>`;
+
+  // Calculate grand totals across all days
+  let grandMassa={}, grandR1={}, grandR2={};
 
   dias.forEach(dia=>{
     const itens=planoAtual.itens[dia]||[];
-    // Calculate totals
     let totalMassa={}, totalR1={}, totalR2={};
     itens.forEach(item=>{
       const prod=PRODUTOS.find(p=>p.nome===item.nome);
       if(!prod)return;
       const un=(item.qtdPacotes||0)*(prod.qtdPct||1);
       if(prod.tipoMassa&&prod.grMassa>0){
-        totalMassa[prod.tipoMassa]=(totalMassa[prod.tipoMassa]||0)+prod.grMassa*un/1000;
+        const kg=prod.grMassa*un/1000;
+        totalMassa[prod.tipoMassa]=(totalMassa[prod.tipoMassa]||0)+kg;
+        grandMassa[prod.tipoMassa]=(grandMassa[prod.tipoMassa]||0)+kg;
       }
       if(prod.tipoRecheio&&prod.grRecheio>0){
-        totalR1[prod.tipoRecheio]=(totalR1[prod.tipoRecheio]||0)+prod.grRecheio*un/1000;
+        const kg=prod.grRecheio*un/1000;
+        totalR1[prod.tipoRecheio]=(totalR1[prod.tipoRecheio]||0)+kg;
+        grandR1[prod.tipoRecheio]=(grandR1[prod.tipoRecheio]||0)+kg;
       }
       if(prod.tipoRecheio2&&prod.grRecheio2>0){
-        totalR2[prod.tipoRecheio2]=(totalR2[prod.tipoRecheio2]||0)+prod.grRecheio2*un/1000;
+        const kg=prod.grRecheio2*un/1000;
+        totalR2[prod.tipoRecheio2]=(totalR2[prod.tipoRecheio2]||0)+kg;
+        grandR2[prod.tipoRecheio2]=(grandR2[prod.tipoRecheio2]||0)+kg;
       }
     });
 
-    html+=`<div class="card" style="margin-bottom:10px;">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
-        <div style="font-size:14px;font-weight:600;color:var(--mc-roxo);">${dia}-feira</div>
-        <button onclick="adicionarItemPlano('${dia}')" style="background:var(--mc-roxo);color:white;border:none;border-radius:8px;padding:5px 12px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;">+ Produto</button>
-      </div>
-      ${itens.map((item,i)=>{
-        const prod=PRODUTOS.find(p=>p.nome===item.nome);
-        const un=prod?(item.qtdPacotes||0)*(prod.qtdPct||1):0;
-        return `<div style="display:grid;grid-template-columns:1fr auto auto;gap:6px;align-items:center;margin-bottom:8px;padding-bottom:8px;border-bottom:0.5px solid var(--border);">
-          <div>
-            <div style="font-size:13px;font-weight:500;color:var(--text-primary);">${item.nome}</div>
-            ${prod?`<div style="font-size:11px;color:var(--text-secondary);">${item.qtdPacotes} pct × ${prod.qtdPct||1} = ${un} un</div>`:''}
-          </div>
-          <input type="number" value="${item.qtdPacotes||0}" min="0" inputmode="numeric"
-            style="width:60px;font-size:14px;padding:6px;border-radius:8px;border:1px solid var(--mc-roxo);background:var(--bg-primary);color:var(--text-primary);font-family:inherit;"
-            onchange="atualizarQtdPlano('${dia}',${i},this.value)" />
-          <button onclick="removerItemPlano('${dia}',${i})" style="background:none;border:1px solid #ef9a9a;color:#c62828;border-radius:8px;padding:5px 8px;cursor:pointer;font-family:inherit;">×</button>
-        </div>`;
-      }).join('')}
-      ${itens.length===0?'<div style="font-size:13px;color:var(--text-secondary);text-align:center;padding:8px 0;">Nenhum produto. Clique em "+ Produto"</div>':''}
-      ${(Object.keys(totalMassa).length>0||Object.keys(totalR1).length>0||Object.keys(totalR2).length>0)?`
-        <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--mc-roxo);border-top-style:dashed;">
-          <div style="font-size:11px;font-weight:600;color:var(--mc-roxo);text-transform:uppercase;letter-spacing:0.04em;margin-bottom:6px;">Necessidade do dia</div>
-          ${Object.entries(totalMassa).map(([k,v])=>`<div style="font-size:12px;color:var(--text-secondary);margin-bottom:2px;">⚖️ <strong>${k}:</strong> ${v.toFixed(3)} kg</div>`).join('')}
-          ${Object.entries(totalR1).map(([k,v])=>`<div style="font-size:12px;color:var(--text-secondary);margin-bottom:2px;">🍖 <strong>${k}:</strong> ${v.toFixed(3)} kg</div>`).join('')}
-          ${Object.entries(totalR2).map(([k,v])=>`<div style="font-size:12px;color:var(--text-secondary);margin-bottom:2px;">➕ <strong>${k}:</strong> ${v.toFixed(3)} kg</div>`).join('')}
+    const diaId='plano-dia-'+dia.replace(/[^a-z]/gi,'');
+    const hasTotais=Object.keys(totalMassa).length+Object.keys(totalR1).length+Object.keys(totalR2).length>0;
+
+    html+=`<div style="margin-bottom:8px;">
+      <button onclick="togglePlanoDia('${diaId}')" style="width:100%;display:flex;justify-content:space-between;align-items:center;padding:13px 16px;background:var(--bg-primary);border:0.5px solid var(--border);border-left:3px solid var(--mc-roxo);border-radius:12px;cursor:pointer;font-family:inherit;text-align:left;">
+        <div>
+          <div style="font-size:14px;font-weight:600;color:var(--mc-roxo);">${dia}-feira</div>
+          <div style="font-size:12px;color:var(--text-secondary);margin-top:2px;">${itens.length} produto(s)${hasTotais?'':' · sem itens'}</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <button onclick="event.stopPropagation();adicionarItemPlano('${dia}')" style="background:var(--mc-roxo);color:white;border:none;border-radius:8px;padding:5px 12px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;">+ Produto</button>
+          <span id="${diaId}-arrow" style="color:var(--mc-roxo);font-size:18px;transition:transform 0.2s;">▼</span>
+        </div>
+      </button>
+      <div id="${diaId}" style="display:none;background:var(--bg-primary);border:0.5px solid var(--border);border-top:none;border-radius:0 0 12px 12px;padding:0 12px 12px;">
+        ${itens.length===0?'<div style="font-size:13px;color:var(--text-secondary);text-align:center;padding:16px 0;">Nenhum produto. Clique em "+ Produto"</div>':''}
+        ${itens.map((item,i)=>{
+          const prod=PRODUTOS.find(p=>p.nome===item.nome);
+          const un=prod?(item.qtdPacotes||0)*(prod.qtdPct||1):0;
+          const mkg=prod&&prod.grMassa>0?(prod.grMassa*un/1000).toFixed(3):'—';
+          const r1kg=prod&&prod.grRecheio>0?(prod.grRecheio*un/1000).toFixed(3):'—';
+          const r2kg=prod&&prod.grRecheio2>0?(prod.grRecheio2*un/1000).toFixed(3):'—';
+          return `<div style="padding:10px 0;border-bottom:0.5px solid var(--border);">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+              <div style="flex:1;">
+                <div style="font-size:13px;font-weight:600;color:var(--text-primary);">${item.nome}</div>
+                <div style="font-size:11px;color:var(--text-secondary);">${item.qtdPacotes} pct × ${prod?prod.qtdPct||1:1} = ${un} un</div>
+              </div>
+              <input type="number" value="${item.qtdPacotes||0}" min="0" inputmode="numeric"
+                style="width:64px;font-size:14px;padding:6px;border-radius:8px;border:1px solid var(--mc-roxo);background:var(--bg-primary);color:var(--text-primary);font-family:inherit;"
+                onchange="atualizarQtdPlano('${dia}',${i},this.value)" />
+              <button onclick="removerItemPlano('${dia}',${i})" style="background:none;border:1px solid #ef9a9a;color:#c62828;border-radius:8px;padding:5px 8px;cursor:pointer;font-family:inherit;">×</button>
+            </div>
+            <div style="font-size:11px;color:var(--text-secondary);padding-left:4px;">
+              ${prod&&prod.tipoMassa&&prod.grMassa>0?`⚖️ ${prod.tipoMassa}: ${mkg} kg`:''}
+              ${prod&&prod.tipoRecheio&&prod.grRecheio>0?` · 🍖 ${prod.tipoRecheio}: ${r1kg} kg`:''}
+              ${prod&&prod.tipoRecheio2&&prod.grRecheio2>0?` · ➕ ${prod.tipoRecheio2}: ${r2kg} kg`:''}
+            </div>
+          </div>`;
+        }).join('')}
+        ${hasTotais?`<div style="margin-top:10px;padding:10px;background:var(--bg-secondary);border-radius:8px;">
+          <div style="font-size:11px;font-weight:600;color:var(--mc-roxo);text-transform:uppercase;letter-spacing:0.04em;margin-bottom:6px;">Resumo do dia</div>
+          ${Object.entries(totalMassa).map(([k,v])=>`<div style="font-size:12px;color:var(--text-secondary);">⚖️ <strong>${k}:</strong> ${v.toFixed(3)} kg</div>`).join('')}
+          ${Object.entries(totalR1).map(([k,v])=>`<div style="font-size:12px;color:var(--text-secondary);">🍖 <strong>${k}:</strong> ${v.toFixed(3)} kg</div>`).join('')}
+          ${Object.entries(totalR2).map(([k,v])=>`<div style="font-size:12px;color:var(--text-secondary);">➕ <strong>${k}:</strong> ${v.toFixed(3)} kg</div>`).join('')}
         </div>`:''}
+      </div>
     </div>`;
   });
 
+  // Grand total card
+  const hasGrand=Object.keys(grandMassa).length+Object.keys(grandR1).length+Object.keys(grandR2).length>0;
+  if(hasGrand){
+    html+=`<div class="card" style="border-left:3px solid var(--mc-dourado);margin-top:4px;">
+      <div style="font-size:13px;font-weight:600;color:var(--mc-dourado);margin-bottom:10px;">📊 Consumo Geral da Semana</div>
+      ${Object.entries(grandMassa).map(([k,v])=>`<div class="resumo-row"><span class="resumo-nome">⚖️ ${k}</span><span style="font-weight:700;color:var(--mc-azul);">${v.toFixed(3)} kg</span></div>`).join('')}
+      ${Object.entries(grandR1).map(([k,v])=>`<div class="resumo-row"><span class="resumo-nome">🍖 ${k}</span><span style="font-weight:700;color:var(--mc-verde);">${v.toFixed(3)} kg</span></div>`).join('')}
+      ${Object.entries(grandR2).map(([k,v])=>`<div class="resumo-row"><span class="resumo-nome">➕ ${k}</span><span style="font-weight:700;color:var(--mc-roxo);">${v.toFixed(3)} kg</span></div>`).join('')}
+    </div>`;
+  }
+
   el.innerHTML=html;
 }
+
+function togglePlanoDia(id){
+  const el=document.getElementById(id);
+  const arrow=document.getElementById(id+'-arrow');
+  if(!el)return;
+  const open=el.style.display==='none';
+  el.style.display=open?'block':'none';
+  if(arrow)arrow.style.transform=open?'rotate(180deg)':'rotate(0deg)';
+}
+
+function importarPlanoPaste(){
+  const txt=document.getElementById('plano-import-txt').value.trim();
+  const result=document.getElementById('plano-import-result');
+  if(!txt){result.textContent='Cole o conteúdo primeiro.';result.style.color='#c62828';return;}
+  
+  const MAP_DIA={'segunda':'Segunda','terça':'Terça','terca':'Terça','quarta':'Quarta','quinta':'Quinta','sexta':'Sexta',
+    'seg':'Segunda','ter':'Terça','qua':'Quarta','qui':'Quinta','sex':'Sexta'};
+  
+  const lines=txt.split(/\r?\n/).filter(l=>l.trim());
+  let importados=0, naoEncontrados=[];
+  const novoItens={};
+  
+  lines.forEach(line=>{
+    const cols=line.split('	').map(c=>c.trim());
+    if(cols.length<3)return;
+    
+    // Try to parse: Dia | [Codigo] | Produto | Quantidade
+    let diaRaw='',nomeRaw='',qtdRaw='';
+    if(cols.length>=4){
+      diaRaw=cols[0]; nomeRaw=cols[2]; qtdRaw=cols[3];
+    } else if(cols.length===3){
+      diaRaw=cols[0]; nomeRaw=cols[1]; qtdRaw=cols[2];
+    }
+    
+    // Skip header line
+    if(nomeRaw.toLowerCase()==='produto'||nomeRaw.toLowerCase()==='descrição')return;
+    
+    const diaKey=MAP_DIA[diaRaw.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').split('-')[0].trim()];
+    if(!diaKey){return;}
+    
+    const qtd=parseInt(qtdRaw)||0;
+    if(!qtd)return;
+    
+    // Find product by name (fuzzy: normalize and compare)
+    const normalize=s=>s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9 ]/g,' ').trim();
+    const nomeNorm=normalize(nomeRaw);
+    let prod=PRODUTOS.find(p=>normalize(p.nome)===nomeNorm);
+    if(!prod){
+      // Try partial match
+      prod=PRODUTOS.find(p=>normalize(p.nome).includes(nomeNorm)||nomeNorm.includes(normalize(p.nome).substring(0,15)));
+    }
+    
+    if(!novoItens[diaKey])novoItens[diaKey]=[];
+    if(prod){
+      novoItens[diaKey].push({nome:prod.nome,qtdPacotes:qtd});
+      importados++;
+    } else {
+      naoEncontrados.push(nomeRaw);
+      // Add with original name anyway
+      novoItens[diaKey].push({nome:nomeRaw,qtdPacotes:qtd});
+    }
+  });
+  
+  // Merge with existing (replace days that have imported items)
+  Object.entries(novoItens).forEach(([dia,itens])=>{
+    planoAtual.itens[dia]=itens;
+  });
+  
+  let msg=`✓ ${importados} produto(s) importado(s).`;
+  if(naoEncontrados.length>0)msg+=` ⚠️ Não encontrados: ${naoEncontrados.join(', ')}`;
+  result.textContent=msg;
+  result.style.color=naoEncontrados.length?'#856404':'#2e7d32';
+  
+  renderPlano();
+}
+
 
 function trocarSemanaPlano(semana){
   const recExist=planos.find(p=>p.semana===semana);
@@ -3107,7 +3231,7 @@ window.selecionarDataEmb=selecionarDataEmb; window.irParaEmbalagem=irParaEmbalag
 window.toggleEmb=toggleEmb; window.toggleAjuste=toggleAjuste; window.confirmarAjuste=confirmarAjuste;
 window.selecionarDataExp=selecionarDataExp; window.irParaExpedicao=irParaExpedicao;
 window.adicionarLiberacao=adicionarLiberacao;
-window.tab=tab; window.toggleConf=toggleConf; window.admFiltrar=admFiltrar; window.toggleEditProd=toggleEditProd; window.salvarEditProd=salvarEditProd; window.toggleEditRecheio=toggleEditRecheio; window.salvarEditRecheio=salvarEditRecheio; window.renderMeusReg=renderMeusReg; window.renderCozReg=renderCozReg; window.abrirPresenca=abrirPresenca; window.salvarPresenca=salvarPresenca; window.voltarPresenca=voltarPresenca; window.renderPresencaForm=renderPresencaForm; window.selecionarDataPresenca=selecionarDataPresenca; window.selecionarDataPresencaManual=selecionarDataPresencaManual; window.adicionarColaborador=adicionarColaborador; window.removerColab=removerColab; window.updateColab=updateColab; window.renderPresencaReg=renderPresencaReg; window.abrirContagem=abrirContagem; window.subtrairContagem=subtrairContagem; window.filtrarContagem=filtrarContagem; window.adicionarContagem=adicionarContagem; window.renderContagemHist=renderContagemHist; window.verDetalheContagem=verDetalheContagem; window.renderContagemLanc=renderContagemLanc; window.renderContagemHome=renderContagemHome; window.abrirManut=abrirManut; window.voltarManut=voltarManut; window.salvarNovaMaquina=salvarNovaMaquina; window.abrirMaquina=abrirMaquina; window.iniciarNovaManutencao=iniciarNovaManutencao; window.selecionarDataManut=selecionarDataManut; window.salvarManutencao=salvarManutencao; window.selecionarDataManutBtn=selecionarDataManutBtn; window.abrirPlano=abrirPlano; window.voltarPlano=voltarPlano; window.salvarPlano=salvarPlano; window.adicionarItemPlano=adicionarItemPlano; window.atualizarQtdPlano=atualizarQtdPlano; window.removerItemPlano=removerItemPlano; window.trocarSemanaPlano=trocarSemanaPlano; window.renderManutDateGrid=renderManutDateGrid; window.toggleEditParcial=toggleEditParcial; window.salvarEditParcial=salvarEditParcial; window.excluirRegistro=excluirRegistro; window.gerarExcel=gerarExcel; window.renderPresencaForm=renderPresencaForm; window.goToAdmin=goToAdmin; window.sairAdmin=sairAdmin; window.backFromArea=backFromArea;
+window.tab=tab; window.toggleConf=toggleConf; window.admFiltrar=admFiltrar; window.toggleEditProd=toggleEditProd; window.salvarEditProd=salvarEditProd; window.toggleEditRecheio=toggleEditRecheio; window.salvarEditRecheio=salvarEditRecheio; window.renderMeusReg=renderMeusReg; window.renderCozReg=renderCozReg; window.abrirPresenca=abrirPresenca; window.salvarPresenca=salvarPresenca; window.voltarPresenca=voltarPresenca; window.renderPresencaForm=renderPresencaForm; window.selecionarDataPresenca=selecionarDataPresenca; window.selecionarDataPresencaManual=selecionarDataPresencaManual; window.adicionarColaborador=adicionarColaborador; window.removerColab=removerColab; window.updateColab=updateColab; window.renderPresencaReg=renderPresencaReg; window.abrirContagem=abrirContagem; window.subtrairContagem=subtrairContagem; window.filtrarContagem=filtrarContagem; window.adicionarContagem=adicionarContagem; window.renderContagemHist=renderContagemHist; window.verDetalheContagem=verDetalheContagem; window.renderContagemLanc=renderContagemLanc; window.renderContagemHome=renderContagemHome; window.abrirManut=abrirManut; window.voltarManut=voltarManut; window.salvarNovaMaquina=salvarNovaMaquina; window.abrirMaquina=abrirMaquina; window.iniciarNovaManutencao=iniciarNovaManutencao; window.selecionarDataManut=selecionarDataManut; window.salvarManutencao=salvarManutencao; window.selecionarDataManutBtn=selecionarDataManutBtn; window.abrirPlano=abrirPlano; window.voltarPlano=voltarPlano; window.salvarPlano=salvarPlano; window.adicionarItemPlano=adicionarItemPlano; window.atualizarQtdPlano=atualizarQtdPlano; window.removerItemPlano=removerItemPlano; window.trocarSemanaPlano=trocarSemanaPlano; window.togglePlanoDia=togglePlanoDia; window.importarPlanoPaste=importarPlanoPaste; window.renderManutDateGrid=renderManutDateGrid; window.toggleEditParcial=toggleEditParcial; window.salvarEditParcial=salvarEditParcial; window.excluirRegistro=excluirRegistro; window.gerarExcel=gerarExcel; window.renderPresencaForm=renderPresencaForm; window.goToAdmin=goToAdmin; window.sairAdmin=sairAdmin; window.backFromArea=backFromArea;
 </script>
 </body>
 </html>
