@@ -1866,6 +1866,14 @@ function selecionarDataPresencaManual(){
   selecionarDataPresenca(`${d}/${m}/${y}`);
 }
 
+async function excluirPresenca(fid){
+  if(!window.adminMode){alert('Apenas o administrador pode excluir registros.');return;}
+  if(!confirm('Excluir este registro de presença?\nEssa ação não pode ser desfeita.'))return;
+  try{
+    await deleteDoc(doc(db,'presencas',fid));
+  }catch(e){alert('Erro ao excluir: '+e.message);}
+}
+
 async function salvarPresenca(){
   // Collect current field values
   colaboradoresTemp.forEach((c,i)=>{
@@ -1934,17 +1942,18 @@ function renderPresencaReg(setor){
         <span class="reg-hora">${rec.hora}</span>
       </div>
       <div style="display:flex;gap:12px;margin:6px 0;">
-        <span style="font-size:13px;">👥 <strong>${rec.presentes}/${rec.escalados}</strong> presentes</span>
+        <span style="font-size:13px;color:var(--text-primary);">👥 <strong>${rec.presentes}/${rec.escalados}</strong> presentes</span>
         ${faltas>0?`<span style="font-size:13px;color:#c62828;">❌ ${faltas} falta(s)</span>`:''}
         ${saidas>0?`<span style="font-size:13px;color:var(--mc-laranja);">🕐 ${saidas} saída(s)</span>`:''}
       </div>
       ${rec.colaboradores&&rec.colaboradores.length>0?`
         <div style="margin-top:6px;padding-top:6px;border-top:0.5px solid var(--border);">
-          ${rec.colaboradores.map(c=>`<div style="font-size:12px;color:var(--text-secondary);padding:3px 0;">
+          ${rec.colaboradores.map(c=>`<div style="font-size:12px;color:var(--text-primary);padding:3px 0;">
             <strong style="color:var(--text-primary);">${c.nome}</strong> — ${c.status==='Faltou'?'❌':'🕐'} ${c.status}${c.obs?` · ${c.obs}`:''}
           </div>`).join('')}
         </div>`:''}
       ${rec.editadoEm?`<div style="font-size:11px;color:var(--mc-dourado);margin-top:4px;">✏️ Atualizado às ${rec.editadoEm}</div>`:''}
+      <button class="btn-del-admin" onclick="excluirPresenca('${rec.firestoreId}')" style="margin-top:6px;background:none;border:1px solid #ef9a9a;color:#c62828;font-size:12px;padding:5px 10px;border-radius:8px;cursor:pointer;font-family:inherit;">🗑 Excluir</button>
     </div>`;
   }).join('');
 }
@@ -3022,17 +3031,29 @@ function renderPlano(){
     const diaId='plano-dia-'+dia.replace(/[^a-z]/gi,'');
     const hasTotais=Object.keys(totalMassa).length+Object.keys(totalR1).length+Object.keys(totalR2).length>0;
 
+    const isFeriado=planoAtual.feriados&&planoAtual.feriados[dia];
+    const diaColor=isFeriado?'#9e3400':'var(--mc-roxo)';
+    const diaBg=isFeriado?'rgba(158,52,0,0.08)':'var(--bg-primary)';
     html+=`<div style="margin-bottom:8px;">
-      <button onclick="togglePlanoDia('${diaId}')" style="width:100%;display:flex;justify-content:space-between;align-items:center;padding:13px 16px;background:var(--bg-primary);border:0.5px solid var(--border);border-left:3px solid var(--mc-roxo);border-radius:12px;cursor:pointer;font-family:inherit;text-align:left;">
-        <div>
-          <div style="font-size:14px;font-weight:600;color:var(--mc-roxo);">${dia}-feira</div>
-          <div style="font-size:12px;color:var(--text-secondary);margin-top:2px;">${itens.length} produto(s)${hasTotais?'':' · sem itens'}</div>
+      <div style="display:flex;align-items:stretch;border:0.5px solid var(--border);border-left:3px solid ${diaColor};border-radius:12px;overflow:hidden;background:${diaBg};">
+        <button onclick="togglePlanoDia('${diaId}')" style="flex:1;display:flex;justify-content:space-between;align-items:center;padding:13px 16px;background:transparent;border:none;cursor:pointer;font-family:inherit;text-align:left;">
+          <div>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <div style="font-size:14px;font-weight:600;color:${diaColor};">${dia}${dia==='Sábado'?'':'-feira'}</div>
+              ${isFeriado?'<span style="background:#9e3400;color:white;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;">FERIADO</span>':''}
+            </div>
+            <div style="font-size:12px;color:var(--text-secondary);margin-top:2px;">${itens.length} produto(s)${hasTotais?'':' · sem itens'}</div>
+          </div>
+          <span id="${diaId}-arrow" style="color:${diaColor};font-size:18px;transition:transform 0.2s;">▼</span>
+        </button>
+        <div style="display:flex;align-items:center;gap:8px;padding:0 12px;border-left:0.5px solid var(--border);">
+          <label style="display:flex;align-items:center;gap:4px;font-size:12px;color:var(--text-secondary);cursor:pointer;white-space:nowrap;">
+            <input type="checkbox" ${isFeriado?'checked':''} onchange="toggleFeriado('${dia}',this.checked)" style="cursor:pointer;" />
+            Feriado
+          </label>
+          <button onclick="adicionarItemPlano('${dia}')" style="background:${diaColor};color:white;border:none;border-radius:8px;padding:5px 12px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;">+ Produto</button>
         </div>
-        <div style="display:flex;align-items:center;gap:10px;">
-          <button onclick="event.stopPropagation();adicionarItemPlano('${dia}')" style="background:var(--mc-roxo);color:white;border:none;border-radius:8px;padding:5px 12px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;">+ Produto</button>
-          <span id="${diaId}-arrow" style="color:var(--mc-roxo);font-size:18px;transition:transform 0.2s;">▼</span>
-        </div>
-      </button>
+      </div>
       <div id="${diaId}" style="display:none;background:var(--bg-primary);border:0.5px solid var(--border);border-top:none;border-radius:0 0 12px 12px;padding:0 12px 12px;">
         ${itens.length===0?'<div style="font-size:13px;color:var(--text-secondary);text-align:center;padding:16px 0;">Nenhum produto. Clique em "+ Produto"</div>':''}
         ${itens.map((item,i)=>{
@@ -3081,6 +3102,13 @@ function renderPlano(){
   }
 
   el.innerHTML=html;
+}
+
+function toggleFeriado(dia, val){
+  if(!planoAtual.feriados)planoAtual.feriados={};
+  if(val) planoAtual.feriados[dia]=true;
+  else delete planoAtual.feriados[dia];
+  renderPlano();
 }
 
 function togglePlanoDia(id){
@@ -3142,7 +3170,7 @@ function limparPlano(){
 function trocarSemanaPlano(semana){
   const recExist=planos.find(p=>p.semana===semana);
   if(recExist){
-    planoAtual={semana, firestoreId:recExist.firestoreId, itens:JSON.parse(JSON.stringify(recExist.itens||{}))};
+    planoAtual={semana, firestoreId:recExist.firestoreId, itens:JSON.parse(JSON.stringify(recExist.itens||{})), feriados:JSON.parse(JSON.stringify(recExist.feriados||{}))};
   } else {
     planoAtual={semana, firestoreId:null, itens:{}};
   }
@@ -3191,10 +3219,10 @@ async function salvarPlano(){
   try{
     
     if(planoAtual.firestoreId){
-      await updateDoc(doc(db,'planos',planoAtual.firestoreId),{itens:planoAtual.itens,editadoEm:agora()});
+      await updateDoc(doc(db,'planos',planoAtual.firestoreId),{itens:planoAtual.itens,feriados:planoAtual.feriados||{},editadoEm:agora()});
     } else {
       const ref=doc(collection(db,'planos'));
-      await setDoc(ref,{semana:planoAtual.semana,itens:planoAtual.itens,hora:agora(),timestamp:Date.now()});
+      await setDoc(ref,{semana:planoAtual.semana,itens:planoAtual.itens,feriados:planoAtual.feriados||{},hora:agora(),timestamp:Date.now()});
       planoAtual.firestoreId=ref.id;
     }
     if(btn){btn.textContent='Salvar';btn.disabled=false;}
@@ -3217,7 +3245,7 @@ window.selecionarDataEmb=selecionarDataEmb; window.irParaEmbalagem=irParaEmbalag
 window.toggleEmb=toggleEmb; window.toggleAjuste=toggleAjuste; window.confirmarAjuste=confirmarAjuste;
 window.selecionarDataExp=selecionarDataExp; window.irParaExpedicao=irParaExpedicao;
 window.adicionarLiberacao=adicionarLiberacao;
-window.tab=tab; window.toggleConf=toggleConf; window.admFiltrar=admFiltrar; window.toggleEditProd=toggleEditProd; window.salvarEditProd=salvarEditProd; window.toggleEditRecheio=toggleEditRecheio; window.salvarEditRecheio=salvarEditRecheio; window.renderMeusReg=renderMeusReg; window.renderCozReg=renderCozReg; window.abrirPresenca=abrirPresenca; window.salvarPresenca=salvarPresenca; window.voltarPresenca=voltarPresenca; window.renderPresencaForm=renderPresencaForm; window.selecionarDataPresenca=selecionarDataPresenca; window.selecionarDataPresencaManual=selecionarDataPresencaManual; window.adicionarColaborador=adicionarColaborador; window.removerColab=removerColab; window.updateColab=updateColab; window.renderPresencaReg=renderPresencaReg; window.abrirContagem=abrirContagem; window.subtrairContagem=subtrairContagem; window.filtrarContagem=filtrarContagem; window.adicionarContagem=adicionarContagem; window.renderContagemHist=renderContagemHist; window.verDetalheContagem=verDetalheContagem; window.renderContagemLanc=renderContagemLanc; window.renderContagemHome=renderContagemHome; window.abrirManut=abrirManut; window.voltarManut=voltarManut; window.salvarNovaMaquina=salvarNovaMaquina; window.abrirMaquina=abrirMaquina; window.iniciarNovaManutencao=iniciarNovaManutencao; window.selecionarDataManut=selecionarDataManut; window.salvarManutencao=salvarManutencao; window.selecionarDataManutBtn=selecionarDataManutBtn; window.abrirPlano=abrirPlano; window.voltarPlano=voltarPlano; window.salvarPlano=salvarPlano; window.adicionarItemPlano=adicionarItemPlano; window.atualizarQtdPlano=atualizarQtdPlano; window.removerItemPlano=removerItemPlano; window.trocarSemanaPlano=trocarSemanaPlano; window.togglePlanoDia=togglePlanoDia; window.importarPlanoPaste=importarPlanoPaste; window.limparPlano=limparPlano; window.renderManutDateGrid=renderManutDateGrid; window.toggleEditParcial=toggleEditParcial; window.salvarEditParcial=salvarEditParcial; window.excluirRegistro=excluirRegistro; window.gerarExcel=gerarExcel; window.renderPresencaForm=renderPresencaForm; window.goToAdmin=goToAdmin; window.sairAdmin=sairAdmin; window.backFromArea=backFromArea;
+window.tab=tab; window.toggleConf=toggleConf; window.admFiltrar=admFiltrar; window.toggleEditProd=toggleEditProd; window.salvarEditProd=salvarEditProd; window.toggleEditRecheio=toggleEditRecheio; window.salvarEditRecheio=salvarEditRecheio; window.renderMeusReg=renderMeusReg; window.renderCozReg=renderCozReg; window.abrirPresenca=abrirPresenca; window.excluirPresenca=excluirPresenca; window.salvarPresenca=salvarPresenca; window.voltarPresenca=voltarPresenca; window.renderPresencaForm=renderPresencaForm; window.selecionarDataPresenca=selecionarDataPresenca; window.selecionarDataPresencaManual=selecionarDataPresencaManual; window.adicionarColaborador=adicionarColaborador; window.removerColab=removerColab; window.updateColab=updateColab; window.renderPresencaReg=renderPresencaReg; window.abrirContagem=abrirContagem; window.subtrairContagem=subtrairContagem; window.filtrarContagem=filtrarContagem; window.adicionarContagem=adicionarContagem; window.renderContagemHist=renderContagemHist; window.verDetalheContagem=verDetalheContagem; window.renderContagemLanc=renderContagemLanc; window.renderContagemHome=renderContagemHome; window.abrirManut=abrirManut; window.voltarManut=voltarManut; window.salvarNovaMaquina=salvarNovaMaquina; window.abrirMaquina=abrirMaquina; window.iniciarNovaManutencao=iniciarNovaManutencao; window.selecionarDataManut=selecionarDataManut; window.salvarManutencao=salvarManutencao; window.selecionarDataManutBtn=selecionarDataManutBtn; window.abrirPlano=abrirPlano; window.voltarPlano=voltarPlano; window.salvarPlano=salvarPlano; window.adicionarItemPlano=adicionarItemPlano; window.atualizarQtdPlano=atualizarQtdPlano; window.removerItemPlano=removerItemPlano; window.trocarSemanaPlano=trocarSemanaPlano; window.togglePlanoDia=togglePlanoDia; window.toggleFeriado=toggleFeriado; window.importarPlanoPaste=importarPlanoPaste; window.limparPlano=limparPlano; window.renderManutDateGrid=renderManutDateGrid; window.toggleEditParcial=toggleEditParcial; window.salvarEditParcial=salvarEditParcial; window.excluirRegistro=excluirRegistro; window.gerarExcel=gerarExcel; window.renderPresencaForm=renderPresencaForm; window.goToAdmin=goToAdmin; window.sairAdmin=sairAdmin; window.backFromArea=backFromArea;
 </script>
 </body>
 </html>
