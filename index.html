@@ -2979,7 +2979,7 @@ function renderPlano(){
   const semsDisp=[semanaAtual(),...planos.map(p=>p.semana)].filter((v,i,a)=>a.indexOf(v)===i).slice(0,8);
   
   let html=`
-    <div class="card" style="margin-bottom:10px;border-left:3px solid var(--mc-roxo);">
+    <div class="card" style="margin-bottom:10px;border-left:3px solid var(--mc-roxo);display:${window.adminMode?'block':'none'}">
       <div style="font-size:13px;font-weight:600;color:var(--mc-roxo);margin-bottom:10px;">📥 Importar do Excel</div>
       <div class="card-label">Dia da semana</div>
       <select id="plano-import-dia" style="font-size:14px;margin-bottom:10px;">
@@ -3035,27 +3035,27 @@ function renderPlano(){
     const diaColor=isFeriado?'#9e3400':'var(--mc-roxo)';
     const diaBg=isFeriado?'rgba(158,52,0,0.08)':'var(--bg-primary)';
     html+=`<div style="margin-bottom:8px;">
-      <div style="display:flex;align-items:stretch;border:0.5px solid var(--border);border-left:3px solid ${diaColor};border-radius:12px;overflow:hidden;background:${diaBg};">
-        <button onclick="togglePlanoDia('${diaId}')" style="flex:1;display:flex;justify-content:space-between;align-items:center;padding:13px 16px;background:transparent;border:none;cursor:pointer;font-family:inherit;text-align:left;">
-          <div>
-            <div style="display:flex;align-items:center;gap:8px;">
-              <div style="font-size:14px;font-weight:600;color:${diaColor};">${dia}${dia==='Sábado'?'':'-feira'}</div>
-              ${isFeriado?'<span style="background:#9e3400;color:white;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;">FERIADO</span>':''}
-            </div>
-            <div style="font-size:12px;color:var(--text-secondary);margin-top:2px;">${itens.length} produto(s)${hasTotais?'':' · sem itens'}</div>
+      <button onclick="togglePlanoDia('${diaId}')" style="width:100%;display:flex;justify-content:space-between;align-items:center;padding:13px 16px;background:${diaBg};border:0.5px solid var(--border);border-left:3px solid ${diaColor};border-radius:12px;cursor:pointer;font-family:inherit;text-align:left;">
+        <div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <div style="font-size:14px;font-weight:600;color:${diaColor};">${dia}${dia==='Sábado'?'':'-feira'}</div>
+            ${isFeriado?'<span style="font-size:10px;color:#9e3400;font-weight:600;">● Feriado</span>':''}
           </div>
-          <span id="${diaId}-arrow" style="color:${diaColor};font-size:18px;transition:transform 0.2s;">▼</span>
-        </button>
-        <div style="display:flex;align-items:center;gap:8px;padding:0 12px;border-left:0.5px solid var(--border);">
-          <label style="display:flex;align-items:center;gap:4px;font-size:12px;color:var(--text-secondary);cursor:pointer;white-space:nowrap;">
-            <input type="checkbox" ${isFeriado?'checked':''} onchange="toggleFeriado('${dia}',this.checked)" style="cursor:pointer;" />
-            Feriado
-          </label>
-          <button onclick="adicionarItemPlano('${dia}')" style="background:${diaColor};color:white;border:none;border-radius:8px;padding:5px 12px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;">+ Produto</button>
+          <div style="font-size:12px;color:var(--text-secondary);margin-top:2px;">${itens.length} produto(s)${hasTotais?'':' · sem itens'}</div>
         </div>
-      </div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          ${window.adminMode?`<button onclick="event.stopPropagation();adicionarItemPlano('${dia}')" style="background:${diaColor};color:white;border:none;border-radius:8px;padding:5px 12px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;">+ Produto</button>`:''}
+          <span id="${diaId}-arrow" style="color:${diaColor};font-size:18px;transition:transform 0.2s;">▼</span>
+        </div>
+      </button>
       <div id="${diaId}" style="display:none;background:var(--bg-primary);border:0.5px solid var(--border);border-top:none;border-radius:0 0 12px 12px;padding:0 12px 12px;">
-        ${itens.length===0?'<div style="font-size:13px;color:var(--text-secondary);text-align:center;padding:16px 0;">Nenhum produto. Clique em "+ Produto"</div>':''}
+        ${window.adminMode?`<div style="display:flex;align-items:center;justify-content:flex-end;padding:8px 0 4px;border-bottom:0.5px solid var(--border);margin-bottom:6px;">
+          <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-secondary);cursor:pointer;">
+            <input type="checkbox" ${isFeriado?'checked':''} onchange="toggleFeriado('${dia}',this.checked)" style="cursor:pointer;accent-color:#9e3400;" />
+            Marcar como feriado
+          </label>
+        </div>`:''}
+        ${itens.length===0?'<div style="font-size:13px;color:var(--text-secondary);text-align:center;padding:16px 0;">Nenhum produto adicionado</div>':''}
         ${itens.map((item,i)=>{
           const prod=PRODUTOS.find(p=>p.nome===item.nome);
           const un=prod?(item.qtdPacotes||0)*(prod.qtdPct||1):0;
