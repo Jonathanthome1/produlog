@@ -1779,10 +1779,29 @@ function updateColab(i, field, val){
 }
 
 function adicionarColaborador(){
+  // Save current escalados/presentes values before re-render
+  const escEl=document.getElementById('pr-escalados');
+  const presEl=document.getElementById('pr-presentes');
+  const escVal=escEl?escEl.value:'';
+  const presVal=presEl?presEl.value:'';
+  // Save current colab values
+  colaboradoresTemp.forEach((c,i)=>{
+    const n=document.getElementById(`colab-nome-${i}`);
+    const s=document.getElementById(`colab-status-${i}`);
+    const o=document.getElementById(`colab-obs-${i}`);
+    if(n)c.nome=n.value;
+    if(s)c.status=s.value;
+    if(o)c.obs=o.value;
+  });
   colaboradoresTemp.push({nome:'',status:'Faltou',obs:''});
   renderPresencaForm();
-  // Re-populate values after re-render
   setTimeout(()=>{
+    // Restore escalados/presentes
+    const esc=document.getElementById('pr-escalados');
+    const pres=document.getElementById('pr-presentes');
+    if(esc)esc.value=escVal;
+    if(pres)pres.value=presVal;
+    // Re-populate colab values
     colaboradoresTemp.forEach((c,i)=>{
       const n=document.getElementById(`colab-nome-${i}`);
       const s=document.getElementById(`colab-status-${i}`);
@@ -1795,7 +1814,10 @@ function adicionarColaborador(){
 }
 
 function removerColab(i){
-  // Save current values before removing
+  const escEl=document.getElementById('pr-escalados');
+  const presEl=document.getElementById('pr-presentes');
+  const escVal=escEl?escEl.value:'';
+  const presVal=presEl?presEl.value:'';
   colaboradoresTemp.forEach((c,idx)=>{
     const n=document.getElementById(`colab-nome-${idx}`);
     const s=document.getElementById(`colab-status-${idx}`);
@@ -1807,6 +1829,10 @@ function removerColab(i){
   colaboradoresTemp.splice(i,1);
   renderPresencaForm();
   setTimeout(()=>{
+    const esc=document.getElementById('pr-escalados');
+    const pres=document.getElementById('pr-presentes');
+    if(esc)esc.value=escVal;
+    if(pres)pres.value=presVal;
     colaboradoresTemp.forEach((c,i)=>{
       const n=document.getElementById(`colab-nome-${i}`);
       const s=document.getElementById(`colab-status-${i}`);
@@ -2980,7 +3006,7 @@ function renderPlano(){
         const un=prod?(item.qtdPacotes||0)*(prod.qtdPct||1):0;
         return `<div style="display:grid;grid-template-columns:1fr auto auto;gap:6px;align-items:center;margin-bottom:8px;padding-bottom:8px;border-bottom:0.5px solid var(--border);">
           <div>
-            <div style="font-size:13px;font-weight:500;">${item.nome}</div>
+            <div style="font-size:13px;font-weight:500;color:var(--text-primary);">${item.nome}</div>
             ${prod?`<div style="font-size:11px;color:var(--text-secondary);">${item.qtdPacotes} pct × ${prod.qtdPct||1} = ${un} un</div>`:''}
           </div>
           <input type="number" value="${item.qtdPacotes||0}" min="0" inputmode="numeric"
@@ -3038,6 +3064,7 @@ function adicionarItemPlano(dia){
 function atualizarQtdPlano(dia,idx,val){
   if(planoAtual.itens[dia]&&planoAtual.itens[dia][idx]){
     planoAtual.itens[dia][idx].qtdPacotes=parseInt(val)||0;
+    renderPlano();
   }
 }
 
