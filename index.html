@@ -944,7 +944,7 @@
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getFirestore, collection, addDoc, deleteDoc, setDoc, onSnapshot, doc, updateDoc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDY5ma_NbCmZ2dyXUjKm6GZQ3ibhwgcdmI",
@@ -1990,7 +1990,7 @@ async function excluirRegistro(colecao, fid, nome){
   if(!window.adminMode){alert('Apenas o administrador pode excluir registros.');return;}
   if(!confirm('Excluir "'+nome+'"?\nEssa ação não pode ser desfeita.'))return;
   try{
-    const {deleteDoc} = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
+    
     await deleteDoc(doc(db,colecao,fid));
   }catch(e){alert('Erro ao excluir: '+e.message);}
 }
@@ -2599,7 +2599,7 @@ async function adicionarContagem(cod, nome){
   reg.nome=nome;
   contagemAtual.itens[cod]=reg;
   try{
-    const {setDoc} = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
+    
     if(contagemAtual.firestoreId){
       await updateDoc(doc(db,'contagens',contagemAtual.firestoreId),{
         itens:contagemAtual.itens,editadoEm:agora()
@@ -2965,18 +2965,11 @@ function abrirPlano(){
 function renderPlano(){
   const el=document.getElementById('plano-content');
   if(!el)return;
-  const dias=['Segunda','Terça','Quarta','Quinta','Sexta'];
+  const dias=['Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
   
   const semsDisp=[semanaAtual(),...planos.map(p=>p.semana)].filter((v,i,a)=>a.indexOf(v)===i).slice(0,8);
   
   let html=`
-    <div class="card" style="margin-bottom:10px;">
-      <div class="card-label">Semana</div>
-      <select onchange="trocarSemanaPlano(this.value)" style="font-size:14px;">
-        ${semsDisp.map(s=>'<option value="'+s+'" '+(s===planoAtual.semana?'selected':'')+'>'+semanaLabel(s)+'</option>').join('')}
-      </select>
-    </div>
-
     <div class="card" style="margin-bottom:10px;border-left:3px solid var(--mc-roxo);">
       <div style="font-size:13px;font-weight:600;color:var(--mc-roxo);margin-bottom:10px;">📥 Importar do Excel</div>
       <div class="card-label">Dia da semana</div>
@@ -3101,67 +3094,47 @@ function togglePlanoDia(id){
 
 function importarPlanoPaste(){
   const txt=document.getElementById('plano-import-txt').value.trim();
+  const dia=document.getElementById('plano-import-dia').value;
   const result=document.getElementById('plano-import-result');
+  if(!dia){result.textContent='Selecione o dia da semana primeiro.';result.style.color='#c62828';return;}
   if(!txt){result.textContent='Cole o conteúdo primeiro.';result.style.color='#c62828';return;}
-  
-  const MAP_DIA={'segunda':'Segunda','terça':'Terça','terca':'Terça','quarta':'Quarta','quinta':'Quinta','sexta':'Sexta',
-    'seg':'Segunda','ter':'Terça','qua':'Quarta','qui':'Quinta','sex':'Sexta'};
-  
-  const lines=txt.split(/\r?\n/).filter(l=>l.trim());
+
+  const lines=txt.replace(/\r/g,'').split('\n').filter(l=>l.trim());
   let importados=0, naoEncontrados=[];
-  const novoItens={};
-  
+  const itens=[];
+
   lines.forEach(line=>{
-    const cols=line.split('	').map(c=>c.trim());
-    if(cols.length<3)return;
-    
-    // Try to parse: Dia | [Codigo] | Produto | Quantidade
-    let diaRaw='',nomeRaw='',qtdRaw='';
-    if(cols.length>=4){
-      diaRaw=cols[0]; nomeRaw=cols[2]; qtdRaw=cols[3];
-    } else if(cols.length===3){
-      diaRaw=cols[0]; nomeRaw=cols[1]; qtdRaw=cols[2];
-    }
-    
-    // Skip header line
-    if(nomeRaw.toLowerCase()==='produto'||nomeRaw.toLowerCase()==='descrição')return;
-    
-    const diaKey=MAP_DIA[diaRaw.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').split('-')[0].trim()];
-    if(!diaKey){return;}
-    
-    const qtd=parseInt(qtdRaw)||0;
+    const cols=line.trim().split('\t').map(c=>c.trim()).filter(Boolean);
+    if(cols.length<2)return;
+    const codRaw=cols[0];
+    const qtd=parseInt(cols[1])||0;
     if(!qtd)return;
-    
-    // Find product by name (fuzzy: normalize and compare)
-    const normalize=s=>s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9 ]/g,' ').trim();
-    const nomeNorm=normalize(nomeRaw);
-    let prod=PRODUTOS.find(p=>normalize(p.nome)===nomeNorm);
-    if(!prod){
-      // Try partial match
-      prod=PRODUTOS.find(p=>normalize(p.nome).includes(nomeNorm)||nomeNorm.includes(normalize(p.nome).substring(0,15)));
-    }
-    
-    if(!novoItens[diaKey])novoItens[diaKey]=[];
+    const prod=PRODUTOS.find(p=>p.cod===codRaw||String(p.cod)===String(codRaw));
     if(prod){
-      novoItens[diaKey].push({nome:prod.nome,qtdPacotes:qtd});
+      itens.push({nome:prod.nome,qtdPacotes:qtd});
       importados++;
     } else {
-      naoEncontrados.push(nomeRaw);
-      // Add with original name anyway
-      novoItens[diaKey].push({nome:nomeRaw,qtdPacotes:qtd});
+      naoEncontrados.push(codRaw);
     }
   });
-  
-  // Merge with existing (replace days that have imported items)
-  Object.entries(novoItens).forEach(([dia,itens])=>{
-    planoAtual.itens[dia]=itens;
-  });
-  
-  let msg=`✓ ${importados} produto(s) importado(s).`;
-  if(naoEncontrados.length>0)msg+=` ⚠️ Não encontrados: ${naoEncontrados.join(', ')}`;
+
+  if(!planoAtual.itens)planoAtual.itens={};
+  planoAtual.itens[dia]=itens;
+
+  let msg='✓ '+importados+' produto(s) importado(s) para '+dia+'-feira.';
+  if(naoEncontrados.length>0)msg+=' ⚠️ Código(s) não encontrado(s): '+naoEncontrados.join(', ');
   result.textContent=msg;
   result.style.color=naoEncontrados.length?'#856404':'#2e7d32';
-  
+  document.getElementById('plano-import-txt').value='';
+  renderPlano();
+}
+
+function limparPlano(){
+  if(!confirm('Limpar todos os itens do plano desta semana?\nEssa ação não pode ser desfeita.'))return;
+  planoAtual.itens={};
+  if(planoAtual.firestoreId){
+    updateDoc(doc(db,'planos',planoAtual.firestoreId),{itens:{},editadoEm:agora()}).catch(e=>console.error(e));
+  }
   renderPlano();
 }
 
@@ -3216,7 +3189,7 @@ async function salvarPlano(){
   const btn=document.querySelector('#s-plano .topbar-right');
   if(btn){btn.textContent='Salvando...';btn.disabled=true;}
   try{
-    const {setDoc} = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
+    
     if(planoAtual.firestoreId){
       await updateDoc(doc(db,'planos',planoAtual.firestoreId),{itens:planoAtual.itens,editadoEm:agora()});
     } else {
