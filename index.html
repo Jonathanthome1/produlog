@@ -2745,16 +2745,19 @@ function renderManutHome(){
         const totalMins=mans.reduce((s,x)=>s+(x.tempo_min||0),0);
         const horas=Math.floor(totalMins/60);
         const mins=totalMins%60;
-        return `<div class="reg-item" style="border-left-color:${cor};cursor:pointer;" onclick="abrirMaquina('${m.firestoreId}')">
-          <div class="reg-header">
+        return `<div class="reg-item" style="border-left-color:${cor};">
+          <div class="reg-header" style="cursor:pointer;" onclick="abrirMaquina('${m.firestoreId}')">
             <span class="reg-produto">${m.nome}</span>
-            <span style="font-size:11px;color:var(--text-secondary);">${mans.length} manut.</span>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span style="font-size:11px;color:var(--text-secondary);">${mans.length} manut.</span>
+              <button class="btn-del-admin" onclick="event.stopPropagation();excluirMaquina('${m.firestoreId}','${m.nome.replace(/'/g,"\\'")}','${manutSetorAtivo}')" style="background:none;border:1px solid #ef9a9a;color:#c62828;font-size:11px;padding:3px 8px;border-radius:6px;cursor:pointer;font-family:inherit;">🗑</button>
+            </div>
           </div>
-          <div style="font-size:12px;color:var(--text-secondary);margin-top:4px;">
+          <div style="font-size:12px;color:var(--text-secondary);margin-top:4px;cursor:pointer;" onclick="abrirMaquina('${m.firestoreId}')">
             ${ultima?`Última: ${ultima.data} · ${ultima.tipo}`:'Sem manutenções ainda'}
             ${totalMins>0?` · ⏱ ${horas>0?horas+'h ':''}${mins}min parada total`:''}
           </div>
-          ${m.obs?`<div style="font-size:12px;color:var(--text-secondary);font-style:italic;">${m.obs}</div>`:''}
+          ${m.obs?`<div style="font-size:12px;color:var(--text-secondary);font-style:italic;cursor:pointer;" onclick="abrirMaquina('${m.firestoreId}')">${m.obs}</div>`:''}
         </div>`;
       }).join('')}
   `;
@@ -2794,6 +2797,21 @@ async function salvarNovaMaquina(){
     alert('Erro ao salvar: '+e.message);
     btn.textContent='Cadastrar máquina ✓';btn.disabled=false;
   }
+}
+
+async function excluirMaquina(maqId, nome, setor){
+  if(!window.adminMode){alert('Apenas o administrador pode excluir máquinas.');return;}
+  if(!confirm('Excluir a máquina "'+nome+'"?\nAs manutenções registradas também serão excluídas.\nEssa ação não pode ser desfeita.'))return;
+  try{
+    // Delete the machine
+    await deleteDoc(doc(db,'maquinas',maqId));
+    // Delete all its manutencoes
+    const mans=manutencoes.filter(m=>m.maquina_id===maqId);
+    for(const m of mans){
+      await deleteDoc(doc(db,'manutencoes',m.firestoreId));
+    }
+    renderManutHome();
+  }catch(e){alert('Erro ao excluir: '+e.message);}
 }
 
 function abrirMaquina(maqId){
@@ -3245,7 +3263,7 @@ window.selecionarDataEmb=selecionarDataEmb; window.irParaEmbalagem=irParaEmbalag
 window.toggleEmb=toggleEmb; window.toggleAjuste=toggleAjuste; window.confirmarAjuste=confirmarAjuste;
 window.selecionarDataExp=selecionarDataExp; window.irParaExpedicao=irParaExpedicao;
 window.adicionarLiberacao=adicionarLiberacao;
-window.tab=tab; window.toggleConf=toggleConf; window.admFiltrar=admFiltrar; window.toggleEditProd=toggleEditProd; window.salvarEditProd=salvarEditProd; window.toggleEditRecheio=toggleEditRecheio; window.salvarEditRecheio=salvarEditRecheio; window.renderMeusReg=renderMeusReg; window.renderCozReg=renderCozReg; window.abrirPresenca=abrirPresenca; window.excluirPresenca=excluirPresenca; window.salvarPresenca=salvarPresenca; window.voltarPresenca=voltarPresenca; window.renderPresencaForm=renderPresencaForm; window.selecionarDataPresenca=selecionarDataPresenca; window.selecionarDataPresencaManual=selecionarDataPresencaManual; window.adicionarColaborador=adicionarColaborador; window.removerColab=removerColab; window.updateColab=updateColab; window.renderPresencaReg=renderPresencaReg; window.abrirContagem=abrirContagem; window.subtrairContagem=subtrairContagem; window.filtrarContagem=filtrarContagem; window.adicionarContagem=adicionarContagem; window.renderContagemHist=renderContagemHist; window.verDetalheContagem=verDetalheContagem; window.renderContagemLanc=renderContagemLanc; window.renderContagemHome=renderContagemHome; window.abrirManut=abrirManut; window.voltarManut=voltarManut; window.salvarNovaMaquina=salvarNovaMaquina; window.abrirMaquina=abrirMaquina; window.iniciarNovaManutencao=iniciarNovaManutencao; window.selecionarDataManut=selecionarDataManut; window.salvarManutencao=salvarManutencao; window.selecionarDataManutBtn=selecionarDataManutBtn; window.abrirPlano=abrirPlano; window.voltarPlano=voltarPlano; window.salvarPlano=salvarPlano; window.adicionarItemPlano=adicionarItemPlano; window.atualizarQtdPlano=atualizarQtdPlano; window.removerItemPlano=removerItemPlano; window.trocarSemanaPlano=trocarSemanaPlano; window.togglePlanoDia=togglePlanoDia; window.toggleFeriado=toggleFeriado; window.importarPlanoPaste=importarPlanoPaste; window.limparPlano=limparPlano; window.renderManutDateGrid=renderManutDateGrid; window.toggleEditParcial=toggleEditParcial; window.salvarEditParcial=salvarEditParcial; window.excluirRegistro=excluirRegistro; window.gerarExcel=gerarExcel; window.renderPresencaForm=renderPresencaForm; window.goToAdmin=goToAdmin; window.sairAdmin=sairAdmin; window.backFromArea=backFromArea;
+window.tab=tab; window.toggleConf=toggleConf; window.admFiltrar=admFiltrar; window.toggleEditProd=toggleEditProd; window.salvarEditProd=salvarEditProd; window.toggleEditRecheio=toggleEditRecheio; window.salvarEditRecheio=salvarEditRecheio; window.renderMeusReg=renderMeusReg; window.renderCozReg=renderCozReg; window.abrirPresenca=abrirPresenca; window.excluirPresenca=excluirPresenca; window.salvarPresenca=salvarPresenca; window.voltarPresenca=voltarPresenca; window.renderPresencaForm=renderPresencaForm; window.selecionarDataPresenca=selecionarDataPresenca; window.selecionarDataPresencaManual=selecionarDataPresencaManual; window.adicionarColaborador=adicionarColaborador; window.removerColab=removerColab; window.updateColab=updateColab; window.renderPresencaReg=renderPresencaReg; window.abrirContagem=abrirContagem; window.subtrairContagem=subtrairContagem; window.filtrarContagem=filtrarContagem; window.adicionarContagem=adicionarContagem; window.renderContagemHist=renderContagemHist; window.verDetalheContagem=verDetalheContagem; window.renderContagemLanc=renderContagemLanc; window.renderContagemHome=renderContagemHome; window.abrirManut=abrirManut; window.voltarManut=voltarManut; window.salvarNovaMaquina=salvarNovaMaquina; window.excluirMaquina=excluirMaquina; window.abrirMaquina=abrirMaquina; window.iniciarNovaManutencao=iniciarNovaManutencao; window.selecionarDataManut=selecionarDataManut; window.salvarManutencao=salvarManutencao; window.selecionarDataManutBtn=selecionarDataManutBtn; window.abrirPlano=abrirPlano; window.voltarPlano=voltarPlano; window.salvarPlano=salvarPlano; window.adicionarItemPlano=adicionarItemPlano; window.atualizarQtdPlano=atualizarQtdPlano; window.removerItemPlano=removerItemPlano; window.trocarSemanaPlano=trocarSemanaPlano; window.togglePlanoDia=togglePlanoDia; window.toggleFeriado=toggleFeriado; window.importarPlanoPaste=importarPlanoPaste; window.limparPlano=limparPlano; window.renderManutDateGrid=renderManutDateGrid; window.toggleEditParcial=toggleEditParcial; window.salvarEditParcial=salvarEditParcial; window.excluirRegistro=excluirRegistro; window.gerarExcel=gerarExcel; window.renderPresencaForm=renderPresencaForm; window.goToAdmin=goToAdmin; window.sairAdmin=sairAdmin; window.backFromArea=backFromArea;
 </script>
 </body>
 </html>
