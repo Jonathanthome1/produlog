@@ -637,12 +637,39 @@
   <div class="screen" id="s-emb-home">
     <div class="topbar">
       <div style="flex:1;"><div class="topbar-title">Embalagem 📦</div><div class="topbar-sub" id="emb-data-topbar"></div></div>
-      <button class="emb-data-badge" onclick="abrirPresenca('emb')" style="margin-right:6px;">👥</button><button class="emb-data-badge" onclick="goTo('s-emb-sel-data')">Trocar dia</button>
+      <button class="emb-data-badge" onclick="abrirPresenca('emb')" style="margin-right:6px;">👥</button><button class="emb-data-badge" onclick="goTo('s-emb-manual')" style="margin-right:6px;">+ Produto</button><button class="emb-data-badge" onclick="goTo('s-emb-sel-data')">Trocar dia</button>
     </div>
     <div class="content" id="emb-content"></div>
   </div>
 
 
+
+
+  <!-- EMBALAGEM: PRODUTO MANUAL -->
+  <div class="screen" id="s-emb-manual">
+    <div class="topbar">
+      <button class="back-btn" onclick="goTo('s-emb-home')">‹</button>
+      <div><div class="topbar-title">Adicionar Produto</div><div class="topbar-sub">Embalagem manual</div></div>
+    </div>
+    <div class="content">
+      <div class="card">
+        <div class="card-label">Nome do produto</div>
+        <input type="text" id="emb-manual-nome" placeholder="Ex: PÃO DE QUEIJO EXTRA..." style="font-size:15px;" />
+      </div>
+      <div class="card">
+        <div class="card-label">Quantidade embalada (unidades)</div>
+        <div class="input-unit">
+          <input type="number" id="emb-manual-qtd" placeholder="0" min="0" inputmode="numeric" />
+          <span class="unit-label">un</span>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-label">Observação (opcional)</div>
+        <input type="text" id="emb-manual-obs" placeholder="Ex: retrabalho, sobra..." />
+      </div>
+      <button class="btn btn-primary" id="emb-manual-btn" onclick="salvarEmbManual()">Adicionar ao checklist ✓</button>
+    </div>
+  </div>
 
   <!-- PRESENÇA: FORM (shared, rendered dynamically) -->
   <div class="screen" id="s-presenca-form">
@@ -1013,7 +1040,7 @@ function atualizarTela(){
   if(!tela||tela==='loading'){ goTo('s-inicio'); return; }
   if(tela==='s-conf-home') renderConfHome();
   if(tela==='s-coz-home') renderCozHome();
-  if(tela==='s-emb-home') renderEmbalagem();
+  if(tela==='s-emb-home') renderEmbalagem(); // embManual listener triggers this
   if(tela==='s-emb-sel-data') renderSelDataEmb();
   if(tela==='s-exp-home') renderExpedicao();
   if(tela==='s-exp-sel-data') renderSelDataExp();
@@ -1092,6 +1119,7 @@ function goTo(id){
   if(id==='s-meus-reg') renderMeusReg();
   if(id==='s-coz-reg') renderCozReg();
   if(id==='s-emb-home') renderEmbalagem();
+  if(id==='s-emb-manual'){ const b=document.getElementById('emb-manual-btn');if(b){b.textContent='Adicionar ao checklist ✓';b.disabled=false;} }
   if(id==='s-exp-home') renderExpedicao();
   if(id==='s-adm') renderAdm(tabAtiva);
   if(id==='s-presenca-form') renderPresencaForm();
@@ -1470,6 +1498,41 @@ async function salvarEditRecheio(fid){
   } catch(e){alert('Erro ao salvar.');btn.textContent='Salvar';btn.disabled=false;}
 }
 
+// ===== EMBALAGEM MANUAL =====
+let embManual = [];
+
+onSnapshot(collection(db,'embManual'), snap=>{
+  try{
+    embManual=snap.docs.map(d=>({firestoreId:d.id,...d.data()})).sort((a,b)=>(b.timestamp||0)-(a.timestamp||0));
+    atualizarTela();
+  }catch(e){ console.error('embManual snap:',e); }
+});
+
+async function salvarEmbManual(){
+  const nome=document.getElementById('emb-manual-nome').value.trim();
+  const qtd=parseInt(document.getElementById('emb-manual-qtd').value)||0;
+  const obs=document.getElementById('emb-manual-obs').value.trim();
+  if(!nome){alert('Informe o nome do produto.');return;}
+  if(!qtd){alert('Informe a quantidade.');return;}
+  const btn=document.getElementById('emb-manual-btn');
+  btn.textContent='Salvando...';btn.disabled=true;
+  try{
+    await addDoc(collection(db,'embManual'),{
+      produto:nome, qtd, qtdEmbalada:qtd, obs,
+      data:dataSelEmb||hoje(), hora:agora(), timestamp:Date.now(),
+      feito:true, manual:true
+    });
+    document.getElementById('emb-manual-nome').value='';
+    document.getElementById('emb-manual-qtd').value='';
+    document.getElementById('emb-manual-obs').value='';
+    btn.textContent='Adicionar ao checklist ✓';btn.disabled=false;
+    goTo('s-emb-home');
+  }catch(e){
+    alert('Erro ao salvar: '+e.message);
+    btn.textContent='Adicionar ao checklist ✓';btn.disabled=false;
+  }
+}
+
 // ===== EMBALAGEM =====
 function statusEmbalagem(data){
   const regs=registros.filter(r=>r.data===data);
@@ -1508,8 +1571,10 @@ function renderEmbalagem(){
   document.getElementById('emb-data-topbar').textContent=dataSelEmb||hoje();
   const el=document.getElementById('emb-content');
   const regs=registros.filter(r=>r.data===dataSelEmb);
-  if(!regs.length){el.innerHTML='<div class="empty">Nenhum produto lançado neste dia.</div>';return;}
-  const total=regs.length,feitos=regs.filter(r=>r.embalagem&&r.embalagem.feito).length;
+  const manuais=embManual.filter(r=>r.data===(dataSelEmb||hoje()));
+  const total=regs.length+manuais.length;
+  const feitos=regs.filter(r=>r.embalagem&&r.embalagem.feito).length+manuais.length; // manuais são sempre feitos
+  if(!total){el.innerHTML='<div class="empty">Nenhum produto neste dia.</div>';return;}
   const pct=Math.round(feitos/total*100);const barColor=pct===100?'#4caf50':'var(--mc-dourado)';
   el.innerHTML=`
     <div class="card" style="margin-bottom:12px;">
@@ -1537,7 +1602,18 @@ function renderEmbalagem(){
           <button class="btn-sm-green" onclick="confirmarAjuste('${r.firestoreId}',${r.qtd})">OK</button>
         </div>
       </div>`;
-    }).join('')}`;
+    }).join('')}
+    ${manuais.length>0?`<div class="section-divider" style="margin-top:8px;">Adicionados manualmente</div>`:''}
+    ${manuais.map(r=>`<div class="emb-item done" style="border-left-color:#6b7280;">
+      <div class="emb-item-header">
+        <div class="emb-check-btn done">✓</div>
+        <div class="emb-item-info">
+          <div class="emb-item-nome">${r.produto}</div>
+          <div class="emb-item-qtd">Embalado: <strong>${r.qtdEmbalada} un</strong>${r.obs?' · '+r.obs:''} <span style="font-size:10px;color:var(--text-secondary);">· manual</span></div>
+        </div>
+        <button class="btn-del-admin" onclick="excluirRegistro('embManual','${r.firestoreId}','${r.produto}')" style="background:none;border:1px solid #ef9a9a;color:#c62828;font-size:11px;padding:3px 8px;border-radius:6px;cursor:pointer;font-family:inherit;">🗑</button>
+      </div>
+    </div>`).join('')}`;
 }
 async function toggleEmb(fid,qtdProd){
   const reg=registros.find(r=>r.firestoreId===fid);
@@ -3263,7 +3339,7 @@ window.selecionarDataEmb=selecionarDataEmb; window.irParaEmbalagem=irParaEmbalag
 window.toggleEmb=toggleEmb; window.toggleAjuste=toggleAjuste; window.confirmarAjuste=confirmarAjuste;
 window.selecionarDataExp=selecionarDataExp; window.irParaExpedicao=irParaExpedicao;
 window.adicionarLiberacao=adicionarLiberacao;
-window.tab=tab; window.toggleConf=toggleConf; window.admFiltrar=admFiltrar; window.toggleEditProd=toggleEditProd; window.salvarEditProd=salvarEditProd; window.toggleEditRecheio=toggleEditRecheio; window.salvarEditRecheio=salvarEditRecheio; window.renderMeusReg=renderMeusReg; window.renderCozReg=renderCozReg; window.abrirPresenca=abrirPresenca; window.excluirPresenca=excluirPresenca; window.salvarPresenca=salvarPresenca; window.voltarPresenca=voltarPresenca; window.renderPresencaForm=renderPresencaForm; window.selecionarDataPresenca=selecionarDataPresenca; window.selecionarDataPresencaManual=selecionarDataPresencaManual; window.adicionarColaborador=adicionarColaborador; window.removerColab=removerColab; window.updateColab=updateColab; window.renderPresencaReg=renderPresencaReg; window.abrirContagem=abrirContagem; window.subtrairContagem=subtrairContagem; window.filtrarContagem=filtrarContagem; window.adicionarContagem=adicionarContagem; window.renderContagemHist=renderContagemHist; window.verDetalheContagem=verDetalheContagem; window.renderContagemLanc=renderContagemLanc; window.renderContagemHome=renderContagemHome; window.abrirManut=abrirManut; window.voltarManut=voltarManut; window.salvarNovaMaquina=salvarNovaMaquina; window.excluirMaquina=excluirMaquina; window.abrirMaquina=abrirMaquina; window.iniciarNovaManutencao=iniciarNovaManutencao; window.selecionarDataManut=selecionarDataManut; window.salvarManutencao=salvarManutencao; window.selecionarDataManutBtn=selecionarDataManutBtn; window.abrirPlano=abrirPlano; window.voltarPlano=voltarPlano; window.salvarPlano=salvarPlano; window.adicionarItemPlano=adicionarItemPlano; window.atualizarQtdPlano=atualizarQtdPlano; window.removerItemPlano=removerItemPlano; window.trocarSemanaPlano=trocarSemanaPlano; window.togglePlanoDia=togglePlanoDia; window.toggleFeriado=toggleFeriado; window.importarPlanoPaste=importarPlanoPaste; window.limparPlano=limparPlano; window.renderManutDateGrid=renderManutDateGrid; window.toggleEditParcial=toggleEditParcial; window.salvarEditParcial=salvarEditParcial; window.excluirRegistro=excluirRegistro; window.gerarExcel=gerarExcel; window.renderPresencaForm=renderPresencaForm; window.goToAdmin=goToAdmin; window.sairAdmin=sairAdmin; window.backFromArea=backFromArea;
+window.tab=tab; window.toggleConf=toggleConf; window.admFiltrar=admFiltrar; window.toggleEditProd=toggleEditProd; window.salvarEditProd=salvarEditProd; window.toggleEditRecheio=toggleEditRecheio; window.salvarEditRecheio=salvarEditRecheio; window.renderMeusReg=renderMeusReg; window.renderCozReg=renderCozReg; window.abrirPresenca=abrirPresenca; window.salvarEmbManual=salvarEmbManual; window.excluirPresenca=excluirPresenca; window.salvarPresenca=salvarPresenca; window.voltarPresenca=voltarPresenca; window.renderPresencaForm=renderPresencaForm; window.selecionarDataPresenca=selecionarDataPresenca; window.selecionarDataPresencaManual=selecionarDataPresencaManual; window.adicionarColaborador=adicionarColaborador; window.removerColab=removerColab; window.updateColab=updateColab; window.renderPresencaReg=renderPresencaReg; window.abrirContagem=abrirContagem; window.subtrairContagem=subtrairContagem; window.filtrarContagem=filtrarContagem; window.adicionarContagem=adicionarContagem; window.renderContagemHist=renderContagemHist; window.verDetalheContagem=verDetalheContagem; window.renderContagemLanc=renderContagemLanc; window.renderContagemHome=renderContagemHome; window.abrirManut=abrirManut; window.voltarManut=voltarManut; window.salvarNovaMaquina=salvarNovaMaquina; window.excluirMaquina=excluirMaquina; window.abrirMaquina=abrirMaquina; window.iniciarNovaManutencao=iniciarNovaManutencao; window.selecionarDataManut=selecionarDataManut; window.salvarManutencao=salvarManutencao; window.selecionarDataManutBtn=selecionarDataManutBtn; window.abrirPlano=abrirPlano; window.voltarPlano=voltarPlano; window.salvarPlano=salvarPlano; window.adicionarItemPlano=adicionarItemPlano; window.atualizarQtdPlano=atualizarQtdPlano; window.removerItemPlano=removerItemPlano; window.trocarSemanaPlano=trocarSemanaPlano; window.togglePlanoDia=togglePlanoDia; window.toggleFeriado=toggleFeriado; window.importarPlanoPaste=importarPlanoPaste; window.limparPlano=limparPlano; window.renderManutDateGrid=renderManutDateGrid; window.toggleEditParcial=toggleEditParcial; window.salvarEditParcial=salvarEditParcial; window.excluirRegistro=excluirRegistro; window.gerarExcel=gerarExcel; window.renderPresencaForm=renderPresencaForm; window.goToAdmin=goToAdmin; window.sairAdmin=sairAdmin; window.backFromArea=backFromArea;
 </script>
 </body>
 </html>
