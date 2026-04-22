@@ -1347,7 +1347,7 @@ function goTo(id){
 
 function renderConfHome(){
   document.getElementById('conf-date').textContent=hoje();
-  document.getElementById('conf-count').textContent=registros.filter(r=>r.data===hoje()).length;
+  document.getElementById('conf-count').textContent=registros.filter(r=>r.data===hoje()&&r.origem!=='quadra').length;
 }
 function renderCozHome(){
   document.getElementById('coz-date').textContent=hoje();
@@ -1463,12 +1463,13 @@ async function salvar(){
   } catch(e){alert('Erro ao salvar.');btn.textContent='Salvar registro ✓';btn.className='btn btn-primary';}
 }
 function renderMeusReg(dataFiltro){
-  const datas=sortDatas([...new Set(registros.map(r=>r.data))]);
+  const regConf=registros.filter(r=>r.origem!=='quadra');
+  const datas=sortDatas([...new Set(regConf.map(r=>r.data))]);
   const df = dataFiltro || window._mrData || (datas[0]||hoje());
   window._mrData = df;
-  document.getElementById('mr-sub').textContent=`${registros.length} registro(s) total`;
+  document.getElementById('mr-sub').textContent=`${regConf.length} registro(s) total`;
   const el=document.getElementById('mr-content');
-  if(!registros.length){el.innerHTML='<div class="empty">Nenhum registro ainda.</div>';return;}
+  if(!regConf.length){el.innerHTML='<div class="empty">Nenhum registro ainda.</div>';return;}
 
   const selectHtml=`<div style="margin-bottom:12px;">
     <select onchange="renderMeusReg(this.value)" style="font-size:15px;padding:10px 12px;border-radius:10px;border:0.5px solid var(--border-md);background:var(--bg-primary);color:var(--text-primary);width:100%;font-family:inherit;">
@@ -1476,7 +1477,7 @@ function renderMeusReg(dataFiltro){
     </select>
   </div>`;
 
-  const regs=registros.filter(r=>r.data===df);
+  const regs=regConf.filter(r=>r.data===df);
   const itens = regs.map(r=>{
     const hasR1=r.prodData&&r.prodData.tipoRecheio&&r.prodData.grRecheio>0;
     const hasR2=r.prodData&&r.prodData.tipoRecheio2&&r.prodData.grRecheio2>0;
@@ -2427,7 +2428,7 @@ function renderAdm(t){
   else if(t==='producao'){
     if(!registros.length){el.innerHTML='<div class="empty">Nenhum registro ainda.</div>';return;}
     el.innerHTML = makeSelect('sel-prod-adm', datasReg, df, 'producao');
-    const filt=registros.filter(r=>r.data===df);
+    const filt=registros.filter(r=>r.data===df&&r.origem!=='quadra');
     el.innerHTML+=!filt.length?'<div class="empty">Sem registros.</div>':
       filt.map(r=>`<div class="reg-item"><div class="reg-header"><span class="reg-produto">${r.produto}</span><div style="display:flex;align-items:center;gap:6px;"><span class="badge ${r.confirmado?'badge-ok':'badge-pend'}">${r.confirmado?'ok':'pend.'}</span><button onclick="excluirRegistro('registros','${r.firestoreId}','${r.produto}')" style="background:none;border:1px solid #ef9a9a;color:#c62828;font-size:11px;padding:3px 7px;border-radius:6px;cursor:pointer;font-family:inherit;">🗑</button></div></div>
         <div class="reg-detalhe" style="margin-top:5px;">${r.hora} · <strong>${r.qtd}</strong> un<br>
@@ -2439,7 +2440,7 @@ function renderAdm(t){
   else if(t==='quebras'){
     if(!registros.length){el.innerHTML='<div class="empty">Nenhum registro ainda.</div>';return;}
     el.innerHTML = makeSelect('sel-qb-adm', datasReg, df, 'quebras');
-    const filt=registros.filter(r=>r.data===df);
+    const filt=registros.filter(r=>r.data===df&&r.origem!=='quadra');
     el.innerHTML+=!filt.length?'<div class="empty">Sem registros.</div>':
       filt.map(r=>`<div class="reg-item"><div class="reg-header"><span class="reg-produto">${r.produto}</span><span style="font-size:11px;color:var(--text-secondary);">${r.hora}</span></div>
         <div style="font-size:12px;color:var(--text-secondary);margin-bottom:6px;">${r.qtd} unidades</div>
