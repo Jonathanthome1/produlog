@@ -2732,18 +2732,53 @@ function renderContagemHist(){
   const porData={};
   contagens.forEach(function(c){if(!porData[c.data])porData[c.data]=[];porData[c.data].push(c);});
   const datasOrd=sortDatas(Object.keys(porData));
-  el.innerHTML=datasOrd.map(function(data){
+  let html='';
+  datasOrd.forEach(function(data){
     const regs=porData[data];
-    return '<div class="section-divider">'+data+'</div>'+regs.map(function(c){
+    const dayId='cont-day-'+data.replace(/\//g,'-');
+    html+='<div style="margin-bottom:4px;">';
+    html+='<button data-did="'+dayId+'" onclick="toggleContDay(this.dataset.did)" style="width:100%;display:flex;justify-content:space-between;align-items:center;padding:13px 16px;background:var(--bg-primary);border:0.5px solid var(--border);border-left:3px solid #0891b2;border-radius:12px;cursor:pointer;font-family:inherit;text-align:left;">';
+    html+='<div><div style="font-size:14px;font-weight:600;color:#0891b2;">'+data+'</div>';
+    html+='<div style="font-size:12px;color:var(--text-secondary);margin-top:2px;">'+regs.length+' grupo(s) contado(s)</div></div>';
+    html+='<span id="'+dayId+'-arrow" style="color:#0891b2;font-size:18px;transition:transform 0.2s;">▼</span>';
+    html+='</button>';
+    html+='<div id="'+dayId+'" style="display:none;padding-left:8px;">';
+    regs.forEach(function(c){
       const contados=Object.keys(c.itens||{}).length;
-      const total=CONTAGEM_ITENS[c.grupo]?.length||0;
-      return '<div class="reg-item" style="border-left-color:#0891b2;">'+
-        '<div class="reg-header"><span class="reg-produto">'+grupoNome(c.grupo)+'</span><span class="reg-hora">'+c.hora+'</span></div>'+
-        '<div style="font-size:12px;color:var(--text-secondary);margin-top:4px;">'+contados+' de '+total+' itens contados</div>'+
-        '<button onclick="verDetalheContagem(this.dataset.fid)" data-fid="'+c.firestoreId+'" style="margin-top:8px;background:none;border:1px solid #0891b2;color:#0891b2;font-size:12px;padding:5px 12px;border-radius:8px;cursor:pointer;font-family:inherit;">Ver detalhes</button>'+
-        '</div>';
-    }).join('');
-  }).join('');
+      const total=CONTAGEM_ITENS[c.grupo]?CONTAGEM_ITENS[c.grupo].length:0;
+      html+='<div class="reg-item" style="border-left-color:#0891b2;">';
+      html+='<div class="reg-header">';
+      html+='<span class="reg-produto">'+grupoNome(c.grupo)+'</span>';
+      html+='<div style="display:flex;align-items:center;gap:8px;">';
+      html+='<span class="reg-hora">'+c.hora+'</span>';
+      html+='<button class="btn-del-admin" data-fid="'+c.firestoreId+'" onclick="excluirContagem(this.dataset.fid)" style="background:none;border:1px solid #ef9a9a;color:#c62828;font-size:11px;padding:3px 8px;border-radius:6px;cursor:pointer;font-family:inherit;">🗑</button>';
+      html+='</div></div>';
+      html+='<div style="font-size:12px;color:var(--text-secondary);margin-top:4px;">'+contados+' de '+total+' itens contados</div>';
+      html+='<button data-fid="'+c.firestoreId+'" onclick="verDetalheContagem(this.dataset.fid)" style="margin-top:8px;background:none;border:1px solid #0891b2;color:#0891b2;font-size:12px;padding:5px 12px;border-radius:8px;cursor:pointer;font-family:inherit;">Ver detalhes</button>';
+      html+='</div>';
+    });
+    html+='</div></div>';
+  });
+  el.innerHTML=html;
+}
+
+
+function toggleContDay(id){
+  const el=document.getElementById(id);
+  const arrow=document.getElementById(id+'-arrow');
+  if(!el)return;
+  const open=el.style.display==='none';
+  el.style.display=open?'block':'none';
+  if(arrow)arrow.style.transform=open?'rotate(180deg)':'rotate(0deg)';
+}
+
+async function excluirContagem(fid){
+  if(!window.adminMode){alert('Apenas o administrador pode excluir contagens.');return;}
+  if(!confirm('Excluir esta contagem?\nEssa ação não pode ser desfeita.'))return;
+  try{
+    await deleteDoc(doc(db,'contagens',fid));
+    renderContagemHist();
+  }catch(e){alert('Erro ao excluir: '+e.message);}
 }
 
 function verDetalheContagem(fid){
@@ -3339,7 +3374,7 @@ window.selecionarDataEmb=selecionarDataEmb; window.irParaEmbalagem=irParaEmbalag
 window.toggleEmb=toggleEmb; window.toggleAjuste=toggleAjuste; window.confirmarAjuste=confirmarAjuste;
 window.selecionarDataExp=selecionarDataExp; window.irParaExpedicao=irParaExpedicao;
 window.adicionarLiberacao=adicionarLiberacao;
-window.tab=tab; window.toggleConf=toggleConf; window.admFiltrar=admFiltrar; window.toggleEditProd=toggleEditProd; window.salvarEditProd=salvarEditProd; window.toggleEditRecheio=toggleEditRecheio; window.salvarEditRecheio=salvarEditRecheio; window.renderMeusReg=renderMeusReg; window.renderCozReg=renderCozReg; window.abrirPresenca=abrirPresenca; window.salvarEmbManual=salvarEmbManual; window.excluirPresenca=excluirPresenca; window.salvarPresenca=salvarPresenca; window.voltarPresenca=voltarPresenca; window.renderPresencaForm=renderPresencaForm; window.selecionarDataPresenca=selecionarDataPresenca; window.selecionarDataPresencaManual=selecionarDataPresencaManual; window.adicionarColaborador=adicionarColaborador; window.removerColab=removerColab; window.updateColab=updateColab; window.renderPresencaReg=renderPresencaReg; window.abrirContagem=abrirContagem; window.subtrairContagem=subtrairContagem; window.filtrarContagem=filtrarContagem; window.adicionarContagem=adicionarContagem; window.renderContagemHist=renderContagemHist; window.verDetalheContagem=verDetalheContagem; window.renderContagemLanc=renderContagemLanc; window.renderContagemHome=renderContagemHome; window.abrirManut=abrirManut; window.voltarManut=voltarManut; window.salvarNovaMaquina=salvarNovaMaquina; window.excluirMaquina=excluirMaquina; window.abrirMaquina=abrirMaquina; window.iniciarNovaManutencao=iniciarNovaManutencao; window.selecionarDataManut=selecionarDataManut; window.salvarManutencao=salvarManutencao; window.selecionarDataManutBtn=selecionarDataManutBtn; window.abrirPlano=abrirPlano; window.voltarPlano=voltarPlano; window.salvarPlano=salvarPlano; window.adicionarItemPlano=adicionarItemPlano; window.atualizarQtdPlano=atualizarQtdPlano; window.removerItemPlano=removerItemPlano; window.trocarSemanaPlano=trocarSemanaPlano; window.togglePlanoDia=togglePlanoDia; window.toggleFeriado=toggleFeriado; window.importarPlanoPaste=importarPlanoPaste; window.limparPlano=limparPlano; window.renderManutDateGrid=renderManutDateGrid; window.toggleEditParcial=toggleEditParcial; window.salvarEditParcial=salvarEditParcial; window.excluirRegistro=excluirRegistro; window.gerarExcel=gerarExcel; window.renderPresencaForm=renderPresencaForm; window.goToAdmin=goToAdmin; window.sairAdmin=sairAdmin; window.backFromArea=backFromArea;
+window.tab=tab; window.toggleConf=toggleConf; window.admFiltrar=admFiltrar; window.toggleEditProd=toggleEditProd; window.salvarEditProd=salvarEditProd; window.toggleEditRecheio=toggleEditRecheio; window.salvarEditRecheio=salvarEditRecheio; window.renderMeusReg=renderMeusReg; window.renderCozReg=renderCozReg; window.abrirPresenca=abrirPresenca; window.salvarEmbManual=salvarEmbManual; window.excluirPresenca=excluirPresenca; window.salvarPresenca=salvarPresenca; window.voltarPresenca=voltarPresenca; window.renderPresencaForm=renderPresencaForm; window.selecionarDataPresenca=selecionarDataPresenca; window.selecionarDataPresencaManual=selecionarDataPresencaManual; window.adicionarColaborador=adicionarColaborador; window.removerColab=removerColab; window.updateColab=updateColab; window.renderPresencaReg=renderPresencaReg; window.abrirContagem=abrirContagem; window.subtrairContagem=subtrairContagem; window.filtrarContagem=filtrarContagem; window.adicionarContagem=adicionarContagem; window.renderContagemHist=renderContagemHist; window.verDetalheContagem=verDetalheContagem; window.renderContagemLanc=renderContagemLanc; window.renderContagemHome=renderContagemHome; window.toggleContDay=toggleContDay; window.excluirContagem=excluirContagem; window.abrirManut=abrirManut; window.voltarManut=voltarManut; window.salvarNovaMaquina=salvarNovaMaquina; window.excluirMaquina=excluirMaquina; window.abrirMaquina=abrirMaquina; window.iniciarNovaManutencao=iniciarNovaManutencao; window.selecionarDataManut=selecionarDataManut; window.salvarManutencao=salvarManutencao; window.selecionarDataManutBtn=selecionarDataManutBtn; window.abrirPlano=abrirPlano; window.voltarPlano=voltarPlano; window.salvarPlano=salvarPlano; window.adicionarItemPlano=adicionarItemPlano; window.atualizarQtdPlano=atualizarQtdPlano; window.removerItemPlano=removerItemPlano; window.trocarSemanaPlano=trocarSemanaPlano; window.togglePlanoDia=togglePlanoDia; window.toggleFeriado=toggleFeriado; window.importarPlanoPaste=importarPlanoPaste; window.limparPlano=limparPlano; window.renderManutDateGrid=renderManutDateGrid; window.toggleEditParcial=toggleEditParcial; window.salvarEditParcial=salvarEditParcial; window.excluirRegistro=excluirRegistro; window.gerarExcel=gerarExcel; window.renderPresencaForm=renderPresencaForm; window.goToAdmin=goToAdmin; window.sairAdmin=sairAdmin; window.backFromArea=backFromArea;
 </script>
 </body>
 </html>
