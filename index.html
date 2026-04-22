@@ -278,6 +278,11 @@
         <div style="flex:1;"><div class="hb-title">Expedição</div><div class="hb-desc">Liberação para câmara fria</div></div>
         <span style="color:var(--text-secondary);font-size:20px;">›</span>
       </button>
+      <button class="home-btn" style="border-left-color:#92400e;" onclick="abrirPin('quadra')">
+        <div class="hb-icon" style="background:#fef3c7;">🍞</div>
+        <div style="flex:1;"><div class="hb-title">Quadra</div><div class="hb-desc">Produção de pães e kits</div></div>
+        <span style="color:var(--text-secondary);font-size:20px;">›</span>
+      </button>
       <button class="home-btn" style="border-left-color:#059669;" onclick="abrirPin('container')">
         <div class="hb-icon" style="background:#ecfdf5;">🏭</div>
         <div style="flex:1;"><div class="hb-title">Container</div><div class="hb-desc">Estoque de matérias primas</div></div>
@@ -886,6 +891,81 @@
     <div class="content" id="container-saida-content"></div>
   </div>
 
+
+  <!-- QUADRA HOME -->
+  <div class="screen" id="s-quadra-home">
+    <div class="topbar" style="background:#92400e;">
+      <div style="flex:1;"><div class="topbar-title">Quadra 🍞</div><div class="topbar-sub" id="quadra-date"></div></div>
+      <button class="topbar-right" onclick="window.adminMode?goTo('s-adm-hub'):goTo('s-inicio')">Sair</button>
+    </div>
+    <div class="content">
+      <div class="op-stat-card" style="background:#92400e;">
+        <div class="op-stat-num" id="quadra-count">0</div>
+        <div class="op-stat-lbl">lançamentos hoje</div>
+      </div>
+      <div class="section-divider">O que deseja fazer?</div>
+      <button class="home-btn" style="border-left-color:#92400e;" onclick="iniciarNovoLancQuadra()">
+        <div class="hb-icon" style="background:#fef3c7;">📋</div>
+        <div style="flex:1;"><div class="hb-title">Novo Lançamento</div><div class="hb-desc">Registrar produção de kits</div></div>
+        <span style="color:var(--text-secondary);font-size:20px;">›</span>
+      </button>
+      <button class="btn btn-secondary" style="margin-top:8px;" onclick="goTo('s-quadra-reg')">Ver registros</button>
+    </div>
+  </div>
+
+  <!-- QUADRA: PASSO 1 - DATA -->
+  <div class="screen" id="s-quadra-data">
+    <div class="topbar" style="background:#92400e;">
+      <button class="back-btn" onclick="goTo('s-quadra-home')">‹</button>
+      <div><div class="topbar-title">Novo Lançamento</div><div class="topbar-sub">Passo 1 — Data</div></div>
+    </div>
+    <div class="content">
+      <div class="card">
+        <div class="card-label">Data da produção</div>
+        <div class="date-btn-grid" id="quadra-date-grid"></div>
+        <button class="date-manual-toggle" onclick="toggleManual('quadra-manual-wrap')">Outra data →</button>
+        <div id="quadra-manual-wrap" style="display:none;margin-top:8px;">
+          <input type="date" id="quadra-input-data" onchange="selecionarDataQuadra()" />
+        </div>
+      </div>
+      <button id="quadra-btn-prox-data" class="btn btn-disabled">Próximo →</button>
+    </div>
+  </div>
+
+  <!-- QUADRA: PASSO 2 - KIT -->
+  <div class="screen" id="s-quadra-kit">
+    <div class="topbar" style="background:#92400e;">
+      <button class="back-btn" onclick="goTo('s-quadra-data')">‹</button>
+      <div><div class="topbar-title">Novo Lançamento</div><div class="topbar-sub">Passo 2 — Selecionar Kit</div></div>
+    </div>
+    <div class="content">
+      <div id="quadra-data-banner" class="banner banner-info" style="margin-bottom:10px;"></div>
+      <div class="card" style="padding:10px;">
+        <input type="text" id="quadra-kit-srch" placeholder="Buscar kit..." oninput="filtrarKitsQuadra()" style="margin-bottom:8px;" autocomplete="off" />
+        <div id="quadra-kit-list"></div>
+      </div>
+      <button id="quadra-btn-prox-kit" class="btn btn-disabled">Próximo →</button>
+    </div>
+  </div>
+
+  <!-- QUADRA: PASSO 3 - RECEITA + PRODUTOS -->
+  <div class="screen" id="s-quadra-lanc">
+    <div class="topbar" style="background:#92400e;">
+      <button class="back-btn" onclick="goTo('s-quadra-kit')">‹</button>
+      <div><div class="topbar-title" id="quadra-lanc-title">Lançamento</div><div class="topbar-sub" id="quadra-lanc-sub"></div></div>
+    </div>
+    <div class="content" id="quadra-lanc-content"></div>
+  </div>
+
+  <!-- QUADRA: REGISTROS -->
+  <div class="screen" id="s-quadra-reg">
+    <div class="topbar" style="background:#92400e;">
+      <button class="back-btn" onclick="goTo('s-quadra-home')">‹</button>
+      <div><div class="topbar-title">Registros Quadra</div><div class="topbar-sub" id="quadra-reg-sub"></div></div>
+    </div>
+    <div class="content" id="quadra-reg-content"></div>
+  </div>
+
   <!-- EXPEDIÇÃO: SELECIONAR DATA -->
   <div class="screen" id="s-exp-sel-data">
     <div class="topbar laranja">
@@ -937,6 +1017,11 @@
       <button class="home-btn laranja" onclick="goToAdmin('s-exp-sel-data')">
         <div class="hb-icon hb-laranja">🚚</div>
         <div style="flex:1;"><div class="hb-title">Expedição</div><div class="hb-desc">Liberação para câmara fria</div></div>
+        <span style="color:var(--text-secondary);font-size:20px;">›</span>
+      </button>
+      <button class="home-btn" style="border-left-color:#92400e;" onclick="goToAdmin('s-quadra-home')">
+        <div class="hb-icon" style="background:#fef3c7;">🍞</div>
+        <div style="flex:1;"><div class="hb-title">Quadra</div><div class="hb-desc">Produção de pães e kits</div></div>
         <span style="color:var(--text-secondary);font-size:20px;">›</span>
       </button>
       <button class="home-btn" style="border-left-color:#059669;" onclick="goToAdmin('s-container-home')">
@@ -1081,10 +1166,13 @@ const db = getFirestore(app);
 // PINs por setor
 const CONTAGEM_ITENS = {"Materia Prima": [{"cod": "14001", "nome": "AMIDO DE MILHO SACO 25KG"}, {"cod": "14003", "nome": "AÇUCAR CONCENTRADO"}, {"cod": "14004", "nome": "AÇUCAR CRISTAL"}, {"cod": "14005", "nome": "AÇUCAR REFINADO"}, {"cod": "14006", "nome": "AIPIM"}, {"cod": "14007", "nome": "ALFACE"}, {"cod": "14008", "nome": "ALHO"}, {"cod": "14009", "nome": "AMACIANTE DE CARNE"}, {"cod": "14010", "nome": "ARROZ"}, {"cod": "14011", "nome": "BATATA"}, {"cod": "14012", "nome": "BATATA DOCE"}, {"cod": "14013", "nome": "BETERRABA"}, {"cod": "14014", "nome": "BROCOLIS"}, {"cod": "14015", "nome": "CACAU EM PÓ - BLACK"}, {"cod": "14016", "nome": "CACHAÇA"}, {"cod": "14017", "nome": "CAFÉ"}, {"cod": "14018", "nome": "CALDO DE CARNE"}, {"cod": "14019", "nome": "CALDO DE GALINHA"}, {"cod": "14020", "nome": "CALDO DE LEGUMES"}, {"cod": "14021", "nome": "CANELA"}, {"cod": "14022", "nome": "CATCHUP"}, {"cod": "14023", "nome": "CEBOLA"}, {"cod": "14024", "nome": "CENOURA"}, {"cod": "14025", "nome": "CHEDDAR"}, {"cod": "14026", "nome": "CHOCOLATE AO LEITE EM BARRA 24GR"}, {"cod": "14028", "nome": "CHUCHU"}, {"cod": "14029", "nome": "CORANTE AMARELO GEMA"}, {"cod": "14030", "nome": "CORANTE CARAMELO"}, {"cod": "14031", "nome": "COUVE FLOR"}, {"cod": "14032", "nome": "COUVE MANTEIGA"}, {"cod": "14033", "nome": "CARNE ACEM"}, {"cod": "14034", "nome": "COXA SOBRECOXA"}, {"cod": "14035", "nome": "DOCE DE LEITE"}, {"cod": "14038", "nome": "ERVA DOCE"}, {"cod": "14039", "nome": "ESPINAFRE"}, {"cod": "14040", "nome": "ESSENCIA DE BAUNILHA"}, {"cod": "14041", "nome": "ESSENCIA DE QUEIJO"}, {"cod": "14042", "nome": "ESSENCIA MANTEIGA"}, {"cod": "14043", "nome": "FARINHA BELONI"}, {"cod": "14045", "nome": "FARINHA DE MILHO MÉDIA"}, {"cod": "14046", "nome": "FARINHA DE ROSCA"}, {"cod": "14047", "nome": "FARINHA DE TRIGO SUPER"}, {"cod": "14048", "nome": "FARINHA FIBRA DE TRIGO"}, {"cod": "14049", "nome": "FARINHA INTEGRAL"}, {"cod": "14050", "nome": "FARINHA MANDIOCA"}, {"cod": "14051", "nome": "FARINHA MIX PRIFAL"}, {"cod": "14052", "nome": "FARINHA M DIAS"}, {"cod": "14053", "nome": "FEIJÃO PRETO"}, {"cod": "14054", "nome": "FERMENTO DOCE"}, {"cod": "14055", "nome": "FERMENTO EM PÓ"}, {"cod": "14056", "nome": "FERMENTO FLASHMANN"}, {"cod": "14057", "nome": "FERMENTO ITAIQUARA"}, {"cod": "14058", "nome": "FILÉ PEITO DE FRANGO"}, {"cod": "14059", "nome": "FLOCOS DE BATATA"}, {"cod": "14060", "nome": "FRUTAS CRISTALIZADAS"}, {"cod": "14061", "nome": "GOIABADA"}, {"cod": "14062", "nome": "GOTAS PINGO CHOCOLATE"}, {"cod": "14063", "nome": "GRANOLA 7 CEREAIS"}, {"cod": "14064", "nome": "HORTELA"}, {"cod": "14065", "nome": "LEITE"}, {"cod": "14066", "nome": "LENTILHA"}, {"cod": "14067", "nome": "LINGUIÇA CALABRESA MÉDIA"}, {"cod": "14068", "nome": "MARGARINA COAMO"}, {"cod": "14069", "nome": "MARGARINA FOLHADA"}, {"cod": "14070", "nome": "MILHO"}, {"cod": "14071", "nome": "MISTURA AUSTRALIANO"}, {"cod": "14073", "nome": "MISTURA DE PÃO DE QUEIJO RECHEADO 6520"}, {"cod": "14074", "nome": "MISTURA PARA PÃO DE QUEIJO NORMAL"}, {"cod": "14075", "nome": "MISTURA PRA CUCA ALEMA"}, {"cod": "14076", "nome": "MOLHO INGLES"}, {"cod": "14077", "nome": "MOLHO REFOGADO"}, {"cod": "14078", "nome": "MOLHO SHOYO"}, {"cod": "14079", "nome": "MORANGA CABUTIA"}, {"cod": "14080", "nome": "MOSTARDA"}, {"cod": "14081", "nome": "NOZ MOSCADA"}, {"cod": "14082", "nome": "OLEO DE SOJA"}, {"cod": "14083", "nome": "OLEO EMULSIFICANTE"}, {"cod": "14084", "nome": "OREGANO"}, {"cod": "14085", "nome": "OVO EM PÓ"}, {"cod": "14086", "nome": "OVO IN NATURA"}, {"cod": "14088", "nome": "PAPRICA DOCE"}, {"cod": "14089", "nome": "PEPINO"}, {"cod": "14090", "nome": "PIMENTA MOÍDA BRANCA"}, {"cod": "14091", "nome": "PIMENTAO"}, {"cod": "14092", "nome": "POLVILHO AZEDO"}, {"cod": "14093", "nome": "PRESUNTO"}, {"cod": "14094", "nome": "PROTEINA DE SOJA SABOR CEBOLA E SALSA"}, {"cod": "14095", "nome": "PROTEINA DE SOJA SABOR PICANHA"}, {"cod": "14096", "nome": "PROTEINA DE SOJA TEXTURIZADA CARAMELO"}, {"cod": "14097", "nome": "PROTEINA DE SOJA TEXTURIZADA NATURAL"}, {"cod": "14098", "nome": "QUEIJO MINAS (MEIA CURA)"}, {"cod": "14099", "nome": "QUEIJO MUSSARELA"}, {"cod": "14100", "nome": "QUEIJO TROPICAL (PARMESÃO)"}, {"cod": "14102", "nome": "RABANETE"}, {"cod": "14103", "nome": "REFORÇADOR(MELHORADOR)"}, {"cod": "14104", "nome": "REPOLHO"}, {"cod": "14105", "nome": "REQUEIJÃO (VALE DO PARDO)"}, {"cod": "14107", "nome": "RETARDADOR"}, {"cod": "14108", "nome": "RUCULA"}, {"cod": "14109", "nome": "SAL"}, {"cod": "14110", "nome": "SAL GROSSO"}, {"cod": "14111", "nome": "SALSICHA EXCELSIOR"}, {"cod": "14112", "nome": "SEMENTE DE LINHAÇA"}, {"cod": "14113", "nome": "SOBREPALETA SUINA"}, {"cod": "14114", "nome": "SORO DE LEITE EM PO"}, {"cod": "14115", "nome": "TEMPERO VERDE"}, {"cod": "14116", "nome": "TOMATE"}, {"cod": "14117", "nome": "TRIGO PARA KIBE"}, {"cod": "14118", "nome": "VAGEM"}, {"cod": "14119", "nome": "VINAGRE ALCOOL 750 ML"}, {"cod": "14122", "nome": "MASSA ESPAGUETE"}, {"cod": "14124", "nome": "SORBATO DE POTASSIO"}, {"cod": "14125", "nome": "CARNE COXAO"}, {"cod": "14132", "nome": "OVO EM GALAO"}, {"cod": "14133", "nome": "PROTEINA DE SOJA TEXTURIZADA NATURAL (EM FLOCOS)"}, {"cod": "14134", "nome": "PROTEINA DE SOJA TEXTURIZADA NATURAL RED BORDO"}, {"cod": "14137", "nome": "FARINHA ESTRELA"}, {"cod": "14138", "nome": "FARINHA PADEIRO"}, {"cod": "14139", "nome": "LINGUIÇA CALABRESA FINA"}, {"cod": "14140", "nome": "FARINHA ANACONDA"}, {"cod": "14141", "nome": "MOLHO BARBECUE"}, {"cod": "14142", "nome": "LIMAO"}, {"cod": "14143", "nome": "MAÇA"}, {"cod": "14144", "nome": "PIMENTA VERMELHA"}, {"cod": "14145", "nome": "MANJERONA"}, {"cod": "14146", "nome": "CHOCOLATE AO LEITE EM BARRA 6GR"}, {"cod": "14147", "nome": "MARGARINA VIGOR (AMELIA)"}, {"cod": "14148", "nome": "SALSICHA NOBRE/PENA BRANCA"}, {"cod": "14149", "nome": "MARGARINA CREMOSA 60% (REFEITÓRIO)"}, {"cod": "14150", "nome": "OLEO OVAM25 (OLEO ALIMENTICIO)"}, {"cod": "14151", "nome": "PIMENTA DEDO DE MOÇA"}, {"cod": "14152", "nome": "PIMENTA MOÍDA PRETA"}, {"cod": "14153", "nome": "REQUEIJÃO (AMARILIS)"}, {"cod": "1505", "nome": "FARINHA DE MILHO FINA"}, {"cod": "2233", "nome": "EMULSIFICANTE - INATIVO"}, {"cod": "2555", "nome": "MELHORADOR BIOPAN - INATIVO"}, {"cod": "3968", "nome": "AMIDO ESPECIAL PODIUM (AMIDO PARA RECHEIO)"}, {"cod": "14120", "nome": "COLORAU"}, {"cod": "14121", "nome": "CREME DE LEITE"}], "Produto Acabado - Pão": [{"cod": "122", "nome": "CUCA FRUTAS 320GR"}, {"cod": "130", "nome": "CUCA ALEMÃ 320GR"}, {"cod": "132", "nome": "CUECA VIRADA 40GR"}, {"cod": "145", "nome": "CUCA CHOCOLATE 320GR"}, {"cod": "154", "nome": "CUCA COLONIAL 400GR"}, {"cod": "155", "nome": "CUECA VIRADA GRANDE 44GR"}, {"cod": "3", "nome": "PÃO FIBRAS 75GR"}, {"cod": "4", "nome": "PÃO MASSA DOCE 75GR"}, {"cod": "6", "nome": "PÃO DE MILHO - BOLA 75GR"}, {"cod": "101", "nome": "PÃO MASSA FORNEADO"}, {"cod": "105", "nome": "PÃO FOLHADO 88GR"}, {"cod": "107", "nome": "PÃO FIBRAS -  PRETO 75GR"}, {"cod": "108", "nome": "PÃO FIBRAS - BOLA 75GR"}, {"cod": "111", "nome": "PÃO MASSA DOCE - CÃO 135GR"}, {"cod": "112", "nome": "PÃO DE XIS 120GR"}, {"cod": "114", "nome": "PÃO MASSA DOCE ANIVERSARIO 45GR"}, {"cod": "115", "nome": "PÃO VOVÓ 88GR"}, {"cod": "117", "nome": "PÃO GAJETA 88GR"}, {"cod": "118", "nome": "PÃO BAGUETE COM FIBRAS 155GR"}, {"cod": "123", "nome": "PÃO TRANÇA 270GR"}, {"cod": "124", "nome": "PÃO MASSA DOCE HAMBURGUER 90GR"}, {"cod": "126", "nome": "PÃO DOCE BRIOCHE 60GR"}, {"cod": "127", "nome": "PÃO DE SONHO MINI 44GR"}, {"cod": "128", "nome": "PÃO DE SONHO 70GR"}, {"cod": "129", "nome": "PÃO CARACOL 88GR"}, {"cod": "134", "nome": "PÃO RAMINHO 37GR"}, {"cod": "138", "nome": "PÃO DE BATATA 75GR"}, {"cod": "139", "nome": "PÃO DE CENOURA 75GR"}, {"cod": "14", "nome": "PÃO DE MILHO - SALGADO (CACETINHO) 75GR"}, {"cod": "140", "nome": "PÃO DE LEITE 500GR"}, {"cod": "142", "nome": "PÃO DE MILHO SALGADO 500GR"}, {"cod": "143", "nome": "PÃO FIBRAS 500GR"}, {"cod": "144", "nome": "PÃO 7 GRÃOS 500GR"}, {"cod": "148", "nome": "PÃO AIPIM 500GR"}, {"cod": "150", "nome": "PÃO CASEIRO 500GR"}, {"cod": "153", "nome": "PÃO MILHO DOCE 500GR"}, {"cod": "159", "nome": "PÃO DONUT 44GR"}, {"cod": "201", "nome": "ROSCA DE POLVILHO 250GR"}, {"cod": "21", "nome": "PÃO BRIOCHE 500GR"}, {"cod": "25", "nome": "PÃO CENOURA 500GR"}, {"cod": "26", "nome": "PÃO DE BATATA 500GR"}, {"cod": "266", "nome": "ROLO MASSA DE PAO-SEMI FOLHADA"}, {"cod": "186", "nome": "PÃO DE QUEIJO RECH. FRANGO 58GR"}, {"cod": "187", "nome": "PÃO DE QUEIJO RECH. REQUEIJÃO 58GR"}, {"cod": "188", "nome": "PÃO DE QUEIJO RECH. GOIABADA  58GR"}, {"cod": "197", "nome": "PÃO DE QUEIJO 90GR"}, {"cod": "198", "nome": "PÃO DE QUEIJO 65GR 1KG GONDOLA"}, {"cod": "199", "nome": "PÃO DE QUEIJO 25GR"}, {"cod": "200", "nome": "PÃO DE QUEIJO 65GR"}, {"cod": "403", "nome": "PÃO DE QUEIJO RECH. GOIABADA 400GR (RECEITARIA)"}, {"cod": "5", "nome": "PÃO FRANCES SOVADO 88GR"}, {"cod": "7", "nome": "PÃO FRANCES DE QUARTO (250)"}, {"cod": "106", "nome": "PÃO FRANCES MINI 6/8 54GR"}, {"cod": "110", "nome": "PÃO FRANCES BAGUETE 155GR"}, {"cod": "119", "nome": "PÃO FRANCES PREMIUM 75GR"}, {"cod": "12", "nome": "PÃO FRANCES BOLA 75GR"}, {"cod": "120", "nome": "PÃO FRANCES PREMIUM 10/12"}, {"cod": "147", "nome": "PÃO FRANCES 500GR"}, {"cod": "160", "nome": "PÃO FRANCES PREMIUM PLUS"}, {"cod": "31", "nome": "PAO FRANCES PREMIUM 6,6KG CARDOSO EMB. PRETA"}, {"cod": "32", "nome": "PÃO FRANCES BOLA CARDOSO 6,6KG"}], "Produto Acabado - Salgado": [{"cod": "259", "nome": "PALMIER - ORELHA DE MACACO"}, {"cod": "261", "nome": "MASSA FOLHADA"}, {"cod": "267", "nome": "ROLO MASSA FOLHADA"}, {"cod": "247", "nome": "POLENTINHA DE QUEIJO"}, {"cod": "248", "nome": "MINI TRAVISSEIRINHO CALABRESA"}, {"cod": "249", "nome": "MINI EMPADA PRESUNTO E QUEIJO"}, {"cod": "250", "nome": "MINI COXINHA DE FRANGO"}, {"cod": "251", "nome": "MINI CROQUETE CARNE"}, {"cod": "252", "nome": "MINI KIBE"}, {"cod": "253", "nome": "MINI TRAVISSEIRINHO  PRESUNTO/QUEIJO"}, {"cod": "254", "nome": "MINI BOLINHA DE QUEIJO"}, {"cod": "255", "nome": "MINI EMPADA FRANGO FOLHADA"}, {"cod": "256", "nome": "MINI CACHORRO FOLHADO"}, {"cod": "257", "nome": "MINI CHURROS DOCE DE LEITE"}, {"cod": "260", "nome": "MINI RISOLES FRANGO"}, {"cod": "262", "nome": "MINI CROQUETE CARNE C/ REQUEIJÃO"}, {"cod": "264", "nome": "MINI EMPANADINHO DE SALSICHA FRITO"}, {"cod": "265", "nome": "MINI CROQUETE DE FRANGO C/ REQUEIJÃO"}, {"cod": "268", "nome": "MINI RISOLES PRESUNTO"}, {"cod": "269", "nome": "BOLINHA DE AIPIM C/ CALABRESA"}, {"cod": "270", "nome": "MINI POLENTINHA DE CALABRESA"}, {"cod": "275", "nome": "MINI RISOLES CARNE"}, {"cod": "278", "nome": "MINI FOLHADO FRANGO"}, {"cod": "279", "nome": "MINI FOLHADO PRESUNTO QUEIJO"}, {"cod": "280", "nome": "MINI FOLHADO GOIABADA"}, {"cod": "281", "nome": "MINI PASTEL DE CARNE"}, {"cod": "282", "nome": "DOGUINHO"}, {"cod": "288", "nome": "CALABRINHO"}, {"cod": "289", "nome": "MINI PASTEL DE QUEIJO"}, {"cod": "290", "nome": "MINI PASTEL DE FRANGO"}, {"cod": "850", "nome": "(C&F) MINI COXINHA DE FRANGO"}, {"cod": "854", "nome": "(C&F) MINI BOLINHA DE QUEIJO"}, {"cod": "857", "nome": "(C&F) MINI CHURROS DOCE DE LEITE"}, {"cod": "860", "nome": "(C&F) MINI RISOLES FRANGO"}, {"cod": "862", "nome": "(C&F) MINI CROQUETE CARNE C/ REQUEIJÃO"}, {"cod": "864", "nome": "(C&F) MINI EMPANADINHO DE SALSICHA"}, {"cod": "865", "nome": "(C&F) MINI CROQUETE DE FRANGO C/ REQUEIJÃO"}, {"cod": "870", "nome": "(C&F) MINI POLENTINHA DE CALABRESA"}, {"cod": "875", "nome": "(C&F) MINI RISOLES CARNE"}, {"cod": "1501", "nome": "KIT AMOSTRA EMPANADA"}, {"cod": "203", "nome": "FOLHADO CARNE E CHEDDAR (10 UN C/ 150GR CX C/ 1,50KG)"}, {"cod": "204", "nome": "FOLHADO CARNE REQUEIJÃO (10 UN C/ 150GR CX C/ 1,50KG)"}, {"cod": "205", "nome": "FOLHADO CALABRESA REQUEIJAO (10UN C/ 150GR CX C/ 1,50KG)"}, {"cod": "206", "nome": "FOLHADO FRANGO REQUEIJÃO (10 UN C/ 150GR CX C/ 1,50KG)"}, {"cod": "207", "nome": "FOLHADO FRANGO CHEDDAR (10 UN C/ 150GR CX C/ 1,50KG)"}, {"cod": "208", "nome": "FOLHADO FRANGO (10 UN C/ 150GR CX C/ 1,50KG)"}, {"cod": "209", "nome": "FOLHADO CARNE (10 UN C/ 150GR CX C/ 1,50KG)"}, {"cod": "210", "nome": "FOLHADO CALABRESA (10 UN C/ 150GR CX C/ 1,50KG)"}, {"cod": "211", "nome": "FOLHADO PRESUNTO QUEIJO (10 UN C/ 150GR CX C/ 1,50KG)"}, {"cod": "212", "nome": "EMPADA FRANGO (10 UN C/ 150GR CX C/ 1,50KG)"}, {"cod": "213", "nome": "EMPADA CARNE (10 UN C/ 150GR CX C/ 1,50KG)"}, {"cod": "214", "nome": "EMPADA FRANGO REQUEIJÃO (10 UN C/ 150GR CX C/ 1,50KG)"}, {"cod": "215", "nome": "CACHORRO FOLHADO (10 UN C/ 150GR CX C/ 1,50KG)"}, {"cod": "216", "nome": "FOLHADO CHOCOLATE (10 UN C/ 125GR CX C/ 1,25KG)"}, {"cod": "226", "nome": "CACHORRO ALEMÃO (10 UN C/ 150GR CX C/ 1,50KG)"}, {"cod": "227", "nome": "FOLHADO DE STROGONOFF (10 UN C/ 150GR CX C/ 1,50KG)"}, {"cod": "228", "nome": "COXINHA DE FRANGO (CX C/ 10 UNID DE 170GR)"}, {"cod": "229", "nome": "RISOLES DE FRANGO GRANDE (150GR UN/PCT COM 1,5KG)"}, {"cod": "230", "nome": "RISOLES DE CARNE GRANDE  (150GR UN/PCT COM 1,5KG)"}, {"cod": "231", "nome": "SALGADOS CROQUETE (CX C/ 10UNID DE 110GR)"}, {"cod": "233", "nome": "CROISSANT CHOCOLATE (10 UN C/ 125GR CX C/ 1,25KG)"}, {"cod": "235", "nome": "CROISSANT (10 UN C/ 125GR CX C/ 1,25KG)"}, {"cod": "237", "nome": "PASTEL CASEIRO SABOR CARNE (06 UN C/ 170GR PCT C/ 1,02KG)"}, {"cod": "240", "nome": "EMPADA CARNE REQUEIJÃO (10 UN C/ 150GR CX C/ 1,5KG)"}, {"cod": "241", "nome": "EMPANADO DE SALSICHA FRITO (10 UN C/ 150GR CX C/ 1,50KG)"}, {"cod": "242", "nome": "RISOLES DE PRESUNTO GRANDE (150GR UN/PCT COM 1,5KG)"}, {"cod": "244", "nome": "EMPADA PRESUNTO QUEIJO (10 UN C/ 150GR CX C/ 1,5KG)"}, {"cod": "292", "nome": "MINI CROISSANT PREMIUM FRANGO"}, {"cod": "293", "nome": "MINI CROISSANT PREMIUM PRESUNTO"}, {"cod": "294", "nome": "MINI CROISSANT PREMIUM GOIABADA"}, {"cod": "295", "nome": "MINI CROISSANT PREMIUM CHOCOLATE"}, {"cod": "300", "nome": "MINI CROISSANT FRANGO"}, {"cod": "301", "nome": "MINI CROISSANT PRESUNTO"}, {"cod": "302", "nome": "MINI CROISSANT GOIABADA"}, {"cod": "303", "nome": "MINI CROISSANT CHOCOLATE PRETO"}, {"cod": "304", "nome": "MINI CROISSANT COCO"}, {"cod": "305", "nome": "MINI STRUDEL MAÇÃ/CANELA"}, {"cod": "306", "nome": "MINI CROISSANT CHOCOLATE BRANCO"}, {"cod": "350", "nome": "PASTEL CASEIRO SABOR QUEIJO (06 UN C/ 170GR PCT C/ 1,02KG)"}, {"cod": "351", "nome": "PASTEL CASEIRO SABOR CALABRESA (06 UN C/ 170GR PCT C/ 1,02KG)"}, {"cod": "353", "nome": "PASTEL CASEIRO SABOR FRANGO (06 UN C/ 170GR PCT C/ 1,02KG)"}, {"cod": "357", "nome": "EMPANADA FRANGO REQUEIJÃO (10 UN C/ 180GR CX C/ 1,80KG)"}, {"cod": "358", "nome": "EMPANADA CALABRESA (10 UN C/ 180GR CX C/ 1,80KG)"}, {"cod": "359", "nome": "EMPANADA QUEIJO (10 UN C/ 180GR CX C/ 1,80KG)"}, {"cod": "360", "nome": "EMPANADA COSTELINHA C/ BARBECUE (10 UN C/ 180GR CX C/ 1,80KG)"}, {"cod": "361", "nome": "EMPANADA CARNE (10 UN C/ 180GR CX C/ 1,80KG)"}, {"cod": "362", "nome": "EMPANADA BROCOLIS (10 UN C/ 180GR CX C/ 1,80KG)"}, {"cod": "364", "nome": "CROISSANT FRANGO (10 UN C/ 140GR CX C/ 1,4KG)"}, {"cod": "365", "nome": "CROISSANT PRESUNTO (10 UN C/ 140GR CX C/ 1,4KG)"}, {"cod": "366", "nome": "CROISSANT GOIABADA (10 UN C/ 140GR CX C/ 1,4KG)"}, {"cod": "500", "nome": "BAURU FOLHADO (10 UN C/ 150GR CX C/ 1,50KG)"}, {"cod": "501", "nome": "FAGOTTO (CALABRINHO CALABRESA CHEDDAR) (10 UN C/ 150GR CX C/ 1,50KG)"}, {"cod": "502", "nome": "HAMBURGÃO CARNE CHEDDAR (10 UN C/ 180GR CX C/ 1,80KG)"}, {"cod": "803", "nome": "(C&F) FOLHADO CARNE E CHEDDAR"}, {"cod": "804", "nome": "(C&F) FOLHADO CARNE REQUEIJÃO"}, {"cod": "806", "nome": "(C&F) FOLHADO FRANGO REQUEIJÃO"}, {"cod": "807", "nome": "(C&F) FOLHADO FRANGO CHEDDAR"}, {"cod": "814", "nome": "(C&F) EMPADA FRANGO REQUEIJÃO"}, {"cod": "815", "nome": "(C&F) CACHORRO FOLHADO"}, {"cod": "826", "nome": "(C&F) CACHORRO ALEMÃO"}, {"cod": "829", "nome": "(C&F) RISOLES DE FRANGO GRANDE"}, {"cod": "830", "nome": "(C&F) RISOLES DE CARNE GRANDE"}, {"cod": "837", "nome": "(C&F) PASTEL CASEIRO SABOR CARNE"}, {"cod": "841", "nome": "(C&F) EMPANADO DE SALSICHA FRITO"}, {"cod": "844", "nome": "(C&F) EMPADA PRESUNTO QUEIJO"}, {"cod": "953", "nome": "(C&F) PASTEL CASEIRO SABOR FRANGO"}, {"cod": "957", "nome": "(C&F) EMPANADA FRANGO CREMOSO"}, {"cod": "960", "nome": "(C&F) EMPANADA COSTELINHA C/ BARBECUE"}], "Plastico": [{"cod": "14500", "nome": "BOBINA 1KG PICOTADA C/ 12 UNID"}, {"cod": "14501", "nome": "CAIXA DE ALUMINIO D7 KIT"}, {"cod": "14503", "nome": "CAIXA DE PAPELÃO Nº 3 21X13,5X20"}, {"cod": "14505", "nome": "DILUENTE V730D 750ML"}, {"cod": "14506", "nome": "ETIQUETA 100 X 80 AMARELA C/SERRILHA ("}, {"cod": "14507", "nome": "ETIQUETA 100 X 80 AZUL CLARO C/SERRILH"}, {"cod": "14508", "nome": "ETIQUETA 100 X 80 BRANCA C/SERRILHA (B"}, {"cod": "14509", "nome": "ETIQUETA 100 X 80 LARANJA C/SERRILHA ("}, {"cod": "14510", "nome": "ETIQUETA 100 X 80 VERMELHA C/SERRILHA"}, {"cod": "14511", "nome": "ETIQUETA 50 X 25 2 COL BRANCA"}, {"cod": "14513", "nome": "FILME STRETCH"}, {"cod": "14514", "nome": "FITA PP"}, {"cod": "14515", "nome": "PLASTICO FILME 10/12 AZUL 8KG"}, {"cod": "14516", "nome": "PLASTICO FILME 10/12 PREMIUM CINZA"}, {"cod": "14517", "nome": "PLASTICO FILME 10/12 VERMELHO"}, {"cod": "14518", "nome": "PLASTICO FILME 6/8 AZUL"}, {"cod": "14519", "nome": "PLASTICO FILME 6/8 PREMIUM ROXO"}, {"cod": "14520", "nome": "PLASTICO FILME 6/8 VERMELHO"}, {"cod": "14521", "nome": "PLASTICO FILME CARDOSO 6,6KG AZUL"}, {"cod": "14522", "nome": "PLASTICO FILME CARDOSO 6,6KG PREMIUM"}, {"cod": "14523", "nome": "PLASTICO FILME PANITT 8KG"}, {"cod": "14524", "nome": "PLASTICO FILME 6/8 BOLA 8KG LARANJA 73 X 62"}, {"cod": "14525", "nome": "RIBBON 110 X 74 RESINA Z"}, {"cod": "14528", "nome": "SACO AVULSO 6/8 AZUL 3,2KG"}, {"cod": "14529", "nome": "SACO AVULSO 6/8 VERMELHO 8KG"}, {"cod": "14530", "nome": "SACO AVULSO BOLINHA DE QUEIJO"}, {"cod": "14531", "nome": "SACO AVULSO CHURROS DOCE DE LEITE COM CHOCOLATE"}, {"cod": "14532", "nome": "SACO AVULSO CHURROS DOCE LEITE"}, {"cod": "14534", "nome": "SACO AVULSO CROQUETE"}, {"cod": "14535", "nome": "DESATIVADO - SACO AVULSO CROQUETE COM REQUEIJÃO"}, {"cod": "14537", "nome": "SACO AVULSO KIBE"}, {"cod": "14540", "nome": "SACO AVULSO MINI CACHORRO"}, {"cod": "14542", "nome": "SACO AVULSO PALMIER"}, {"cod": "14545", "nome": "SACO AVULSO PÃO FRANCÊS AZUL 3,5 DIVERSOS"}, {"cod": "14548", "nome": "SACO CAPA FARDO"}, {"cod": "14551", "nome": "SACO PLÁSTICO TRANSPARENTE 21X30X008"}, {"cod": "14552", "nome": "SACO PLÁSTICO TRANSPARENTE 32X46X008"}, {"cod": "14554", "nome": "SACO TRANSPARENTE PEBD + PET 31X31"}, {"cod": "14556", "nome": "CAIXA DE PAPELÃO Nº6 240 X 160 X 200"}, {"cod": "14557", "nome": "BANDEJA NP-15 BAIXA QUATRO LUGARES C/100"}, {"cod": "14558", "nome": "ROTULO 100 X 243 RECEITARIA"}, {"cod": "14560", "nome": "FILME SEPARADOR PASTEL 59CM"}, {"cod": "14565", "nome": "TAMPA CAIXA DE ALUMINIO D7 (100)"}, {"cod": "14566", "nome": "PLASTICO FILME MASSINHA MARROM"}, {"cod": "14567", "nome": "PLASTICO FILME INTEGRAL AZUL"}, {"cod": "14568", "nome": "ETIQUETA 50 X 50 COL BRANCA"}, {"cod": "14569", "nome": "PLASTICO FILME PÃO QUEIJO 65GR VERDE"}, {"cod": "14570", "nome": "PLASTICO FILME PÃO QUEIJO 90GR LILAS"}, {"cod": "14571", "nome": "SACO TRANSPARENTE 31X31 TARJA+LISTRA AZUL"}, {"cod": "14572", "nome": "SACO TRANSPARENTE 31X31 TARJA+LISTRA AMARELA"}, {"cod": "14573", "nome": "SACO TRANSPARENTE 31X31 TARJA+LISTRA LARANJA"}, {"cod": "14574", "nome": "SACO PLÁSTICO TRANSPARENTE 21X30X008 TARJA+LISTRA AZUL"}, {"cod": "14575", "nome": "SACO PLÁSTICO TRANSPARENTE 21X30X008 TARJA+LISTRA AMARELO"}, {"cod": "14576", "nome": "SACO PLÁSTICO TRANSPARENTE 21X30X008 TARJA+LISTRA LARANJA"}], "Kits Confeitaria": [{"cod": "15026", "nome": "KIT MASSA FOLHADA"}, {"cod": "15039", "nome": "KIT MASSA UNIVERSAL NORMAL"}, {"cod": "15040", "nome": "KIT PÃO DE QUEIJO"}, {"cod": "15041", "nome": "KIT PÃO DE QUEIJO RECHEADO"}, {"cod": "15042", "nome": "KIT RECHEIO CROQUETE FRANGO"}, {"cod": "15043", "nome": "KIT MASSA CHURROS"}, {"cod": "15044", "nome": "KIT MASSA UNIVERSAL BOLINHA AIPIM"}, {"cod": "15045", "nome": "KIT MASSA CROISSANT"}, {"cod": "15047", "nome": "KIT MASSA PASTEL (PASTEL GRANDE)"}, {"cod": "15048", "nome": "KIT MASSA PASTEL LISA (PASTEL PEQUENO)"}, {"cod": "15049", "nome": "KIT MASSA POLENTINHA"}, {"cod": "15050", "nome": "KIT RECHEIO DE CROQUETE CARNE"}, {"cod": "15051", "nome": "KIT RECHEIO DE KIBE"}, {"cod": "15052", "nome": "KIT MASSA DOG"}, {"cod": "15053", "nome": "KIT RECHEIO DE FRANGO"}, {"cod": "15054", "nome": "KIT RECHEIO DE CARNE"}, {"cod": "15055", "nome": "KIT RECHEIO STROGONOFF"}, {"cod": "15056", "nome": "KIT RECHEIO BROCOLIS EMPANADA"}, {"cod": "15058", "nome": "KIT RECHEIO CARNE PASTEL"}, {"cod": "15059", "nome": "KIT RECHEIO PRESUNTO QUEIJO REQUEIJAO"}, {"cod": "15060", "nome": "KIT RECHEIO DE CALABRESA QUEIJO REQUEIJAO"}, {"cod": "15061", "nome": "KIT RECHEIO CALABRESA COM REQUEIJÃO"}, {"cod": "15062", "nome": "KIT RECHEIO PRESUNTO E REQUEIJÃO"}, {"cod": "15064", "nome": "KIT RECHEIO MINI PASTEL CARNE"}, {"cod": "15065", "nome": "KIT PÃO FOLHADO - CONFEITARIA"}, {"cod": "15071", "nome": "KIT RECHEIO PRESUNTO QUEIJO PASTEL CASEIRO"}, {"cod": "15072", "nome": "KIT RECHEIO QUEIJOS PASTEL CASEIRO"}, {"cod": "15073", "nome": "KIT RECHEIO CALABRESA PASTEL CASEIRO"}, {"cod": "15074", "nome": "KIT MASSA EMPANADA"}, {"cod": "15075", "nome": "KIT MASSA RISOLES"}, {"cod": "15076", "nome": "KIT RECHEIO DE CARNE RISOLES"}, {"cod": "15077", "nome": "KIT RECHEIO QUEIJOS MINI PASTEL"}, {"cod": "15078", "nome": "KIT RECHEIO COSTELA BARBECUE"}, {"cod": "15080", "nome": "KIT MASSA SONHO"}, {"cod": "15081", "nome": "KIT RECHEIO FRANGO CROISSANT"}, {"cod": "15082", "nome": "KIT RECHEIO CARNE EMPANADA"}, {"cod": "15083", "nome": "KIT RECHEIO QUEIJO EMPANADA"}, {"cod": "15084", "nome": "KIT RECHEIO CALABRESA EMPANADA"}, {"cod": "15085", "nome": "KIT MASSA FOLHADA MINI"}, {"cod": "15086", "nome": "KIT RECHEIO DE MINI RISOLES CARNE"}, {"cod": "4001", "nome": "KIT RECHEIO DE FRANGO - KG"}], "Kits Quadra": [{"cod": "15012", "nome": "KIT PÃO DE BATATA"}, {"cod": "15013", "nome": "KIT BRIOCHE"}, {"cod": "15015", "nome": "KIT PÃO DE CENOURA"}, {"cod": "15016", "nome": "KIT CUCA ALEMÃ"}, {"cod": "15017", "nome": "KIT CUCA CHOCOLATE"}, {"cod": "15018", "nome": "KIT CUCA COLONIAL"}, {"cod": "15019", "nome": "KIT CUCA FRUTAS"}, {"cod": "15020", "nome": "KIT CUECA VIRADA"}, {"cod": "15021", "nome": "KIT MASSA ESPECIAL DONUTS E CUECA"}, {"cod": "15022", "nome": "KIT INTEGRAL"}, {"cod": "15023", "nome": "KIT PÃO DE LEITE"}, {"cod": "15024", "nome": "KIT MASSA DOCE"}, {"cod": "15025", "nome": "KIT MASSA ESPECIAL"}, {"cod": "15027", "nome": "KIT PÃO DE MILHO DOCE"}, {"cod": "15028", "nome": "KIT PÃO DE MILHO SALGADO (CACETINHO)"}, {"cod": "15030", "nome": "KIT MASSA ESPECIAL MINI SONHO"}, {"cod": "15031", "nome": "KIT PÃO FOLHADO"}, {"cod": "15032", "nome": "KIT PÃO PRETO"}, {"cod": "15033", "nome": "KIT RAMINHO"}, {"cod": "15034", "nome": "KIT ROSCA DE POLVILHO"}, {"cod": "15035", "nome": "KIT SOVADO"}, {"cod": "15036", "nome": "KIT GAJETA VOVO"}, {"cod": "15005", "nome": "KIT PREMIUM 6/8 G"}, {"cod": "15009", "nome": "KIT PÃO 7 GRÃOS"}, {"cod": "15010", "nome": "KIT PÃO DE AIPIM"}, {"cod": "15014", "nome": "KIT PÃO CASEIRO"}, {"cod": "15029", "nome": "KIT PÃO DE MILHO SALGADO"}]};
 
-const PINS = { confeitaria:'1234', cozinha:'5678', embalagem:'9101', expedicao:'1314', admin:'2504', contagem:'0000', container:'0001' };
-const CORES = { confeitaria:'', cozinha:'verde', embalagem:'', expedicao:'laranja', admin:'roxo', contagem:'roxo', container:'' };
-const NOMES = { confeitaria:'Confeitaria 🥐', cozinha:'Cozinha 🍳', embalagem:'Embalagem 📦', expedicao:'Expedição 🚚', admin:'Administrativo 📊', contagem:'Contagem 📋', container:'Container 🏭' };
-const DESTINOS = { confeitaria:'s-conf-home', cozinha:'s-coz-home', embalagem:'s-emb-sel-data', expedicao:'s-exp-sel-data', admin:'s-adm-hub', contagem:'s-contagem-home', container:'s-container-home' };
+const QUADRA_PRODUTOS = [{"cod": "130", "nome": "CUCA ALEMÃ 320GR", "kit": "Kit Cuca Alemã", "kgPacote": 0.32}, {"cod": "145", "nome": "CUCA CHOCOLATE 320GR", "kit": "Kit Cuca Chocolate", "kgPacote": 0.32}, {"cod": "154", "nome": "CUCA COLONIAL 400GR", "kit": "Kit Cuca Colonial", "kgPacote": 4.0}, {"cod": "122", "nome": "CUCA FRUTAS 320GR", "kit": "Kit Cuca Frutas", "kgPacote": 0.32}, {"cod": "132", "nome": "CUECA VIRADA 40GR", "kit": "Kit Cueca Virada", "kgPacote": 2.0}, {"cod": "7", "nome": "PÃO FRANCES DE QUARTO (250)", "kit": "Kit Grande Premium 6/8", "kgPacote": 3.5}, {"cod": "12", "nome": "PÃO FRANCES BOLA 75GR", "kit": "Kit Grande Premium 6/8", "kgPacote": 8.0}, {"cod": "31", "nome": "PAO FRANCES PREMIUM 6,6KG CARDOSO EMB. PRETA", "kit": "Kit Grande Premium 6/8", "kgPacote": 6.6}, {"cod": "32", "nome": "PÃO FRANCES BOLA CARDOSO 6,6KG", "kit": "Kit Grande Premium 6/8", "kgPacote": 6.6}, {"cod": "106", "nome": "PÃO FRANCES MINI 6/8 54GR", "kit": "Kit Grande Premium 6/8", "kgPacote": 8.0}, {"cod": "110", "nome": "PÃO FRANCES BAGUETE 155GR", "kit": "Kit Grande Premium 6/8", "kgPacote": 3.5}, {"cod": "119", "nome": "PÃO FRANCES PREMIUM 75GR", "kit": "Kit Grande Premium 6/8", "kgPacote": 8.0}, {"cod": "120", "nome": "PÃO FRANCES PREMIUM 10/12", "kit": "Kit Grande Premium 6/8", "kgPacote": 8.0}, {"cod": "147", "nome": "PÃO FRANCES 500GR", "kit": "Kit Grande Premium 6/8", "kgPacote": 3.5}, {"cod": "160", "nome": "PÃO FRANCES PREMIUM PLUS", "kit": "Kit Grande Premium 6/8", "kgPacote": 8.0}, {"cod": "4", "nome": "PÃO MASSA DOCE 75GR", "kit": "Kit Massa Doce", "kgPacote": 3.5}, {"cod": "111", "nome": "PÃO MASSA DOCE - CÃO 135GR", "kit": "Kit Massa Doce", "kgPacote": 3.5}, {"cod": "112", "nome": "PÃO DE XIS 120GR", "kit": "Kit Massa Doce", "kgPacote": 3.5}, {"cod": "114", "nome": "PÃO MASSA DOCE ANIVERSARIO 45GR", "kit": "Kit Massa Doce", "kgPacote": 3.5}, {"cod": "124", "nome": "PÃO MASSA DOCE HAMBURGUER 90GR", "kit": "Kit Massa Doce", "kgPacote": 3.5}, {"cod": "123", "nome": "PÃO TRANÇA 270GR", "kit": "Kit Massa Especial", "kgPacote": 3.0}, {"cod": "129", "nome": "PÃO CARACOL 88GR", "kit": "Kit Massa Especial", "kgPacote": 3.0}, {"cod": "155", "nome": "CUECA VIRADA GRANDE 44GR", "kit": "Kit Massa Especial Donuts E Cueca Grande", "kgPacote": 2.0}, {"cod": "159", "nome": "PÃO DONUT 44GR", "kit": "Kit Massa Especial Donuts E Cueca Grande", "kgPacote": 2.0}, {"cod": "127", "nome": "PÃO DE SONHO MINI 44GR", "kit": "Kit Massa Especial Mini Sonho", "kgPacote": 3.0}, {"cod": "128", "nome": "PÃO DE SONHO 70GR", "kit": "Kit Massa Sonho", "kgPacote": 3.0}, {"cod": "144", "nome": "PÃO 7 GRÃOS 500GR", "kit": "Kit Pão 7 Grãos", "kgPacote": 3.5}, {"cod": "21", "nome": "PÃO BRIOCHE 500GR", "kit": "Kit Pão Brioche", "kgPacote": 3.5}, {"cod": "126", "nome": "PÃO DOCE BRIOCHE 60GR", "kit": "Kit Pão Brioche", "kgPacote": 3.5}, {"cod": "150", "nome": "PÃO CASEIRO 500GR", "kit": "Kit Pão Caseiro", "kgPacote": 3.5}, {"cod": "148", "nome": "PÃO AIPIM 500GR", "kit": "Kit Pão De Aipim", "kgPacote": 3.5}, {"cod": "26", "nome": "PÃO DE BATATA 500GR", "kit": "Kit Pão De Batata", "kgPacote": 3.5}, {"cod": "138", "nome": "PÃO DE BATATA 75GR", "kit": "Kit Pão De Batata", "kgPacote": 3.5}, {"cod": "25", "nome": "PÃO CENOURA 500GR", "kit": "Kit Pão De Cenoura", "kgPacote": 3.5}, {"cod": "139", "nome": "PÃO DE CENOURA 75GR", "kit": "Kit Pão De Cenoura", "kgPacote": 3.5}, {"cod": "140", "nome": "PÃO DE LEITE 500GR", "kit": "Kit Pão De Leite", "kgPacote": 3.5}, {"cod": "6", "nome": "PÃO DE MILHO - BOLA 75GR", "kit": "Kit Pão De Milho Doce", "kgPacote": 3.5}, {"cod": "153", "nome": "PÃO MILHO DOCE 500GR", "kit": "Kit Pão De Milho Doce", "kgPacote": 3.5}, {"cod": "142", "nome": "PÃO DE MILHO SALGADO 500GR", "kit": "Kit Pão De Milho Salgado", "kgPacote": 3.5}, {"cod": "14", "nome": "PÃO DE MILHO - SALGADO (CACETINHO) 75GR", "kit": "Kit Pao De Milho Salgado Cacetinho", "kgPacote": 3.5}, {"cod": "105", "nome": "PÃO FOLHADO 88GR", "kit": "Kit Pão Folhado", "kgPacote": 3.0}, {"cod": "3", "nome": "PÃO FIBRAS 75GR", "kit": "Kit Pão Integral", "kgPacote": 3.5}, {"cod": "108", "nome": "PÃO FIBRAS - BOLA 75GR", "kit": "Kit Pão Integral", "kgPacote": 3.5}, {"cod": "118", "nome": "PÃO BAGUETE COM FIBRAS 155GR", "kit": "Kit Pão Integral", "kgPacote": 3.5}, {"cod": "143", "nome": "PÃO FIBRAS 500GR", "kit": "Kit Pão Integral", "kgPacote": 3.5}, {"cod": "107", "nome": "PÃO FIBRAS -  PRETO 75GR", "kit": "Kit Pão Preto", "kgPacote": 3.5}, {"cod": "5", "nome": "PÃO FRANCES SOVADO 88GR", "kit": "Kit Pão Sovado", "kgPacote": 3.5}, {"cod": "134", "nome": "PÃO RAMINHO 37GR", "kit": "Kit Raminho", "kgPacote": 3.0}, {"cod": "201", "nome": "ROSCA DE POLVILHO 250GR", "kit": "Kit Rosca De Polvilho", "kgPacote": 3.5}, {"cod": "115", "nome": "PÃO VOVÓ 88GR", "kit": "Kit Vovo/Gajeta", "kgPacote": 3.5}, {"cod": "117", "nome": "PÃO GAJETA 88GR", "kit": "Kit Vovo/Gajeta", "kgPacote": 3.5}];
+const QUADRA_KITS_RECEITAS = {"KIT GRANDE PREMIUM 6/8": {"ingredientes": [{"nome": "Farinha Prifal Mix", "qtd": 75.0}, {"nome": "Farinha M Dias", "qtd": 50.0}, {"nome": "Fermento Flashmann", "qtd": 1.0}, {"nome": "Fermento Itaiquara", "qtd": 2.5}, {"nome": "Açucar Refinado", "qtd": 0.5}, {"nome": "MARGARINA VIGOR (AMELIA)", "qtd": 0.5}, {"nome": "Retardador", "qtd": 0.2}, {"nome": "Agua", "qtd": 61.0}], "totalKg": 190.7}, "KIT PÃO 7 GRÃOS": {"ingredientes": [{"nome": "Farinha Padeiro", "qtd": 25.0}, {"nome": "Farinha integral", "qtd": 3.0}, {"nome": "Sal", "qtd": 0.575}, {"nome": "Açucar Refinado", "qtd": 1.5}, {"nome": "MARGARINA VIGOR (AMELIA)", "qtd": 0.9}, {"nome": "Fermento Doce", "qtd": 0.75}, {"nome": "Granola 7 Cereais", "qtd": 3.0}, {"nome": "Reforçador", "qtd": 0.3}, {"nome": "Corante Caramelo", "qtd": 0.4}, {"nome": "Agua", "qtd": 15.0}], "totalKg": 50.425}, "KIT PÃO DE AIPIM": {"ingredientes": [{"nome": "Farinha Padeiro", "qtd": 25.0}, {"nome": "Sal", "qtd": 0.5}, {"nome": "MARGARINA VIGOR (AMELIA)", "qtd": 0.75}, {"nome": "Açucar Refinado", "qtd": 1.0}, {"nome": "Reforçador", "qtd": 0.32}, {"nome": "Oleo Emulsificante", "qtd": 0.2}, {"nome": "Fermento Doce", "qtd": 0.75}, {"nome": "Aipim", "qtd": 7.5}, {"nome": "Agua", "qtd": 10.0}], "totalKg": 46.02}, "KIT PÃO DE BATATA": {"ingredientes": [{"nome": "FARINHA PRIFAL MIX", "qtd": 25.0}, {"nome": "Açucar Refinado", "qtd": 2.0}, {"nome": "Açucar Concentrado", "qtd": 0.005}, {"nome": "MARGARINA VIGOR (AMELIA)", "qtd": 0.5}, {"nome": "Fermento Doce", "qtd": 0.75}, {"nome": "Essencia Manteiga", "qtd": 0.04}, {"nome": "Flocos de batata", "qtd": 2.5}, {"nome": "Oleo Emulsificante", "qtd": 0.1}, {"nome": "Agua", "qtd": 7.0}], "totalKg": 37.895}, "KIT PÃO BRIOCHE": {"ingredientes": [{"nome": "Farinha Padeiro", "qtd": 25.0}, {"nome": "Açucar Refinado", "qtd": 4.0}, {"nome": "Creme de Leite", "qtd": 1.0}, {"nome": "MARGARINA VIGOR (AMELIA)", "qtd": 1.0}, {"nome": "Oleo Emulsificante", "qtd": 0.1}, {"nome": "Fermento Doce", "qtd": 1.25}, {"nome": "Corante amarelo", "qtd": 0.09}, {"nome": "Sal", "qtd": 0.5}, {"nome": "Reforçador", "qtd": 0.25}, {"nome": "Agua", "qtd": 4.5}, {"nome": "Essencia Manteiga", "qtd": 0.08}], "totalKg": 37.77}, "KIT PÃO CASEIRO": {"ingredientes": [{"nome": "Farinha Padeiro", "qtd": 25.0}, {"nome": "MARGARINA VIGOR (AMELIA)", "qtd": 0.85}, {"nome": "Oleo emulsificante", "qtd": 0.1}, {"nome": "Açucar Refinado", "qtd": 2.5}, {"nome": "Sal", "qtd": 0.5}, {"nome": "Reforçador", "qtd": 0.25}, {"nome": "Essencia Manteiga", "qtd": 0.08}, {"nome": "Fermento Doce", "qtd": 0.75}, {"nome": "Agua", "qtd": 12.0}], "totalKg": 42.03}, "KIT PÃO DE CENOURA": {"ingredientes": [{"nome": "FARINHA PRIFAL MIX", "qtd": 25.0}, {"nome": "Açucar Refinado", "qtd": 1.0}, {"nome": "Açucar Concentrado", "qtd": 0.005}, {"nome": "MARGARINA VIGOR (AMELIA)", "qtd": 0.4}, {"nome": "Fermento Doce", "qtd": 0.75}, {"nome": "Ovo em Galao", "qtd": 0.83}, {"nome": "Cenoura", "qtd": 6.0}, {"nome": "Oleo Emulsificante", "qtd": 0.05}, {"nome": "Agua", "qtd": 5.0}, {"nome": "Corante amarelo", "qtd": 0.07}], "totalKg": 39.105}, "KIT CUCA ALEMÃ": {"ingredientes": [{"nome": "Mistura para Cuca Alema", "qtd": 10.0}, {"nome": "Fermento Doce", "qtd": 0.125}, {"nome": "Agua", "qtd": 3.4}], "totalKg": 13.525}, "KIT CUCA CHOCOLATE": {"ingredientes": [{"nome": "FARINHA PRIFAL MIX", "qtd": 25.0}, {"nome": "Açucar Refinado", "qtd": 3.0}, {"nome": "Açucar Concentrado", "qtd": 0.005}, {"nome": "MARGARINA VIGOR (AMELIA)", "qtd": 0.3}, {"nome": "Fermento Doce", "qtd": 0.75}, {"nome": "Oleo Emulsificante", "qtd": 0.05}, {"nome": "Corante Amarelo", "qtd": 0.05}, {"nome": "Essencia de Baunilha", "qtd": 0.04}, {"nome": "Ovo em pó", "qtd": 0.225}, {"nome": "Gotas Pingo Chocolate", "qtd": 4.8}, {"nome": "Agua", "qtd": 11.0}], "totalKg": 45.22}, "KIT CUCA COLONIAL": {"ingredientes": [{"nome": "FARINHA PRIFAL MIX", "qtd": 25.0}, {"nome": "Açucar Refinado", "qtd": 3.0}, {"nome": "MARGARINA VIGOR (AMELIA)", "qtd": 0.3}, {"nome": "Fermento Doce", "qtd": 0.75}, {"nome": "Ovo em Pó", "qtd": 0.225}, {"nome": "Essencia de baunilha", "qtd": 0.04}, {"nome": "Oleo Emulsificante", "qtd": 0.05}, {"nome": "Açucar Concentrado", "qtd": 0.005}, {"nome": "Corante amarelo", "qtd": 0.05}, {"nome": "Agua", "qtd": 10.2}], "totalKg": 39.62}, "KIT CUCA FRUTAS": {"ingredientes": [{"nome": "FARINHA PRIFAL MIX", "qtd": 25.0}, {"nome": "Açucar Refinado", "qtd": 3.0}, {"nome": "Açucar Concentrado", "qtd": 0.005}, {"nome": "MARGARINA VIGOR (AMELIA)", "qtd": 0.3}, {"nome": "Fermento Doce", "qtd": 0.75}, {"nome": "Oleo Emulsificante", "qtd": 0.05}, {"nome": "Corante Amarelo", "qtd": 0.05}, {"nome": "Essencia de Baunilha", "qtd": 0.04}, {"nome": "Ovo em pó", "qtd": 0.225}, {"nome": "Frutas Cristalizadas", "qtd": 4.8}, {"nome": "Agua", "qtd": 11.0}], "totalKg": 45.22}, "KIT CUECA VIRADA": {"ingredientes": [{"nome": "FARINHA DE TRIGO SUPER", "qtd": 25.0}, {"nome": "Açucar Refinado", "qtd": 5.0}, {"nome": "MARGARINA VIGOR (AMELIA)", "qtd": 5.5}, {"nome": "Leite", "qtd": 4.0}, {"nome": "Ovo em Galao", "qtd": 5.0}, {"nome": "Fermento em Pó", "qtd": 0.5}, {"nome": "Sal", "qtd": 0.3}, {"nome": "Cachaça", "qtd": 0.1}, {"nome": "Essencia de Baunilha", "qtd": 0.15}, {"nome": "Canela", "qtd": 0.04}, {"nome": "AMIDO DE MILHO", "qtd": 4.0}, {"nome": "CORANTE AMARELO", "qtd": 0.015}, {"nome": "Noz Moscada", "qtd": 0.012}], "totalKg": 49.617}, "KIT MASSA ESPECIAL DONUTS E CUECA GRANDE": {"ingredientes": [{"nome": "Farinha Estrela", "qtd": 25.0}, {"nome": "Açucar Refinado", "qtd": 2.0}, {"nome": "Açucar Concentrado", "qtd": 0.005}, {"nome": "MARGARINA VIGOR (AMELIA)", "qtd": 0.5}, {"nome": "Fermento Doce", "qtd": 0.75}, {"nome": "Ovo em Pó", "qtd": 0.225}, {"nome": "Oleo Emulsificante", "qtd": 0.1}, {"nome": "Canela", "qtd": 0.02}, {"nome": "Agua", "qtd": 6.0}], "totalKg": 34.6}, "KIT PÃO INTEGRAL": {"ingredientes": [{"nome": "FARINHA PRIFAL MIX", "qtd": 50.0}, {"nome": "Farinha Estrela", "qtd": 50.0}, {"nome": "Farinha Integral", "qtd": 5.0}, {"nome": "Farinha Fibra de Trigo", "qtd": 5.0}, {"nome": "Reforçador", "qtd": 0.3}, {"nome": "Oleo Emulsificante", "qtd": 0.075}, {"nome": "Retardador", "qtd": 0.2}, {"nome": "Fermento Itaiquara", "qtd": 2.5}, {"nome": "Corante Caramelo", "qtd": 0.8}, {"nome": "MARGARINA VIGOR (AMELIA)", "qtd": 1.0}, {"nome": "Sal", "qtd": 0.15}, {"nome": "Semente de Linhaça", "qtd": 3.0}, {"nome": "Agua", "qtd": 51.0}], "totalKg": 169.025}, "KIT PÃO DE LEITE": {"ingredientes": [{"nome": "Farinha Padeiro", "qtd": 25.0}, {"nome": "Açucar Refinado", "qtd": 4.0}, {"nome": "MARGARINA VIGOR (AMELIA)", "qtd": 0.85}, {"nome": "Leite", "qtd": 4.0}, {"nome": "Oleo Emulsificante", "qtd": 0.1}, {"nome": "Fermento Doce", "qtd": 1.0}, {"nome": "Açucar Concentrado", "qtd": 0.005}, {"nome": "Sal", "qtd": 0.5}, {"nome": "Reforçador", "qtd": 0.25}, {"nome": "Agua", "qtd": 7.0}], "totalKg": 42.705}, "KIT MASSA DOCE": {"ingredientes": [{"nome": "Farinha Estrela", "qtd": 50.0}, {"nome": "Açucar Refinado", "qtd": 10.0}, {"nome": "Fermento Doce", "qtd": 3.5}, {"nome": "Oleo Emulsificante", "qtd": 0.175}, {"nome": "Açucar Concentrado", "qtd": 0.025}, {"nome": "Agua", "qtd": 40.0}, {"nome": "FARINHA PRIFAL MIX", "qtd": 50.0}], "totalKg": 153.7}, "KIT MASSA ESPECIAL": {"ingredientes": [{"nome": "FARINHA ESTRELA", "qtd": 25.0}, {"nome": "Açucar Refinado", "qtd": 3.0}, {"nome": "Açucar Concentrado", "qtd": 0.005}, {"nome": "MARGARINA VIGOR (AMELIA)", "qtd": 0.25}, {"nome": "Fermento Doce", "qtd": 0.75}, {"nome": "Ovo em Pó", "qtd": 0.225}, {"nome": "Oleo Emulsificante", "qtd": 0.075}, {"nome": "Canela", "qtd": 0.02}, {"nome": "Agua", "qtd": 7.0}], "totalKg": 36.325}, "KIT PÃO DE MILHO DOCE": {"ingredientes": [{"nome": "FARINHA PRIFAL MIX", "qtd": 25.0}, {"nome": "Farinha Padeiro", "qtd": 25.0}, {"nome": "Farinha de Milho Média", "qtd": 7.0}, {"nome": "Açucar Refinado", "qtd": 8.0}, {"nome": "Reforçador", "qtd": 0.3}, {"nome": "Fermento Doce", "qtd": 2.0}, {"nome": "Corante amarelo", "qtd": 0.16}, {"nome": "Sal", "qtd": 0.56}, {"nome": "Oleo Emulsificante", "qtd": 0.16}, {"nome": "MARGARINA VIGOR (AMELIA)", "qtd": 1.0}, {"nome": "Erva Doce", "qtd": 0.2}, {"nome": "Açucar Concentrado", "qtd": 0.01}, {"nome": "Agua", "qtd": 21.0}], "totalKg": 90.39}, "KIT PAO DE MILHO SALGADO CACETINHO": {"ingredientes": [{"nome": "Farinha Estrela", "qtd": 25.0}, {"nome": "Farinha de milho média", "qtd": 2.5}, {"nome": "Fermento Doce", "qtd": 0.75}, {"nome": "MARGARINA VIGOR (AMELIA)", "qtd": 0.5}, {"nome": "Açucar Refinado", "qtd": 0.5}, {"nome": "Sal", "qtd": 0.05}, {"nome": "Reforçador", "qtd": 0.05}, {"nome": "Corante amarelo", "qtd": 0.08}, {"nome": "Agua", "qtd": 12.0}], "totalKg": 41.43}, "KIT PÃO DE MILHO SALGADO": {"ingredientes": [{"nome": "Farinha Padeiro", "qtd": 25.0}, {"nome": "FARINHA PRIFAL MIX", "qtd": 25.0}, {"nome": "Farinha de Milho Média", "qtd": 7.0}, {"nome": "Açucar Refinado", "qtd": 3.0}, {"nome": "Reforçador", "qtd": 0.3}, {"nome": "Fermento Doce", "qtd": 2.0}, {"nome": "Corante amarelo", "qtd": 1.0}, {"nome": "Sal", "qtd": 0.56}, {"nome": "Oleo Emulsificante", "qtd": 0.16}, {"nome": "MARGARINA VIGOR (AMELIA)", "qtd": 1.0}, {"nome": "Agua", "qtd": 12.5}], "totalKg": 77.52}, "KIT MASSA ESPECIAL MINI SONHO": {"ingredientes": [{"nome": "Farinha Padeiro", "qtd": 25.0}, {"nome": "Açucar Refinado", "qtd": 2.0}, {"nome": "Açucar Concentrado", "qtd": 0.005}, {"nome": "MARGARINA VIGOR (AMELIA)", "qtd": 0.25}, {"nome": "Fermento Doce", "qtd": 0.75}, {"nome": "Ovo em Pó", "qtd": 0.225}, {"nome": "Canela", "qtd": 0.02}, {"nome": "Reforçador", "qtd": 0.25}, {"nome": "Sal", "qtd": 0.5}, {"nome": "Agua", "qtd": 6.5}], "totalKg": 35.5}, "KIT PÃO FOLHADO": {"ingredientes": [{"nome": "FARINHA PRIFAL MIX", "qtd": 25.0}, {"nome": "Fermento Itaiquara", "qtd": 0.75}, {"nome": "Margarina Folhada", "qtd": 6.5}, {"nome": "Oleo Emulsificante", "qtd": 0.025}, {"nome": "MARGARINA VIGOR (AMELIA)", "qtd": 0.1}, {"nome": "Agua", "qtd": 11.0}], "totalKg": 43.375}, "KIT PÃO PRETO": {"ingredientes": [{"nome": "FARINHA PRIFAL MIX", "qtd": 50.0}, {"nome": "Farinha Integral", "qtd": 5.0}, {"nome": "Farinha Fibra de Trigo", "qtd": 5.0}, {"nome": "Reforçador", "qtd": 0.2}, {"nome": "Oleo Emulsificante", "qtd": 0.125}, {"nome": "Retardador", "qtd": 0.1}, {"nome": "MARGARINA VIGOR (AMELIA)", "qtd": 1.0}, {"nome": "Fermento Itaiquara", "qtd": 2.0}, {"nome": "Corante Caramelo", "qtd": 1.5}, {"nome": "Semente de Linhaça", "qtd": 1.0}, {"nome": "Agua", "qtd": 40.0}, {"nome": "Sal", "qtd": 0.3}, {"nome": "FARINHA ESTRELA", "qtd": 25.0}], "totalKg": 131.225}, "KIT RAMINHO": {"ingredientes": [{"nome": "FARINHA PRIFAL MIX", "qtd": 25.0}, {"nome": "Açucar Refinado", "qtd": 3.0}, {"nome": "Açucar Concentrado", "qtd": 0.005}, {"nome": "MARGARINA VIGOR (AMELIA)", "qtd": 0.25}, {"nome": "Fermento Doce", "qtd": 0.75}, {"nome": "Ovo em Pó", "qtd": 0.225}, {"nome": "Oleo Emulsificante", "qtd": 0.075}, {"nome": "Erva Doce", "qtd": 0.2}, {"nome": "Agua", "qtd": 9.2}], "totalKg": 38.705}, "KIT ROSCA DE POLVILHO": {"ingredientes": [{"nome": "Polvilho Azedo", "qtd": 39.6}, {"nome": "Farinha Padeiro", "qtd": 8.8}, {"nome": "Sal", "qtd": 0.8}, {"nome": "Açucar Refinado", "qtd": 0.6}, {"nome": "Oleo de Soja", "qtd": 2.0}, {"nome": "Ovo in natura", "qtd": 4.8}, {"nome": "Leite", "qtd": 6.0}, {"nome": "Agua", "qtd": 25.0}], "totalKg": 87.6}, "KIT PÃO SOVADO": {"ingredientes": [{"nome": "FARINHA PRIFAL MIX", "qtd": 25.0}, {"nome": "FARINHA ESTRELA", "qtd": 25.0}, {"nome": "Açucar Refinado", "qtd": 0.5}, {"nome": "Oleo Emulsificante", "qtd": 0.075}, {"nome": "Fermento Itaiquara", "qtd": 0.75}, {"nome": "AGUA", "qtd": 13.0}], "totalKg": 64.325}, "KIT VOVO/GAJETA": {"ingredientes": [{"nome": "Farinha Padeiro", "qtd": 25.0}, {"nome": "FARINHA PRIFAL MIX", "qtd": 25.0}, {"nome": "Oleo Emulsificante", "qtd": 0.2}, {"nome": "Fermento Itaiquara", "qtd": 0.75}, {"nome": "Sal", "qtd": 0.5}, {"nome": "Açucar Refinado", "qtd": 1.0}, {"nome": "Amido de Milho", "qtd": 1.1}, {"nome": "Reforçador", "qtd": 0.25}, {"nome": "Agua", "qtd": 24.0}], "totalKg": 77.8}, "KIT MASSA SONHO": {"ingredientes": [{"nome": "AÇUCAR REFINADO", "qtd": 6.0}, {"nome": "AÇUCAR CONCENTRADO", "qtd": 0.01}, {"nome": "MARGARINA VIGOR (AMELIA)", "qtd": 0.5}, {"nome": "Reforçador", "qtd": 0.25}, {"nome": "Canela", "qtd": 0.04}, {"nome": "OLEO EMULSIFICANTE", "qtd": 0.15}, {"nome": "Sal", "qtd": 0.5}, {"nome": "Fermento Doce", "qtd": 1.5}, {"nome": "Ovo em Pó", "qtd": 0.45}, {"nome": "Farinha Padeiro", "qtd": 25.0}, {"nome": "FARINHA PRIFAL MIX", "qtd": 25.0}], "totalKg": 59.4}};
+const QUADRA_KIT_MAPPING = {"Kit Massa Especial Mini Sonho": "KIT MASSA ESPECIAL MINI SONHO", "Kit Pão Sovado": "KIT PÃO SOVADO", "Kit Pao De Milho Salgado Cacetinho": "KIT PAO DE MILHO SALGADO CACETINHO", "Kit Cuca Alemã": "KIT CUCA ALEMÃ", "Kit Rosca De Polvilho": "KIT ROSCA DE POLVILHO", "Kit Massa Especial Donuts E Cueca Grande": "KIT MASSA ESPECIAL DONUTS E CUECA GRANDE", "Kit Pão Preto": "KIT PÃO PRETO", "Kit Massa Sonho": "KIT MASSA SONHO", "Kit Massa Especial": "KIT MASSA ESPECIAL", "Kit Massa Doce": "KIT MASSA DOCE", "Kit Pão De Cenoura": "KIT PÃO DE CENOURA", "Kit Cueca Virada": "KIT CUECA VIRADA", "Kit Pão De Leite": "KIT PÃO DE LEITE", "Kit Cuca Colonial": "KIT CUCA COLONIAL", "Kit Pão De Aipim": "KIT PÃO DE AIPIM", "Kit Cuca Frutas": "KIT CUCA FRUTAS", "Kit Cuca Chocolate": "KIT CUCA CHOCOLATE", "Kit Vovo/Gajeta": "KIT VOVO/GAJETA", "Kit Pão De Milho Doce": "KIT PÃO DE MILHO DOCE", "Kit Pão De Batata": "KIT PÃO DE BATATA", "Kit Pão Caseiro": "KIT PÃO CASEIRO", "Kit Raminho": "KIT RAMINHO", "Kit Pão De Milho Salgado": "KIT PÃO DE MILHO SALGADO", "Kit Pão Folhado": "KIT PÃO FOLHADO", "Kit Pão Brioche": "KIT PÃO BRIOCHE", "Kit Pão Integral": "KIT PÃO INTEGRAL", "Kit Grande Premium 6/8": "KIT GRANDE PREMIUM 6/8", "Kit Pão 7 Grãos": "KIT PÃO 7 GRÃOS"};
+const PINS = { confeitaria:'1234', cozinha:'5678', embalagem:'9101', expedicao:'1314', admin:'2504', contagem:'0000', container:'0001', quadra:'2020' };
+const CORES = { confeitaria:'', cozinha:'verde', embalagem:'', expedicao:'laranja', admin:'roxo', contagem:'roxo', container:'', quadra:'' };
+const NOMES = { confeitaria:'Confeitaria 🥐', cozinha:'Cozinha 🍳', embalagem:'Embalagem 📦', expedicao:'Expedição 🚚', admin:'Administrativo 📊', contagem:'Contagem 📋', container:'Container 🏭', quadra:'Quadra 🍞' };
+const DESTINOS = { confeitaria:'s-conf-home', cozinha:'s-coz-home', embalagem:'s-emb-sel-data', expedicao:'s-exp-sel-data', admin:'s-adm-hub', contagem:'s-contagem-home', container:'s-container-home', quadra:'s-quadra-home' };
 
 let pinAtual = '';
 let setorAtivo = '';
@@ -1142,6 +1230,8 @@ function atualizarTela(){
   if(tela==='s-adm') renderAdm(tabAtiva);
   if(tela==='s-contagem-home') renderContagemHome();
   if(tela==='s-container-home') renderContainerHome();
+  if(tela==='s-quadra-home') renderQuadraHome();
+  if(tela==='s-quadra-reg') renderQuadraReg();
   if(tela==='s-container-item') renderContainerItem();
   if(tela==='s-contagem-hist') renderContagemHist();
   if(tela==='s-plano') renderPlano();
@@ -1223,6 +1313,11 @@ function goTo(id){
   if(id==='s-presenca-reg-emb') renderPresencaReg('emb');
   if(id==='s-contagem-home') renderContagemHome();
   if(id==='s-container-home') renderContainerHome();
+  if(id==='s-quadra-home') renderQuadraHome();
+  if(id==='s-quadra-data'){ renderQuadraDateGrid(); }
+  if(id==='s-quadra-kit'){ filtrarKitsQuadra(); }
+  if(id==='s-quadra-lanc') renderQuadraLanc();
+  if(id==='s-quadra-reg') renderQuadraReg();
   if(id==='s-container-item') renderContainerItem();
   if(id==='s-container-saida') renderContainerSaida();
   if(id==='s-container-entrada'){ const b=document.getElementById('container-entrada-btn');if(b){b.textContent='Registrar entrada ✓';b.disabled=false;} }
@@ -3750,6 +3845,302 @@ async function excluirLoteContainer(fid){
   }catch(e){alert('Erro ao excluir: '+e.message);}
 }
 
+
+// ===== QUADRA =====
+let quadraRegistros = [];
+let quadraDataSel = null;
+let quadraKitSel = null;
+let quadraProdutosLanc = {}; // {cod: {nome, kgPacote, qtdPacotes}}
+
+onSnapshot(collection(db,'quadraRegistros'), snap=>{
+  try{
+    quadraRegistros=snap.docs.map(d=>({firestoreId:d.id,...d.data()})).sort((a,b)=>(b.timestamp||0)-(a.timestamp||0));
+    atualizarTela();
+  }catch(e){ console.error('quadraRegistros snap:',e); }
+});
+
+function renderQuadraHome(){
+  document.getElementById('quadra-date').textContent=hoje();
+  document.getElementById('quadra-count').textContent=quadraRegistros.filter(r=>r.data===hoje()).length;
+}
+
+function iniciarNovoLancQuadra(){
+  quadraDataSel=null; quadraKitSel=null; quadraProdutosLanc={};
+  renderDateGrid('quadra-date-grid', null, 'prod');
+  document.getElementById('quadra-btn-prox-data').className='btn btn-disabled';
+  document.getElementById('quadra-btn-prox-data').onclick=null;
+  goTo('s-quadra-data');
+}
+
+function selecionarDataQuadra(){
+  const val=document.getElementById('quadra-input-data').value;
+  if(!val)return;
+  const[y,m,d]=val.split('-');
+  selecionarDataQuadraBtn(`${d}/${m}/${y}`);
+}
+
+function selecionarDataQuadraBtn(data){
+  quadraDataSel=data;
+  renderDateGrid('quadra-date-grid', data, 'prod');
+  const btn=document.getElementById('quadra-btn-prox-data');
+  btn.className='btn btn-primary';
+  btn.style.background='#92400e';
+  btn.onclick=()=>{
+    document.getElementById('quadra-data-banner').textContent='Produção de: '+data;
+    quadraKitSel=null;
+    filtrarKitsQuadra();
+    document.getElementById('quadra-btn-prox-kit').className='btn btn-disabled';
+    document.getElementById('quadra-kit-srch').value='';
+    goTo('s-quadra-kit');
+  };
+}
+
+// Override renderDateGrid for quadra (reuse prod type but handle click)
+// Patch: when on quadra-data screen, date buttons call selecionarDataQuadraBtn
+// Already done via selecionarDataTipo - but we need custom handler
+// Fix: render our own grid
+function renderQuadraDateGrid(){
+  const dias=diasUteis(3);
+  const el=document.getElementById('quadra-date-grid');
+  if(!el)return;
+  el.innerHTML=dias.map((d,i)=>
+    `<button class="date-btn ${quadraDataSel===fmtData(d)?'sel':''}" onclick="selecionarDataQuadraBtn('${fmtData(d)}')">
+      <div class="date-btn-label">${labelDia(i)||diaSemana(d)}</div>
+      <div class="date-btn-date">${fmtData(d)}</div>
+    </button>`).join('');
+}
+
+function filtrarKitsQuadra(){
+  const q=(document.getElementById('quadra-kit-srch').value||'').toLowerCase();
+  const kits=[...new Set(QUADRA_PRODUTOS.map(p=>p.kit))].sort();
+  const filtrados=q?kits.filter(k=>k.toLowerCase().includes(q)):kits;
+  const el=document.getElementById('quadra-kit-list');
+  el.innerHTML=filtrados.map(k=>`
+    <div class="produto-item ${quadraKitSel===k?'sel':''}" onclick="selKitQuadra('${k.replace(/'/g,"\'")}')">
+      <span class="produto-name">${k}</span><span class="produto-check-mark">✓</span>
+    </div>`).join('');
+}
+
+function selKitQuadra(kit){
+  quadraKitSel=kit;
+  filtrarKitsQuadra();
+  const btn=document.getElementById('quadra-btn-prox-kit');
+  btn.className='btn btn-primary';
+  btn.style.background='#92400e';
+  btn.onclick=()=>{ quadraProdutosLanc={}; renderQuadraLanc(); goTo('s-quadra-lanc'); };
+}
+
+function renderQuadraLanc(){
+  const el=document.getElementById('quadra-lanc-content');
+  if(!el)return;
+  document.getElementById('quadra-lanc-title').textContent=quadraKitSel||'Lançamento';
+  
+  // Get receita
+  const recKey=QUADRA_KIT_MAPPING[quadraKitSel];
+  const receita=recKey?QUADRA_KITS_RECEITAS[recKey]:null;
+  const kgPorKit=receita?receita.totalKg:0;
+  
+  // Produtos deste kit
+  const produtosKit=QUADRA_PRODUTOS.filter(p=>p.kit===quadraKitSel);
+  
+  // Calcular totais
+  let totalKgProd=0;
+  Object.values(quadraProdutosLanc).forEach(p=>{ totalKgProd+=p.qtdPacotes*(p.kgPacote||0); });
+  
+  // Subtitle
+  const numKits=parseFloat(document.getElementById('quadra-num-kits')?.value)||0;
+  const totalEsperado=numKits*kgPorKit;
+  document.getElementById('quadra-lanc-sub').textContent=quadraDataSel||'';
+
+  let html=`
+    <!-- RECEITA DO KIT -->
+    <div class="card" style="border-left:3px solid #92400e;margin-bottom:12px;">
+      <div style="font-size:13px;font-weight:700;color:#92400e;margin-bottom:8px;">📋 ${quadraKitSel}</div>
+      <div class="card-label">Quantidade de kits usados</div>
+      <div class="input-unit" style="margin-bottom:10px;">
+        <input type="number" id="quadra-num-kits" placeholder="0" min="0" step="0.5" inputmode="decimal"
+          oninput="renderQuadraLanc()" style="font-size:16px;" />
+        <span class="unit-label">kits</span>
+      </div>
+      ${receita?`
+      <div style="font-size:12px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.04em;margin-bottom:6px;">Receita por kit (${kgPorKit.toFixed(3)} kg total)</div>
+      <table style="width:100%;font-size:12px;border-collapse:collapse;">
+        <tr style="border-bottom:1px solid var(--border);">
+          <th style="text-align:left;padding:4px 0;color:var(--text-secondary);font-weight:600;">Ingrediente</th>
+          <th style="text-align:right;padding:4px 0;color:var(--text-secondary);font-weight:600;">Kg/kit</th>
+        </tr>
+        ${receita.ingredientes.map(ing=>`
+        <tr style="border-bottom:0.5px solid var(--border);">
+          <td style="padding:4px 0;color:var(--text-primary);">${ing.nome}</td>
+          <td style="padding:4px 0;text-align:right;color:var(--text-primary);font-weight:500;">${ing.qtd}</td>
+        </tr>`).join('')}
+        <tr>
+          <td style="padding:6px 0;font-weight:700;color:#92400e;">Total</td>
+          <td style="padding:6px 0;text-align:right;font-weight:700;color:#92400e;">${kgPorKit.toFixed(3)}</td>
+        </tr>
+      </table>`:'<div style="color:var(--text-secondary);font-size:12px;">Receita não encontrada.</div>'}
+    </div>
+
+    <!-- PRODUTOS DERIVADOS -->
+    <div class="section-divider">Produtos produzidos</div>
+    ${produtosKit.map(p=>{
+      const lanc=quadraProdutosLanc[p.cod];
+      const qtd=lanc?lanc.qtdPacotes:0;
+      const kgTotal=qtd*p.kgPacote;
+      return `<div class="card" style="${qtd>0?'border-left:3px solid #92400e;':''}">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">
+          <div style="flex:1;">
+            <div style="font-size:13px;font-weight:600;color:var(--text-primary);">${p.nome}</div>
+            <div style="font-size:11px;color:var(--text-secondary);">${p.kgPacote}kg/pct${qtd>0?' · '+kgTotal.toFixed(3)+' kg total':''}</div>
+          </div>
+        </div>
+        <div class="input-unit">
+          <input type="number" id="quadra-pct-${p.cod}" placeholder="0" min="0" inputmode="numeric"
+            value="${qtd||''}"
+            oninput="atualizarProdQuadra('${p.cod}','${p.nome.replace(/'/g,"\'")}',${p.kgPacote},this.value)"
+            style="font-size:15px;" />
+          <span class="unit-label">pacotes</span>
+        </div>
+      </div>`;
+    }).join('')}
+
+    <!-- RESUMO E QUEBRA -->
+    ${numKits>0||totalKgProd>0?`
+    <div class="card" style="border-left:3px solid var(--mc-dourado);margin-top:4px;">
+      <div style="font-size:13px;font-weight:600;color:var(--mc-dourado);margin-bottom:8px;">📊 Resumo</div>
+      ${numKits>0?`<div class="resumo-row"><span class="resumo-nome">Esperado (${numKits} kits)</span><span style="font-weight:700;">${totalEsperado.toFixed(3)} kg</span></div>`:''}
+      <div class="resumo-row"><span class="resumo-nome">Produzido</span><span style="font-weight:700;color:#92400e;">${totalKgProd.toFixed(3)} kg</span></div>
+      ${numKits>0?`<div class="resumo-row">
+        <span class="resumo-nome">Quebra</span>
+        <span style="font-weight:700;color:${Math.abs(totalEsperado-totalKgProd)<0.01?'#2e7d32':totalKgProd>totalEsperado?'#2e7d32':'#c62828'};">
+          ${totalKgProd>totalEsperado?'+':''}${(totalKgProd-totalEsperado).toFixed(3)} kg
+        </span>
+      </div>`:''}
+    </div>`:''}
+
+    <button class="btn btn-primary" id="quadra-btn-salvar" onclick="salvarQuadra()"
+      style="background:#92400e;margin-top:4px;">Salvar lançamento ✓</button>
+  `;
+
+  el.innerHTML=html;
+}
+
+function atualizarProdQuadra(cod, nome, kgPacote, val){
+  const qtd=parseInt(val)||0;
+  if(qtd>0){
+    quadraProdutosLanc[cod]={cod, nome, kgPacote, qtdPacotes:qtd};
+  } else {
+    delete quadraProdutosLanc[cod];
+  }
+  // Update summary without full re-render
+  const numKits=parseFloat(document.getElementById('quadra-num-kits')?.value)||0;
+  const recKey=QUADRA_KIT_MAPPING[quadraKitSel];
+  const receita=recKey?QUADRA_KITS_RECEITAS[recKey]:null;
+  const kgPorKit=receita?receita.totalKg:0;
+  let totalKgProd=0;
+  Object.values(quadraProdutosLanc).forEach(p=>{ totalKgProd+=p.qtdPacotes*(p.kgPacote||0); });
+  // Lightweight update of summary card
+  renderQuadraLanc();
+}
+
+async function salvarQuadra(){
+  const numKits=parseFloat(document.getElementById('quadra-num-kits')?.value)||0;
+  const produtosArr=Object.values(quadraProdutosLanc);
+  if(numKits<=0){alert('Informe a quantidade de kits usados.');return;}
+  if(!produtosArr.length){alert('Informe a produção de pelo menos um produto.');return;}
+
+  const recKey=QUADRA_KIT_MAPPING[quadraKitSel];
+  const receita=recKey?QUADRA_KITS_RECEITAS[recKey]:null;
+  const kgPorKit=receita?receita.totalKg:0;
+  const totalEsperado=numKits*kgPorKit;
+  const totalProduzido=produtosArr.reduce((s,p)=>s+p.qtdPacotes*p.kgPacote,0);
+  const quebra=totalProduzido-totalEsperado;
+
+  const btn=document.getElementById('quadra-btn-salvar');
+  btn.textContent='Salvando...';btn.disabled=true;
+
+  try{
+    // Save main quadra record
+    const ref=await addDoc(collection(db,'quadraRegistros'),{
+      kit:quadraKitSel,
+      numKits, kgPorKit, totalEsperado,
+      totalProduzido, quebra,
+      produtos:produtosArr,
+      data:quadraDataSel, hora:agora(), timestamp:Date.now()
+    });
+
+    // Also push each produto to 'registros' collection so embalagem sees it
+    for(const p of produtosArr){
+      await addDoc(collection(db,'registros'),{
+        produto:p.nome,
+        prodData:{nome:p.nome, kgPacote:p.kgPacote, tipoMassa:quadraKitSel, grMassa:0, tipoRecheio:'', grRecheio:0, tipoRecheio2:'', grRecheio2:0},
+        qtd:p.qtdPacotes, qtdPacotes:p.qtdPacotes, qtdUnidades:p.qtdPacotes,
+        massa:0, r1:0, r2:0, obs:'Kit: '+quadraKitSel,
+        hora:agora(), data:quadraDataSel, confirmado:false, timestamp:Date.now(),
+        origem:'quadra', quadraRegId:ref.id,
+        quebra:{massaEsp:0,massaReal:0,difMassa:0,r1Esp:0,r1Real:0,difR1:0,r2Esp:0,r2Real:0,difR2:0},
+        embalagem:{feito:false,qtdEmbalada:0,qtdProduzida:p.qtdPacotes},
+        expedicao:{parciais:[],totalLiberado:0}
+      });
+    }
+
+    goTo('s-quadra-home');
+  }catch(e){
+    alert('Erro ao salvar: '+e.message);
+    btn.textContent='Salvar lançamento ✓';btn.disabled=false;
+  }
+}
+
+function renderQuadraReg(){
+  const el=document.getElementById('quadra-reg-content');
+  const sub=document.getElementById('quadra-reg-sub');
+  if(!el)return;
+  const datas=sortDatas([...new Set(quadraRegistros.map(r=>r.data))]);
+  if(sub)sub.textContent=quadraRegistros.length+' lançamento(s)';
+  if(!quadraRegistros.length){el.innerHTML='<div class="empty">Nenhum lançamento ainda.</div>';return;}
+
+  const df=window._quadraRegData||(datas[0]||hoje());
+  const selectHtml=`<div style="margin-bottom:12px;">
+    <select onchange="window._quadraRegData=this.value;renderQuadraReg()" style="font-size:15px;padding:10px 12px;border-radius:10px;border:0.5px solid var(--border-md);background:var(--bg-primary);color:var(--text-primary);width:100%;font-family:inherit;">
+      ${datas.map(d=>`<option value="${d}" ${d===df?'selected':''}>${d}</option>`).join('')}
+    </select>
+  </div>`;
+
+  const regs=quadraRegistros.filter(r=>r.data===df);
+  el.innerHTML=selectHtml+(regs.length?regs.map(r=>`
+    <div class="reg-item" style="border-left-color:#92400e;">
+      <div class="reg-header">
+        <span class="reg-produto">${r.kit}</span>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <span class="reg-hora">${r.hora}</span>
+          <button class="btn-del-admin" data-fid="${r.firestoreId}" onclick="excluirRegQuadra(this.dataset.fid)" style="background:none;border:1px solid #ef9a9a;color:#c62828;font-size:11px;padding:3px 7px;border-radius:6px;cursor:pointer;font-family:inherit;">🗑</button>
+        </div>
+      </div>
+      <div style="font-size:12px;color:var(--text-secondary);margin-top:4px;">
+        ${r.numKits} kit(s) · Esperado: <strong>${(r.totalEsperado||0).toFixed(2)}kg</strong> · Produzido: <strong>${(r.totalProduzido||0).toFixed(2)}kg</strong>
+        · Quebra: <strong style="color:${Math.abs(r.quebra||0)<0.01?'#2e7d32':(r.quebra||0)>0?'#2e7d32':'#c62828'}">${(r.quebra||0)>0?'+':''}${(r.quebra||0).toFixed(2)}kg</strong>
+      </div>
+      <div style="font-size:12px;color:var(--text-secondary);margin-top:4px;">
+        ${(r.produtos||[]).map(p=>`${p.nome}: ${p.qtdPacotes}pct (${(p.qtdPacotes*p.kgPacote).toFixed(1)}kg)`).join(' · ')}
+      </div>
+    </div>`).join(''):'<div class="empty">Sem lançamentos nesta data.</div>');
+}
+
+async function excluirRegQuadra(fid){
+  if(!window.adminMode){alert('Apenas o administrador pode excluir.');return;}
+  if(!confirm('Excluir este lançamento?\nOs produtos serão removidos da embalagem.\nEssa ação não pode ser desfeita.'))return;
+  try{
+    const reg=quadraRegistros.find(r=>r.firestoreId===fid);
+    await deleteDoc(doc(db,'quadraRegistros',fid));
+    // Also remove from registros
+    if(reg){
+      const regsProd=registros.filter(r=>r.quadraRegId===fid);
+      for(const r of regsProd) await deleteDoc(doc(db,'registros',r.firestoreId));
+    }
+    renderQuadraReg();
+  }catch(e){alert('Erro ao excluir: '+e.message);}
+}
+
 window.goTo=goTo; window.abrirPin=abrirPin; window.pinDigit=pinDigit; window.pinDel=pinDel;
 window.iniciarNovoReg=iniciarNovoReg; window.toggleManual=toggleManual;
 window.selecionarDataTipo=selecionarDataTipo; window.selecionarDataManual=selecionarDataManual;
@@ -3761,7 +4152,7 @@ window.selecionarDataEmb=selecionarDataEmb; window.irParaEmbalagem=irParaEmbalag
 window.toggleEmb=toggleEmb; window.toggleAjuste=toggleAjuste; window.confirmarAjuste=confirmarAjuste;
 window.selecionarDataExp=selecionarDataExp; window.irParaExpedicao=irParaExpedicao;
 window.adicionarLiberacao=adicionarLiberacao;
-window.tab=tab; window.toggleConf=toggleConf; window.admFiltrar=admFiltrar; window.toggleEditProd=toggleEditProd; window.salvarEditProd=salvarEditProd; window.toggleEditRecheio=toggleEditRecheio; window.salvarEditRecheio=salvarEditRecheio; window.renderMeusReg=renderMeusReg; window.renderCozReg=renderCozReg; window.abrirPresenca=abrirPresenca; window.salvarEmbManual=salvarEmbManual; window.excluirPresenca=excluirPresenca; window.salvarPresenca=salvarPresenca; window.voltarPresenca=voltarPresenca; window.renderPresencaForm=renderPresencaForm; window.selecionarDataPresenca=selecionarDataPresenca; window.selecionarDataPresencaManual=selecionarDataPresencaManual; window.adicionarColaborador=adicionarColaborador; window.removerColab=removerColab; window.updateColab=updateColab; window.renderPresencaReg=renderPresencaReg; window.abrirContagem=abrirContagem; window.subtrairContagem=subtrairContagem; window.filtrarContagem=filtrarContagem; window.adicionarContagem=adicionarContagem; window.renderContagemHist=renderContagemHist; window.verDetalheContagem=verDetalheContagem; window.renderContagemLanc=renderContagemLanc; window.renderContagemHome=renderContagemHome; window.toggleContDay=toggleContDay; window.abrirContainerItem=abrirContainerItem; window.iniciarContainerEntrada=iniciarContainerEntrada; window.selecionarDataContainerEntradaBtn=selecionarDataContainerEntradaBtn; window.selecionarDataContainerEntrada=selecionarDataContainerEntrada; window.salvarContainerEntrada=salvarContainerEntrada; window.iniciarContainerSaida=iniciarContainerSaida; window.selecionarLoteSaida=selecionarLoteSaida; window.salvarContainerSaida=salvarContainerSaida; window.excluirLoteContainer=excluirLoteContainer; window.excluirMovContainer=excluirMovContainer; window.excluirContagem=excluirContagem; window.abrirManut=abrirManut; window.voltarManut=voltarManut; window.salvarNovaMaquina=salvarNovaMaquina; window.excluirMaquina=excluirMaquina; window.abrirMaquina=abrirMaquina; window.iniciarNovaManutencao=iniciarNovaManutencao; window.selecionarDataManut=selecionarDataManut; window.salvarManutencao=salvarManutencao; window.selecionarDataManutBtn=selecionarDataManutBtn; window.abrirPlano=abrirPlano; window.voltarPlano=voltarPlano; window.salvarPlano=salvarPlano; window.adicionarItemPlano=adicionarItemPlano; window.atualizarQtdPlano=atualizarQtdPlano; window.removerItemPlano=removerItemPlano; window.trocarSemanaPlano=trocarSemanaPlano; window.togglePlanoDia=togglePlanoDia; window.toggleFeriado=toggleFeriado; window.importarPlanoPaste=importarPlanoPaste; window.limparPlano=limparPlano; window.renderManutDateGrid=renderManutDateGrid; window.toggleEditParcial=toggleEditParcial; window.salvarEditParcial=salvarEditParcial; window.excluirRegistro=excluirRegistro; window.gerarExcel=gerarExcel; window.renderPresencaForm=renderPresencaForm; window.goToAdmin=goToAdmin; window.sairAdmin=sairAdmin; window.backFromArea=backFromArea;
+window.tab=tab; window.toggleConf=toggleConf; window.admFiltrar=admFiltrar; window.toggleEditProd=toggleEditProd; window.salvarEditProd=salvarEditProd; window.toggleEditRecheio=toggleEditRecheio; window.salvarEditRecheio=salvarEditRecheio; window.renderMeusReg=renderMeusReg; window.renderCozReg=renderCozReg; window.abrirPresenca=abrirPresenca; window.salvarEmbManual=salvarEmbManual; window.excluirPresenca=excluirPresenca; window.salvarPresenca=salvarPresenca; window.voltarPresenca=voltarPresenca; window.renderPresencaForm=renderPresencaForm; window.selecionarDataPresenca=selecionarDataPresenca; window.selecionarDataPresencaManual=selecionarDataPresencaManual; window.adicionarColaborador=adicionarColaborador; window.removerColab=removerColab; window.updateColab=updateColab; window.renderPresencaReg=renderPresencaReg; window.abrirContagem=abrirContagem; window.subtrairContagem=subtrairContagem; window.filtrarContagem=filtrarContagem; window.adicionarContagem=adicionarContagem; window.renderContagemHist=renderContagemHist; window.verDetalheContagem=verDetalheContagem; window.renderContagemLanc=renderContagemLanc; window.renderContagemHome=renderContagemHome; window.toggleContDay=toggleContDay; window.abrirContainerItem=abrirContainerItem; window.iniciarContainerEntrada=iniciarContainerEntrada; window.selecionarDataContainerEntradaBtn=selecionarDataContainerEntradaBtn; window.selecionarDataContainerEntrada=selecionarDataContainerEntrada; window.salvarContainerEntrada=salvarContainerEntrada; window.iniciarContainerSaida=iniciarContainerSaida; window.selecionarLoteSaida=selecionarLoteSaida; window.salvarContainerSaida=salvarContainerSaida; window.excluirLoteContainer=excluirLoteContainer; window.iniciarNovoLancQuadra=iniciarNovoLancQuadra; window.selecionarDataQuadraBtn=selecionarDataQuadraBtn; window.selecionarDataQuadra=selecionarDataQuadra; window.filtrarKitsQuadra=filtrarKitsQuadra; window.selKitQuadra=selKitQuadra; window.atualizarProdQuadra=atualizarProdQuadra; window.salvarQuadra=salvarQuadra; window.renderQuadraReg=renderQuadraReg; window.excluirRegQuadra=excluirRegQuadra; window.renderQuadraDateGrid=renderQuadraDateGrid; window.excluirMovContainer=excluirMovContainer; window.excluirContagem=excluirContagem; window.abrirManut=abrirManut; window.voltarManut=voltarManut; window.salvarNovaMaquina=salvarNovaMaquina; window.excluirMaquina=excluirMaquina; window.abrirMaquina=abrirMaquina; window.iniciarNovaManutencao=iniciarNovaManutencao; window.selecionarDataManut=selecionarDataManut; window.salvarManutencao=salvarManutencao; window.selecionarDataManutBtn=selecionarDataManutBtn; window.abrirPlano=abrirPlano; window.voltarPlano=voltarPlano; window.salvarPlano=salvarPlano; window.adicionarItemPlano=adicionarItemPlano; window.atualizarQtdPlano=atualizarQtdPlano; window.removerItemPlano=removerItemPlano; window.trocarSemanaPlano=trocarSemanaPlano; window.togglePlanoDia=togglePlanoDia; window.toggleFeriado=toggleFeriado; window.importarPlanoPaste=importarPlanoPaste; window.limparPlano=limparPlano; window.renderManutDateGrid=renderManutDateGrid; window.toggleEditParcial=toggleEditParcial; window.salvarEditParcial=salvarEditParcial; window.excluirRegistro=excluirRegistro; window.gerarExcel=gerarExcel; window.renderPresencaForm=renderPresencaForm; window.goToAdmin=goToAdmin; window.sairAdmin=sairAdmin; window.backFromArea=backFromArea;
 </script>
 </body>
 </html>
