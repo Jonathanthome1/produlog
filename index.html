@@ -3934,36 +3934,38 @@ function renderQuadraLanc(){
   const el=document.getElementById('quadra-lanc-content');
   if(!el)return;
   document.getElementById('quadra-lanc-title').textContent=quadraKitSel||'Lançamento';
-  
-  // Get receita
+  document.getElementById('quadra-lanc-sub').textContent=quadraDataSel||'';
+
   const recKey=QUADRA_KIT_MAPPING[quadraKitSel];
   const receita=recKey?QUADRA_KITS_RECEITAS[recKey]:null;
   const kgPorKit=receita?receita.totalKg:0;
-  
-  // Produtos deste kit
   const produtosKit=QUADRA_PRODUTOS.filter(p=>p.kit===quadraKitSel);
-  
-  // Calcular totais
-  let totalKgProd=0;
-  Object.values(quadraProdutosLanc).forEach(p=>{ totalKgProd+=p.qtdPacotes*(p.kgPacote||0); });
-  
-  // Subtitle
-  const numKits=parseFloat(document.getElementById('quadra-num-kits')?.value)||0;
-  const totalEsperado=numKits*kgPorKit;
-  document.getElementById('quadra-lanc-sub').textContent=quadraDataSel||'';
 
-  let html=`
-    <!-- RECEITA DO KIT -->
+  // Only build shell once
+  if(!document.getElementById('quadra-num-kits')){
+    let html=`
     <div class="card" style="border-left:3px solid #92400e;margin-bottom:12px;">
-      <div style="font-size:13px;font-weight:700;color:#92400e;margin-bottom:8px;">📋 ${quadraKitSel}</div>
-      <div class="card-label">Quantidade de kits usados</div>
-      <div class="input-unit" style="margin-bottom:10px;">
-        <input type="number" id="quadra-num-kits" placeholder="0" min="0" step="0.5" inputmode="decimal"
-          oninput="renderQuadraLanc()" style="font-size:16px;" />
-        <span class="unit-label">kits</span>
+      <div style="font-size:13px;font-weight:700;color:#92400e;margin-bottom:10px;">📋 ${quadraKitSel}</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
+        <div>
+          <div class="card-label">Qtd de kits usados</div>
+          <div class="input-unit">
+            <input type="number" id="quadra-num-kits" placeholder="0" min="0" step="0.5" inputmode="decimal"
+              oninput="atualizarResumoQuadra()" style="font-size:16px;" />
+            <span class="unit-label">kits</span>
+          </div>
+        </div>
+        <div>
+          <div class="card-label">Massa velha (opcional)</div>
+          <div class="input-unit">
+            <input type="number" id="quadra-massa-velha" placeholder="0" min="0" step="0.1" inputmode="decimal"
+              oninput="atualizarResumoQuadra()" style="font-size:16px;" />
+            <span class="unit-label">kg</span>
+          </div>
+        </div>
       </div>
       ${receita?`
-      <div style="font-size:12px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.04em;margin-bottom:6px;">Receita por kit (${kgPorKit.toFixed(3)} kg total)</div>
+      <div style="font-size:12px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.04em;margin-bottom:6px;">Receita por kit — ${kgPorKit.toFixed(3)} kg total</div>
       <table style="width:100%;font-size:12px;border-collapse:collapse;">
         <tr style="border-bottom:1px solid var(--border);">
           <th style="text-align:left;padding:4px 0;color:var(--text-secondary);font-weight:600;">Ingrediente</th>
@@ -3971,8 +3973,8 @@ function renderQuadraLanc(){
         </tr>
         ${receita.ingredientes.map(ing=>`
         <tr style="border-bottom:0.5px solid var(--border);">
-          <td style="padding:4px 0;color:var(--text-primary);">${ing.nome}</td>
-          <td style="padding:4px 0;text-align:right;color:var(--text-primary);font-weight:500;">${ing.qtd}</td>
+          <td style="padding:5px 0;color:var(--text-primary);">${ing.nome}</td>
+          <td style="padding:5px 0;text-align:right;color:var(--text-primary);font-weight:500;">${ing.qtd}</td>
         </tr>`).join('')}
         <tr>
           <td style="padding:6px 0;font-weight:700;color:#92400e;">Total</td>
@@ -3981,48 +3983,27 @@ function renderQuadraLanc(){
       </table>`:'<div style="color:var(--text-secondary);font-size:12px;">Receita não encontrada.</div>'}
     </div>
 
-    <!-- PRODUTOS DERIVADOS -->
     <div class="section-divider">Produtos produzidos</div>
-    ${produtosKit.map(p=>{
-      const lanc=quadraProdutosLanc[p.cod];
-      const qtd=lanc?lanc.qtdPacotes:0;
-      const kgTotal=qtd*p.kgPacote;
-      return `<div class="card" style="${qtd>0?'border-left:3px solid #92400e;':''}">
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">
-          <div style="flex:1;">
-            <div style="font-size:13px;font-weight:600;color:var(--text-primary);">${p.nome}</div>
-            <div style="font-size:11px;color:var(--text-secondary);">${p.kgPacote}kg/pct${qtd>0?' · '+kgTotal.toFixed(3)+' kg total':''}</div>
-          </div>
-        </div>
-        <div class="input-unit">
-          <input type="number" id="quadra-pct-${p.cod}" placeholder="0" min="0" inputmode="numeric"
-            value="${qtd||''}"
-            oninput="atualizarProdQuadra('${p.cod}','${p.nome.replace(/'/g,"\'")}',${p.kgPacote},this.value)"
-            style="font-size:15px;" />
-          <span class="unit-label">pacotes</span>
-        </div>
-      </div>`;
-    }).join('')}
+    ${produtosKit.map(p=>`
+    <div class="card" id="quadra-card-${p.cod}">
+      <div style="margin-bottom:8px;">
+        <div style="font-size:13px;font-weight:600;color:var(--text-primary);">${p.nome}</div>
+        <div style="font-size:11px;color:var(--text-secondary);" id="quadra-info-${p.cod}">${p.kgPacote}kg/pct</div>
+      </div>
+      <div class="input-unit">
+        <input type="number" id="quadra-pct-${p.cod}" placeholder="0" min="0" inputmode="numeric"
+          oninput="atualizarProdQuadra('${p.cod}','${p.nome.replace(/'/g,"\'")}',${p.kgPacote},this.value)"
+          style="font-size:15px;" />
+        <span class="unit-label">pacotes</span>
+      </div>
+    </div>`).join('')}
 
-    <!-- RESUMO E QUEBRA -->
-    ${numKits>0||totalKgProd>0?`
-    <div class="card" style="border-left:3px solid var(--mc-dourado);margin-top:4px;">
-      <div style="font-size:13px;font-weight:600;color:var(--mc-dourado);margin-bottom:8px;">📊 Resumo</div>
-      ${numKits>0?`<div class="resumo-row"><span class="resumo-nome">Esperado (${numKits} kits)</span><span style="font-weight:700;">${totalEsperado.toFixed(3)} kg</span></div>`:''}
-      <div class="resumo-row"><span class="resumo-nome">Produzido</span><span style="font-weight:700;color:#92400e;">${totalKgProd.toFixed(3)} kg</span></div>
-      ${numKits>0?`<div class="resumo-row">
-        <span class="resumo-nome">Quebra</span>
-        <span style="font-weight:700;color:${Math.abs(totalEsperado-totalKgProd)<0.01?'#2e7d32':totalKgProd>totalEsperado?'#2e7d32':'#c62828'};">
-          ${totalKgProd>totalEsperado?'+':''}${(totalKgProd-totalEsperado).toFixed(3)} kg
-        </span>
-      </div>`:''}
-    </div>`:''}
-
+    <div id="quadra-resumo-card"></div>
     <button class="btn btn-primary" id="quadra-btn-salvar" onclick="salvarQuadra()"
-      style="background:#92400e;margin-top:4px;">Salvar lançamento ✓</button>
-  `;
-
-  el.innerHTML=html;
+      style="background:#92400e;margin-top:4px;">Salvar lançamento ✓</button>`;
+    el.innerHTML=html;
+  }
+  atualizarResumoQuadra();
 }
 
 function atualizarProdQuadra(cod, nome, kgPacote, val){
@@ -4032,19 +4013,41 @@ function atualizarProdQuadra(cod, nome, kgPacote, val){
   } else {
     delete quadraProdutosLanc[cod];
   }
-  // Update summary without full re-render
+  // Update card border + info label
+  const card=document.getElementById('quadra-card-'+cod);
+  const info=document.getElementById('quadra-info-'+cod);
+  if(card) card.style.borderLeft=qtd>0?'3px solid #92400e':'';
+  if(info) info.textContent=kgPacote+'kg/pct'+(qtd>0?' · '+(qtd*kgPacote).toFixed(2)+' kg total':'');
+  atualizarResumoQuadra();
+}
+
+function atualizarResumoQuadra(){
   const numKits=parseFloat(document.getElementById('quadra-num-kits')?.value)||0;
+  const massaVelha=parseFloat(document.getElementById('quadra-massa-velha')?.value)||0;
   const recKey=QUADRA_KIT_MAPPING[quadraKitSel];
   const receita=recKey?QUADRA_KITS_RECEITAS[recKey]:null;
   const kgPorKit=receita?receita.totalKg:0;
+  const totalEsperado=numKits*kgPorKit+massaVelha;
   let totalKgProd=0;
   Object.values(quadraProdutosLanc).forEach(p=>{ totalKgProd+=p.qtdPacotes*(p.kgPacote||0); });
-  // Lightweight update of summary card
-  renderQuadraLanc();
+  const quebra=totalKgProd-totalEsperado;
+  const resumoEl=document.getElementById('quadra-resumo-card');
+  if(!resumoEl)return;
+  if(numKits<=0&&totalKgProd<=0){resumoEl.innerHTML='';return;}
+  const corQuebra=Math.abs(quebra)<0.01?'#2e7d32':quebra>0?'#2e7d32':'#c62828';
+  resumoEl.innerHTML=`<div class="card" style="border-left:3px solid var(--mc-dourado);margin-top:4px;margin-bottom:4px;">
+    <div style="font-size:13px;font-weight:600;color:var(--mc-dourado);margin-bottom:8px;">📊 Resumo</div>
+    ${numKits>0?`<div class="resumo-row"><span class="resumo-nome">Kits (${numKits}×${kgPorKit.toFixed(2)}kg)</span><span style="font-weight:700;">${(numKits*kgPorKit).toFixed(3)} kg</span></div>`:''}
+    ${massaVelha>0?`<div class="resumo-row"><span class="resumo-nome">+ Massa velha</span><span style="font-weight:700;color:var(--mc-azul);">+${massaVelha.toFixed(3)} kg</span></div>`:''}
+    ${numKits>0||massaVelha>0?`<div class="resumo-row"><span class="resumo-nome">Total esperado</span><span style="font-weight:700;">${totalEsperado.toFixed(3)} kg</span></div>`:''}
+    <div class="resumo-row"><span class="resumo-nome">Produzido</span><span style="font-weight:700;color:#92400e;">${totalKgProd.toFixed(3)} kg</span></div>
+    ${totalEsperado>0?`<div class="resumo-row"><span class="resumo-nome">Quebra</span><span style="font-weight:700;color:${corQuebra};">${quebra>0?'+':''}${quebra.toFixed(3)} kg</span></div>`:''}
+  </div>`;
 }
 
 async function salvarQuadra(){
   const numKits=parseFloat(document.getElementById('quadra-num-kits')?.value)||0;
+  const massaVelha=parseFloat(document.getElementById('quadra-massa-velha')?.value)||0;
   const produtosArr=Object.values(quadraProdutosLanc);
   if(numKits<=0){alert('Informe a quantidade de kits usados.');return;}
   if(!produtosArr.length){alert('Informe a produção de pelo menos um produto.');return;}
@@ -4052,7 +4055,7 @@ async function salvarQuadra(){
   const recKey=QUADRA_KIT_MAPPING[quadraKitSel];
   const receita=recKey?QUADRA_KITS_RECEITAS[recKey]:null;
   const kgPorKit=receita?receita.totalKg:0;
-  const totalEsperado=numKits*kgPorKit;
+  const totalEsperado=numKits*kgPorKit+massaVelha;
   const totalProduzido=produtosArr.reduce((s,p)=>s+p.qtdPacotes*p.kgPacote,0);
   const quebra=totalProduzido-totalEsperado;
 
@@ -4063,7 +4066,7 @@ async function salvarQuadra(){
     // Save main quadra record
     const ref=await addDoc(collection(db,'quadraRegistros'),{
       kit:quadraKitSel,
-      numKits, kgPorKit, totalEsperado,
+      numKits, massaVelha, kgPorKit, totalEsperado,
       totalProduzido, quebra,
       produtos:produtosArr,
       data:quadraDataSel, hora:agora(), timestamp:Date.now()
@@ -4152,7 +4155,7 @@ window.selecionarDataEmb=selecionarDataEmb; window.irParaEmbalagem=irParaEmbalag
 window.toggleEmb=toggleEmb; window.toggleAjuste=toggleAjuste; window.confirmarAjuste=confirmarAjuste;
 window.selecionarDataExp=selecionarDataExp; window.irParaExpedicao=irParaExpedicao;
 window.adicionarLiberacao=adicionarLiberacao;
-window.tab=tab; window.toggleConf=toggleConf; window.admFiltrar=admFiltrar; window.toggleEditProd=toggleEditProd; window.salvarEditProd=salvarEditProd; window.toggleEditRecheio=toggleEditRecheio; window.salvarEditRecheio=salvarEditRecheio; window.renderMeusReg=renderMeusReg; window.renderCozReg=renderCozReg; window.abrirPresenca=abrirPresenca; window.salvarEmbManual=salvarEmbManual; window.excluirPresenca=excluirPresenca; window.salvarPresenca=salvarPresenca; window.voltarPresenca=voltarPresenca; window.renderPresencaForm=renderPresencaForm; window.selecionarDataPresenca=selecionarDataPresenca; window.selecionarDataPresencaManual=selecionarDataPresencaManual; window.adicionarColaborador=adicionarColaborador; window.removerColab=removerColab; window.updateColab=updateColab; window.renderPresencaReg=renderPresencaReg; window.abrirContagem=abrirContagem; window.subtrairContagem=subtrairContagem; window.filtrarContagem=filtrarContagem; window.adicionarContagem=adicionarContagem; window.renderContagemHist=renderContagemHist; window.verDetalheContagem=verDetalheContagem; window.renderContagemLanc=renderContagemLanc; window.renderContagemHome=renderContagemHome; window.toggleContDay=toggleContDay; window.abrirContainerItem=abrirContainerItem; window.iniciarContainerEntrada=iniciarContainerEntrada; window.selecionarDataContainerEntradaBtn=selecionarDataContainerEntradaBtn; window.selecionarDataContainerEntrada=selecionarDataContainerEntrada; window.salvarContainerEntrada=salvarContainerEntrada; window.iniciarContainerSaida=iniciarContainerSaida; window.selecionarLoteSaida=selecionarLoteSaida; window.salvarContainerSaida=salvarContainerSaida; window.excluirLoteContainer=excluirLoteContainer; window.iniciarNovoLancQuadra=iniciarNovoLancQuadra; window.selecionarDataQuadraBtn=selecionarDataQuadraBtn; window.selecionarDataQuadra=selecionarDataQuadra; window.filtrarKitsQuadra=filtrarKitsQuadra; window.selKitQuadra=selKitQuadra; window.atualizarProdQuadra=atualizarProdQuadra; window.salvarQuadra=salvarQuadra; window.renderQuadraReg=renderQuadraReg; window.excluirRegQuadra=excluirRegQuadra; window.renderQuadraDateGrid=renderQuadraDateGrid; window.excluirMovContainer=excluirMovContainer; window.excluirContagem=excluirContagem; window.abrirManut=abrirManut; window.voltarManut=voltarManut; window.salvarNovaMaquina=salvarNovaMaquina; window.excluirMaquina=excluirMaquina; window.abrirMaquina=abrirMaquina; window.iniciarNovaManutencao=iniciarNovaManutencao; window.selecionarDataManut=selecionarDataManut; window.salvarManutencao=salvarManutencao; window.selecionarDataManutBtn=selecionarDataManutBtn; window.abrirPlano=abrirPlano; window.voltarPlano=voltarPlano; window.salvarPlano=salvarPlano; window.adicionarItemPlano=adicionarItemPlano; window.atualizarQtdPlano=atualizarQtdPlano; window.removerItemPlano=removerItemPlano; window.trocarSemanaPlano=trocarSemanaPlano; window.togglePlanoDia=togglePlanoDia; window.toggleFeriado=toggleFeriado; window.importarPlanoPaste=importarPlanoPaste; window.limparPlano=limparPlano; window.renderManutDateGrid=renderManutDateGrid; window.toggleEditParcial=toggleEditParcial; window.salvarEditParcial=salvarEditParcial; window.excluirRegistro=excluirRegistro; window.gerarExcel=gerarExcel; window.renderPresencaForm=renderPresencaForm; window.goToAdmin=goToAdmin; window.sairAdmin=sairAdmin; window.backFromArea=backFromArea;
+window.tab=tab; window.toggleConf=toggleConf; window.admFiltrar=admFiltrar; window.toggleEditProd=toggleEditProd; window.salvarEditProd=salvarEditProd; window.toggleEditRecheio=toggleEditRecheio; window.salvarEditRecheio=salvarEditRecheio; window.renderMeusReg=renderMeusReg; window.renderCozReg=renderCozReg; window.abrirPresenca=abrirPresenca; window.salvarEmbManual=salvarEmbManual; window.excluirPresenca=excluirPresenca; window.salvarPresenca=salvarPresenca; window.voltarPresenca=voltarPresenca; window.renderPresencaForm=renderPresencaForm; window.selecionarDataPresenca=selecionarDataPresenca; window.selecionarDataPresencaManual=selecionarDataPresencaManual; window.adicionarColaborador=adicionarColaborador; window.removerColab=removerColab; window.updateColab=updateColab; window.renderPresencaReg=renderPresencaReg; window.abrirContagem=abrirContagem; window.subtrairContagem=subtrairContagem; window.filtrarContagem=filtrarContagem; window.adicionarContagem=adicionarContagem; window.renderContagemHist=renderContagemHist; window.verDetalheContagem=verDetalheContagem; window.renderContagemLanc=renderContagemLanc; window.renderContagemHome=renderContagemHome; window.toggleContDay=toggleContDay; window.abrirContainerItem=abrirContainerItem; window.iniciarContainerEntrada=iniciarContainerEntrada; window.selecionarDataContainerEntradaBtn=selecionarDataContainerEntradaBtn; window.selecionarDataContainerEntrada=selecionarDataContainerEntrada; window.salvarContainerEntrada=salvarContainerEntrada; window.iniciarContainerSaida=iniciarContainerSaida; window.selecionarLoteSaida=selecionarLoteSaida; window.salvarContainerSaida=salvarContainerSaida; window.excluirLoteContainer=excluirLoteContainer; window.iniciarNovoLancQuadra=iniciarNovoLancQuadra; window.selecionarDataQuadraBtn=selecionarDataQuadraBtn; window.selecionarDataQuadra=selecionarDataQuadra; window.filtrarKitsQuadra=filtrarKitsQuadra; window.selKitQuadra=selKitQuadra; window.atualizarProdQuadra=atualizarProdQuadra; window.salvarQuadra=salvarQuadra; window.renderQuadraReg=renderQuadraReg; window.excluirRegQuadra=excluirRegQuadra; window.renderQuadraDateGrid=renderQuadraDateGrid; window.atualizarResumoQuadra=atualizarResumoQuadra; window.excluirMovContainer=excluirMovContainer; window.excluirContagem=excluirContagem; window.abrirManut=abrirManut; window.voltarManut=voltarManut; window.salvarNovaMaquina=salvarNovaMaquina; window.excluirMaquina=excluirMaquina; window.abrirMaquina=abrirMaquina; window.iniciarNovaManutencao=iniciarNovaManutencao; window.selecionarDataManut=selecionarDataManut; window.salvarManutencao=salvarManutencao; window.selecionarDataManutBtn=selecionarDataManutBtn; window.abrirPlano=abrirPlano; window.voltarPlano=voltarPlano; window.salvarPlano=salvarPlano; window.adicionarItemPlano=adicionarItemPlano; window.atualizarQtdPlano=atualizarQtdPlano; window.removerItemPlano=removerItemPlano; window.trocarSemanaPlano=trocarSemanaPlano; window.togglePlanoDia=togglePlanoDia; window.toggleFeriado=toggleFeriado; window.importarPlanoPaste=importarPlanoPaste; window.limparPlano=limparPlano; window.renderManutDateGrid=renderManutDateGrid; window.toggleEditParcial=toggleEditParcial; window.salvarEditParcial=salvarEditParcial; window.excluirRegistro=excluirRegistro; window.gerarExcel=gerarExcel; window.renderPresencaForm=renderPresencaForm; window.goToAdmin=goToAdmin; window.sairAdmin=sairAdmin; window.backFromArea=backFromArea;
 </script>
 </body>
 </html>
