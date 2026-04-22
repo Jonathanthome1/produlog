@@ -278,6 +278,11 @@
         <div style="flex:1;"><div class="hb-title">Expedição</div><div class="hb-desc">Liberação para câmara fria</div></div>
         <span style="color:var(--text-secondary);font-size:20px;">›</span>
       </button>
+      <button class="home-btn" style="border-left-color:#059669;" onclick="abrirPin('container')">
+        <div class="hb-icon" style="background:#ecfdf5;">🏭</div>
+        <div style="flex:1;"><div class="hb-title">Container</div><div class="hb-desc">Estoque de matérias primas</div></div>
+        <span style="color:var(--text-secondary);font-size:20px;">›</span>
+      </button>
       <button class="home-btn" style="border-left-color:#0891b2;" onclick="abrirPin('contagem')">
         <div class="hb-icon" style="background:#ecfeff;">📋</div>
         <div style="flex:1;"><div class="hb-title">Contagem</div><div class="hb-desc">Contagem mensal de estoque</div></div>
@@ -803,6 +808,79 @@
     <div class="content" id="plano-content"></div>
   </div>
 
+
+  <!-- CONTAINER HOME -->
+  <div class="screen" id="s-container-home">
+    <div class="topbar" style="background:#059669;">
+      <div style="flex:1;"><div class="topbar-title">Container 🏭</div><div class="topbar-sub" id="cont-container-sub">Estoque de matérias primas</div></div>
+      <button class="topbar-right" onclick="window.adminMode?goTo('s-adm-hub'):goTo('s-inicio')">Sair</button>
+    </div>
+    <div class="content">
+      <div class="section-divider">Selecione o produto</div>
+      <button class="home-btn" style="border-left-color:#059669;" onclick="abrirContainerItem('Calabresa')"><div class="hb-icon" style="background:#ecfdf5;">📦</div><div style="flex:1;"><div class="hb-title">Calabresa</div><div class="hb-desc" id="container-badge-Calabresa">Verificando...</div></div><span style="color:var(--text-secondary);font-size:20px;">›</span></button>
+      <button class="home-btn" style="border-left-color:#059669;" onclick="abrirContainerItem('Calabresa Fina')"><div class="hb-icon" style="background:#ecfdf5;">📦</div><div style="flex:1;"><div class="hb-title">Calabresa Fina</div><div class="hb-desc" id="container-badge-Calabresa-Fina">Verificando...</div></div><span style="color:var(--text-secondary);font-size:20px;">›</span></button>
+      <button class="home-btn" style="border-left-color:#059669;" onclick="abrirContainerItem('Coxão')"><div class="hb-icon" style="background:#ecfdf5;">📦</div><div style="flex:1;"><div class="hb-title">Coxão</div><div class="hb-desc" id="container-badge-Coxão">Verificando...</div></div><span style="color:var(--text-secondary);font-size:20px;">›</span></button>
+      <button class="home-btn" style="border-left-color:#059669;" onclick="abrirContainerItem('Acem')"><div class="hb-icon" style="background:#ecfdf5;">📦</div><div style="flex:1;"><div class="hb-title">Acem</div><div class="hb-desc" id="container-badge-Acem">Verificando...</div></div><span style="color:var(--text-secondary);font-size:20px;">›</span></button>
+      <button class="home-btn" style="border-left-color:#059669;" onclick="abrirContainerItem('Presunto')"><div class="hb-icon" style="background:#ecfdf5;">📦</div><div style="flex:1;"><div class="hb-title">Presunto</div><div class="hb-desc" id="container-badge-Presunto">Verificando...</div></div><span style="color:var(--text-secondary);font-size:20px;">›</span></button>
+      <button class="home-btn" style="border-left-color:#059669;" onclick="abrirContainerItem('Salsicha Excelsior')"><div class="hb-icon" style="background:#ecfdf5;">📦</div><div style="flex:1;"><div class="hb-title">Salsicha Excelsior</div><div class="hb-desc" id="container-badge-Salsicha-Excelsior">Verificando...</div></div><span style="color:var(--text-secondary);font-size:20px;">›</span></button>
+      <button class="home-btn" style="border-left-color:#059669;" onclick="abrirContainerItem('Aurora Pena Branca')"><div class="hb-icon" style="background:#ecfdf5;">📦</div><div style="flex:1;"><div class="hb-title">Aurora Pena Branca</div><div class="hb-desc" id="container-badge-Aurora-Pena-Branca">Verificando...</div></div><span style="color:var(--text-secondary);font-size:20px;">›</span></button>
+      <button class="home-btn" style="border-left-color:#059669;" onclick="abrirContainerItem('Queijo Parmesão')"><div class="hb-icon" style="background:#ecfdf5;">📦</div><div style="flex:1;"><div class="hb-title">Queijo Parmesão</div><div class="hb-desc" id="container-badge-Queijo-Parmesão">Verificando...</div></div><span style="color:var(--text-secondary);font-size:20px;">›</span></button>
+      <button class="home-btn" style="border-left-color:#059669;" onclick="abrirContainerItem('Queijo Mussarela')"><div class="hb-icon" style="background:#ecfdf5;">📦</div><div style="flex:1;"><div class="hb-title">Queijo Mussarela</div><div class="hb-desc" id="container-badge-Queijo-Mussarela">Verificando...</div></div><span style="color:var(--text-secondary);font-size:20px;">›</span></button>
+      <button class="home-btn" style="border-left-color:#059669;" onclick="abrirContainerItem('Queijo Meia Cura')"><div class="hb-icon" style="background:#ecfdf5;">📦</div><div style="flex:1;"><div class="hb-title">Queijo Meia Cura</div><div class="hb-desc" id="container-badge-Queijo-Meia-Cura">Verificando...</div></div><span style="color:var(--text-secondary);font-size:20px;">›</span></button>
+      <button class="home-btn" style="border-left-color:#059669;" onclick="abrirContainerItem('Requeijão Vale do Pardo')"><div class="hb-icon" style="background:#ecfdf5;">📦</div><div style="flex:1;"><div class="hb-title">Requeijão Vale do Pardo</div><div class="hb-desc" id="container-badge-Requeijão-Vale-do-Pardo">Verificando...</div></div><span style="color:var(--text-secondary);font-size:20px;">›</span></button>
+      <button class="home-btn" style="border-left-color:#059669;" onclick="abrirContainerItem('Requeijão Amarílis')"><div class="hb-icon" style="background:#ecfdf5;">📦</div><div style="flex:1;"><div class="hb-title">Requeijão Amarílis</div><div class="hb-desc" id="container-badge-Requeijão-Amarílis">Verificando...</div></div><span style="color:var(--text-secondary);font-size:20px;">›</span></button>
+      <button class="home-btn" style="border-left-color:#059669;" onclick="abrirContainerItem('Cheddar')"><div class="hb-icon" style="background:#ecfdf5;">📦</div><div style="flex:1;"><div class="hb-title">Cheddar</div><div class="hb-desc" id="container-badge-Cheddar">Verificando...</div></div><span style="color:var(--text-secondary);font-size:20px;">›</span></button>
+    </div>
+  </div>
+
+  <!-- CONTAINER ITEM DETAIL -->
+  <div class="screen" id="s-container-item">
+    <div class="topbar" style="background:#059669;">
+      <button class="back-btn" onclick="goTo('s-container-home')">‹</button>
+      <div><div class="topbar-title" id="container-item-title">Item</div><div class="topbar-sub" id="container-item-sub"></div></div>
+    </div>
+    <div class="content" id="container-item-content"></div>
+  </div>
+
+  <!-- CONTAINER: ENTRADA -->
+  <div class="screen" id="s-container-entrada">
+    <div class="topbar" style="background:#059669;">
+      <button class="back-btn" onclick="goTo('s-container-item')">‹</button>
+      <div><div class="topbar-title">Nova Entrada</div><div class="topbar-sub" id="container-entrada-sub"></div></div>
+    </div>
+    <div class="content">
+      <div class="card">
+        <div class="card-label">Data de chegada</div>
+        <div class="date-btn-grid" id="container-entrada-date-grid"></div>
+        <button class="date-manual-toggle" onclick="toggleManual('container-manual-wrap')">Outra data →</button>
+        <div id="container-manual-wrap" style="display:none;margin-top:8px;">
+          <input type="date" id="container-entrada-data-input" onchange="selecionarDataContainerEntrada()" />
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-label">Quantidade recebida</div>
+        <div class="input-unit">
+          <input type="number" id="container-entrada-qtd" placeholder="0" min="0" step="0.1" inputmode="decimal" />
+          <span class="unit-label">kg</span>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-label">Observação (opcional)</div>
+        <input type="text" id="container-entrada-obs" placeholder="Ex: fornecedor, nota fiscal..." />
+      </div>
+      <button class="btn btn-primary" id="container-entrada-btn" onclick="salvarContainerEntrada()" style="background:#059669;">Registrar entrada ✓</button>
+    </div>
+  </div>
+
+  <!-- CONTAINER: SAÍDA -->
+  <div class="screen" id="s-container-saida">
+    <div class="topbar" style="background:#059669;">
+      <button class="back-btn" onclick="goTo('s-container-item')">‹</button>
+      <div><div class="topbar-title">Registrar Saída</div><div class="topbar-sub" id="container-saida-sub"></div></div>
+    </div>
+    <div class="content" id="container-saida-content"></div>
+  </div>
+
   <!-- EXPEDIÇÃO: SELECIONAR DATA -->
   <div class="screen" id="s-exp-sel-data">
     <div class="topbar laranja">
@@ -854,6 +932,11 @@
       <button class="home-btn laranja" onclick="goToAdmin('s-exp-sel-data')">
         <div class="hb-icon hb-laranja">🚚</div>
         <div style="flex:1;"><div class="hb-title">Expedição</div><div class="hb-desc">Liberação para câmara fria</div></div>
+        <span style="color:var(--text-secondary);font-size:20px;">›</span>
+      </button>
+      <button class="home-btn" style="border-left-color:#059669;" onclick="goToAdmin('s-container-home')">
+        <div class="hb-icon" style="background:#ecfdf5;">🏭</div>
+        <div style="flex:1;"><div class="hb-title">Container</div><div class="hb-desc">Estoque de matérias primas</div></div>
         <span style="color:var(--text-secondary);font-size:20px;">›</span>
       </button>
       <button class="home-btn" style="border-left-color:#0891b2;" onclick="goToAdmin('s-contagem-home')">
@@ -993,10 +1076,10 @@ const db = getFirestore(app);
 // PINs por setor
 const CONTAGEM_ITENS = {"Materia Prima": [{"cod": "14001", "nome": "AMIDO DE MILHO SACO 25KG"}, {"cod": "14003", "nome": "AÇUCAR CONCENTRADO"}, {"cod": "14004", "nome": "AÇUCAR CRISTAL"}, {"cod": "14005", "nome": "AÇUCAR REFINADO"}, {"cod": "14006", "nome": "AIPIM"}, {"cod": "14007", "nome": "ALFACE"}, {"cod": "14008", "nome": "ALHO"}, {"cod": "14009", "nome": "AMACIANTE DE CARNE"}, {"cod": "14010", "nome": "ARROZ"}, {"cod": "14011", "nome": "BATATA"}, {"cod": "14012", "nome": "BATATA DOCE"}, {"cod": "14013", "nome": "BETERRABA"}, {"cod": "14014", "nome": "BROCOLIS"}, {"cod": "14015", "nome": "CACAU EM PÓ - BLACK"}, {"cod": "14016", "nome": "CACHAÇA"}, {"cod": "14017", "nome": "CAFÉ"}, {"cod": "14018", "nome": "CALDO DE CARNE"}, {"cod": "14019", "nome": "CALDO DE GALINHA"}, {"cod": "14020", "nome": "CALDO DE LEGUMES"}, {"cod": "14021", "nome": "CANELA"}, {"cod": "14022", "nome": "CATCHUP"}, {"cod": "14023", "nome": "CEBOLA"}, {"cod": "14024", "nome": "CENOURA"}, {"cod": "14025", "nome": "CHEDDAR"}, {"cod": "14026", "nome": "CHOCOLATE AO LEITE EM BARRA 24GR"}, {"cod": "14028", "nome": "CHUCHU"}, {"cod": "14029", "nome": "CORANTE AMARELO GEMA"}, {"cod": "14030", "nome": "CORANTE CARAMELO"}, {"cod": "14031", "nome": "COUVE FLOR"}, {"cod": "14032", "nome": "COUVE MANTEIGA"}, {"cod": "14033", "nome": "CARNE ACEM"}, {"cod": "14034", "nome": "COXA SOBRECOXA"}, {"cod": "14035", "nome": "DOCE DE LEITE"}, {"cod": "14038", "nome": "ERVA DOCE"}, {"cod": "14039", "nome": "ESPINAFRE"}, {"cod": "14040", "nome": "ESSENCIA DE BAUNILHA"}, {"cod": "14041", "nome": "ESSENCIA DE QUEIJO"}, {"cod": "14042", "nome": "ESSENCIA MANTEIGA"}, {"cod": "14043", "nome": "FARINHA BELONI"}, {"cod": "14045", "nome": "FARINHA DE MILHO MÉDIA"}, {"cod": "14046", "nome": "FARINHA DE ROSCA"}, {"cod": "14047", "nome": "FARINHA DE TRIGO SUPER"}, {"cod": "14048", "nome": "FARINHA FIBRA DE TRIGO"}, {"cod": "14049", "nome": "FARINHA INTEGRAL"}, {"cod": "14050", "nome": "FARINHA MANDIOCA"}, {"cod": "14051", "nome": "FARINHA MIX PRIFAL"}, {"cod": "14052", "nome": "FARINHA M DIAS"}, {"cod": "14053", "nome": "FEIJÃO PRETO"}, {"cod": "14054", "nome": "FERMENTO DOCE"}, {"cod": "14055", "nome": "FERMENTO EM PÓ"}, {"cod": "14056", "nome": "FERMENTO FLASHMANN"}, {"cod": "14057", "nome": "FERMENTO ITAIQUARA"}, {"cod": "14058", "nome": "FILÉ PEITO DE FRANGO"}, {"cod": "14059", "nome": "FLOCOS DE BATATA"}, {"cod": "14060", "nome": "FRUTAS CRISTALIZADAS"}, {"cod": "14061", "nome": "GOIABADA"}, {"cod": "14062", "nome": "GOTAS PINGO CHOCOLATE"}, {"cod": "14063", "nome": "GRANOLA 7 CEREAIS"}, {"cod": "14064", "nome": "HORTELA"}, {"cod": "14065", "nome": "LEITE"}, {"cod": "14066", "nome": "LENTILHA"}, {"cod": "14067", "nome": "LINGUIÇA CALABRESA MÉDIA"}, {"cod": "14068", "nome": "MARGARINA COAMO"}, {"cod": "14069", "nome": "MARGARINA FOLHADA"}, {"cod": "14070", "nome": "MILHO"}, {"cod": "14071", "nome": "MISTURA AUSTRALIANO"}, {"cod": "14073", "nome": "MISTURA DE PÃO DE QUEIJO RECHEADO 6520"}, {"cod": "14074", "nome": "MISTURA PARA PÃO DE QUEIJO NORMAL"}, {"cod": "14075", "nome": "MISTURA PRA CUCA ALEMA"}, {"cod": "14076", "nome": "MOLHO INGLES"}, {"cod": "14077", "nome": "MOLHO REFOGADO"}, {"cod": "14078", "nome": "MOLHO SHOYO"}, {"cod": "14079", "nome": "MORANGA CABUTIA"}, {"cod": "14080", "nome": "MOSTARDA"}, {"cod": "14081", "nome": "NOZ MOSCADA"}, {"cod": "14082", "nome": "OLEO DE SOJA"}, {"cod": "14083", "nome": "OLEO EMULSIFICANTE"}, {"cod": "14084", "nome": "OREGANO"}, {"cod": "14085", "nome": "OVO EM PÓ"}, {"cod": "14086", "nome": "OVO IN NATURA"}, {"cod": "14088", "nome": "PAPRICA DOCE"}, {"cod": "14089", "nome": "PEPINO"}, {"cod": "14090", "nome": "PIMENTA MOÍDA BRANCA"}, {"cod": "14091", "nome": "PIMENTAO"}, {"cod": "14092", "nome": "POLVILHO AZEDO"}, {"cod": "14093", "nome": "PRESUNTO"}, {"cod": "14094", "nome": "PROTEINA DE SOJA SABOR CEBOLA E SALSA"}, {"cod": "14095", "nome": "PROTEINA DE SOJA SABOR PICANHA"}, {"cod": "14096", "nome": "PROTEINA DE SOJA TEXTURIZADA CARAMELO"}, {"cod": "14097", "nome": "PROTEINA DE SOJA TEXTURIZADA NATURAL"}, {"cod": "14098", "nome": "QUEIJO MINAS (MEIA CURA)"}, {"cod": "14099", "nome": "QUEIJO MUSSARELA"}, {"cod": "14100", "nome": "QUEIJO TROPICAL (PARMESÃO)"}, {"cod": "14102", "nome": "RABANETE"}, {"cod": "14103", "nome": "REFORÇADOR(MELHORADOR)"}, {"cod": "14104", "nome": "REPOLHO"}, {"cod": "14105", "nome": "REQUEIJÃO (VALE DO PARDO)"}, {"cod": "14107", "nome": "RETARDADOR"}, {"cod": "14108", "nome": "RUCULA"}, {"cod": "14109", "nome": "SAL"}, {"cod": "14110", "nome": "SAL GROSSO"}, {"cod": "14111", "nome": "SALSICHA EXCELSIOR"}, {"cod": "14112", "nome": "SEMENTE DE LINHAÇA"}, {"cod": "14113", "nome": "SOBREPALETA SUINA"}, {"cod": "14114", "nome": "SORO DE LEITE EM PO"}, {"cod": "14115", "nome": "TEMPERO VERDE"}, {"cod": "14116", "nome": "TOMATE"}, {"cod": "14117", "nome": "TRIGO PARA KIBE"}, {"cod": "14118", "nome": "VAGEM"}, {"cod": "14119", "nome": "VINAGRE ALCOOL 750 ML"}, {"cod": "14122", "nome": "MASSA ESPAGUETE"}, {"cod": "14124", "nome": "SORBATO DE POTASSIO"}, {"cod": "14125", "nome": "CARNE COXAO"}, {"cod": "14132", "nome": "OVO EM GALAO"}, {"cod": "14133", "nome": "PROTEINA DE SOJA TEXTURIZADA NATURAL (EM FLOCOS)"}, {"cod": "14134", "nome": "PROTEINA DE SOJA TEXTURIZADA NATURAL RED BORDO"}, {"cod": "14137", "nome": "FARINHA ESTRELA"}, {"cod": "14138", "nome": "FARINHA PADEIRO"}, {"cod": "14139", "nome": "LINGUIÇA CALABRESA FINA"}, {"cod": "14140", "nome": "FARINHA ANACONDA"}, {"cod": "14141", "nome": "MOLHO BARBECUE"}, {"cod": "14142", "nome": "LIMAO"}, {"cod": "14143", "nome": "MAÇA"}, {"cod": "14144", "nome": "PIMENTA VERMELHA"}, {"cod": "14145", "nome": "MANJERONA"}, {"cod": "14146", "nome": "CHOCOLATE AO LEITE EM BARRA 6GR"}, {"cod": "14147", "nome": "MARGARINA VIGOR (AMELIA)"}, {"cod": "14148", "nome": "SALSICHA NOBRE/PENA BRANCA"}, {"cod": "14149", "nome": "MARGARINA CREMOSA 60% (REFEITÓRIO)"}, {"cod": "14150", "nome": "OLEO OVAM25 (OLEO ALIMENTICIO)"}, {"cod": "14151", "nome": "PIMENTA DEDO DE MOÇA"}, {"cod": "14152", "nome": "PIMENTA MOÍDA PRETA"}, {"cod": "14153", "nome": "REQUEIJÃO (AMARILIS)"}, {"cod": "1505", "nome": "FARINHA DE MILHO FINA"}, {"cod": "2233", "nome": "EMULSIFICANTE - INATIVO"}, {"cod": "2555", "nome": "MELHORADOR BIOPAN - INATIVO"}, {"cod": "3968", "nome": "AMIDO ESPECIAL PODIUM (AMIDO PARA RECHEIO)"}, {"cod": "14120", "nome": "COLORAU"}, {"cod": "14121", "nome": "CREME DE LEITE"}], "Produto Acabado - Pão": [{"cod": "122", "nome": "CUCA FRUTAS 320GR"}, {"cod": "130", "nome": "CUCA ALEMÃ 320GR"}, {"cod": "132", "nome": "CUECA VIRADA 40GR"}, {"cod": "145", "nome": "CUCA CHOCOLATE 320GR"}, {"cod": "154", "nome": "CUCA COLONIAL 400GR"}, {"cod": "155", "nome": "CUECA VIRADA GRANDE 44GR"}, {"cod": "3", "nome": "PÃO FIBRAS 75GR"}, {"cod": "4", "nome": "PÃO MASSA DOCE 75GR"}, {"cod": "6", "nome": "PÃO DE MILHO - BOLA 75GR"}, {"cod": "101", "nome": "PÃO MASSA FORNEADO"}, {"cod": "105", "nome": "PÃO FOLHADO 88GR"}, {"cod": "107", "nome": "PÃO FIBRAS -  PRETO 75GR"}, {"cod": "108", "nome": "PÃO FIBRAS - BOLA 75GR"}, {"cod": "111", "nome": "PÃO MASSA DOCE - CÃO 135GR"}, {"cod": "112", "nome": "PÃO DE XIS 120GR"}, {"cod": "114", "nome": "PÃO MASSA DOCE ANIVERSARIO 45GR"}, {"cod": "115", "nome": "PÃO VOVÓ 88GR"}, {"cod": "117", "nome": "PÃO GAJETA 88GR"}, {"cod": "118", "nome": "PÃO BAGUETE COM FIBRAS 155GR"}, {"cod": "123", "nome": "PÃO TRANÇA 270GR"}, {"cod": "124", "nome": "PÃO MASSA DOCE HAMBURGUER 90GR"}, {"cod": "126", "nome": "PÃO DOCE BRIOCHE 60GR"}, {"cod": "127", "nome": "PÃO DE SONHO MINI 44GR"}, {"cod": "128", "nome": "PÃO DE SONHO 70GR"}, {"cod": "129", "nome": "PÃO CARACOL 88GR"}, {"cod": "134", "nome": "PÃO RAMINHO 37GR"}, {"cod": "138", "nome": "PÃO DE BATATA 75GR"}, {"cod": "139", "nome": "PÃO DE CENOURA 75GR"}, {"cod": "14", "nome": "PÃO DE MILHO - SALGADO (CACETINHO) 75GR"}, {"cod": "140", "nome": "PÃO DE LEITE 500GR"}, {"cod": "142", "nome": "PÃO DE MILHO SALGADO 500GR"}, {"cod": "143", "nome": "PÃO FIBRAS 500GR"}, {"cod": "144", "nome": "PÃO 7 GRÃOS 500GR"}, {"cod": "148", "nome": "PÃO AIPIM 500GR"}, {"cod": "150", "nome": "PÃO CASEIRO 500GR"}, {"cod": "153", "nome": "PÃO MILHO DOCE 500GR"}, {"cod": "159", "nome": "PÃO DONUT 44GR"}, {"cod": "201", "nome": "ROSCA DE POLVILHO 250GR"}, {"cod": "21", "nome": "PÃO BRIOCHE 500GR"}, {"cod": "25", "nome": "PÃO CENOURA 500GR"}, {"cod": "26", "nome": "PÃO DE BATATA 500GR"}, {"cod": "266", "nome": "ROLO MASSA DE PAO-SEMI FOLHADA"}, {"cod": "186", "nome": "PÃO DE QUEIJO RECH. FRANGO 58GR"}, {"cod": "187", "nome": "PÃO DE QUEIJO RECH. REQUEIJÃO 58GR"}, {"cod": "188", "nome": "PÃO DE QUEIJO RECH. GOIABADA  58GR"}, {"cod": "197", "nome": "PÃO DE QUEIJO 90GR"}, {"cod": "198", "nome": "PÃO DE QUEIJO 65GR 1KG GONDOLA"}, {"cod": "199", "nome": "PÃO DE QUEIJO 25GR"}, {"cod": "200", "nome": "PÃO DE QUEIJO 65GR"}, {"cod": "403", "nome": "PÃO DE QUEIJO RECH. GOIABADA 400GR (RECEITARIA)"}, {"cod": "5", "nome": "PÃO FRANCES SOVADO 88GR"}, {"cod": "7", "nome": "PÃO FRANCES DE QUARTO (250)"}, {"cod": "106", "nome": "PÃO FRANCES MINI 6/8 54GR"}, {"cod": "110", "nome": "PÃO FRANCES BAGUETE 155GR"}, {"cod": "119", "nome": "PÃO FRANCES PREMIUM 75GR"}, {"cod": "12", "nome": "PÃO FRANCES BOLA 75GR"}, {"cod": "120", "nome": "PÃO FRANCES PREMIUM 10/12"}, {"cod": "147", "nome": "PÃO FRANCES 500GR"}, {"cod": "160", "nome": "PÃO FRANCES PREMIUM PLUS"}, {"cod": "31", "nome": "PAO FRANCES PREMIUM 6,6KG CARDOSO EMB. PRETA"}, {"cod": "32", "nome": "PÃO FRANCES BOLA CARDOSO 6,6KG"}], "Produto Acabado - Salgado": [{"cod": "259", "nome": "PALMIER - ORELHA DE MACACO"}, {"cod": "261", "nome": "MASSA FOLHADA"}, {"cod": "267", "nome": "ROLO MASSA FOLHADA"}, {"cod": "247", "nome": "POLENTINHA DE QUEIJO"}, {"cod": "248", "nome": "MINI TRAVISSEIRINHO CALABRESA"}, {"cod": "249", "nome": "MINI EMPADA PRESUNTO E QUEIJO"}, {"cod": "250", "nome": "MINI COXINHA DE FRANGO"}, {"cod": "251", "nome": "MINI CROQUETE CARNE"}, {"cod": "252", "nome": "MINI KIBE"}, {"cod": "253", "nome": "MINI TRAVISSEIRINHO  PRESUNTO/QUEIJO"}, {"cod": "254", "nome": "MINI BOLINHA DE QUEIJO"}, {"cod": "255", "nome": "MINI EMPADA FRANGO FOLHADA"}, {"cod": "256", "nome": "MINI CACHORRO FOLHADO"}, {"cod": "257", "nome": "MINI CHURROS DOCE DE LEITE"}, {"cod": "260", "nome": "MINI RISOLES FRANGO"}, {"cod": "262", "nome": "MINI CROQUETE CARNE C/ REQUEIJÃO"}, {"cod": "264", "nome": "MINI EMPANADINHO DE SALSICHA FRITO"}, {"cod": "265", "nome": "MINI CROQUETE DE FRANGO C/ REQUEIJÃO"}, {"cod": "268", "nome": "MINI RISOLES PRESUNTO"}, {"cod": "269", "nome": "BOLINHA DE AIPIM C/ CALABRESA"}, {"cod": "270", "nome": "MINI POLENTINHA DE CALABRESA"}, {"cod": "275", "nome": "MINI RISOLES CARNE"}, {"cod": "278", "nome": "MINI FOLHADO FRANGO"}, {"cod": "279", "nome": "MINI FOLHADO PRESUNTO QUEIJO"}, {"cod": "280", "nome": "MINI FOLHADO GOIABADA"}, {"cod": "281", "nome": "MINI PASTEL DE CARNE"}, {"cod": "282", "nome": "DOGUINHO"}, {"cod": "288", "nome": "CALABRINHO"}, {"cod": "289", "nome": "MINI PASTEL DE QUEIJO"}, {"cod": "290", "nome": "MINI PASTEL DE FRANGO"}, {"cod": "850", "nome": "(C&F) MINI COXINHA DE FRANGO"}, {"cod": "854", "nome": "(C&F) MINI BOLINHA DE QUEIJO"}, {"cod": "857", "nome": "(C&F) MINI CHURROS DOCE DE LEITE"}, {"cod": "860", "nome": "(C&F) MINI RISOLES FRANGO"}, {"cod": "862", "nome": "(C&F) MINI CROQUETE CARNE C/ REQUEIJÃO"}, {"cod": "864", "nome": "(C&F) MINI EMPANADINHO DE SALSICHA"}, {"cod": "865", "nome": "(C&F) MINI CROQUETE DE FRANGO C/ REQUEIJÃO"}, {"cod": "870", "nome": "(C&F) MINI POLENTINHA DE CALABRESA"}, {"cod": "875", "nome": "(C&F) MINI RISOLES CARNE"}, {"cod": "1501", "nome": "KIT AMOSTRA EMPANADA"}, {"cod": "203", "nome": "FOLHADO CARNE E CHEDDAR (10 UN C/ 150GR CX C/ 1,50KG)"}, {"cod": "204", "nome": "FOLHADO CARNE REQUEIJÃO (10 UN C/ 150GR CX C/ 1,50KG)"}, {"cod": "205", "nome": "FOLHADO CALABRESA REQUEIJAO (10UN C/ 150GR CX C/ 1,50KG)"}, {"cod": "206", "nome": "FOLHADO FRANGO REQUEIJÃO (10 UN C/ 150GR CX C/ 1,50KG)"}, {"cod": "207", "nome": "FOLHADO FRANGO CHEDDAR (10 UN C/ 150GR CX C/ 1,50KG)"}, {"cod": "208", "nome": "FOLHADO FRANGO (10 UN C/ 150GR CX C/ 1,50KG)"}, {"cod": "209", "nome": "FOLHADO CARNE (10 UN C/ 150GR CX C/ 1,50KG)"}, {"cod": "210", "nome": "FOLHADO CALABRESA (10 UN C/ 150GR CX C/ 1,50KG)"}, {"cod": "211", "nome": "FOLHADO PRESUNTO QUEIJO (10 UN C/ 150GR CX C/ 1,50KG)"}, {"cod": "212", "nome": "EMPADA FRANGO (10 UN C/ 150GR CX C/ 1,50KG)"}, {"cod": "213", "nome": "EMPADA CARNE (10 UN C/ 150GR CX C/ 1,50KG)"}, {"cod": "214", "nome": "EMPADA FRANGO REQUEIJÃO (10 UN C/ 150GR CX C/ 1,50KG)"}, {"cod": "215", "nome": "CACHORRO FOLHADO (10 UN C/ 150GR CX C/ 1,50KG)"}, {"cod": "216", "nome": "FOLHADO CHOCOLATE (10 UN C/ 125GR CX C/ 1,25KG)"}, {"cod": "226", "nome": "CACHORRO ALEMÃO (10 UN C/ 150GR CX C/ 1,50KG)"}, {"cod": "227", "nome": "FOLHADO DE STROGONOFF (10 UN C/ 150GR CX C/ 1,50KG)"}, {"cod": "228", "nome": "COXINHA DE FRANGO (CX C/ 10 UNID DE 170GR)"}, {"cod": "229", "nome": "RISOLES DE FRANGO GRANDE (150GR UN/PCT COM 1,5KG)"}, {"cod": "230", "nome": "RISOLES DE CARNE GRANDE  (150GR UN/PCT COM 1,5KG)"}, {"cod": "231", "nome": "SALGADOS CROQUETE (CX C/ 10UNID DE 110GR)"}, {"cod": "233", "nome": "CROISSANT CHOCOLATE (10 UN C/ 125GR CX C/ 1,25KG)"}, {"cod": "235", "nome": "CROISSANT (10 UN C/ 125GR CX C/ 1,25KG)"}, {"cod": "237", "nome": "PASTEL CASEIRO SABOR CARNE (06 UN C/ 170GR PCT C/ 1,02KG)"}, {"cod": "240", "nome": "EMPADA CARNE REQUEIJÃO (10 UN C/ 150GR CX C/ 1,5KG)"}, {"cod": "241", "nome": "EMPANADO DE SALSICHA FRITO (10 UN C/ 150GR CX C/ 1,50KG)"}, {"cod": "242", "nome": "RISOLES DE PRESUNTO GRANDE (150GR UN/PCT COM 1,5KG)"}, {"cod": "244", "nome": "EMPADA PRESUNTO QUEIJO (10 UN C/ 150GR CX C/ 1,5KG)"}, {"cod": "292", "nome": "MINI CROISSANT PREMIUM FRANGO"}, {"cod": "293", "nome": "MINI CROISSANT PREMIUM PRESUNTO"}, {"cod": "294", "nome": "MINI CROISSANT PREMIUM GOIABADA"}, {"cod": "295", "nome": "MINI CROISSANT PREMIUM CHOCOLATE"}, {"cod": "300", "nome": "MINI CROISSANT FRANGO"}, {"cod": "301", "nome": "MINI CROISSANT PRESUNTO"}, {"cod": "302", "nome": "MINI CROISSANT GOIABADA"}, {"cod": "303", "nome": "MINI CROISSANT CHOCOLATE PRETO"}, {"cod": "304", "nome": "MINI CROISSANT COCO"}, {"cod": "305", "nome": "MINI STRUDEL MAÇÃ/CANELA"}, {"cod": "306", "nome": "MINI CROISSANT CHOCOLATE BRANCO"}, {"cod": "350", "nome": "PASTEL CASEIRO SABOR QUEIJO (06 UN C/ 170GR PCT C/ 1,02KG)"}, {"cod": "351", "nome": "PASTEL CASEIRO SABOR CALABRESA (06 UN C/ 170GR PCT C/ 1,02KG)"}, {"cod": "353", "nome": "PASTEL CASEIRO SABOR FRANGO (06 UN C/ 170GR PCT C/ 1,02KG)"}, {"cod": "357", "nome": "EMPANADA FRANGO REQUEIJÃO (10 UN C/ 180GR CX C/ 1,80KG)"}, {"cod": "358", "nome": "EMPANADA CALABRESA (10 UN C/ 180GR CX C/ 1,80KG)"}, {"cod": "359", "nome": "EMPANADA QUEIJO (10 UN C/ 180GR CX C/ 1,80KG)"}, {"cod": "360", "nome": "EMPANADA COSTELINHA C/ BARBECUE (10 UN C/ 180GR CX C/ 1,80KG)"}, {"cod": "361", "nome": "EMPANADA CARNE (10 UN C/ 180GR CX C/ 1,80KG)"}, {"cod": "362", "nome": "EMPANADA BROCOLIS (10 UN C/ 180GR CX C/ 1,80KG)"}, {"cod": "364", "nome": "CROISSANT FRANGO (10 UN C/ 140GR CX C/ 1,4KG)"}, {"cod": "365", "nome": "CROISSANT PRESUNTO (10 UN C/ 140GR CX C/ 1,4KG)"}, {"cod": "366", "nome": "CROISSANT GOIABADA (10 UN C/ 140GR CX C/ 1,4KG)"}, {"cod": "500", "nome": "BAURU FOLHADO (10 UN C/ 150GR CX C/ 1,50KG)"}, {"cod": "501", "nome": "FAGOTTO (CALABRINHO CALABRESA CHEDDAR) (10 UN C/ 150GR CX C/ 1,50KG)"}, {"cod": "502", "nome": "HAMBURGÃO CARNE CHEDDAR (10 UN C/ 180GR CX C/ 1,80KG)"}, {"cod": "803", "nome": "(C&F) FOLHADO CARNE E CHEDDAR"}, {"cod": "804", "nome": "(C&F) FOLHADO CARNE REQUEIJÃO"}, {"cod": "806", "nome": "(C&F) FOLHADO FRANGO REQUEIJÃO"}, {"cod": "807", "nome": "(C&F) FOLHADO FRANGO CHEDDAR"}, {"cod": "814", "nome": "(C&F) EMPADA FRANGO REQUEIJÃO"}, {"cod": "815", "nome": "(C&F) CACHORRO FOLHADO"}, {"cod": "826", "nome": "(C&F) CACHORRO ALEMÃO"}, {"cod": "829", "nome": "(C&F) RISOLES DE FRANGO GRANDE"}, {"cod": "830", "nome": "(C&F) RISOLES DE CARNE GRANDE"}, {"cod": "837", "nome": "(C&F) PASTEL CASEIRO SABOR CARNE"}, {"cod": "841", "nome": "(C&F) EMPANADO DE SALSICHA FRITO"}, {"cod": "844", "nome": "(C&F) EMPADA PRESUNTO QUEIJO"}, {"cod": "953", "nome": "(C&F) PASTEL CASEIRO SABOR FRANGO"}, {"cod": "957", "nome": "(C&F) EMPANADA FRANGO CREMOSO"}, {"cod": "960", "nome": "(C&F) EMPANADA COSTELINHA C/ BARBECUE"}], "Plastico": [{"cod": "14500", "nome": "BOBINA 1KG PICOTADA C/ 12 UNID"}, {"cod": "14501", "nome": "CAIXA DE ALUMINIO D7 KIT"}, {"cod": "14503", "nome": "CAIXA DE PAPELÃO Nº 3 21X13,5X20"}, {"cod": "14505", "nome": "DILUENTE V730D 750ML"}, {"cod": "14506", "nome": "ETIQUETA 100 X 80 AMARELA C/SERRILHA ("}, {"cod": "14507", "nome": "ETIQUETA 100 X 80 AZUL CLARO C/SERRILH"}, {"cod": "14508", "nome": "ETIQUETA 100 X 80 BRANCA C/SERRILHA (B"}, {"cod": "14509", "nome": "ETIQUETA 100 X 80 LARANJA C/SERRILHA ("}, {"cod": "14510", "nome": "ETIQUETA 100 X 80 VERMELHA C/SERRILHA"}, {"cod": "14511", "nome": "ETIQUETA 50 X 25 2 COL BRANCA"}, {"cod": "14513", "nome": "FILME STRETCH"}, {"cod": "14514", "nome": "FITA PP"}, {"cod": "14515", "nome": "PLASTICO FILME 10/12 AZUL 8KG"}, {"cod": "14516", "nome": "PLASTICO FILME 10/12 PREMIUM CINZA"}, {"cod": "14517", "nome": "PLASTICO FILME 10/12 VERMELHO"}, {"cod": "14518", "nome": "PLASTICO FILME 6/8 AZUL"}, {"cod": "14519", "nome": "PLASTICO FILME 6/8 PREMIUM ROXO"}, {"cod": "14520", "nome": "PLASTICO FILME 6/8 VERMELHO"}, {"cod": "14521", "nome": "PLASTICO FILME CARDOSO 6,6KG AZUL"}, {"cod": "14522", "nome": "PLASTICO FILME CARDOSO 6,6KG PREMIUM"}, {"cod": "14523", "nome": "PLASTICO FILME PANITT 8KG"}, {"cod": "14524", "nome": "PLASTICO FILME 6/8 BOLA 8KG LARANJA 73 X 62"}, {"cod": "14525", "nome": "RIBBON 110 X 74 RESINA Z"}, {"cod": "14528", "nome": "SACO AVULSO 6/8 AZUL 3,2KG"}, {"cod": "14529", "nome": "SACO AVULSO 6/8 VERMELHO 8KG"}, {"cod": "14530", "nome": "SACO AVULSO BOLINHA DE QUEIJO"}, {"cod": "14531", "nome": "SACO AVULSO CHURROS DOCE DE LEITE COM CHOCOLATE"}, {"cod": "14532", "nome": "SACO AVULSO CHURROS DOCE LEITE"}, {"cod": "14534", "nome": "SACO AVULSO CROQUETE"}, {"cod": "14535", "nome": "DESATIVADO - SACO AVULSO CROQUETE COM REQUEIJÃO"}, {"cod": "14537", "nome": "SACO AVULSO KIBE"}, {"cod": "14540", "nome": "SACO AVULSO MINI CACHORRO"}, {"cod": "14542", "nome": "SACO AVULSO PALMIER"}, {"cod": "14545", "nome": "SACO AVULSO PÃO FRANCÊS AZUL 3,5 DIVERSOS"}, {"cod": "14548", "nome": "SACO CAPA FARDO"}, {"cod": "14551", "nome": "SACO PLÁSTICO TRANSPARENTE 21X30X008"}, {"cod": "14552", "nome": "SACO PLÁSTICO TRANSPARENTE 32X46X008"}, {"cod": "14554", "nome": "SACO TRANSPARENTE PEBD + PET 31X31"}, {"cod": "14556", "nome": "CAIXA DE PAPELÃO Nº6 240 X 160 X 200"}, {"cod": "14557", "nome": "BANDEJA NP-15 BAIXA QUATRO LUGARES C/100"}, {"cod": "14558", "nome": "ROTULO 100 X 243 RECEITARIA"}, {"cod": "14560", "nome": "FILME SEPARADOR PASTEL 59CM"}, {"cod": "14565", "nome": "TAMPA CAIXA DE ALUMINIO D7 (100)"}, {"cod": "14566", "nome": "PLASTICO FILME MASSINHA MARROM"}, {"cod": "14567", "nome": "PLASTICO FILME INTEGRAL AZUL"}, {"cod": "14568", "nome": "ETIQUETA 50 X 50 COL BRANCA"}, {"cod": "14569", "nome": "PLASTICO FILME PÃO QUEIJO 65GR VERDE"}, {"cod": "14570", "nome": "PLASTICO FILME PÃO QUEIJO 90GR LILAS"}, {"cod": "14571", "nome": "SACO TRANSPARENTE 31X31 TARJA+LISTRA AZUL"}, {"cod": "14572", "nome": "SACO TRANSPARENTE 31X31 TARJA+LISTRA AMARELA"}, {"cod": "14573", "nome": "SACO TRANSPARENTE 31X31 TARJA+LISTRA LARANJA"}, {"cod": "14574", "nome": "SACO PLÁSTICO TRANSPARENTE 21X30X008 TARJA+LISTRA AZUL"}, {"cod": "14575", "nome": "SACO PLÁSTICO TRANSPARENTE 21X30X008 TARJA+LISTRA AMARELO"}, {"cod": "14576", "nome": "SACO PLÁSTICO TRANSPARENTE 21X30X008 TARJA+LISTRA LARANJA"}], "Kits Confeitaria": [{"cod": "15026", "nome": "KIT MASSA FOLHADA"}, {"cod": "15039", "nome": "KIT MASSA UNIVERSAL NORMAL"}, {"cod": "15040", "nome": "KIT PÃO DE QUEIJO"}, {"cod": "15041", "nome": "KIT PÃO DE QUEIJO RECHEADO"}, {"cod": "15042", "nome": "KIT RECHEIO CROQUETE FRANGO"}, {"cod": "15043", "nome": "KIT MASSA CHURROS"}, {"cod": "15044", "nome": "KIT MASSA UNIVERSAL BOLINHA AIPIM"}, {"cod": "15045", "nome": "KIT MASSA CROISSANT"}, {"cod": "15047", "nome": "KIT MASSA PASTEL (PASTEL GRANDE)"}, {"cod": "15048", "nome": "KIT MASSA PASTEL LISA (PASTEL PEQUENO)"}, {"cod": "15049", "nome": "KIT MASSA POLENTINHA"}, {"cod": "15050", "nome": "KIT RECHEIO DE CROQUETE CARNE"}, {"cod": "15051", "nome": "KIT RECHEIO DE KIBE"}, {"cod": "15052", "nome": "KIT MASSA DOG"}, {"cod": "15053", "nome": "KIT RECHEIO DE FRANGO"}, {"cod": "15054", "nome": "KIT RECHEIO DE CARNE"}, {"cod": "15055", "nome": "KIT RECHEIO STROGONOFF"}, {"cod": "15056", "nome": "KIT RECHEIO BROCOLIS EMPANADA"}, {"cod": "15058", "nome": "KIT RECHEIO CARNE PASTEL"}, {"cod": "15059", "nome": "KIT RECHEIO PRESUNTO QUEIJO REQUEIJAO"}, {"cod": "15060", "nome": "KIT RECHEIO DE CALABRESA QUEIJO REQUEIJAO"}, {"cod": "15061", "nome": "KIT RECHEIO CALABRESA COM REQUEIJÃO"}, {"cod": "15062", "nome": "KIT RECHEIO PRESUNTO E REQUEIJÃO"}, {"cod": "15064", "nome": "KIT RECHEIO MINI PASTEL CARNE"}, {"cod": "15065", "nome": "KIT PÃO FOLHADO - CONFEITARIA"}, {"cod": "15071", "nome": "KIT RECHEIO PRESUNTO QUEIJO PASTEL CASEIRO"}, {"cod": "15072", "nome": "KIT RECHEIO QUEIJOS PASTEL CASEIRO"}, {"cod": "15073", "nome": "KIT RECHEIO CALABRESA PASTEL CASEIRO"}, {"cod": "15074", "nome": "KIT MASSA EMPANADA"}, {"cod": "15075", "nome": "KIT MASSA RISOLES"}, {"cod": "15076", "nome": "KIT RECHEIO DE CARNE RISOLES"}, {"cod": "15077", "nome": "KIT RECHEIO QUEIJOS MINI PASTEL"}, {"cod": "15078", "nome": "KIT RECHEIO COSTELA BARBECUE"}, {"cod": "15080", "nome": "KIT MASSA SONHO"}, {"cod": "15081", "nome": "KIT RECHEIO FRANGO CROISSANT"}, {"cod": "15082", "nome": "KIT RECHEIO CARNE EMPANADA"}, {"cod": "15083", "nome": "KIT RECHEIO QUEIJO EMPANADA"}, {"cod": "15084", "nome": "KIT RECHEIO CALABRESA EMPANADA"}, {"cod": "15085", "nome": "KIT MASSA FOLHADA MINI"}, {"cod": "15086", "nome": "KIT RECHEIO DE MINI RISOLES CARNE"}, {"cod": "4001", "nome": "KIT RECHEIO DE FRANGO - KG"}], "Kits Quadra": [{"cod": "15012", "nome": "KIT PÃO DE BATATA"}, {"cod": "15013", "nome": "KIT BRIOCHE"}, {"cod": "15015", "nome": "KIT PÃO DE CENOURA"}, {"cod": "15016", "nome": "KIT CUCA ALEMÃ"}, {"cod": "15017", "nome": "KIT CUCA CHOCOLATE"}, {"cod": "15018", "nome": "KIT CUCA COLONIAL"}, {"cod": "15019", "nome": "KIT CUCA FRUTAS"}, {"cod": "15020", "nome": "KIT CUECA VIRADA"}, {"cod": "15021", "nome": "KIT MASSA ESPECIAL DONUTS E CUECA"}, {"cod": "15022", "nome": "KIT INTEGRAL"}, {"cod": "15023", "nome": "KIT PÃO DE LEITE"}, {"cod": "15024", "nome": "KIT MASSA DOCE"}, {"cod": "15025", "nome": "KIT MASSA ESPECIAL"}, {"cod": "15027", "nome": "KIT PÃO DE MILHO DOCE"}, {"cod": "15028", "nome": "KIT PÃO DE MILHO SALGADO (CACETINHO)"}, {"cod": "15030", "nome": "KIT MASSA ESPECIAL MINI SONHO"}, {"cod": "15031", "nome": "KIT PÃO FOLHADO"}, {"cod": "15032", "nome": "KIT PÃO PRETO"}, {"cod": "15033", "nome": "KIT RAMINHO"}, {"cod": "15034", "nome": "KIT ROSCA DE POLVILHO"}, {"cod": "15035", "nome": "KIT SOVADO"}, {"cod": "15036", "nome": "KIT GAJETA VOVO"}, {"cod": "15005", "nome": "KIT PREMIUM 6/8 G"}, {"cod": "15009", "nome": "KIT PÃO 7 GRÃOS"}, {"cod": "15010", "nome": "KIT PÃO DE AIPIM"}, {"cod": "15014", "nome": "KIT PÃO CASEIRO"}, {"cod": "15029", "nome": "KIT PÃO DE MILHO SALGADO"}]};
 
-const PINS = { confeitaria:'1234', cozinha:'5678', embalagem:'9101', expedicao:'1314', admin:'2504', contagem:'0000' };
-const CORES = { confeitaria:'', cozinha:'verde', embalagem:'', expedicao:'laranja', admin:'roxo', contagem:'roxo' };
-const NOMES = { confeitaria:'Confeitaria 🥐', cozinha:'Cozinha 🍳', embalagem:'Embalagem 📦', expedicao:'Expedição 🚚', admin:'Administrativo 📊', contagem:'Contagem 📋' };
-const DESTINOS = { confeitaria:'s-conf-home', cozinha:'s-coz-home', embalagem:'s-emb-sel-data', expedicao:'s-exp-sel-data', admin:'s-adm-hub', contagem:'s-contagem-home' };
+const PINS = { confeitaria:'1234', cozinha:'5678', embalagem:'9101', expedicao:'1314', admin:'2504', contagem:'0000', container:'0001' };
+const CORES = { confeitaria:'', cozinha:'verde', embalagem:'', expedicao:'laranja', admin:'roxo', contagem:'roxo', container:'' };
+const NOMES = { confeitaria:'Confeitaria 🥐', cozinha:'Cozinha 🍳', embalagem:'Embalagem 📦', expedicao:'Expedição 🚚', admin:'Administrativo 📊', contagem:'Contagem 📋', container:'Container 🏭' };
+const DESTINOS = { confeitaria:'s-conf-home', cozinha:'s-coz-home', embalagem:'s-emb-sel-data', expedicao:'s-exp-sel-data', admin:'s-adm-hub', contagem:'s-contagem-home', container:'s-container-home' };
 
 let pinAtual = '';
 let setorAtivo = '';
@@ -1053,6 +1136,8 @@ function atualizarTela(){
   if(tela==='s-coz-reg') renderCozReg();
   if(tela==='s-adm') renderAdm(tabAtiva);
   if(tela==='s-contagem-home') renderContagemHome();
+  if(tela==='s-container-home') renderContainerHome();
+  if(tela==='s-container-item') renderContainerItem();
   if(tela==='s-contagem-hist') renderContagemHist();
   if(tela==='s-plano') renderPlano();
   if(tela==='s-presenca-reg-conf') renderPresencaReg('conf');
@@ -1132,6 +1217,10 @@ function goTo(id){
   if(id==='s-presenca-reg-coz') renderPresencaReg('coz');
   if(id==='s-presenca-reg-emb') renderPresencaReg('emb');
   if(id==='s-contagem-home') renderContagemHome();
+  if(id==='s-container-home') renderContainerHome();
+  if(id==='s-container-item') renderContainerItem();
+  if(id==='s-container-saida') renderContainerSaida();
+  if(id==='s-container-entrada'){ const b=document.getElementById('container-entrada-btn');if(b){b.textContent='Registrar entrada ✓';b.disabled=false;} }
   if(id==='s-contagem-prod-acabado'){ renderContagemHome(); }
   if(id==='s-contagem-lanc') renderContagemLanc();
   if(id==='s-contagem-hist') renderContagemHist();
@@ -3368,6 +3457,262 @@ async function salvarPlano(){
   }
 }
 
+
+// ===== ESTOQUE CONTAINER =====
+const CONTAINER_ITENS = ['Calabresa','Calabresa Fina','Coxão','Acem','Presunto',
+  'Salsicha Excelsior','Aurora Pena Branca','Queijo Parmesão',
+  'Queijo Mussarela','Queijo Meia Cura','Requeijão Vale do Pardo',
+  'Requeijão Amarílis','Cheddar'];
+
+let containerLotes = []; // Firestore collection 'containerLotes'
+let containerMovs  = []; // Firestore collection 'containerMovs'
+let containerItemAtivo = '';
+let containerDataEntrada = null;
+let containerLoteSaida = null;
+
+onSnapshot(collection(db,'containerLotes'), snap=>{
+  try{
+    containerLotes=snap.docs.map(d=>({firestoreId:d.id,...d.data()})).sort((a,b)=>(b.timestamp||0)-(a.timestamp||0));
+    atualizarTela();
+  }catch(e){ console.error('containerLotes snap:',e); }
+});
+onSnapshot(collection(db,'containerMovs'), snap=>{
+  try{
+    containerMovs=snap.docs.map(d=>({firestoreId:d.id,...d.data()})).sort((a,b)=>(b.timestamp||0)-(a.timestamp||0));
+    atualizarTela();
+  }catch(e){ console.error('containerMovs snap:',e); }
+});
+
+function estoqueAtualItem(item){
+  // Sum all lotes saldo
+  return containerLotes
+    .filter(l=>l.item===item)
+    .reduce((s,l)=>s+(l.saldo||0),0);
+}
+
+function renderContainerHome(){
+  CONTAINER_ITENS.forEach(function(item){
+    const el=document.getElementById('container-badge-'+item.replace(/ /g,'-'));
+    if(!el)return;
+    const total=estoqueAtualItem(item);
+    const lotes=containerLotes.filter(l=>l.item===item&&(l.saldo||0)>0).length;
+    if(total>0) el.textContent=total.toFixed(2)+' kg · '+lotes+' lote(s)';
+    else el.textContent='Sem estoque';
+  });
+}
+
+function abrirContainerItem(item){
+  containerItemAtivo=item;
+  containerDataEntrada=null;
+  containerLoteSaida=null;
+  document.getElementById('container-item-title').textContent=item;
+  renderContainerItem();
+  goTo('s-container-item');
+}
+
+function renderContainerItem(){
+  const el=document.getElementById('container-item-content');
+  if(!el)return;
+  const lotes=containerLotes.filter(l=>l.item===containerItemAtivo);
+  const lotesAtivos=lotes.filter(l=>(l.saldo||0)>0);
+  const totalEstoque=lotesAtivos.reduce((s,l)=>s+(l.saldo||0),0);
+  const sub=document.getElementById('container-item-sub');
+  if(sub)sub.textContent='Estoque: '+totalEstoque.toFixed(2)+' kg';
+
+  let html=`
+    <div class="card" style="border-left:3px solid #059669;margin-bottom:12px;">
+      <div style="font-size:13px;color:var(--text-secondary);">Estoque atual</div>
+      <div style="font-size:32px;font-weight:700;color:#059669;">${totalEstoque.toFixed(2)} <span style="font-size:16px;font-weight:400;">kg</span></div>
+      <div style="font-size:12px;color:var(--text-secondary);margin-top:4px;">${lotesAtivos.length} lote(s) disponível(is)</div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">
+      <button class="btn" style="background:#059669;color:white;" onclick="iniciarContainerEntrada()">+ Entrada</button>
+      <button class="btn btn-secondary" onclick="iniciarContainerSaida()" ${!lotesAtivos.length?'disabled style="opacity:0.5;"':''}>− Saída</button>
+    </div>`;
+
+  if(lotesAtivos.length>0){
+    html+=`<div class="section-divider">Lotes em estoque</div>`;
+    lotesAtivos.forEach(function(l){
+      const movs=containerMovs.filter(m=>m.loteId===l.firestoreId);
+      const totalSaidas=movs.filter(m=>m.tipo==='saida').reduce((s,m)=>s+(m.qtd||0),0);
+      html+=`<div class="reg-item" style="border-left-color:#059669;">
+        <div class="reg-header">
+          <span class="reg-produto">Lote ${l.data}</span>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <span style="font-size:15px;font-weight:700;color:#059669;">${(l.saldo||0).toFixed(2)} kg</span>
+            <button class="btn-del-admin" data-fid="${l.firestoreId}" onclick="excluirLoteContainer(this.dataset.fid)" style="background:none;border:1px solid #ef9a9a;color:#c62828;font-size:11px;padding:3px 7px;border-radius:6px;cursor:pointer;font-family:inherit;">🗑</button>
+          </div>
+        </div>
+        <div style="font-size:12px;color:var(--text-secondary);margin-top:4px;">
+          Entrada: <strong>${l.qtdEntrada} kg</strong> · Saídas: <strong>${totalSaidas.toFixed(2)} kg</strong>
+          ${l.obs?` · ${l.obs}`:''}
+        </div>
+        ${movs.length>0?`<div style="margin-top:6px;font-size:11px;color:var(--text-secondary);">
+          ${movs.slice(0,3).map(m=>`<span style="margin-right:10px;">${m.data} ${m.tipo==='saida'?'−':'+'}${m.qtd}kg</span>`).join('')}
+          ${movs.length>3?`<span>+${movs.length-3} mais</span>`:''}
+        </div>`:''}
+      </div>`;
+    });
+  }
+
+  const lotesFechados=lotes.filter(l=>(l.saldo||0)<=0);
+  if(lotesFechados.length>0){
+    html+=`<div class="section-divider" style="margin-top:8px;">Lotes encerrados</div>`;
+    lotesFechados.slice(0,5).forEach(function(l){
+      html+=`<div class="reg-item" style="border-left-color:var(--text-secondary);opacity:0.6;">
+        <div class="reg-header">
+          <span class="reg-produto">Lote ${l.data}</span>
+          <span style="font-size:12px;color:var(--text-secondary);">zerado</span>
+        </div>
+        <div style="font-size:12px;color:var(--text-secondary);">Entrada: ${l.qtdEntrada} kg · Totalmente consumido</div>
+      </div>`;
+    });
+  }
+
+  el.innerHTML=html;
+}
+
+function iniciarContainerEntrada(){
+  containerDataEntrada=null;
+  document.getElementById('container-entrada-sub').textContent=containerItemAtivo;
+  document.getElementById('container-entrada-qtd').value='';
+  document.getElementById('container-entrada-obs').value='';
+  const btn=document.getElementById('container-entrada-btn');
+  if(btn){btn.textContent='Registrar entrada ✓';btn.disabled=false;}
+  // Render date grid
+  const dias=diasUteis(3);
+  document.getElementById('container-entrada-date-grid').innerHTML=dias.map((d,i)=>
+    `<button class="date-btn" onclick="selecionarDataContainerEntradaBtn('${fmtData(d)}')">
+      <div class="date-btn-label">${labelDia(i)||diaSemana(d)}</div>
+      <div class="date-btn-date">${fmtData(d)}</div>
+    </button>`).join('');
+  goTo('s-container-entrada');
+}
+
+function selecionarDataContainerEntradaBtn(data){
+  containerDataEntrada=data;
+  const dias=diasUteis(3);
+  document.getElementById('container-entrada-date-grid').innerHTML=dias.map((d,i)=>
+    `<button class="date-btn ${fmtData(d)===data?'sel':''}" onclick="selecionarDataContainerEntradaBtn('${fmtData(d)}')">
+      <div class="date-btn-label">${labelDia(i)||diaSemana(d)}</div>
+      <div class="date-btn-date">${fmtData(d)}</div>
+    </button>`).join('');
+}
+
+function selecionarDataContainerEntrada(){
+  const val=document.getElementById('container-entrada-data-input').value;
+  if(!val)return;
+  const[y,m,d]=val.split('-');
+  selecionarDataContainerEntradaBtn(`${d}/${m}/${y}`);
+}
+
+async function salvarContainerEntrada(){
+  const qtd=parseFloat(document.getElementById('container-entrada-qtd').value)||0;
+  const obs=document.getElementById('container-entrada-obs').value.trim();
+  if(!containerDataEntrada){alert('Selecione uma data.');return;}
+  if(!qtd){alert('Informe a quantidade em kg.');return;}
+  const btn=document.getElementById('container-entrada-btn');
+  btn.textContent='Salvando...';btn.disabled=true;
+  try{
+    await addDoc(collection(db,'containerLotes'),{
+      item:containerItemAtivo,
+      qtdEntrada:qtd,
+      saldo:qtd,
+      data:containerDataEntrada,
+      obs, hora:agora(), timestamp:Date.now()
+    });
+    goTo('s-container-item');
+  }catch(e){
+    alert('Erro ao salvar: '+e.message);
+    btn.textContent='Registrar entrada ✓';btn.disabled=false;
+  }
+}
+
+function iniciarContainerSaida(){
+  containerLoteSaida=null;
+  document.getElementById('container-saida-sub').textContent=containerItemAtivo;
+  renderContainerSaida();
+  goTo('s-container-saida');
+}
+
+function renderContainerSaida(){
+  const el=document.getElementById('container-saida-content');
+  if(!el)return;
+  const lotesAtivos=containerLotes.filter(l=>l.item===containerItemAtivo&&(l.saldo||0)>0);
+
+  el.innerHTML=`
+    <div class="card" style="margin-bottom:10px;">
+      <div class="card-label">Selecione o lote para saída</div>
+      ${lotesAtivos.map(l=>`
+        <div onclick="selecionarLoteSaida('${l.firestoreId}')" style="display:flex;justify-content:space-between;align-items:center;padding:12px;border-radius:10px;border:1px solid ${containerLoteSaida===l.firestoreId?'#059669':'var(--border)'};background:${containerLoteSaida===l.firestoreId?'rgba(5,150,105,0.08)':'var(--bg-secondary)'};cursor:pointer;margin-bottom:8px;">
+          <div>
+            <div style="font-size:13px;font-weight:600;color:${containerLoteSaida===l.firestoreId?'#059669':'var(--text-primary)'};">Lote ${l.data}</div>
+            <div style="font-size:12px;color:var(--text-secondary);">Disponível: <strong>${(l.saldo||0).toFixed(2)} kg</strong></div>
+          </div>
+          <div style="width:22px;height:22px;border-radius:50%;border:2px solid ${containerLoteSaida===l.firestoreId?'#059669':'var(--border)'};background:${containerLoteSaida===l.firestoreId?'#059669':'transparent'};display:flex;align-items:center;justify-content:center;color:white;font-size:13px;">${containerLoteSaida===l.firestoreId?'✓':''}</div>
+        </div>`).join('')}
+    </div>
+    ${containerLoteSaida?`
+    <div class="card">
+      <div class="card-label">Quantidade retirada</div>
+      <div class="input-unit">
+        <input type="number" id="container-saida-qtd" placeholder="0" min="0" step="0.1" inputmode="decimal" />
+        <span class="unit-label">kg</span>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-label">Observação (opcional)</div>
+      <input type="text" id="container-saida-obs" placeholder="Ex: para produção de terça..." />
+    </div>
+    <button class="btn" style="background:#059669;color:white;" id="container-saida-btn" onclick="salvarContainerSaida()">Registrar saída ✓</button>`:''}
+  `;
+}
+
+function selecionarLoteSaida(fid){
+  containerLoteSaida=fid;
+  renderContainerSaida();
+}
+
+async function salvarContainerSaida(){
+  const lote=containerLotes.find(l=>l.firestoreId===containerLoteSaida);
+  if(!lote){alert('Selecione um lote.');return;}
+  const qtd=parseFloat(document.getElementById('container-saida-qtd').value)||0;
+  const obs=document.getElementById('container-saida-obs').value.trim();
+  if(!qtd){alert('Informe a quantidade.');return;}
+  if(qtd>(lote.saldo||0)){alert('Quantidade maior que o saldo do lote ('+lote.saldo.toFixed(2)+' kg).');return;}
+  const btn=document.getElementById('container-saida-btn');
+  btn.textContent='Salvando...';btn.disabled=true;
+  try{
+    // Update lote saldo
+    const novoSaldo=(lote.saldo||0)-qtd;
+    await updateDoc(doc(db,'containerLotes',lote.firestoreId),{saldo:novoSaldo});
+    // Register movement
+    await addDoc(collection(db,'containerMovs'),{
+      item:containerItemAtivo,
+      loteId:lote.firestoreId,
+      loteData:lote.data,
+      tipo:'saida',
+      qtd, obs,
+      data:hoje(), hora:agora(), timestamp:Date.now()
+    });
+    goTo('s-container-item');
+  }catch(e){
+    alert('Erro ao salvar: '+e.message);
+    btn.textContent='Registrar saída ✓';btn.disabled=false;
+  }
+}
+
+async function excluirLoteContainer(fid){
+  if(!window.adminMode){alert('Apenas o administrador pode excluir lotes.');return;}
+  if(!confirm('Excluir este lote?\nTodas as movimentações vinculadas também serão excluídas.\nEssa ação não pode ser desfeita.'))return;
+  try{
+    await deleteDoc(doc(db,'containerLotes',fid));
+    const movs=containerMovs.filter(m=>m.loteId===fid);
+    for(const m of movs) await deleteDoc(doc(db,'containerMovs',m.firestoreId));
+    renderContainerItem();
+  }catch(e){alert('Erro ao excluir: '+e.message);}
+}
+
 window.goTo=goTo; window.abrirPin=abrirPin; window.pinDigit=pinDigit; window.pinDel=pinDel;
 window.iniciarNovoReg=iniciarNovoReg; window.toggleManual=toggleManual;
 window.selecionarDataTipo=selecionarDataTipo; window.selecionarDataManual=selecionarDataManual;
@@ -3379,7 +3724,7 @@ window.selecionarDataEmb=selecionarDataEmb; window.irParaEmbalagem=irParaEmbalag
 window.toggleEmb=toggleEmb; window.toggleAjuste=toggleAjuste; window.confirmarAjuste=confirmarAjuste;
 window.selecionarDataExp=selecionarDataExp; window.irParaExpedicao=irParaExpedicao;
 window.adicionarLiberacao=adicionarLiberacao;
-window.tab=tab; window.toggleConf=toggleConf; window.admFiltrar=admFiltrar; window.toggleEditProd=toggleEditProd; window.salvarEditProd=salvarEditProd; window.toggleEditRecheio=toggleEditRecheio; window.salvarEditRecheio=salvarEditRecheio; window.renderMeusReg=renderMeusReg; window.renderCozReg=renderCozReg; window.abrirPresenca=abrirPresenca; window.salvarEmbManual=salvarEmbManual; window.excluirPresenca=excluirPresenca; window.salvarPresenca=salvarPresenca; window.voltarPresenca=voltarPresenca; window.renderPresencaForm=renderPresencaForm; window.selecionarDataPresenca=selecionarDataPresenca; window.selecionarDataPresencaManual=selecionarDataPresencaManual; window.adicionarColaborador=adicionarColaborador; window.removerColab=removerColab; window.updateColab=updateColab; window.renderPresencaReg=renderPresencaReg; window.abrirContagem=abrirContagem; window.subtrairContagem=subtrairContagem; window.filtrarContagem=filtrarContagem; window.adicionarContagem=adicionarContagem; window.renderContagemHist=renderContagemHist; window.verDetalheContagem=verDetalheContagem; window.renderContagemLanc=renderContagemLanc; window.renderContagemHome=renderContagemHome; window.toggleContDay=toggleContDay; window.excluirContagem=excluirContagem; window.abrirManut=abrirManut; window.voltarManut=voltarManut; window.salvarNovaMaquina=salvarNovaMaquina; window.excluirMaquina=excluirMaquina; window.abrirMaquina=abrirMaquina; window.iniciarNovaManutencao=iniciarNovaManutencao; window.selecionarDataManut=selecionarDataManut; window.salvarManutencao=salvarManutencao; window.selecionarDataManutBtn=selecionarDataManutBtn; window.abrirPlano=abrirPlano; window.voltarPlano=voltarPlano; window.salvarPlano=salvarPlano; window.adicionarItemPlano=adicionarItemPlano; window.atualizarQtdPlano=atualizarQtdPlano; window.removerItemPlano=removerItemPlano; window.trocarSemanaPlano=trocarSemanaPlano; window.togglePlanoDia=togglePlanoDia; window.toggleFeriado=toggleFeriado; window.importarPlanoPaste=importarPlanoPaste; window.limparPlano=limparPlano; window.renderManutDateGrid=renderManutDateGrid; window.toggleEditParcial=toggleEditParcial; window.salvarEditParcial=salvarEditParcial; window.excluirRegistro=excluirRegistro; window.gerarExcel=gerarExcel; window.renderPresencaForm=renderPresencaForm; window.goToAdmin=goToAdmin; window.sairAdmin=sairAdmin; window.backFromArea=backFromArea;
+window.tab=tab; window.toggleConf=toggleConf; window.admFiltrar=admFiltrar; window.toggleEditProd=toggleEditProd; window.salvarEditProd=salvarEditProd; window.toggleEditRecheio=toggleEditRecheio; window.salvarEditRecheio=salvarEditRecheio; window.renderMeusReg=renderMeusReg; window.renderCozReg=renderCozReg; window.abrirPresenca=abrirPresenca; window.salvarEmbManual=salvarEmbManual; window.excluirPresenca=excluirPresenca; window.salvarPresenca=salvarPresenca; window.voltarPresenca=voltarPresenca; window.renderPresencaForm=renderPresencaForm; window.selecionarDataPresenca=selecionarDataPresenca; window.selecionarDataPresencaManual=selecionarDataPresencaManual; window.adicionarColaborador=adicionarColaborador; window.removerColab=removerColab; window.updateColab=updateColab; window.renderPresencaReg=renderPresencaReg; window.abrirContagem=abrirContagem; window.subtrairContagem=subtrairContagem; window.filtrarContagem=filtrarContagem; window.adicionarContagem=adicionarContagem; window.renderContagemHist=renderContagemHist; window.verDetalheContagem=verDetalheContagem; window.renderContagemLanc=renderContagemLanc; window.renderContagemHome=renderContagemHome; window.toggleContDay=toggleContDay; window.abrirContainerItem=abrirContainerItem; window.iniciarContainerEntrada=iniciarContainerEntrada; window.selecionarDataContainerEntradaBtn=selecionarDataContainerEntradaBtn; window.selecionarDataContainerEntrada=selecionarDataContainerEntrada; window.salvarContainerEntrada=salvarContainerEntrada; window.iniciarContainerSaida=iniciarContainerSaida; window.selecionarLoteSaida=selecionarLoteSaida; window.salvarContainerSaida=salvarContainerSaida; window.excluirLoteContainer=excluirLoteContainer; window.excluirContagem=excluirContagem; window.abrirManut=abrirManut; window.voltarManut=voltarManut; window.salvarNovaMaquina=salvarNovaMaquina; window.excluirMaquina=excluirMaquina; window.abrirMaquina=abrirMaquina; window.iniciarNovaManutencao=iniciarNovaManutencao; window.selecionarDataManut=selecionarDataManut; window.salvarManutencao=salvarManutencao; window.selecionarDataManutBtn=selecionarDataManutBtn; window.abrirPlano=abrirPlano; window.voltarPlano=voltarPlano; window.salvarPlano=salvarPlano; window.adicionarItemPlano=adicionarItemPlano; window.atualizarQtdPlano=atualizarQtdPlano; window.removerItemPlano=removerItemPlano; window.trocarSemanaPlano=trocarSemanaPlano; window.togglePlanoDia=togglePlanoDia; window.toggleFeriado=toggleFeriado; window.importarPlanoPaste=importarPlanoPaste; window.limparPlano=limparPlano; window.renderManutDateGrid=renderManutDateGrid; window.toggleEditParcial=toggleEditParcial; window.salvarEditParcial=salvarEditParcial; window.excluirRegistro=excluirRegistro; window.gerarExcel=gerarExcel; window.renderPresencaForm=renderPresencaForm; window.goToAdmin=goToAdmin; window.sairAdmin=sairAdmin; window.backFromArea=backFromArea;
 </script>
 </body>
 </html>
