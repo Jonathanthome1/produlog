@@ -1371,7 +1371,7 @@ function goTo(id){
   if(id==='s-quadra-home') renderQuadraHome();
   if(id==='s-quadra-data'){ renderQuadraDateGrid(); }
   if(id==='s-quadra-kit'){ filtrarKitsQuadra(); }
-  if(id==='s-quadra-lanc') renderQuadraLanc();
+  if(id==='s-quadra-lanc'){ const lc=document.getElementById('quadra-lanc-content'); if(lc&&!lc.innerHTML.trim())renderQuadraLanc(); else renderQuadraLanc(); }
   if(id==='s-quadra-reg') renderQuadraReg();
   if(id==='s-container-item') renderContainerItem();
   if(id==='s-container-saida') renderContainerSaida();
@@ -3983,7 +3983,14 @@ function selKitQuadra(kit){
   const btn=document.getElementById('quadra-btn-prox-kit');
   btn.className='btn btn-primary';
   btn.style.background='#92400e';
-  btn.onclick=()=>{ quadraProdutosLanc={}; renderQuadraLanc(); goTo('s-quadra-lanc'); };
+  btn.onclick=()=>{
+    quadraProdutosLanc={};
+    // Clear shell so renderQuadraLanc rebuilds for the new kit
+    const lc=document.getElementById('quadra-lanc-content');
+    if(lc)lc.innerHTML='';
+    renderQuadraLanc();
+    goTo('s-quadra-lanc');
+  };
 }
 
 function renderQuadraLanc(){
