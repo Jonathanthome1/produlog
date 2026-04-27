@@ -1842,17 +1842,17 @@ function renderSelDataEmb(){
     else badge=`<span class="badge-vazio-emb">sem registros</span>`;
     const lbl=labelDia(idx);
     const nome=lbl?`${lbl} · ${nomeDiaSemana(d)}`:`${nomeDiaSemana(d)}`;
-    const clk=status!=='vazio';
-    return `<button class="emb-date-item ${isSel?'sel':''} ${!clk?'sem-registros':''}"
-      onclick="${clk?`selecionarDataEmb('${data}')`:''}" ${!clk?'disabled':''}>
-      <div class="emb-date-item-left"><div class="emb-date-item-label">${nome}</div><div class="emb-date-item-sub">${data}${total>0?` · ${total} produto(s)`:''}</div></div>
-      <div class="emb-date-status">${dot}${badge}</div></button>`;
+            const clk=status!=='vazio';
+    const btnAttr=clk?' data-d="'+data+'" onclick="selecionarDataEmb(this.dataset.d)"':' disabled';
+    return '<button class="emb-date-item '+(isSel?'sel':'')+' '+(!clk?'sem-registros':'')+'"'+btnAttr+'>'+
+      '<div class="emb-date-item-left"><div class="emb-date-item-label">'+nome+'</div><div class="emb-date-item-sub">'+data+(total>0?' · '+total+' produto(s)':'')+' </div></div>'+
+      '<div class="emb-date-status">'+dot+badge+'</div></button>';
   }).join('');
 
   el.innerHTML=alert+`<div class="emb-date-list">${listHtml}</div>`;
   if(dataSelEmb)el.innerHTML+=`<div style="margin-top:14px;"><button class="btn btn-primary" onclick="irParaEmbalagem()">Ver produtos de ${dataSelEmb} →</button></div>`;
 }
-function selecionarDataEmb(data){dataSelEmb=data;renderSelDataEmb();}
+function selecionarDataEmb(data){dataSelEmb=data;goTo('s-emb-home');}
 function irParaEmbalagem(){if(!dataSelEmb)return;goTo('s-emb-home');}
 function renderEmbalagem(){
   document.getElementById('emb-data-topbar').textContent=dataSelEmb||hoje();
