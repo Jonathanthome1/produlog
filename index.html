@@ -1904,7 +1904,7 @@ function renderEmbalagem(){
             ✓ Confirmar ${totalParcial} un embaladas
           </button>`:''}
         </div>`:''}
-        ${done?`<div class="emb-item-actions" id="ajuste-${r.firestoreId}" style="display:none;">
+        ${done?`<div class="emb-item-actions" id="ajuste-${r.firestoreId}" style="display:none;margin-top:8px;">
           <span style="font-size:13px;color:var(--text-secondary);white-space:nowrap;">Ajustar:</span>
           <input type="number" class="emb-input-qtd" id="input-emb-${r.firestoreId}" value="${emb.qtdEmbalada||r.qtd}" min="0" inputmode="numeric" />
           <button class="btn-sm-green" onclick="confirmarAjuste('${r.firestoreId}',${r.qtdUnidades||r.qtd})">OK</button>
@@ -1982,8 +1982,15 @@ async function toggleEmb(fid,qtdProd){
   await updateDoc(doc(db,'registros',fid),{embalagem:{feito:novoFeito,qtdEmbalada:novaQtd,qtdProduzida:qtdProd}});
 }
 function toggleAjuste(fid,qtdProd,qtdAtual){
-  const el=document.getElementById(`ajuste-${fid}`);el.classList.toggle('show');
-  if(el.classList.contains('show'))document.getElementById(`input-emb-${fid}`).value=qtdAtual;
+  const el=document.getElementById('ajuste-'+fid);
+  if(!el)return;
+  const isShown=el.style.display==='flex'||el.style.display==='block';
+  el.style.display=isShown?'none':'flex';
+  if(!isShown){
+    const inp=document.getElementById('input-emb-'+fid);
+    if(inp)inp.value=qtdAtual;
+    inp && inp.focus();
+  }
 }
 async function confirmarAjuste(fid,qtdProd){
   const val=parseInt(document.getElementById(`input-emb-${fid}`).value)||0;
