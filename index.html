@@ -1993,8 +1993,37 @@ function toggleAjuste(fid,qtdProd,qtdAtual){
   }
 }
 async function confirmarAjuste(fid,qtdProd){
-  const val=parseInt(document.getElementById(`input-emb-${fid}`).value)||0;
-  await updateDoc(doc(db,'registros',fid),{embalagem:{feito:true,qtdEmbalada:val,qtdProduzida:qtdProd}});
+  const val=parseInt(document.getElementById('input-emb-'+fid).value)||0;
+  if(val<=0){alert('Informe uma quantidade válida.');return;}
+  const reg=registros.find(r=>r.firestoreId===fid);
+  if(!reg)return;
+  const exp=reg.expedicao||{parciais:[],totalLiberado:0};
+  const jaLiberou=(exp.totalLiberado||0)>0;
+
+  if(jaLiberou){
+    // Already expedited - ask if wants to reopen
+    const ok=confirm('Este produto já foi liberado na expedição ('+exp.totalLiberado+' un).\nAo ajustar, o produto ficará pendente novamente na expedição.\nDeseja continuar?');
+    if(!ok)return;
+    // Reopen: reset expedição and update embalagem
+    await updateDoc(doc(db,'registros',fid),{
+      'embalagem.feito':true,
+      'embalagem.qtdEmbalada':val,
+      'embalagem.qtdProduzida':qtdProd,
+      'embalagem.parciais':reg.embalagem?.parciais||[],
+      'expedicao.parciais':[],
+      'expedicao.totalLiberado':0
+    });
+  } else {
+    // Not yet expedited - just update embalagem, expedição picks up new value automatically
+    await updateDoc(doc(db,'registros',fid),{
+      'embalagem.feito':true,
+      'embalagem.qtdEmbalada':val,
+      'embalagem.qtdProduzida':qtdProd
+    });
+  }
+  // Close ajuste panel
+  const el=document.getElementById('ajuste-'+fid);
+  if(el)el.style.display='none';
 }
 
 // ===== EXPEDIÇÃO =====
