@@ -1810,22 +1810,29 @@ function statusEmbalagem(data){
   return feitos===regs.length?'completo':'pendente';
 }
 function renderSelDataEmb(){
-  // Show all days that have records, plus last 30 calendar days
+  // Show last 30 calendar days
   const hoje2=new Date(); const diasArr=[];
   for(let i=0;i<30;i++){const d=new Date(hoje2);d.setDate(hoje2.getDate()-i);diasArr.push(d);}
-  const dias=diasArr.reverse();
+  // Do NOT reverse - keep newest first, we'll sort after
   const el=document.getElementById('emb-sel-content');
-  const pend=dias.filter(d=>statusEmbalagem(fmtData(d))==='pendente');
+  if(!el)return;
+
+  const diasComStatus=diasArr.map((d,idx)=>({
+    d, data:fmtData(d),
+    status:statusEmbalagem(fmtData(d)),
+    idx // keep original index for labelDia
+  }));
+
+  // Pendentes first (mantendo ordem cronológica entre eles), depois resto
+  const pendentes=diasComStatus.filter(x=>x.status==='pendente');
+  const resto=diasComStatus.filter(x=>x.status!=='pendente');
+  const diasOrdenados=[...pendentes,...resto];
+
+  const pend=pendentes.length;
   let alert='';
-  if(pend.length>0)alert=`<div class="banner" style="background:#fff3cd;border:0.5px solid #f5a623;color:#7a4f00;margin-bottom:12px;">⚠️ <strong>${pend.length} dia(s)</strong> com produtos pendentes de embalagem</div>`;
-  // Sort: pending days first, then by date descending
-  const diasComStatus=dias.map(d=>({d, data:fmtData(d), status:statusEmbalagem(fmtData(d))}));
-  const diasOrdenados=[
-    ...diasComStatus.filter(x=>x.status==='pendente').reverse(),
-    ...diasComStatus.filter(x=>x.status!=='pendente')
-  ];
-  const listHtml=diasOrdenados.map(({d,data})=>{
-    const status=statusEmbalagem(data);
+  if(pend>0)alert=`<div class="banner" style="background:#fff3cd;border:0.5px solid #f5a623;color:#7a4f00;margin-bottom:12px;">⚠️ <strong>${pend} dia(s)</strong> com produtos pendentes de embalagem</div>`;
+
+  const listHtml=diasOrdenados.map(({d,data,status,idx})=>{
     const regs=registros.filter(r=>r.data===data);
     const feitos=regs.filter(r=>r.embalagem&&r.embalagem.feito).length;
     const total=regs.length;const isSel=dataSelEmb===data;
@@ -1833,13 +1840,15 @@ function renderSelDataEmb(){
     if(status==='pendente'){const p=total-feitos;badge=`<span class="badge-pendente-emb">⏳ ${p} pendente${p>1?'s':''}</span>`;dot=`<div class="dot-pendente"></div>`;}
     else if(status==='completo')badge=`<span class="badge-completo-emb">✓ completo</span>`;
     else badge=`<span class="badge-vazio-emb">sem registros</span>`;
-    const lbl=labelDia(i);const nome=lbl?`${lbl} · ${nomeDiaSemana(d)}`:`${nomeDiaSemana(d)}`;
+    const lbl=labelDia(idx);
+    const nome=lbl?`${lbl} · ${nomeDiaSemana(d)}`:`${nomeDiaSemana(d)}`;
     const clk=status!=='vazio';
     return `<button class="emb-date-item ${isSel?'sel':''} ${!clk?'sem-registros':''}"
       onclick="${clk?`selecionarDataEmb('${data}')`:''}" ${!clk?'disabled':''}>
       <div class="emb-date-item-left"><div class="emb-date-item-label">${nome}</div><div class="emb-date-item-sub">${data}${total>0?` · ${total} produto(s)`:''}</div></div>
       <div class="emb-date-status">${dot}${badge}</div></button>`;
   }).join('');
+
   el.innerHTML=alert+`<div class="emb-date-list">${listHtml}</div>`;
   if(dataSelEmb)el.innerHTML+=`<div style="margin-top:14px;"><button class="btn btn-primary" onclick="irParaEmbalagem()">Ver produtos de ${dataSelEmb} →</button></div>`;
 }
