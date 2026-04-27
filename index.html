@@ -358,7 +358,8 @@
         <div style="flex:1;"><div class="hb-title">Produção de Massas</div><div class="hb-desc">Registrar kg de massa produzido</div></div>
         <span style="color:var(--text-secondary);font-size:20px;">›</span>
       </button>
-      <button class="btn btn-secondary" style="margin-top:4px;margin-bottom:12px;" onclick="goTo('s-meus-reg')">Ver registros de produção</button>
+      <button class="btn btn-secondary" style="margin-top:4px;" onclick="goTo('s-meus-reg')">Ver registros de produção</button>
+      <button class="btn btn-secondary" style="margin-top:4px;margin-bottom:12px;" onclick="goTo('s-conf-massas')">Ver registros de massas</button>
       <div class="section-divider">Equipe</div>
       <button class="home-btn azul" onclick="abrirPresenca('conf')">
         <div class="hb-icon" style="background:#e8eaff;">👥</div>
@@ -378,6 +379,16 @@
         <span style="color:var(--text-secondary);font-size:20px;">›</span>
       </button>
     </div>
+  </div>
+
+
+  <!-- CONFEITARIA: VER MASSAS -->
+  <div class="screen" id="s-conf-massas">
+    <div class="topbar">
+      <button class="back-btn" onclick="goTo('s-conf-home')">‹</button>
+      <div><div class="topbar-title">Registros de Massas</div><div class="topbar-sub" id="conf-massas-sub"></div></div>
+    </div>
+    <div class="content" id="conf-massas-content"></div>
   </div>
 
   <!-- PASSO 1: DATA PRODUÇÃO -->
@@ -548,6 +559,12 @@
         <span style="color:var(--text-secondary);font-size:20px;">›</span>
       </button>
       <button class="btn btn-secondary" style="margin-top:4px;" onclick="goTo('s-presenca-reg-coz')">Ver registros de presença</button>
+      <div class="section-divider" style="margin-top:14px;">Planejamento</div>
+      <button class="home-btn" style="border-left-color:#6b21a8;" onclick="abrirPlano()">
+        <div class="hb-icon" style="background:#f3e8ff;">📅</div>
+        <div style="flex:1;"><div class="hb-title">Plano da Semana</div><div class="hb-desc">Ver plano de produção</div></div>
+        <span style="color:var(--text-secondary);font-size:20px;">›</span>
+      </button>
       <div class="section-divider" style="margin-top:14px;">Equipamentos</div>
       <button class="home-btn verde" onclick="abrirManut('coz')">
         <div class="hb-icon" style="background:#fef3c7;">🔧</div>
@@ -1274,6 +1291,7 @@ function atualizarTela(){
   if(tela==='s-exp-home') renderExpedicao();
   if(tela==='s-exp-sel-data') renderSelDataExp();
   if(tela==='s-meus-reg') renderMeusReg();
+  if(tela==='s-conf-massas') renderConfMassas();
   if(tela==='s-coz-reg') renderCozReg();
   if(tela==='s-adm') renderAdm(tabAtiva);
   if(tela==='s-contagem-home') renderContagemHome();
@@ -1353,6 +1371,7 @@ function goTo(id){
   if(id==='s-emb-sel-data') renderSelDataEmb();
   if(id==='s-exp-sel-data') renderSelDataExp();
   if(id==='s-meus-reg') renderMeusReg();
+  if(id==='s-conf-massas') renderConfMassas();
   if(id==='s-coz-reg') renderCozReg();
   if(id==='s-emb-home') renderEmbalagem();
   if(id==='s-emb-manual'){ const b=document.getElementById('emb-manual-btn');if(b){b.textContent='Adicionar ao checklist ✓';b.disabled=false;} }
@@ -1791,7 +1810,10 @@ function statusEmbalagem(data){
   return feitos===regs.length?'completo':'pendente';
 }
 function renderSelDataEmb(){
-  const dias=diasUteis(10);
+  // Show all days that have records, plus last 30 calendar days
+  const hoje2=new Date(); const diasArr=[];
+  for(let i=0;i<30;i++){const d=new Date(hoje2);d.setDate(hoje2.getDate()-i);diasArr.push(d);}
+  const dias=diasArr.reverse();
   const el=document.getElementById('emb-sel-content');
   const pend=dias.filter(d=>statusEmbalagem(fmtData(d))==='pendente');
   let alert='';
@@ -1836,21 +1858,41 @@ function renderEmbalagem(){
       <div style="font-size:12px;color:var(--text-secondary);margin-top:4px;">${feitos} de ${total} produto(s) embalados</div>
     </div>
     ${regs.map(r=>{
-      const emb=r.embalagem||{feito:false,qtdEmbalada:0};const done=emb.feito;
+      const emb=r.embalagem||{feito:false,qtdEmbalada:0,parciais:[]};const done=emb.feito;
+      const parciais=emb.parciais||[];
+      const totalParcial=parciais.reduce((s,p)=>s+(p.qtd||0),0);
       return `<div class="emb-item ${done?'done':''}">
         <div class="emb-item-header">
-          <div class="emb-check-btn ${done?'done':''}" onclick="toggleEmb('${r.firestoreId}',${r.qtd})">${done?'✓':''}</div>
+          <div class="emb-check-btn ${done?'done':''}">${done?'✓':totalParcial>0?'…':''}</div>
           <div class="emb-item-info">
             <div class="emb-item-nome">${r.produto}</div>
-            <div class="emb-item-qtd">Produzido: <strong>${r.qtd} un</strong>${done?` · Embalado: <strong>${emb.qtdEmbalada} un</strong>`:''}${done&&emb.qtdEmbalada<r.qtd?` <span style="color:#c62828;font-size:11px;">(−${r.qtd-emb.qtdEmbalada})</span>`:''}</div>
+            <div class="emb-item-qtd">
+              Produzido: <strong>${r.qtdUnidades||r.qtd} un</strong>
+              ${totalParcial>0&&!done?` · Embalando: <strong style="color:var(--mc-dourado);">${totalParcial} un</strong>`:''}
+              ${done?` · Embalado: <strong>${emb.qtdEmbalada} un</strong>`:''}
+              ${done&&emb.qtdEmbalada<(r.qtdUnidades||r.qtd)?` <span style="color:#c62828;font-size:11px;">(−${(r.qtdUnidades||r.qtd)-emb.qtdEmbalada})</span>`:''}
+            </div>
+            ${parciais.length>0&&!done?`<div style="font-size:11px;color:var(--text-secondary);margin-top:2px;">${parciais.map(p=>p.hora+': +'+p.qtd).join(' · ')}</div>`:''}
           </div>
-          <button class="btn-sm-outline" onclick="toggleAjuste('${r.firestoreId}',${r.qtd},${emb.qtdEmbalada||r.qtd})">Ajustar</button>
         </div>
-        <div class="emb-item-actions" id="ajuste-${r.firestoreId}">
-          <span style="font-size:13px;color:var(--text-secondary);white-space:nowrap;">Qtd embalada:</span>
+        ${!done?`<div style="margin-top:8px;">
+          <div style="display:flex;gap:8px;margin-bottom:6px;">
+            <input type="number" id="emb-parc-inp-${r.firestoreId}" placeholder="+ parcial" min="0" inputmode="numeric"
+              style="flex:1;font-size:14px;padding:8px;border-radius:8px;border:1px solid var(--mc-azul);background:var(--bg-primary);color:var(--text-primary);font-family:inherit;" />
+            <button onclick="adicionarParcialEmb('${r.firestoreId}',${r.qtdUnidades||r.qtd})"
+              style="background:var(--mc-azul);color:white;border:none;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">+ Parcial</button>
+          </div>
+          ${totalParcial>0?`<button onclick="confirmarEmbalagEmCompleto('${r.firestoreId}',${r.qtdUnidades||r.qtd},${totalParcial})"
+            style="width:100%;padding:10px;background:#2e7d32;color:white;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;">
+            ✓ Confirmar ${totalParcial} un embaladas
+          </button>`:''}
+        </div>`:''}
+        ${done?`<div class="emb-item-actions" id="ajuste-${r.firestoreId}" style="display:none;">
+          <span style="font-size:13px;color:var(--text-secondary);white-space:nowrap;">Ajustar:</span>
           <input type="number" class="emb-input-qtd" id="input-emb-${r.firestoreId}" value="${emb.qtdEmbalada||r.qtd}" min="0" inputmode="numeric" />
-          <button class="btn-sm-green" onclick="confirmarAjuste('${r.firestoreId}',${r.qtd})">OK</button>
+          <button class="btn-sm-green" onclick="confirmarAjuste('${r.firestoreId}',${r.qtdUnidades||r.qtd})">OK</button>
         </div>
+        <button class="btn-sm-outline" style="margin-top:6px;font-size:11px;" onclick="toggleAjuste('${r.firestoreId}',${r.qtdUnidades||r.qtd},${emb.qtdEmbalada||r.qtd})">Ajustar qtd</button>`:''}
       </div>`;
     }).join('')}
     ${manuais.length>0?`<div class="section-divider" style="margin-top:8px;">Adicionados manualmente</div>`:''}
@@ -1865,6 +1907,38 @@ function renderEmbalagem(){
       </div>
     </div>`).join('')}`;
 }
+async function adicionarParcialEmb(fid, qtdTotal){
+  const inp=document.getElementById('emb-parc-inp-'+fid);
+  if(!inp)return;
+  const val=parseInt(inp.value)||0;
+  if(val<=0){alert('Informe uma quantidade válida.');return;}
+  const reg=registros.find(r=>r.firestoreId===fid);
+  if(!reg)return;
+  const emb=reg.embalagem||{feito:false,qtdEmbalada:0,parciais:[]};
+  const parciais=emb.parciais||[];
+  const totalAtual=parciais.reduce((s,p)=>s+(p.qtd||0),0);
+  if(totalAtual+val>qtdTotal){
+    if(!confirm(`Total parcial (${totalAtual+val}) excede produzido (${qtdTotal}). Continuar?`))return;
+  }
+  parciais.push({qtd:val,hora:agora()});
+  try{
+    await updateDoc(doc(db,'registros',fid),{'embalagem.parciais':parciais});
+    inp.value='';
+  }catch(e){alert('Erro: '+e.message);}
+}
+
+async function confirmarEmbalagEmCompleto(fid, qtdProd, totalParcial){
+  if(!confirm('Confirmar '+totalParcial+' un embaladas?\nO produto ficará disponível para Expedição.'))return;
+  try{
+    await updateDoc(doc(db,'registros',fid),{
+      'embalagem.feito':true,
+      'embalagem.qtdEmbalada':totalParcial,
+      'embalagem.qtdProduzida':qtdProd,
+      'embalagem.horaFeito':agora()
+    });
+  }catch(e){alert('Erro: '+e.message);}
+}
+
 async function toggleEmb(fid,qtdProd){
   const reg=registros.find(r=>r.firestoreId===fid);
   const emb=reg.embalagem||{feito:false,qtdEmbalada:0};
@@ -1892,7 +1966,10 @@ function statusExpedicao(data){
   return completos===regs.length?'completo':'pendente';
 }
 function renderSelDataExp(){
-  const dias=diasUteis(10);
+  // Show all days that have records, plus last 30 calendar days
+  const hoje2=new Date(); const diasArr=[];
+  for(let i=0;i<30;i++){const d=new Date(hoje2);d.setDate(hoje2.getDate()-i);diasArr.push(d);}
+  const dias=diasArr.reverse();
   const el=document.getElementById('exp-sel-content');
   const pend=dias.filter(d=>statusExpedicao(fmtData(d))==='pendente');
   let alert='';
@@ -3334,10 +3411,15 @@ function semanaLabel(semStr){
 }
 
 function voltarPlano(){
-  goTo('s-conf-home');
+  // Go back to wherever the user came from
+  const prev=document.querySelector('.screen.active');
+  if(window._planoOrigin) goTo(window._planoOrigin);
+  else goTo('s-conf-home');
+  window._planoOrigin=null;
 }
 
 function abrirPlano(){
+  window._planoOrigin=document.querySelector('.screen.active')?.id||'s-conf-home';
   const semAtual=semanaAtual();
   const recExist=planos.find(p=>p.semana===semAtual);
   if(recExist){
@@ -4439,8 +4521,28 @@ async function excluirFarinhaRec(fid){
   }catch(e){alert('Erro ao excluir: '+e.message);}
 }
 
+function renderConfMassas(){
+  const el=document.getElementById('conf-massas-content');
+  const sub=document.getElementById('conf-massas-sub');
+  if(!el)return;
+  const datas=sortDatas([...new Set(regMassas.map(r=>r.data))]);
+  if(sub)sub.textContent=regMassas.length+' registro(s)';
+  if(!regMassas.length){el.innerHTML='<div class="empty">Nenhuma massa registrada ainda.</div>';return;}
+  const df=window._confMassaData||(datas[0]||hoje());
+  window._confMassaData=df;
+  const selectHtml=`<div style="margin-bottom:12px;"><select onchange="window._confMassaData=this.value;renderConfMassas()" style="font-size:15px;padding:10px 12px;border-radius:10px;border:0.5px solid var(--border-md);background:var(--bg-primary);color:var(--text-primary);width:100%;font-family:inherit;">
+    ${datas.map(d=>`<option value="${d}" ${d===df?'selected':''}>${d}</option>`).join('')}
+  </select></div>`;
+  const filt=regMassas.filter(r=>r.data===df);
+  el.innerHTML=selectHtml+(filt.length?filt.map(r=>`
+    <div class="reg-item">
+      <div class="reg-header"><span class="reg-produto">${r.massa}</span><span class="reg-hora">${r.hora}</span></div>
+      <div class="reg-detalhe">${r.qtdKg} kg${r.obs?' · <em>'+r.obs+'</em>':''}</div>
+    </div>`).join(''):'<div class="empty">Sem massas nesta data.</div>');
+}
+
 window.goTo=goTo; window.abrirPin=abrirPin; window.pinDigit=pinDigit; window.pinDel=pinDel;
-window.iniciarNovoReg=iniciarNovoReg; window.toggleManual=toggleManual;
+window.iniciarNovoReg=iniciarNovoReg; window.renderConfMassas=renderConfMassas; window.toggleManual=toggleManual;
 window.selecionarDataTipo=selecionarDataTipo; window.selecionarDataManual=selecionarDataManual;
 window.irParaProduto=irParaProduto; window.filtrar=filtrar; window.selProd=selProd;
 window.irQtd=irQtd; window.calcPrev=calcPrev; window.salvar=salvar;
@@ -4450,7 +4552,7 @@ window.selecionarDataEmb=selecionarDataEmb; window.irParaEmbalagem=irParaEmbalag
 window.toggleEmb=toggleEmb; window.toggleAjuste=toggleAjuste; window.confirmarAjuste=confirmarAjuste;
 window.selecionarDataExp=selecionarDataExp; window.irParaExpedicao=irParaExpedicao;
 window.adicionarLiberacao=adicionarLiberacao;
-window.tab=tab; window.toggleConf=toggleConf; window.admFiltrar=admFiltrar; window.toggleEditProd=toggleEditProd; window.salvarEditProd=salvarEditProd; window.toggleEditRecheio=toggleEditRecheio; window.salvarEditRecheio=salvarEditRecheio; window.renderMeusReg=renderMeusReg; window.renderCozReg=renderCozReg; window.abrirPresenca=abrirPresenca; window.salvarEmbManual=salvarEmbManual; window.excluirPresenca=excluirPresenca; window.salvarPresenca=salvarPresenca; window.voltarPresenca=voltarPresenca; window.renderPresencaForm=renderPresencaForm; window.selecionarDataPresenca=selecionarDataPresenca; window.selecionarDataPresencaManual=selecionarDataPresencaManual; window.adicionarColaborador=adicionarColaborador; window.removerColab=removerColab; window.updateColab=updateColab; window.renderPresencaReg=renderPresencaReg; window.abrirContagem=abrirContagem; window.subtrairContagem=subtrairContagem; window.filtrarContagem=filtrarContagem; window.adicionarContagem=adicionarContagem; window.renderContagemHist=renderContagemHist; window.verDetalheContagem=verDetalheContagem; window.renderContagemLanc=renderContagemLanc; window.renderContagemHome=renderContagemHome; window.toggleContDay=toggleContDay; window.abrirContainerItem=abrirContainerItem; window.iniciarContainerEntrada=iniciarContainerEntrada; window.selecionarDataContainerEntradaBtn=selecionarDataContainerEntradaBtn; window.selecionarDataContainerEntrada=selecionarDataContainerEntrada; window.salvarContainerEntrada=salvarContainerEntrada; window.iniciarContainerSaida=iniciarContainerSaida; window.selecionarLoteSaida=selecionarLoteSaida; window.salvarContainerSaida=salvarContainerSaida; window.excluirLoteContainer=excluirLoteContainer; window.iniciarNovoLancQuadra=iniciarNovoLancQuadra; window.selecionarDataQuadraBtn=selecionarDataQuadraBtn; window.selecionarDataQuadra=selecionarDataQuadra; window.filtrarKitsQuadra=filtrarKitsQuadra; window.selKitQuadra=selKitQuadra; window.atualizarProdQuadra=atualizarProdQuadra; window.salvarQuadra=salvarQuadra; window.renderQuadraReg=renderQuadraReg; window.excluirRegQuadra=excluirRegQuadra; window.renderQuadraDateGrid=renderQuadraDateGrid; window.atualizarResumoQuadra=atualizarResumoQuadra; window.excluirMovContainer=excluirMovContainer; window.abrirFarinhaLanc=abrirFarinhaLanc; window.atualizarPreviewFarinha=atualizarPreviewFarinha; window.salvarFarinhaLanc=salvarFarinhaLanc; window.renderFarinhaHist=renderFarinhaHist; window.excluirFarinhaRec=excluirFarinhaRec; window.excluirContagem=excluirContagem; window.abrirManut=abrirManut; window.voltarManut=voltarManut; window.salvarNovaMaquina=salvarNovaMaquina; window.excluirMaquina=excluirMaquina; window.abrirMaquina=abrirMaquina; window.iniciarNovaManutencao=iniciarNovaManutencao; window.selecionarDataManut=selecionarDataManut; window.salvarManutencao=salvarManutencao; window.selecionarDataManutBtn=selecionarDataManutBtn; window.abrirPlano=abrirPlano; window.voltarPlano=voltarPlano; window.salvarPlano=salvarPlano; window.adicionarItemPlano=adicionarItemPlano; window.atualizarQtdPlano=atualizarQtdPlano; window.removerItemPlano=removerItemPlano; window.trocarSemanaPlano=trocarSemanaPlano; window.togglePlanoDia=togglePlanoDia; window.toggleFeriado=toggleFeriado; window.importarPlanoPaste=importarPlanoPaste; window.limparPlano=limparPlano; window.renderManutDateGrid=renderManutDateGrid; window.toggleEditParcial=toggleEditParcial; window.salvarEditParcial=salvarEditParcial; window.excluirRegistro=excluirRegistro; window.gerarExcel=gerarExcel; window.renderPresencaForm=renderPresencaForm; window.goToAdmin=goToAdmin; window.sairAdmin=sairAdmin; window.backFromArea=backFromArea;
+window.tab=tab; window.toggleConf=toggleConf; window.admFiltrar=admFiltrar; window.toggleEditProd=toggleEditProd; window.salvarEditProd=salvarEditProd; window.toggleEditRecheio=toggleEditRecheio; window.salvarEditRecheio=salvarEditRecheio; window.renderMeusReg=renderMeusReg; window.renderCozReg=renderCozReg; window.abrirPresenca=abrirPresenca; window.adicionarParcialEmb=adicionarParcialEmb; window.confirmarEmbalagEmCompleto=confirmarEmbalagEmCompleto; window.salvarEmbManual=salvarEmbManual; window.excluirPresenca=excluirPresenca; window.salvarPresenca=salvarPresenca; window.voltarPresenca=voltarPresenca; window.renderPresencaForm=renderPresencaForm; window.selecionarDataPresenca=selecionarDataPresenca; window.selecionarDataPresencaManual=selecionarDataPresencaManual; window.adicionarColaborador=adicionarColaborador; window.removerColab=removerColab; window.updateColab=updateColab; window.renderPresencaReg=renderPresencaReg; window.abrirContagem=abrirContagem; window.subtrairContagem=subtrairContagem; window.filtrarContagem=filtrarContagem; window.adicionarContagem=adicionarContagem; window.renderContagemHist=renderContagemHist; window.verDetalheContagem=verDetalheContagem; window.renderContagemLanc=renderContagemLanc; window.renderContagemHome=renderContagemHome; window.toggleContDay=toggleContDay; window.abrirContainerItem=abrirContainerItem; window.iniciarContainerEntrada=iniciarContainerEntrada; window.selecionarDataContainerEntradaBtn=selecionarDataContainerEntradaBtn; window.selecionarDataContainerEntrada=selecionarDataContainerEntrada; window.salvarContainerEntrada=salvarContainerEntrada; window.iniciarContainerSaida=iniciarContainerSaida; window.selecionarLoteSaida=selecionarLoteSaida; window.salvarContainerSaida=salvarContainerSaida; window.excluirLoteContainer=excluirLoteContainer; window.iniciarNovoLancQuadra=iniciarNovoLancQuadra; window.selecionarDataQuadraBtn=selecionarDataQuadraBtn; window.selecionarDataQuadra=selecionarDataQuadra; window.filtrarKitsQuadra=filtrarKitsQuadra; window.selKitQuadra=selKitQuadra; window.atualizarProdQuadra=atualizarProdQuadra; window.salvarQuadra=salvarQuadra; window.renderQuadraReg=renderQuadraReg; window.excluirRegQuadra=excluirRegQuadra; window.renderQuadraDateGrid=renderQuadraDateGrid; window.atualizarResumoQuadra=atualizarResumoQuadra; window.excluirMovContainer=excluirMovContainer; window.abrirFarinhaLanc=abrirFarinhaLanc; window.atualizarPreviewFarinha=atualizarPreviewFarinha; window.salvarFarinhaLanc=salvarFarinhaLanc; window.renderFarinhaHist=renderFarinhaHist; window.excluirFarinhaRec=excluirFarinhaRec; window.excluirContagem=excluirContagem; window.abrirManut=abrirManut; window.voltarManut=voltarManut; window.salvarNovaMaquina=salvarNovaMaquina; window.excluirMaquina=excluirMaquina; window.abrirMaquina=abrirMaquina; window.iniciarNovaManutencao=iniciarNovaManutencao; window.selecionarDataManut=selecionarDataManut; window.salvarManutencao=salvarManutencao; window.selecionarDataManutBtn=selecionarDataManutBtn; window.abrirPlano=abrirPlano; window.voltarPlano=voltarPlano; window.salvarPlano=salvarPlano; window.adicionarItemPlano=adicionarItemPlano; window.atualizarQtdPlano=atualizarQtdPlano; window.removerItemPlano=removerItemPlano; window.trocarSemanaPlano=trocarSemanaPlano; window.togglePlanoDia=togglePlanoDia; window.toggleFeriado=toggleFeriado; window.importarPlanoPaste=importarPlanoPaste; window.limparPlano=limparPlano; window.renderManutDateGrid=renderManutDateGrid; window.toggleEditParcial=toggleEditParcial; window.salvarEditParcial=salvarEditParcial; window.excluirRegistro=excluirRegistro; window.gerarExcel=gerarExcel; window.renderPresencaForm=renderPresencaForm; window.goToAdmin=goToAdmin; window.sairAdmin=sairAdmin; window.backFromArea=backFromArea;
 </script>
 </body>
 </html>
