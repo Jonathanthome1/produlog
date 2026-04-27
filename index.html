@@ -1882,7 +1882,7 @@ function renderEmbalagem(){
           <div class="emb-item-info">
             <div class="emb-item-nome">${r.produto}</div>
             <div class="emb-item-qtd">
-              Produzido: <strong>${r.qtdUnidades||r.qtd} un</strong>
+              ${r.qtdPacotes>0?`Produzido: <strong>${r.qtdPacotes} pct</strong> <span style="color:var(--text-secondary);font-size:11px;">(${r.qtdUnidades||r.qtd} un)</span>`:`Produzido: <strong>${r.qtdUnidades||r.qtd} un</strong>`}
               ${totalParcial>0&&!done?` · Embalando: <strong style="color:var(--mc-dourado);">${totalParcial} un</strong>`:''}
               ${done?` · Embalado: <strong>${emb.qtdEmbalada} un</strong>`:''}
               ${done&&emb.qtdEmbalada<(r.qtdUnidades||r.qtd)?` <span style="color:#c62828;font-size:11px;">(−${(r.qtdUnidades||r.qtd)-emb.qtdEmbalada})</span>`:''}
