@@ -1106,6 +1106,52 @@
     </div>
   </div>
 
+
+  <!-- TESTES: EDITAR TESTE -->
+  <div class="screen" id="s-testes-edit">
+    <div class="topbar" style="background:#0f766e;">
+      <button class="back-btn" onclick="goTo('s-testes-produto')">‹</button>
+      <div><div class="topbar-title">Editar Teste</div><div class="topbar-sub" id="testes-edit-sub"></div></div>
+    </div>
+    <div class="content">
+      <input type="hidden" id="testes-edit-fid" />
+      <div class="card">
+        <div class="card-label">Fornecedor testado</div>
+        <input type="text" id="testes-edit-fornecedor" placeholder="Nome do fornecedor..." />
+      </div>
+      <div class="card">
+        <div class="card-label">Data do teste</div>
+        <input type="date" id="testes-edit-data" />
+      </div>
+      <div class="card">
+        <div class="card-label">Preço por kg (R$)</div>
+        <div class="input-unit">
+          <input type="number" id="testes-edit-preco" placeholder="0,00" min="0" step="0.01" inputmode="decimal" />
+          <span class="unit-label">R$/kg</span>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-label">Resultado</div>
+        <select id="testes-edit-resultado">
+          <option value="Em avaliação">🔄 Em avaliação</option>
+          <option value="Aprovado">✅ Aprovado</option>
+          <option value="Reprovado">❌ Reprovado</option>
+        </select>
+      </div>
+      <div class="card">
+        <div class="card-label">Diferenças em relação ao atual</div>
+        <textarea id="testes-edit-diferencas"
+          style="width:100%;min-height:80px;font-size:14px;padding:10px;border-radius:10px;border:0.5px solid var(--border-md);background:var(--bg-primary);color:var(--text-primary);font-family:inherit;resize:vertical;"></textarea>
+      </div>
+      <div class="card">
+        <div class="card-label">Observações gerais</div>
+        <textarea id="testes-edit-obs"
+          style="width:100%;min-height:80px;font-size:14px;padding:10px;border-radius:10px;border:0.5px solid var(--border-md);background:var(--bg-primary);color:var(--text-primary);font-family:inherit;resize:vertical;"></textarea>
+      </div>
+      <button class="btn btn-primary" id="testes-edit-btn" onclick="salvarEdicaoTeste()" style="background:#0f766e;">Salvar alterações ✓</button>
+    </div>
+  </div>
+
   <!-- EXPEDIÇÃO: SELECIONAR DATA -->
   <div class="screen" id="s-exp-sel-data">
     <div class="topbar laranja">
@@ -1474,6 +1520,7 @@ function goTo(id){
   if(id==='s-quadra-home') renderQuadraHome();
   if(id==='s-testes-home'){ renderTestesList(); }
   if(id==='s-testes-produto') renderTestesProduto();
+  if(id==='s-testes-edit'){ const b=document.getElementById('testes-edit-btn');if(b){b.textContent='Salvar alterações ✓';b.disabled=false;} }
   if(id==='s-testes-novo'){ const b=document.getElementById('testes-btn-salvar');if(b){b.textContent='Salvar teste ✓';b.disabled=false;} }
   if(id==='s-quadra-data'){ renderQuadraDateGrid(); }
   if(id==='s-quadra-kit'){ filtrarKitsQuadra(); }
@@ -4830,6 +4877,7 @@ function renderTestesProduto(){
         </div>
         <div style="display:flex;align-items:center;gap:6px;">
           <span style="font-size:11px;font-weight:700;color:${corResult(t.resultado)};background:${bgResult(t.resultado)};padding:3px 10px;border-radius:10px;">${t.resultado}</span>
+          <button data-fid="${t.firestoreId}" onclick="abrirEditarTeste(this.dataset.fid)" style="background:none;border:1px solid #0f766e;color:#0f766e;font-size:11px;padding:3px 7px;border-radius:6px;cursor:pointer;font-family:inherit;">✏️</button>
           <button class="btn-del-admin" data-fid="${t.firestoreId}" onclick="excluirTeste(this.dataset.fid)" style="background:none;border:1px solid #ef9a9a;color:#c62828;font-size:11px;padding:3px 7px;border-radius:6px;cursor:pointer;font-family:inherit;">🗑</button>
         </div>
       </div>
@@ -4889,6 +4937,54 @@ async function salvarTeste(){
   }
 }
 
+function abrirEditarTeste(fid){
+  const t=testesRegistros.find(r=>r.firestoreId===fid);
+  if(!t)return;
+  document.getElementById('testes-edit-fid').value=fid;
+  document.getElementById('testes-edit-sub').textContent=t.produto+' · '+t.fornecedor;
+  document.getElementById('testes-edit-fornecedor').value=t.fornecedor||'';
+  // Convert date from dd/mm/yyyy to yyyy-mm-dd for input
+  if(t.data){
+    const parts=t.data.split('/');
+    if(parts.length===3) document.getElementById('testes-edit-data').value=parts[2]+'-'+parts[1]+'-'+parts[0];
+  }
+  document.getElementById('testes-edit-preco').value=t.preco||'';
+  document.getElementById('testes-edit-resultado').value=t.resultado||'Em avaliação';
+  document.getElementById('testes-edit-diferencas').value=t.diferencas||'';
+  document.getElementById('testes-edit-obs').value=t.obs||'';
+  const btn=document.getElementById('testes-edit-btn');
+  if(btn){btn.textContent='Salvar alterações ✓';btn.disabled=false;}
+  goTo('s-testes-edit');
+}
+
+async function salvarEdicaoTeste(){
+  const fid=document.getElementById('testes-edit-fid').value;
+  const fornecedor=document.getElementById('testes-edit-fornecedor').value.trim();
+  const dataRaw=document.getElementById('testes-edit-data').value;
+  const preco=document.getElementById('testes-edit-preco').value;
+  const resultado=document.getElementById('testes-edit-resultado').value;
+  const diferencas=document.getElementById('testes-edit-diferencas').value.trim();
+  const obs=document.getElementById('testes-edit-obs').value.trim();
+  if(!fornecedor){alert('Informe o nome do fornecedor.');return;}
+  if(!dataRaw){alert('Informe a data do teste.');return;}
+  const[y,m,d]=dataRaw.split('-');
+  const dataFmt=d+'/'+m+'/'+y;
+  const btn=document.getElementById('testes-edit-btn');
+  btn.textContent='Salvando...';btn.disabled=true;
+  try{
+    await updateDoc(doc(db,'testesMP',fid),{
+      fornecedor, data:dataFmt,
+      preco:preco?parseFloat(preco):null,
+      resultado, diferencas, obs,
+      editadoEm:agora()
+    });
+    goTo('s-testes-produto');
+  }catch(e){
+    alert('Erro ao salvar: '+e.message);
+    btn.textContent='Salvar alterações ✓';btn.disabled=false;
+  }
+}
+
 async function excluirTeste(fid){
   if(!window.adminMode){alert('Apenas o administrador pode excluir.');return;}
   if(!confirm('Excluir este teste?\nEssa ação não pode ser desfeita.'))return;
@@ -4909,7 +5005,7 @@ window.selecionarDataEmb=selecionarDataEmb; window.irParaEmbalagem=irParaEmbalag
 window.toggleEmb=toggleEmb; window.toggleAjuste=toggleAjuste; window.confirmarAjuste=confirmarAjuste;
 window.selecionarDataExp=selecionarDataExp; window.irParaExpedicao=irParaExpedicao;
 window.adicionarLiberacao=adicionarLiberacao;
-window.tab=tab; window.toggleConf=toggleConf; window.admFiltrar=admFiltrar; window.toggleEditProd=toggleEditProd; window.salvarEditProd=salvarEditProd; window.toggleEditRecheio=toggleEditRecheio; window.salvarEditRecheio=salvarEditRecheio; window.renderMeusReg=renderMeusReg; window.renderCozReg=renderCozReg; window.abrirPresenca=abrirPresenca; window.adicionarParcialEmb=adicionarParcialEmb; window.confirmarEmbalagEmCompleto=confirmarEmbalagEmCompleto; window.subtrairParcialEmb=subtrairParcialEmb; window.salvarEmbManual=salvarEmbManual; window.excluirPresenca=excluirPresenca; window.salvarPresenca=salvarPresenca; window.voltarPresenca=voltarPresenca; window.renderPresencaForm=renderPresencaForm; window.selecionarDataPresenca=selecionarDataPresenca; window.selecionarDataPresencaManual=selecionarDataPresencaManual; window.adicionarColaborador=adicionarColaborador; window.removerColab=removerColab; window.updateColab=updateColab; window.renderPresencaReg=renderPresencaReg; window.abrirContagem=abrirContagem; window.subtrairContagem=subtrairContagem; window.filtrarContagem=filtrarContagem; window.adicionarContagem=adicionarContagem; window.renderContagemHist=renderContagemHist; window.verDetalheContagem=verDetalheContagem; window.renderContagemLanc=renderContagemLanc; window.renderContagemHome=renderContagemHome; window.toggleContDay=toggleContDay; window.abrirContainerItem=abrirContainerItem; window.iniciarContainerEntrada=iniciarContainerEntrada; window.selecionarDataContainerEntradaBtn=selecionarDataContainerEntradaBtn; window.selecionarDataContainerEntrada=selecionarDataContainerEntrada; window.salvarContainerEntrada=salvarContainerEntrada; window.iniciarContainerSaida=iniciarContainerSaida; window.selecionarLoteSaida=selecionarLoteSaida; window.salvarContainerSaida=salvarContainerSaida; window.excluirLoteContainer=excluirLoteContainer; window.iniciarNovoLancQuadra=iniciarNovoLancQuadra; window.selecionarDataQuadraBtn=selecionarDataQuadraBtn; window.selecionarDataQuadra=selecionarDataQuadra; window.filtrarKitsQuadra=filtrarKitsQuadra; window.selKitQuadra=selKitQuadra; window.atualizarProdQuadra=atualizarProdQuadra; window.salvarQuadra=salvarQuadra; window.renderQuadraReg=renderQuadraReg; window.excluirRegQuadra=excluirRegQuadra; window.renderQuadraDateGrid=renderQuadraDateGrid; window.atualizarResumoQuadra=atualizarResumoQuadra; window.renderTestesList=renderTestesList; window.abrirTestesProduto=abrirTestesProduto; window.abrirNovoTeste=abrirNovoTeste; window.salvarTeste=salvarTeste; window.excluirTeste=excluirTeste; window.adicionarProdutoTeste=adicionarProdutoTeste; window.excluirMovContainer=excluirMovContainer; window.abrirFarinhaLanc=abrirFarinhaLanc; window.atualizarPreviewFarinha=atualizarPreviewFarinha; window.salvarFarinhaLanc=salvarFarinhaLanc; window.renderFarinhaHist=renderFarinhaHist; window.excluirFarinhaRec=excluirFarinhaRec; window.excluirContagem=excluirContagem; window.abrirManut=abrirManut; window.voltarManut=voltarManut; window.salvarNovaMaquina=salvarNovaMaquina; window.excluirMaquina=excluirMaquina; window.abrirMaquina=abrirMaquina; window.iniciarNovaManutencao=iniciarNovaManutencao; window.selecionarDataManut=selecionarDataManut; window.salvarManutencao=salvarManutencao; window.selecionarDataManutBtn=selecionarDataManutBtn; window.abrirPlano=abrirPlano; window.voltarPlano=voltarPlano; window.salvarPlano=salvarPlano; window.adicionarItemPlano=adicionarItemPlano; window.atualizarQtdPlano=atualizarQtdPlano; window.removerItemPlano=removerItemPlano; window.trocarSemanaPlano=trocarSemanaPlano; window.togglePlanoDia=togglePlanoDia; window.toggleFeriado=toggleFeriado; window.importarPlanoPaste=importarPlanoPaste; window.limparPlano=limparPlano; window.renderManutDateGrid=renderManutDateGrid; window.toggleEditParcial=toggleEditParcial; window.salvarEditParcial=salvarEditParcial; window.excluirRegistro=excluirRegistro; window.gerarExcel=gerarExcel; window.renderPresencaForm=renderPresencaForm; window.goToAdmin=goToAdmin; window.sairAdmin=sairAdmin; window.backFromArea=backFromArea;
+window.tab=tab; window.toggleConf=toggleConf; window.admFiltrar=admFiltrar; window.toggleEditProd=toggleEditProd; window.salvarEditProd=salvarEditProd; window.toggleEditRecheio=toggleEditRecheio; window.salvarEditRecheio=salvarEditRecheio; window.renderMeusReg=renderMeusReg; window.renderCozReg=renderCozReg; window.abrirPresenca=abrirPresenca; window.adicionarParcialEmb=adicionarParcialEmb; window.confirmarEmbalagEmCompleto=confirmarEmbalagEmCompleto; window.subtrairParcialEmb=subtrairParcialEmb; window.salvarEmbManual=salvarEmbManual; window.excluirPresenca=excluirPresenca; window.salvarPresenca=salvarPresenca; window.voltarPresenca=voltarPresenca; window.renderPresencaForm=renderPresencaForm; window.selecionarDataPresenca=selecionarDataPresenca; window.selecionarDataPresencaManual=selecionarDataPresencaManual; window.adicionarColaborador=adicionarColaborador; window.removerColab=removerColab; window.updateColab=updateColab; window.renderPresencaReg=renderPresencaReg; window.abrirContagem=abrirContagem; window.subtrairContagem=subtrairContagem; window.filtrarContagem=filtrarContagem; window.adicionarContagem=adicionarContagem; window.renderContagemHist=renderContagemHist; window.verDetalheContagem=verDetalheContagem; window.renderContagemLanc=renderContagemLanc; window.renderContagemHome=renderContagemHome; window.toggleContDay=toggleContDay; window.abrirContainerItem=abrirContainerItem; window.iniciarContainerEntrada=iniciarContainerEntrada; window.selecionarDataContainerEntradaBtn=selecionarDataContainerEntradaBtn; window.selecionarDataContainerEntrada=selecionarDataContainerEntrada; window.salvarContainerEntrada=salvarContainerEntrada; window.iniciarContainerSaida=iniciarContainerSaida; window.selecionarLoteSaida=selecionarLoteSaida; window.salvarContainerSaida=salvarContainerSaida; window.excluirLoteContainer=excluirLoteContainer; window.iniciarNovoLancQuadra=iniciarNovoLancQuadra; window.selecionarDataQuadraBtn=selecionarDataQuadraBtn; window.selecionarDataQuadra=selecionarDataQuadra; window.filtrarKitsQuadra=filtrarKitsQuadra; window.selKitQuadra=selKitQuadra; window.atualizarProdQuadra=atualizarProdQuadra; window.salvarQuadra=salvarQuadra; window.renderQuadraReg=renderQuadraReg; window.excluirRegQuadra=excluirRegQuadra; window.renderQuadraDateGrid=renderQuadraDateGrid; window.atualizarResumoQuadra=atualizarResumoQuadra; window.renderTestesList=renderTestesList; window.abrirTestesProduto=abrirTestesProduto; window.abrirNovoTeste=abrirNovoTeste; window.salvarTeste=salvarTeste; window.excluirTeste=excluirTeste; window.adicionarProdutoTeste=adicionarProdutoTeste; window.abrirEditarTeste=abrirEditarTeste; window.salvarEdicaoTeste=salvarEdicaoTeste; window.excluirMovContainer=excluirMovContainer; window.abrirFarinhaLanc=abrirFarinhaLanc; window.atualizarPreviewFarinha=atualizarPreviewFarinha; window.salvarFarinhaLanc=salvarFarinhaLanc; window.renderFarinhaHist=renderFarinhaHist; window.excluirFarinhaRec=excluirFarinhaRec; window.excluirContagem=excluirContagem; window.abrirManut=abrirManut; window.voltarManut=voltarManut; window.salvarNovaMaquina=salvarNovaMaquina; window.excluirMaquina=excluirMaquina; window.abrirMaquina=abrirMaquina; window.iniciarNovaManutencao=iniciarNovaManutencao; window.selecionarDataManut=selecionarDataManut; window.salvarManutencao=salvarManutencao; window.selecionarDataManutBtn=selecionarDataManutBtn; window.abrirPlano=abrirPlano; window.voltarPlano=voltarPlano; window.salvarPlano=salvarPlano; window.adicionarItemPlano=adicionarItemPlano; window.atualizarQtdPlano=atualizarQtdPlano; window.removerItemPlano=removerItemPlano; window.trocarSemanaPlano=trocarSemanaPlano; window.togglePlanoDia=togglePlanoDia; window.toggleFeriado=toggleFeriado; window.importarPlanoPaste=importarPlanoPaste; window.limparPlano=limparPlano; window.renderManutDateGrid=renderManutDateGrid; window.toggleEditParcial=toggleEditParcial; window.salvarEditParcial=salvarEditParcial; window.excluirRegistro=excluirRegistro; window.gerarExcel=gerarExcel; window.renderPresencaForm=renderPresencaForm; window.goToAdmin=goToAdmin; window.sairAdmin=sairAdmin; window.backFromArea=backFromArea;
 </script>
 </body>
 </html>
