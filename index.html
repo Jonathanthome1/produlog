@@ -2944,11 +2944,23 @@ async function gerarExcel(){
 
     // ABA 1: PRODUÇÃO
     const prod=registros.filter(r=>inRange(r.data));
-    const prodRows=[['Data','Hora','Produto','Qtd Produzida','Massa Usada (kg)','Massa Esperada (kg)','Quebra Massa (kg)','Recheio 1 (kg)','Recheio 2 (kg)','Qtd Embalada','Qtd Expedida','Confirmado','Observação','Editado em']];
+    const prodRows=[['Data','Hora','Produto','Qtd Produzida',
+      'Massa Usada (kg)','Massa Esperada (kg)','Quebra Massa (kg)',
+      'Recheio 1 Usado (kg)','Recheio 1 Esperado (kg)','Quebra Recheio 1 (kg)',
+      'Recheio 2 Usado (kg)','Recheio 2 Esperado (kg)','Quebra Recheio 2 (kg)',
+      'Qtd Embalada','Qtd Expedida','Confirmado','Observação','Editado em']];
     prod.forEach(r=>{
       const emb=r.embalagem||{};
       const exp=r.expedicao||{totalLiberado:0};
-      prodRows.push([r.data,r.hora,r.produto,r.qtd,r.massa,(r.quebra?.massaEsp||0).toFixed(3),(r.quebra?.difMassa||0).toFixed(3),r.r1||0,r.r2||0,emb.qtdEmbalada||0,exp.totalLiberado||0,r.confirmado?'Sim':'Não',r.obs||'',r.editadoEm||'']);
+      const q=r.quebra||{};
+      prodRows.push([
+        r.data,r.hora,r.produto,r.qtd,
+        r.massa,(q.massaEsp||0).toFixed(3),(q.difMassa||0).toFixed(3),
+        r.r1||0,(q.r1Esp||0).toFixed(3),(q.difR1||0).toFixed(3),
+        r.r2||0,(q.r2Esp||0).toFixed(3),(q.difR2||0).toFixed(3),
+        emb.qtdEmbalada||0,exp.totalLiberado||0,
+        r.confirmado?'Sim':'Não',r.obs||'',r.editadoEm||''
+      ]);
     });
     XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(prodRows),'Produção');
 
