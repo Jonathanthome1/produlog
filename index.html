@@ -2946,32 +2946,45 @@ async function gerarExcel(){
 
     // ABA 1: PRODUÇÃO
     const prod=registros.filter(r=>inRange(r.data));
-    const prodRows=[['Data','Hora','Produto','Qtd Produzida',
-      'Massa Usada (kg)','Massa Esperada (kg)','Quebra Massa (kg)',
-      'Recheio 1 Usado (kg)','Recheio 1 Esperado (kg)','Quebra Recheio 1 (kg)',
-      'Recheio 2 Usado (kg)','Recheio 2 Esperado (kg)','Quebra Recheio 2 (kg)',
+    const prodRows=[['Data','Hora','Produto','Qtd Pacotes','Qtd Unidades',
+      'Massa Padrão (gr/un)','Massa Usada (kg)','Massa Esperada (kg)','Quebra Massa (kg)','Massa Média Real (gr/un)',
+      'Recheio 1 Padrão (gr/un)','Recheio 1 Usado (kg)','Recheio 1 Esperado (kg)','Quebra Recheio 1 (kg)','Recheio 1 Média Real (gr/un)',
+      'Recheio 2 Padrão (gr/un)','Recheio 2 Usado (kg)','Recheio 2 Esperado (kg)','Quebra Recheio 2 (kg)','Recheio 2 Média Real (gr/un)',
       'Qtd Embalada','Qtd Expedida','Confirmado','Observação','Editado em']];
     prod.forEach(r=>{
       const emb=r.embalagem||{};
       const exp=r.expedicao||{totalLiberado:0};
-      // Recalculate expected values on the fly to fix old records
       const p=r.prodData||{};
       const qtdPct=p.qtdPct||1;
-      const unidades=r.qtd*qtdPct;
-      const mEsp=(p.grMassa||0)*unidades/1000;
-      const r1Esp=(p.grRecheio||0)*unidades/1000;
-      const r2Esp=(p.grRecheio2||0)*unidades/1000;
+      const unidades=r.qtdUnidades||(r.qtd*qtdPct);
+      const grMassa=p.grMassa||0, grR1=p.grRecheio||0, grR2=p.grRecheio2||0;
+      const mEsp=grMassa*unidades/1000;
+      const r1Esp=grR1*unidades/1000;
+      const r2Esp=grR2*unidades/1000;
       const massa=r.massa||0, r1=r.r1||0, r2=r.r2||0;
+      const medMassa=unidades>0?(massa*1000/unidades):0;
+      const medR1=unidades>0?(r1*1000/unidades):0;
+      const medR2=unidades>0?(r2*1000/unidades):0;
       prodRows.push([
-        r.data,r.hora,r.produto,r.qtd,
-        massa,mEsp.toFixed(3),(massa-mEsp).toFixed(3),
-        r1,r1Esp.toFixed(3),(r1-r1Esp).toFixed(3),
-        r2,r2Esp.toFixed(3),(r2-r2Esp).toFixed(3),
+        r.data,r.hora,r.produto,r.qtd,unidades,
+        grMassa,massa,+mEsp.toFixed(3),+(massa-mEsp).toFixed(3),grMassa>0?+medMassa.toFixed(2):'',
+        grR1,r1,+r1Esp.toFixed(3),+(r1-r1Esp).toFixed(3),grR1>0?+medR1.toFixed(2):'',
+        grR2,r2,+r2Esp.toFixed(3),+(r2-r2Esp).toFixed(3),grR2>0?+medR2.toFixed(2):'',
         emb.qtdEmbalada||0,exp.totalLiberado||0,
         r.confirmado?'Sim':'Não',r.obs||'',r.editadoEm||''
       ]);
     });
-    XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(prodRows),'Produção');
+    const prodSheet=XLSX.utils.aoa_to_sheet(prodRows);
+    // Highlight Média Real columns (J=9, O=14, T=19 zero-indexed)
+    const ref=XLSX.utils.decode_range(prodSheet['!ref']);
+    [9,14,19].forEach(C=>{
+      for(let R=ref.s.r;R<=ref.e.r;R++){
+        const cell=prodSheet[XLSX.utils.encode_cell({r:R,c:C})];
+        if(!cell)continue;
+        cell.s={fill:{fgColor:{rgb:'FFEB9C'},patternType:'solid'},font:{bold:R===0,color:{rgb:'9C5700'}}};
+      }
+    });
+    XLSX.utils.book_append_sheet(wb,prodSheet,'Produção');
 
     // ABA 2: MASSAS
     const mass=regMassas.filter(r=>inRange(r.data));
