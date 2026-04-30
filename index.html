@@ -1752,9 +1752,11 @@ async function salvarEditProd(fid){
   if(!qtd||!massa){alert('Qtd e massa são obrigatórios.');return;}
   const btn=document.getElementById(`eq-btn-${fid}`);
   btn.textContent='Salvando...';btn.disabled=true;
-  // Recalculate quebra
+  // Recalculate quebra (qtd = pacotes, multiplicar por qtdPct para unidades)
   const p=reg.prodData;
-  const mE=p.grMassa*qtd/1000, r1E=p.grRecheio*qtd/1000, r2E=p.grRecheio2*qtd/1000;
+  const qtdPct=p.qtdPct||1;
+  const unidades=qtd*qtdPct;
+  const mE=p.grMassa*unidades/1000, r1E=p.grRecheio*unidades/1000, r2E=p.grRecheio2*unidades/1000;
   try{
     await updateDoc(doc(db,'registros',fid),{
       qtd, massa, r1, r2, obs,
@@ -2952,12 +2954,19 @@ async function gerarExcel(){
     prod.forEach(r=>{
       const emb=r.embalagem||{};
       const exp=r.expedicao||{totalLiberado:0};
-      const q=r.quebra||{};
+      // Recalculate expected values on the fly to fix old records
+      const p=r.prodData||{};
+      const qtdPct=p.qtdPct||1;
+      const unidades=r.qtd*qtdPct;
+      const mEsp=(p.grMassa||0)*unidades/1000;
+      const r1Esp=(p.grRecheio||0)*unidades/1000;
+      const r2Esp=(p.grRecheio2||0)*unidades/1000;
+      const massa=r.massa||0, r1=r.r1||0, r2=r.r2||0;
       prodRows.push([
         r.data,r.hora,r.produto,r.qtd,
-        r.massa,(q.massaEsp||0).toFixed(3),(q.difMassa||0).toFixed(3),
-        r.r1||0,(q.r1Esp||0).toFixed(3),(q.difR1||0).toFixed(3),
-        r.r2||0,(q.r2Esp||0).toFixed(3),(q.difR2||0).toFixed(3),
+        massa,mEsp.toFixed(3),(massa-mEsp).toFixed(3),
+        r1,r1Esp.toFixed(3),(r1-r1Esp).toFixed(3),
+        r2,r2Esp.toFixed(3),(r2-r2Esp).toFixed(3),
         emb.qtdEmbalada||0,exp.totalLiberado||0,
         r.confirmado?'Sim':'Não',r.obs||'',r.editadoEm||''
       ]);
