@@ -241,12 +241,10 @@
     height: 32px;
     width: auto;
     object-fit: contain;
-    filter: brightness(0) invert(1);
-    opacity: 0.92;
     flex-shrink: 0;
   }
-  .topbar .app-logo { height: 28px; margin-left: 4px; }
-  .splash-logo { height: 80px; margin-bottom: 24px; }
+  .topbar .app-logo { height: 26px; margin-left: 4px; }
+  .splash-logo { height: 70px; margin-bottom: 16px; max-width: 90%; }
   .footer-brand {
     text-align: center; padding: 16px 0 24px;
     font-size: 11px; color: var(--text-secondary);
@@ -256,39 +254,53 @@
 
   /* RESPONSIVE LAYOUT - DESKTOP */
   @media (min-width: 768px) {
-    body { background: var(--bg-secondary); }
-    .screen {
-      max-width: 1100px;
-      margin: 0 auto;
-      min-height: 100vh;
-      background: var(--bg-primary);
-      box-shadow: 0 0 40px rgba(0,0,0,0.5);
+    body { background: #1a1a2e; padding: 0; }
+    .app-frame {
+      max-width: 1100px !important;
+      box-shadow: 0 0 50px rgba(0,0,0,0.6);
     }
     .topbar { padding-left: 32px; padding-right: 32px; }
-    .content { padding: 24px 32px; max-width: 1100px; }
-    .home-btn { max-width: 720px; margin-left: auto; margin-right: auto; }
-    .card { max-width: 720px; margin-left: auto; margin-right: auto; }
-    .section-divider { max-width: 720px; margin-left: auto; margin-right: auto; }
-    .reg-item, .emb-item, .emb-date-item { max-width: 720px; margin-left: auto; margin-right: auto; }
-    .btn { max-width: 720px; margin-left: auto; margin-right: auto; display: block; }
-    .banner { max-width: 720px; margin-left: auto; margin-right: auto; }
-    /* Splash hub buttons in 2 cols */
-    #s-inicio .content { max-width: 900px; }
-    #s-inicio .home-btn { max-width: 100%; }
-    #s-adm-hub .content { max-width: 900px; }
-    /* Metric/cards grid stays */
+    .content {
+      padding: 28px 40px !important;
+      max-width: 100% !important;
+    }
+    /* Inner content max width for readability */
+    .content > .home-btn,
+    .content > .card,
+    .content > .section-divider,
+    .content > .reg-item,
+    .content > .emb-item,
+    .content > .emb-date-item,
+    .content > .btn,
+    .content > .banner,
+    .content > .empty {
+      max-width: 800px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .content > .home-btn { margin-bottom: 12px; }
   }
-  @media (min-width: 1100px) {
-    /* Larger screens: 2-column hub buttons */
-    #s-inicio .content > div:has(> .home-btn),
+  @media (min-width: 1024px) {
+    /* Larger screens: hub buttons in 2 columns */
+    #s-inicio .content,
     #s-adm-hub .content {
+      max-width: 1000px !important;
+      margin: 0 auto;
+    }
+    #s-inicio .content > .home-btn,
+    #s-adm-hub .content > .home-btn {
+      max-width: none;
+      margin: 0 0 12px 0;
+    }
+    /* Use grid for hub buttons */
+    .hub-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 10px;
-      align-items: start;
+      gap: 12px;
+      max-width: 1000px;
+      margin: 0 auto;
     }
-    #s-inicio .home-btn, #s-adm-hub .home-btn { margin-bottom: 0; }
-    .topbar { padding-left: 40px; padding-right: 40px; }
+    .hub-grid .home-btn { margin: 0; max-width: none; }
   }
 </style>
 </head>
