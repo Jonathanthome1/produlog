@@ -364,7 +364,8 @@
         <span style="color:var(--text-secondary);font-size:20px;">›</span>
       </button>
       <button class="btn btn-secondary" style="margin-top:4px;" onclick="goTo('s-meus-reg')">Ver registros de produção</button>
-      <button class="btn btn-secondary" style="margin-top:4px;margin-bottom:12px;" onclick="goTo('s-conf-massas')">Ver registros de massas</button>
+      <button class="btn btn-secondary" style="margin-top:4px;" onclick="goTo('s-conf-massas')">Ver registros de massas</button>
+      <button class="btn btn-secondary" style="margin-top:4px;margin-bottom:12px;" onclick="abrirExpView('conf')">Ver liberações da expedição</button>
       <div class="section-divider">Equipe</div>
       <button class="home-btn azul" onclick="abrirPresenca('conf')">
         <div class="hb-icon" style="background:#e8eaff;">👥</div>
@@ -669,7 +670,7 @@
   <div class="screen" id="s-emb-home">
     <div class="topbar">
       <div style="flex:1;"><div class="topbar-title">Embalagem 📦</div><div class="topbar-sub" id="emb-data-topbar"></div></div>
-      <button class="emb-data-badge" onclick="abrirPresenca('emb')" style="margin-right:6px;">👥</button><button class="emb-data-badge" onclick="goTo('s-emb-manual')" style="margin-right:6px;">+ Produto</button><button class="emb-data-badge" onclick="goTo('s-emb-sel-data')">Trocar dia</button>
+      <button class="emb-data-badge" onclick="abrirPresenca('emb')" style="margin-right:6px;">👥</button><button class="emb-data-badge" onclick="goTo('s-emb-manual')" style="margin-right:6px;">+ Produto</button><button class="emb-data-badge" onclick="abrirExpView('emb')" style="margin-right:6px;">🚚</button><button class="emb-data-badge" onclick="goTo('s-emb-sel-data')">Trocar dia</button>
     </div>
     <div class="content" id="emb-content"></div>
   </div>
@@ -701,6 +702,24 @@
       </div>
       <button class="btn btn-primary" id="emb-manual-btn" onclick="salvarEmbManual()">Adicionar ao checklist ✓</button>
     </div>
+  </div>
+
+
+  <!-- EXPEDIÇÃO VIEW (read-only) -->
+  <div class="screen" id="s-exp-view-sel">
+    <div class="topbar">
+      <button class="back-btn" id="exp-view-back" onclick="goTo('s-conf-home')">‹</button>
+      <div><div class="topbar-title">Liberações da Expedição</div><div class="topbar-sub">Selecione o dia (somente visualização)</div></div>
+    </div>
+    <div class="content" id="exp-view-sel-content"></div>
+  </div>
+
+  <div class="screen" id="s-exp-view">
+    <div class="topbar">
+      <button class="back-btn" onclick="goTo('s-exp-view-sel')">‹</button>
+      <div><div class="topbar-title">Expedição</div><div class="topbar-sub" id="exp-view-data-topbar">data</div></div>
+    </div>
+    <div class="content" id="exp-view-content"></div>
   </div>
 
   <!-- PRESENÇA: FORM (shared, rendered dynamically) -->
@@ -1234,6 +1253,16 @@
   </div>
 
 
+
+  <!-- ADMIN STATUS PANEL -->
+  <div class="screen" id="s-adm-status">
+    <div class="topbar">
+      <button class="back-btn" onclick="goTo('s-adm-hub')">‹</button>
+      <div><div class="topbar-title">📊 Status Geral</div><div class="topbar-sub" id="adm-status-sub">Visão geral dos setores</div></div>
+    </div>
+    <div class="content" id="adm-status-content"></div>
+  </div>
+
   <!-- CONTAGEM HOME -->
   <div class="screen" id="s-contagem-home">
     <div class="topbar" style="background:#0891b2;">
@@ -1276,6 +1305,16 @@
   </div>
 
 
+
+  <!-- ADMIN STATUS PANEL -->
+  <div class="screen" id="s-adm-status">
+    <div class="topbar">
+      <button class="back-btn" onclick="goTo('s-adm-hub')">‹</button>
+      <div><div class="topbar-title">📊 Status Geral</div><div class="topbar-sub" id="adm-status-sub">Visão geral dos setores</div></div>
+    </div>
+    <div class="content" id="adm-status-content"></div>
+  </div>
+
   <!-- CONTAGEM: PRODUTO ACABADO SUB-MENU -->
   <div class="screen" id="s-contagem-prod-acabado">
     <div class="topbar" style="background:#0891b2;">
@@ -1296,6 +1335,16 @@
     </div>
   </div>
 
+
+  <!-- ADMIN STATUS PANEL -->
+  <div class="screen" id="s-adm-status">
+    <div class="topbar">
+      <button class="back-btn" onclick="goTo('s-adm-hub')">‹</button>
+      <div><div class="topbar-title">📊 Status Geral</div><div class="topbar-sub" id="adm-status-sub">Visão geral dos setores</div></div>
+    </div>
+    <div class="content" id="adm-status-content"></div>
+  </div>
+
   <!-- CONTAGEM: LANÇAMENTO -->
   <div class="screen" id="s-contagem-lanc">
     <div class="topbar" style="background:#0891b2;">
@@ -1303,6 +1352,16 @@
       <div><div class="topbar-title" id="cont-lanc-title">Contagem</div><div class="topbar-sub" id="cont-lanc-sub"></div></div>
     </div>
     <div class="content" id="cont-lanc-content"></div>
+  </div>
+
+
+  <!-- ADMIN STATUS PANEL -->
+  <div class="screen" id="s-adm-status">
+    <div class="topbar">
+      <button class="back-btn" onclick="goTo('s-adm-hub')">‹</button>
+      <div><div class="topbar-title">📊 Status Geral</div><div class="topbar-sub" id="adm-status-sub">Visão geral dos setores</div></div>
+    </div>
+    <div class="content" id="adm-status-content"></div>
   </div>
 
   <!-- CONTAGEM: HISTÓRICO -->
@@ -1417,6 +1476,9 @@ function atualizarTela(){
   if(tela==='s-emb-home') renderEmbalagem(); // embManual listener triggers this
   if(tela==='s-emb-sel-data') renderSelDataEmb();
   if(tela==='s-exp-home') renderExpedicao();
+  if(tela==='s-adm-status') renderAdmStatus();
+  if(tela==='s-exp-view-sel') renderExpViewSelData();
+  if(tela==='s-exp-view') renderExpView();
   if(tela==='s-exp-sel-data') renderSelDataExp();
   if(tela==='s-meus-reg') renderMeusReg();
   if(tela==='s-conf-massas') renderConfMassas();
@@ -1506,6 +1568,8 @@ function goTo(id){
   if(id==='s-emb-home') renderEmbalagem();
   if(id==='s-emb-manual'){ const b=document.getElementById('emb-manual-btn');if(b){b.textContent='Adicionar ao checklist ✓';b.disabled=false;} }
   if(id==='s-exp-home') renderExpedicao();
+  if(id==='s-exp-view-sel') renderExpViewSelData();
+  if(id==='s-exp-view') renderExpView();
   if(id==='s-adm') renderAdm(tabAtiva);
   if(id==='s-presenca-form') renderPresencaForm();
   if(id==='s-presenca-reg-conf') renderPresencaReg('conf');
@@ -2035,11 +2099,15 @@ function renderEmbalagem(){
             <button onclick="subtrairParcialEmb('${r.firestoreId}')"
               style="background:none;border:1px solid #c62828;color:#c62828;border-radius:8px;padding:8px 12px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;" ${totalParcial===0?'disabled style="opacity:0.4;"':''}>− Remover</button>
           </div>
+          <textarea id="emb-obs-${r.firestoreId}" placeholder="Observação (opcional)..."
+            onblur="salvarObsEmb('${r.firestoreId}',this.value)"
+            style="width:100%;font-size:13px;padding:8px;border-radius:8px;border:1px solid var(--border);background:var(--bg-primary);color:var(--text-primary);font-family:inherit;resize:vertical;min-height:40px;margin-bottom:6px;">${(r.embalagem&&r.embalagem.obs)||''}</textarea>
           ${totalParcial>0?`<button onclick="confirmarEmbalagEmCompleto('${r.firestoreId}',${r.qtdUnidades||r.qtd},${totalParcial})"
             style="width:100%;padding:10px;background:#2e7d32;color:white;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;">
             ✓ Confirmar ${totalParcial} un embaladas
           </button>`:''}
         </div>`:''}
+        ${done&&r.embalagem&&r.embalagem.obs?`<div style="margin-top:6px;padding:8px;background:rgba(0,0,0,0.04);border-radius:8px;font-size:12px;color:var(--text-secondary);">📝 ${r.embalagem.obs}</div>`:''}
         ${done?`<div class="emb-item-actions" id="ajuste-${r.firestoreId}" style="display:none;margin-top:8px;">
           <span style="font-size:13px;color:var(--text-secondary);white-space:nowrap;">Ajustar:</span>
           <input type="number" class="emb-input-qtd" id="input-emb-${r.firestoreId}" value="${emb.qtdEmbalada||r.qtd}" min="0" inputmode="numeric" />
@@ -2078,6 +2146,12 @@ async function adicionarParcialEmb(fid, qtdTotal){
     await updateDoc(doc(db,'registros',fid),{'embalagem.parciais':parciais});
     inp.value='';
   }catch(e){alert('Erro: '+e.message);}
+}
+
+async function salvarObsEmb(fid, obs){
+  try{
+    await updateDoc(doc(db,'registros',fid),{'embalagem.obs':obs.trim()});
+  }catch(e){console.error('Erro salvando obs emb:',e);}
 }
 
 async function subtrairParcialEmb(fid){
@@ -2173,40 +2247,128 @@ function statusExpedicao(data){
   return completos===regs.length?'completo':'pendente';
 }
 function renderSelDataExp(){
-  // Show all days that have records, plus last 30 calendar days
   const hoje2=new Date(); const diasArr=[];
   for(let i=0;i<30;i++){const d=new Date(hoje2);d.setDate(hoje2.getDate()-i);diasArr.push(d);}
-  const dias=diasArr.reverse();
   const el=document.getElementById('exp-sel-content');
-  const pend=dias.filter(d=>statusExpedicao(fmtData(d))==='pendente');
-  let alert='';
-  if(pend.length>0)alert=`<div class="banner banner-info-laranja" style="margin-bottom:12px;">⚠️ <strong>${pend.length} dia(s)</strong> com produtos pendentes de liberação</div>`;
-  const listHtml=dias.map((d,i)=>{
-    const data=fmtData(d);const status=statusExpedicao(data);
+  if(!el)return;
+
+  // Status of each day
+  const diasComStatus=diasArr.map((d,idx)=>{
+    const data=fmtData(d);
     const regs=registros.filter(r=>r.data===data&&r.embalagem&&r.embalagem.feito);
-    const total=regs.length;const isSel=dataSelExp===data;
+    if(regs.length===0) return {d, data, idx, status:'vazio', total:0, pendentes:0};
+    const pendentes=regs.filter(r=>{
+      const exp=r.expedicao||{totalLiberado:0};
+      return exp.totalLiberado<(r.embalagem.qtdEmbalada||r.qtd);
+    }).length;
+    if(pendentes===0) return {d, data, idx, status:'completo', total:regs.length, pendentes:0};
+    return {d, data, idx, status:'pendente', total:regs.length, pendentes};
+  });
+
+  // Sort: pending first, then completos, then vazios (but only show those with regs)
+  const pendentes=diasComStatus.filter(x=>x.status==='pendente');
+  const resto=diasComStatus.filter(x=>x.status!=='pendente');
+  const diasOrdenados=[...pendentes,...resto];
+
+  let alert='';
+  if(pendentes.length>0)alert=`<div class="banner" style="background:#fff3cd;border:0.5px solid #f5a623;color:#7a4f00;margin-bottom:12px;">⚠️ <strong>${pendentes.length} dia(s)</strong> com produtos pendentes de liberação</div>`;
+
+  const listHtml=diasOrdenados.map(({d,data,status,idx,total,pendentes:pend})=>{
+    const isSel=dataSelExp===data;
     let badge='',dot='';
-    if(status==='pendente'){const p=regs.filter(r=>{const exp=r.expedicao||{totalLiberado:0};return exp.totalLiberado<(r.embalagem.qtdEmbalada||r.qtd);}).length;badge=`<span class="badge-pendente-emb">⏳ ${p} pendente${p>1?'s':''}</span>`;dot=`<div class="dot-laranja"></div>`;}
-    else if(status==='completo')badge=`<span class="badge-completo-emb">✓ completo</span>`;
+    if(status==='pendente'){badge=`<span class="badge-pendente-emb">⏳ ${pend} pendente${pend>1?'s':''}</span>`;dot=`<div class="dot-pendente"></div>`;}
+    else if(status==='completo')badge=`<span class="badge-completo-emb">✓ liberado</span>`;
     else badge=`<span class="badge-vazio-emb">sem embalados</span>`;
-    const lbl=labelDia(i);const nome=lbl?`${lbl} · ${nomeDiaSemana(d)}`:`${nomeDiaSemana(d)}`;
+    const lbl=labelDia(idx);
+    const nome=lbl?`${lbl} · ${nomeDiaSemana(d)}`:`${nomeDiaSemana(d)}`;
     const clk=status!=='vazio';
-    return `<button class="emb-date-item ${isSel?'sel':''} ${!clk?'sem-registros':''}"
-      onclick="${clk?`selecionarDataExp('${data}')`:''}" ${!clk?'disabled':''}>
-      <div class="emb-date-item-left"><div class="emb-date-item-label">${nome}</div><div class="emb-date-item-sub">${data}${total>0?` · ${total} produto(s) embalado(s)`:''}</div></div>
-      <div class="emb-date-status">${dot}${badge}</div></button>`;
+    const btnAttr=clk?' data-d="'+data+'" onclick="selecionarDataExp(this.dataset.d)"':' disabled';
+    return '<button class="emb-date-item '+(isSel?'sel':'')+' '+(!clk?'sem-registros':'')+'"'+btnAttr+'>'+
+      '<div class="emb-date-item-left"><div class="emb-date-item-label">'+nome+'</div><div class="emb-date-item-sub">'+data+(total>0?' · '+total+' produto(s)':'')+'</div></div>'+
+      '<div class="emb-date-status">'+dot+badge+'</div></button>';
   }).join('');
-  el.innerHTML=alert+`<div class="emb-date-list">${listHtml}</div>`;
-  if(dataSelExp)el.innerHTML+=`<div style="margin-top:14px;"><button class="btn btn-laranja" onclick="irParaExpedicao()">Ver produtos de ${dataSelExp} →</button></div>`;
+
+  el.innerHTML=alert+'<div class="emb-date-list">'+listHtml+'</div>';
 }
-function selecionarDataExp(data){dataSelExp=data;renderSelDataExp();}
+
+function selecionarDataExp(data){dataSelExp=data;goTo('s-exp-home');}
 function irParaExpedicao(){if(!dataSelExp)return;goTo('s-exp-home');}
+function abrirExpView(origem){
+  window._expViewOrigem=origem;
+  const back=document.getElementById('exp-view-back');
+  if(back) back.setAttribute('onclick',"goTo('"+(origem==='conf'?'s-conf-home':'s-emb-home')+"')");
+  renderExpViewSelData();
+  goTo('s-exp-view-sel');
+}
+
+function renderExpViewSelData(){
+  // Show last 30 days
+  const el=document.getElementById('exp-view-sel-content');
+  if(!el)return;
+  const hoje2=new Date();
+  const dias=[];
+  for(let i=0;i<30;i++){const d=new Date(hoje2);d.setDate(hoje2.getDate()-i);dias.push(d);}
+  const datasComStatus=dias.map(d=>{
+    const data=fmtData(d);
+    const regs=registros.filter(r=>r.data===data&&r.embalagem&&r.embalagem.feito);
+    const liberadosTotal=regs.reduce((s,r)=>s+((r.expedicao&&r.expedicao.totalLiberado)||0),0);
+    return {data, regs, liberadosTotal};
+  }).filter(x=>x.regs.length>0);
+  if(!datasComStatus.length){el.innerHTML='<div class="empty">Nenhum dia com produtos embalados.</div>';return;}
+  el.innerHTML=datasComStatus.map(x=>{
+    const total=x.regs.length;
+    const completos=x.regs.filter(r=>{
+      const e=r.expedicao||{totalLiberado:0};
+      return e.totalLiberado>=(r.embalagem.qtdEmbalada||r.qtd);
+    }).length;
+    const status=completos===total?'✅ Tudo liberado':completos>0?'🟡 Parcial: '+completos+'/'+total:'⏳ Aguardando';
+    const cor=completos===total?'#4caf50':completos>0?'var(--mc-laranja)':'var(--text-secondary)';
+    return '<button onclick="abrirExpViewData(\''+x.data+'\')" style="width:100%;background:var(--bg-secondary);border:0.5px solid var(--border);border-left:3px solid '+cor+';border-radius:12px;padding:14px;margin-bottom:8px;cursor:pointer;font-family:inherit;text-align:left;display:flex;justify-content:space-between;align-items:center;">'+
+      '<div><div style="font-size:14px;font-weight:600;color:var(--text-primary);">'+x.data+'</div>'+
+      '<div style="font-size:12px;color:var(--text-secondary);margin-top:2px;">'+total+' produto(s) embalados</div></div>'+
+      '<div style="font-size:12px;color:'+cor+';font-weight:600;">'+status+'</div></button>';
+  }).join('');
+}
+
+function abrirExpViewData(data){
+  window._expViewData=data;
+  document.getElementById('exp-view-data-topbar').textContent=data;
+  renderExpView();
+  goTo('s-exp-view');
+}
+
+function renderExpView(){
+  const el=document.getElementById('exp-view-content');
+  if(!el)return;
+  const data=window._expViewData;
+  const regs=registros.filter(r=>r.data===data&&r.embalagem&&r.embalagem.feito);
+  if(!regs.length){el.innerHTML='<div class="empty">Sem produtos embalados.</div>';return;}
+  el.innerHTML=regs.map(r=>{
+    const exp=r.expedicao||{parciais:[],totalLiberado:0};
+    const qtdEmb=r.embalagem.qtdEmbalada||r.qtd;
+    const totalLib=exp.totalLiberado||0;
+    const concluido=totalLib>=qtdEmb;
+    const cor=concluido?'#4caf50':totalLib>0?'var(--mc-laranja)':'var(--text-secondary)';
+    return '<div style="background:var(--bg-secondary);border:0.5px solid var(--border);border-left:3px solid '+cor+';border-radius:12px;padding:14px;margin-bottom:8px;">'+
+      '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;">'+
+      '<div style="flex:1;"><div style="font-size:14px;font-weight:600;color:var(--text-primary);">'+r.produto+'</div>'+
+      '<div style="font-size:12px;color:var(--text-secondary);margin-top:4px;">Embalado: <strong>'+qtdEmb+' un</strong> · Liberado: <strong style="color:'+cor+';">'+totalLib+' un</strong></div></div>'+
+      '<span style="font-size:11px;font-weight:700;color:'+cor+';background:'+(concluido?'rgba(76,175,80,0.15)':totalLib>0?'rgba(245,158,11,0.15)':'rgba(0,0,0,0.05)')+';padding:3px 10px;border-radius:10px;white-space:nowrap;">'+(concluido?'✓ Completo':totalLib>0?'parcial':'pendente')+'</span>'+
+      '</div>'+
+      (exp.parciais&&exp.parciais.length>0?'<div style="margin-top:8px;padding-top:8px;border-top:0.5px solid var(--border);font-size:11px;color:var(--text-secondary);">'+exp.parciais.map(p=>p.hora+': +'+p.qtd+' un').join(' · ')+'</div>':'')+
+      '</div>';
+  }).join('');
+}
+
 function renderExpedicao(){
   document.getElementById('exp-data-topbar').textContent=dataSelExp||hoje();
   const el=document.getElementById('exp-content');
   // Apenas produtos já embalados
   const regs=registros.filter(r=>r.data===dataSelExp&&r.embalagem&&r.embalagem.feito);
   if(!regs.length){el.innerHTML='<div class="empty">Nenhum produto embalado neste dia ainda.</div>';return;}
+  // Separar pães (origem quadra) e salgados (resto)
+  const paes=regs.filter(r=>r.origem==='quadra');
+  const salgados=regs.filter(r=>r.origem!=='quadra');
   const total=regs.length;
   const completos=regs.filter(r=>{
     const exp=r.expedicao||{totalLiberado:0};
@@ -2214,16 +2376,8 @@ function renderExpedicao(){
   }).length;
   const pct=Math.round(completos/total*100);
   const barColor=pct===100?'#4caf50':'var(--mc-laranja)';
-  el.innerHTML=`
-    <div class="card" style="margin-bottom:12px;">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
-        <div style="font-size:13px;font-weight:600;color:var(--mc-laranja);">Liberações do dia</div>
-        <div style="font-size:22px;font-weight:700;color:${barColor};">${pct}%</div>
-      </div>
-      <div class="progresso-bar-wrap"><div class="progresso-bar" style="width:${pct}%;background:${barColor};"></div></div>
-      <div style="font-size:12px;color:var(--text-secondary);margin-top:4px;">${completos} de ${total} produto(s) totalmente liberados</div>
-    </div>
-    ${regs.map(r=>{
+
+  const renderItem=(r)=>{
       const exp=r.expedicao||{parciais:[],totalLiberado:0};
       const qtdEmb=r.embalagem.qtdEmbalada||r.qtd;
       const totalLib=exp.totalLiberado||0;
@@ -2238,6 +2392,7 @@ function renderExpedicao(){
               Embalado: <strong>${qtdEmb} un</strong> · Liberado: <strong style="color:${concluido?'#4caf50':'var(--mc-laranja)'};">${totalLib} un</strong>
               ${!concluido?` · Restante: <strong>${restante}</strong>`:''}
             </div>
+            ${r.embalagem&&r.embalagem.obs?`<div style="margin-top:4px;font-size:11px;color:var(--text-secondary);font-style:italic;">📝 ${r.embalagem.obs}</div>`:''}
           </div>
         </div>
         ${exp.parciais&&exp.parciais.length>0?`
@@ -2259,8 +2414,33 @@ function renderExpedicao(){
           </div>`:''
         }
       </div>`;
-    }).join('')}`;
+    };
+
+  el.innerHTML=`
+    <div class="card" style="margin-bottom:12px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+        <div style="font-size:13px;font-weight:600;color:var(--mc-laranja);">Liberações do dia</div>
+        <div style="font-size:22px;font-weight:700;color:${barColor};">${pct}%</div>
+      </div>
+      <div class="progresso-bar-wrap"><div class="progresso-bar" style="width:${pct}%;background:${barColor};"></div></div>
+      <div style="font-size:12px;color:var(--text-secondary);margin-top:4px;">${completos} de ${total} produto(s) totalmente liberados</div>
+    </div>
+    ${paes.length>0?`
+      <div class="section-divider" style="background:rgba(146,64,14,0.1);color:#92400e;border-left:3px solid #92400e;padding:8px 12px;border-radius:8px;margin:14px 0 10px;font-weight:700;">🍞 PÃES (${paes.length})</div>
+      ${paes.map(renderItem).join('')}
+    `:''}
+    ${salgados.length>0?`
+      <div class="section-divider" style="background:rgba(33,123,196,0.1);color:var(--mc-azul);border-left:3px solid var(--mc-azul);padding:8px 12px;border-radius:8px;margin:14px 0 10px;font-weight:700;">🥐 SALGADOS (${salgados.length})</div>
+      ${salgados.map(renderItem).join('')}
+    `:''}
+    ${(()=>{
+      // Old code remnant - replaced by paes/salgados above. Keep as no-op
+      return '';
+    })()}
+    <!-- end items -->
+  `;
 }
+
 async function adicionarLiberacao(fid,qtdEmb){
   const val=parseInt(document.getElementById(`exp-input-${fid}`).value)||0;
   if(val<=0){alert('Informe a quantidade a liberar.');return;}
@@ -5063,6 +5243,144 @@ async function excluirTeste(fid){
   }catch(e){alert('Erro ao excluir: '+e.message);}
 }
 
+
+function renderAdmStatus(){
+  const el=document.getElementById('adm-status-content');
+  if(!el)return;
+
+  const hojeStr=hoje();
+  const ultimos7=[];
+  for(let i=0;i<7;i++){const d=new Date();d.setDate(d.getDate()-i);ultimos7.push(fmtData(d));}
+
+  // ===== CRITICAL =====
+  const criticos=[];
+
+  // Embalagem pendente
+  const diasEmbPend=ultimos7.filter(data=>{
+    const regs=registros.filter(r=>r.data===data);
+    return regs.some(r=>!r.embalagem||!r.embalagem.feito);
+  });
+  if(diasEmbPend.length>0) criticos.push({
+    icone:'📦', titulo:'Embalagem com pendências',
+    msg:diasEmbPend.length+' dia(s) com produtos não embalados: '+diasEmbPend.slice(0,3).join(', ')+(diasEmbPend.length>3?'...':''),
+    acao:'goToAdmin(\'s-emb-sel-data\')'
+  });
+
+  // Expedição pendente
+  const diasExpPend=ultimos7.filter(data=>{
+    const regs=registros.filter(r=>r.data===data&&r.embalagem&&r.embalagem.feito);
+    return regs.some(r=>{const e=r.expedicao||{totalLiberado:0};return e.totalLiberado<(r.embalagem.qtdEmbalada||r.qtd);});
+  });
+  if(diasExpPend.length>0) criticos.push({
+    icone:'🚚', titulo:'Expedição com pendências',
+    msg:diasExpPend.length+' dia(s) com produtos não liberados: '+diasExpPend.slice(0,3).join(', ')+(diasExpPend.length>3?'...':''),
+    acao:'goToAdmin(\'s-exp-sel-data\')'
+  });
+
+  // Presença sem registro hoje (3 setores: conf, coz, emb)
+  const setoresKeys=['conf','coz','emb'];
+  const setoresNomes={conf:'Confeitaria',coz:'Cozinha',emb:'Embalagem'};
+  const presencasArray=Object.values(presencas||{});
+  const setoresSemPres=setoresKeys.filter(s=>{
+    return !presencasArray.some(p=>p.setor_key===s&&p.data===hojeStr);
+  });
+  if(setoresSemPres.length>0) criticos.push({
+    icone:'👥', titulo:'Presença não registrada hoje',
+    msg:setoresSemPres.map(s=>setoresNomes[s]).join(', '),
+    acao:null
+  });
+
+  // ===== AVISOS =====
+  const avisos=[];
+
+  // Container vencendo em 7 dias
+  if(typeof containerLotes!=='undefined'&&Array.isArray(containerLotes)){
+    const vencendo=containerLotes.filter(l=>{
+      if(!l.validade||(l.saldo||0)<=0)return false;
+      const parts=l.validade.split('/');
+      if(parts.length!==3)return false;
+      const val=new Date(parts[2]+'-'+parts[1]+'-'+parts[0]);
+      const diff=(val-new Date())/(1000*60*60*24);
+      return diff<=7&&diff>=0;
+    });
+    if(vencendo.length>0) avisos.push({
+      icone:'⏰', titulo:'Lotes do container vencendo em 7 dias',
+      msg:vencendo.map(l=>l.item+' (lote '+l.data+')').slice(0,3).join(', ')+(vencendo.length>3?'...':''),
+      acao:'goToAdmin(\'s-rafael-home\')'
+    });
+  }
+
+  // Testes MP em avaliação há mais de 30 dias
+  if(typeof testesRegistros!=='undefined'&&Array.isArray(testesRegistros)){
+    const antigos=testesRegistros.filter(t=>{
+      if(t.resultado!=='Em avaliação')return false;
+      const idade=(Date.now()-(t.timestamp||0))/(1000*60*60*24);
+      return idade>30;
+    });
+    if(antigos.length>0) avisos.push({
+      icone:'🔬', titulo:'Testes em avaliação há +30 dias',
+      msg:antigos.length+' teste(s) sem conclusão',
+      acao:'goToAdmin(\'s-testes-home\')'
+    });
+  }
+
+  // Plano da semana sem feriados marcados (avisa apenas se tem semana atual)
+  if(typeof planos!=='undefined'&&Array.isArray(planos)){
+    const semanaAtualStr=typeof semanaAtual==='function'?semanaAtual():'';
+    const planoAtualRec=planos.find(p=>p.semana===semanaAtualStr);
+    // (deixa de fora - opcional)
+  }
+
+  // ===== OK status =====
+  const tudoOk=criticos.length===0;
+
+  let html='';
+  if(tudoOk&&avisos.length===0){
+    html+='<div class="card" style="border-left:3px solid #4caf50;"><div style="font-size:14px;font-weight:600;color:#2e7d32;">✅ Tudo em ordem!</div><div style="font-size:12px;color:var(--text-secondary);margin-top:4px;">Nenhuma pendência crítica detectada.</div></div>';
+  }
+
+  if(criticos.length>0){
+    html+='<div class="section-divider" style="background:rgba(198,40,40,0.1);color:#c62828;border-left:3px solid #c62828;padding:8px 12px;border-radius:8px;margin:0 0 10px;font-weight:700;">🔴 Pendências críticas ('+criticos.length+')</div>';
+    criticos.forEach(c=>{
+      html+='<div class="card" style="border-left:3px solid #c62828;margin-bottom:8px;">'+
+        '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;">'+
+        '<div style="flex:1;"><div style="font-size:14px;font-weight:600;color:var(--text-primary);">'+c.icone+' '+c.titulo+'</div>'+
+        '<div style="font-size:12px;color:var(--text-secondary);margin-top:4px;">'+c.msg+'</div></div>'+
+        (c.acao?'<button onclick="'+c.acao+'" style="background:none;border:1px solid #c62828;color:#c62828;font-size:11px;padding:4px 10px;border-radius:6px;cursor:pointer;font-family:inherit;white-space:nowrap;">Ver →</button>':'')+
+        '</div></div>';
+    });
+  }
+
+  if(avisos.length>0){
+    html+='<div class="section-divider" style="background:rgba(245,158,11,0.1);color:#856404;border-left:3px solid #f5a623;padding:8px 12px;border-radius:8px;margin:14px 0 10px;font-weight:700;">🟡 Avisos ('+avisos.length+')</div>';
+    avisos.forEach(c=>{
+      html+='<div class="card" style="border-left:3px solid #f5a623;margin-bottom:8px;">'+
+        '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;">'+
+        '<div style="flex:1;"><div style="font-size:14px;font-weight:600;color:var(--text-primary);">'+c.icone+' '+c.titulo+'</div>'+
+        '<div style="font-size:12px;color:var(--text-secondary);margin-top:4px;">'+c.msg+'</div></div>'+
+        (c.acao?'<button onclick="'+c.acao+'" style="background:none;border:1px solid #856404;color:#856404;font-size:11px;padding:4px 10px;border-radius:6px;cursor:pointer;font-family:inherit;white-space:nowrap;">Ver →</button>':'')+
+        '</div></div>';
+    });
+  }
+
+  // ===== Resumo numérico do dia =====
+  const totalProdHoje=registros.filter(r=>r.data===hojeStr).length;
+  const totalEmbHoje=registros.filter(r=>r.data===hojeStr&&r.embalagem&&r.embalagem.feito).length;
+  const totalExpHoje=registros.filter(r=>r.data===hojeStr&&r.expedicao&&r.expedicao.totalLiberado>0).length;
+  html+='<div class="section-divider" style="margin-top:14px;">📈 Atividade de hoje ('+hojeStr+')</div>';
+  html+='<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px;">'+
+    '<div class="card" style="text-align:center;padding:14px 10px;"><div style="font-size:24px;font-weight:700;color:var(--mc-azul);">'+totalProdHoje+'</div><div style="font-size:10px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.04em;">Produzido</div></div>'+
+    '<div class="card" style="text-align:center;padding:14px 10px;"><div style="font-size:24px;font-weight:700;color:var(--mc-dourado);">'+totalEmbHoje+'</div><div style="font-size:10px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.04em;">Embalado</div></div>'+
+    '<div class="card" style="text-align:center;padding:14px 10px;"><div style="font-size:24px;font-weight:700;color:var(--mc-laranja);">'+totalExpHoje+'</div><div style="font-size:10px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.04em;">Liberado</div></div>'+
+    '</div>';
+
+  // Update sub
+  const sub=document.getElementById('adm-status-sub');
+  if(sub) sub.textContent=criticos.length+' crítico(s) · '+avisos.length+' aviso(s)';
+
+  el.innerHTML=html;
+}
+
 window.goTo=goTo; window.abrirPin=abrirPin; window.pinDigit=pinDigit; window.pinDel=pinDel;
 window.iniciarNovoReg=iniciarNovoReg; window.renderConfMassas=renderConfMassas; window.toggleManual=toggleManual;
 window.selecionarDataTipo=selecionarDataTipo; window.selecionarDataManual=selecionarDataManual;
@@ -5074,7 +5392,7 @@ window.selecionarDataEmb=selecionarDataEmb; window.irParaEmbalagem=irParaEmbalag
 window.toggleEmb=toggleEmb; window.toggleAjuste=toggleAjuste; window.confirmarAjuste=confirmarAjuste;
 window.selecionarDataExp=selecionarDataExp; window.irParaExpedicao=irParaExpedicao;
 window.adicionarLiberacao=adicionarLiberacao;
-window.tab=tab; window.toggleConf=toggleConf; window.admFiltrar=admFiltrar; window.toggleEditProd=toggleEditProd; window.salvarEditProd=salvarEditProd; window.toggleEditRecheio=toggleEditRecheio; window.salvarEditRecheio=salvarEditRecheio; window.renderMeusReg=renderMeusReg; window.renderCozReg=renderCozReg; window.abrirPresenca=abrirPresenca; window.adicionarParcialEmb=adicionarParcialEmb; window.confirmarEmbalagEmCompleto=confirmarEmbalagEmCompleto; window.subtrairParcialEmb=subtrairParcialEmb; window.salvarEmbManual=salvarEmbManual; window.excluirPresenca=excluirPresenca; window.salvarPresenca=salvarPresenca; window.voltarPresenca=voltarPresenca; window.renderPresencaForm=renderPresencaForm; window.selecionarDataPresenca=selecionarDataPresenca; window.selecionarDataPresencaManual=selecionarDataPresencaManual; window.adicionarColaborador=adicionarColaborador; window.removerColab=removerColab; window.updateColab=updateColab; window.renderPresencaReg=renderPresencaReg; window.abrirContagem=abrirContagem; window.subtrairContagem=subtrairContagem; window.filtrarContagem=filtrarContagem; window.adicionarContagem=adicionarContagem; window.renderContagemHist=renderContagemHist; window.verDetalheContagem=verDetalheContagem; window.renderContagemLanc=renderContagemLanc; window.renderContagemHome=renderContagemHome; window.toggleContDay=toggleContDay; window.abrirContainerItem=abrirContainerItem; window.iniciarContainerEntrada=iniciarContainerEntrada; window.selecionarDataContainerEntradaBtn=selecionarDataContainerEntradaBtn; window.selecionarDataContainerEntrada=selecionarDataContainerEntrada; window.salvarContainerEntrada=salvarContainerEntrada; window.iniciarContainerSaida=iniciarContainerSaida; window.selecionarLoteSaida=selecionarLoteSaida; window.salvarContainerSaida=salvarContainerSaida; window.excluirLoteContainer=excluirLoteContainer; window.iniciarNovoLancQuadra=iniciarNovoLancQuadra; window.selecionarDataQuadraBtn=selecionarDataQuadraBtn; window.selecionarDataQuadra=selecionarDataQuadra; window.filtrarKitsQuadra=filtrarKitsQuadra; window.selKitQuadra=selKitQuadra; window.atualizarProdQuadra=atualizarProdQuadra; window.salvarQuadra=salvarQuadra; window.renderQuadraReg=renderQuadraReg; window.excluirRegQuadra=excluirRegQuadra; window.renderQuadraDateGrid=renderQuadraDateGrid; window.atualizarResumoQuadra=atualizarResumoQuadra; window.renderTestesList=renderTestesList; window.abrirTestesProduto=abrirTestesProduto; window.abrirNovoTeste=abrirNovoTeste; window.salvarTeste=salvarTeste; window.excluirTeste=excluirTeste; window.adicionarProdutoTeste=adicionarProdutoTeste; window.abrirEditarTeste=abrirEditarTeste; window.salvarEdicaoTeste=salvarEdicaoTeste; window.excluirMovContainer=excluirMovContainer; window.abrirFarinhaLanc=abrirFarinhaLanc; window.atualizarPreviewFarinha=atualizarPreviewFarinha; window.salvarFarinhaLanc=salvarFarinhaLanc; window.renderFarinhaHist=renderFarinhaHist; window.excluirFarinhaRec=excluirFarinhaRec; window.excluirContagem=excluirContagem; window.abrirManut=abrirManut; window.voltarManut=voltarManut; window.salvarNovaMaquina=salvarNovaMaquina; window.excluirMaquina=excluirMaquina; window.abrirMaquina=abrirMaquina; window.iniciarNovaManutencao=iniciarNovaManutencao; window.selecionarDataManut=selecionarDataManut; window.salvarManutencao=salvarManutencao; window.selecionarDataManutBtn=selecionarDataManutBtn; window.abrirPlano=abrirPlano; window.voltarPlano=voltarPlano; window.salvarPlano=salvarPlano; window.adicionarItemPlano=adicionarItemPlano; window.atualizarQtdPlano=atualizarQtdPlano; window.removerItemPlano=removerItemPlano; window.trocarSemanaPlano=trocarSemanaPlano; window.togglePlanoDia=togglePlanoDia; window.toggleFeriado=toggleFeriado; window.importarPlanoPaste=importarPlanoPaste; window.limparPlano=limparPlano; window.renderManutDateGrid=renderManutDateGrid; window.toggleEditParcial=toggleEditParcial; window.salvarEditParcial=salvarEditParcial; window.excluirRegistro=excluirRegistro; window.gerarExcel=gerarExcel; window.renderPresencaForm=renderPresencaForm; window.goToAdmin=goToAdmin; window.sairAdmin=sairAdmin; window.backFromArea=backFromArea;
+window.tab=tab; window.toggleConf=toggleConf; window.admFiltrar=admFiltrar; window.toggleEditProd=toggleEditProd; window.salvarEditProd=salvarEditProd; window.toggleEditRecheio=toggleEditRecheio; window.salvarEditRecheio=salvarEditRecheio; window.renderMeusReg=renderMeusReg; window.renderCozReg=renderCozReg; window.abrirPresenca=abrirPresenca; window.adicionarParcialEmb=adicionarParcialEmb; window.salvarObsEmb=salvarObsEmb; window.abrirExpView=abrirExpView; window.renderAdmStatus=renderAdmStatus; window.abrirExpViewData=abrirExpViewData; window.renderExpView=renderExpView; window.renderExpViewSelData=renderExpViewSelData; window.confirmarEmbalagEmCompleto=confirmarEmbalagEmCompleto; window.subtrairParcialEmb=subtrairParcialEmb; window.salvarEmbManual=salvarEmbManual; window.excluirPresenca=excluirPresenca; window.salvarPresenca=salvarPresenca; window.voltarPresenca=voltarPresenca; window.renderPresencaForm=renderPresencaForm; window.selecionarDataPresenca=selecionarDataPresenca; window.selecionarDataPresencaManual=selecionarDataPresencaManual; window.adicionarColaborador=adicionarColaborador; window.removerColab=removerColab; window.updateColab=updateColab; window.renderPresencaReg=renderPresencaReg; window.abrirContagem=abrirContagem; window.subtrairContagem=subtrairContagem; window.filtrarContagem=filtrarContagem; window.adicionarContagem=adicionarContagem; window.renderContagemHist=renderContagemHist; window.verDetalheContagem=verDetalheContagem; window.renderContagemLanc=renderContagemLanc; window.renderContagemHome=renderContagemHome; window.toggleContDay=toggleContDay; window.abrirContainerItem=abrirContainerItem; window.iniciarContainerEntrada=iniciarContainerEntrada; window.selecionarDataContainerEntradaBtn=selecionarDataContainerEntradaBtn; window.selecionarDataContainerEntrada=selecionarDataContainerEntrada; window.salvarContainerEntrada=salvarContainerEntrada; window.iniciarContainerSaida=iniciarContainerSaida; window.selecionarLoteSaida=selecionarLoteSaida; window.salvarContainerSaida=salvarContainerSaida; window.excluirLoteContainer=excluirLoteContainer; window.iniciarNovoLancQuadra=iniciarNovoLancQuadra; window.selecionarDataQuadraBtn=selecionarDataQuadraBtn; window.selecionarDataQuadra=selecionarDataQuadra; window.filtrarKitsQuadra=filtrarKitsQuadra; window.selKitQuadra=selKitQuadra; window.atualizarProdQuadra=atualizarProdQuadra; window.salvarQuadra=salvarQuadra; window.renderQuadraReg=renderQuadraReg; window.excluirRegQuadra=excluirRegQuadra; window.renderQuadraDateGrid=renderQuadraDateGrid; window.atualizarResumoQuadra=atualizarResumoQuadra; window.renderTestesList=renderTestesList; window.abrirTestesProduto=abrirTestesProduto; window.abrirNovoTeste=abrirNovoTeste; window.salvarTeste=salvarTeste; window.excluirTeste=excluirTeste; window.adicionarProdutoTeste=adicionarProdutoTeste; window.abrirEditarTeste=abrirEditarTeste; window.salvarEdicaoTeste=salvarEdicaoTeste; window.excluirMovContainer=excluirMovContainer; window.abrirFarinhaLanc=abrirFarinhaLanc; window.atualizarPreviewFarinha=atualizarPreviewFarinha; window.salvarFarinhaLanc=salvarFarinhaLanc; window.renderFarinhaHist=renderFarinhaHist; window.excluirFarinhaRec=excluirFarinhaRec; window.excluirContagem=excluirContagem; window.abrirManut=abrirManut; window.voltarManut=voltarManut; window.salvarNovaMaquina=salvarNovaMaquina; window.excluirMaquina=excluirMaquina; window.abrirMaquina=abrirMaquina; window.iniciarNovaManutencao=iniciarNovaManutencao; window.selecionarDataManut=selecionarDataManut; window.salvarManutencao=salvarManutencao; window.selecionarDataManutBtn=selecionarDataManutBtn; window.abrirPlano=abrirPlano; window.voltarPlano=voltarPlano; window.salvarPlano=salvarPlano; window.adicionarItemPlano=adicionarItemPlano; window.atualizarQtdPlano=atualizarQtdPlano; window.removerItemPlano=removerItemPlano; window.trocarSemanaPlano=trocarSemanaPlano; window.togglePlanoDia=togglePlanoDia; window.toggleFeriado=toggleFeriado; window.importarPlanoPaste=importarPlanoPaste; window.limparPlano=limparPlano; window.renderManutDateGrid=renderManutDateGrid; window.toggleEditParcial=toggleEditParcial; window.salvarEditParcial=salvarEditParcial; window.excluirRegistro=excluirRegistro; window.gerarExcel=gerarExcel; window.renderPresencaForm=renderPresencaForm; window.goToAdmin=goToAdmin; window.sairAdmin=sairAdmin; window.backFromArea=backFromArea;
 </script>
 </body>
 </html>
