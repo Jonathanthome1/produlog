@@ -2261,13 +2261,16 @@ function renderSelDataExp(){
   const diasComStatus=diasArr.map((d,idx)=>{
     const data=fmtData(d);
     const regs=registros.filter(r=>r.data===data&&r.embalagem&&r.embalagem.feito);
-    if(regs.length===0) return {d, data, idx, status:'vazio', total:0, pendentes:0};
-    const pendentes=regs.filter(r=>{
+    if(regs.length===0) return {d, data, idx, status:'vazio', total:0, pendentes:0, paesPend:0, salgPend:0};
+    const pendList=regs.filter(r=>{
       const exp=r.expedicao||{totalLiberado:0};
       return exp.totalLiberado<(r.embalagem.qtdEmbalada||r.qtd);
-    }).length;
-    if(pendentes===0) return {d, data, idx, status:'completo', total:regs.length, pendentes:0};
-    return {d, data, idx, status:'pendente', total:regs.length, pendentes};
+    });
+    const pendentes=pendList.length;
+    const paesPend=pendList.filter(r=>r.origem==='quadra').length;
+    const salgPend=pendList.filter(r=>r.origem!=='quadra').length;
+    if(pendentes===0) return {d, data, idx, status:'completo', total:regs.length, pendentes:0, paesPend:0, salgPend:0};
+    return {d, data, idx, status:'pendente', total:regs.length, pendentes, paesPend, salgPend};
   });
 
   // Sort: pending first, then completos, then vazios (but only show those with regs)
@@ -2278,19 +2281,29 @@ function renderSelDataExp(){
   let alert='';
   if(pendentes.length>0)alert=`<div class="banner" style="background:#fff3cd;border:0.5px solid #f5a623;color:#7a4f00;margin-bottom:12px;">⚠️ <strong>${pendentes.length} dia(s)</strong> com produtos pendentes de liberação</div>`;
 
-  const listHtml=diasOrdenados.map(({d,data,status,idx,total,pendentes:pend})=>{
+  const listHtml=diasOrdenados.map(({d,data,status,idx,total,pendentes:pend,paesPend,salgPend})=>{
     const isSel=dataSelExp===data;
-    let badge='',dot='';
-    if(status==='pendente'){badge=`<span class="badge-pendente-emb">⏳ ${pend} pendente${pend>1?'s':''}</span>`;dot=`<div class="dot-pendente"></div>`;}
-    else if(status==='completo')badge=`<span class="badge-completo-emb">✓ liberado</span>`;
-    else badge=`<span class="badge-vazio-emb">sem embalados</span>`;
+    let badge='',dot='',breakdown='';
+    if(status==='pendente'){
+      badge='<span class="badge-pendente-emb">⏳ '+pend+' pendente'+(pend>1?'s':'')+'</span>';
+      dot='<div class="dot-pendente"></div>';
+      const partes=[];
+      if(paesPend>0) partes.push('<span style="color:#92400e;font-weight:600;">🍞 '+paesPend+'</span>');
+      if(salgPend>0) partes.push('<span style="color:var(--mc-azul);font-weight:600;">🥐 '+salgPend+'</span>');
+      if(partes.length>0) breakdown='<div style="font-size:11px;margin-top:3px;display:flex;gap:8px;">'+partes.join(' · ')+'</div>';
+    }
+    else if(status==='completo')badge='<span class="badge-completo-emb">✓ liberado</span>';
+    else badge='<span class="badge-vazio-emb">sem embalados</span>';
     const lbl=labelDia(idx);
-    const nome=lbl?`${lbl} · ${nomeDiaSemana(d)}`:`${nomeDiaSemana(d)}`;
+    const nome=lbl?lbl+' · '+nomeDiaSemana(d):nomeDiaSemana(d);
     const clk=status!=='vazio';
     const btnAttr=clk?' data-d="'+data+'" onclick="selecionarDataExp(this.dataset.d)"':' disabled';
     return '<button class="emb-date-item '+(isSel?'sel':'')+' '+(!clk?'sem-registros':'')+'"'+btnAttr+'>'+
       '<div class="emb-date-item-left"><div class="emb-date-item-label">'+nome+'</div><div class="emb-date-item-sub">'+data+(total>0?' · '+total+' produto(s)':'')+'</div></div>'+
-      '<div class="emb-date-status">'+dot+badge+'</div></button>';
+      '<div class="emb-date-status" style="display:flex;flex-direction:column;align-items:flex-end;gap:2px;">'+
+      '<div style="display:flex;align-items:center;gap:6px;">'+dot+badge+'</div>'+
+      breakdown+
+      '</div></button>';
   }).join('');
 
   el.innerHTML=alert+'<div class="emb-date-list">'+listHtml+'</div>';
@@ -2433,14 +2446,14 @@ function renderExpedicao(){
       </div>
       <div class="progresso-bar-wrap"><div class="progresso-bar" style="width:${pct}%;background:${barColor};"></div></div>
       <div style="font-size:12px;color:var(--text-secondary);margin-top:4px;">${completos} de ${total} produto(s) totalmente liberados</div>
-      ${(paesPend>0||salgPend>0)?`<div style="display:flex;gap:8px;margin-top:8px;">
-        ${paes.length>0?`<div style="flex:1;background:rgba(146,64,14,0.08);border-left:3px solid #92400e;border-radius:8px;padding:8px 10px;">
-          <div style="font-size:10px;color:#92400e;font-weight:600;text-transform:uppercase;letter-spacing:0.04em;">🍞 Pães pendentes</div>
-          <div style="font-size:18px;font-weight:700;color:${paesPend>0?'#92400e':'#4caf50'};">${paesPend} <span style="font-size:11px;font-weight:400;color:var(--text-secondary);">de ${paes.length}</span></div>
+      ${(paes.length>0||salgados.length>0)?`<div style="display:flex;gap:8px;margin-top:8px;">
+        ${paes.length>0?`<div style="flex:1;background:rgba(245,158,11,0.18);border-left:3px solid #f59e0b;border-radius:8px;padding:10px 12px;">
+          <div style="font-size:10px;color:#fbbf24;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;">🍞 Pães pendentes</div>
+          <div style="font-size:20px;font-weight:700;color:${paesPend>0?'#fbbf24':'#4caf50'};margin-top:2px;">${paesPend} <span style="font-size:12px;font-weight:500;color:var(--text-primary);opacity:0.7;">de ${paes.length}</span></div>
         </div>`:''}
-        ${salgados.length>0?`<div style="flex:1;background:rgba(33,123,196,0.08);border-left:3px solid var(--mc-azul);border-radius:8px;padding:8px 10px;">
-          <div style="font-size:10px;color:var(--mc-azul);font-weight:600;text-transform:uppercase;letter-spacing:0.04em;">🥐 Salgados pendentes</div>
-          <div style="font-size:18px;font-weight:700;color:${salgPend>0?'var(--mc-azul)':'#4caf50'};">${salgPend} <span style="font-size:11px;font-weight:400;color:var(--text-secondary);">de ${salgados.length}</span></div>
+        ${salgados.length>0?`<div style="flex:1;background:rgba(96,165,250,0.18);border-left:3px solid #60a5fa;border-radius:8px;padding:10px 12px;">
+          <div style="font-size:10px;color:#93c5fd;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;">🥐 Salgados pendentes</div>
+          <div style="font-size:20px;font-weight:700;color:${salgPend>0?'#93c5fd':'#4caf50'};margin-top:2px;">${salgPend} <span style="font-size:12px;font-weight:500;color:var(--text-primary);opacity:0.7;">de ${salgados.length}</span></div>
         </div>`:''}
       </div>`:''}
     </div>
