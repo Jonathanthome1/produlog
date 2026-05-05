@@ -10,17 +10,49 @@
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
     :root {
-      --mc-azul: #2B2FA8; --mc-azul-medio: #4448c4; --mc-azul-claro: #eeeffe;
-      --mc-dourado: #F5A623; --mc-dourado-claro: #fff8ec;
-      --mc-verde: #1a7a4a; --mc-verde-claro: #e8f5e9;
-      --mc-roxo: #6b21a8; --mc-roxo-claro: #f3e8ff;
-      --mc-laranja: #c2410c; --mc-laranja-claro: #fff7ed;
-      --mc-vermelho: #b91c1c; --mc-vermelho-claro: #fef2f2;
-      --bg-primary: #ffffff; --bg-secondary: #f5f5f5; --bg-tertiary: #f0f0f0;
-      --text-primary: #1a1a1a; --text-secondary: #6b6b6b;
-      --border: rgba(0,0,0,0.12); --border-md: rgba(0,0,0,0.2);
+      /* Identidade Monte Castelo */
+      --mc-azul: #1e3a8a; --mc-azul-claro: #dbeafe; --mc-azul-medio: #3b82f6;
+      --mc-dourado: #fbbf24; --mc-dourado-claro: #fef3c7;
+      --mc-verde: #10b981; --mc-verde-claro: #d1fae5;
+      --mc-roxo: #8b5cf6; --mc-roxo-claro: #e9d5ff;
+      --mc-laranja: #f59e0b; --mc-laranja-claro: #fef3c7;
+      --mc-vermelho: #ef4444; --mc-vermelho-claro: #fee2e2;
+      --mc-indigo: #6366f1; --mc-indigo-claro: #e0e7ff;
+
+      /* Backgrounds — tema claro suave */
+      --bg-primary: #ffffff;
+      --bg-secondary: #f8fafc;
+      --bg-tertiary: #f1f5f9;
+      --bg-page: #f8fafc;
+
+      /* Textos */
+      --text-primary: #0f172a;
+      --text-secondary: #64748b;
+      --text-muted: #94a3b8;
+
+      /* Bordas */
+      --border: #e5e7eb;
+      --border-md: #cbd5e1;
+      --border-strong: #94a3b8;
+
+      /* Sombras suaves */
+      --shadow-sm: 0 1px 2px rgba(15,23,42,0.04);
+      --shadow-md: 0 1px 3px rgba(15,23,42,0.06), 0 1px 2px rgba(15,23,42,0.04);
+      --shadow-lg: 0 4px 16px rgba(15,23,42,0.08);
+
+      /* Radius */
+      --r-sm: 6px; --r-md: 8px; --r-lg: 10px; --r-xl: 12px;
     }
-    html, body { height: 100%; background: #e8e8e8; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+    html, body {
+      height: 100%;
+      background: var(--bg-page);
+      color: var(--text-primary);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', sans-serif;
+      font-size: 14px;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
     .app-frame { max-width: 430px; margin: 0 auto; background: var(--bg-secondary); min-height: 100vh; box-shadow: 0 0 40px rgba(0,0,0,0.15); }
     .screen { display: none; }
     .screen.active { display: flex; flex-direction: column; min-height: 100vh; }
@@ -300,7 +332,346 @@
       margin: 0 auto;
     }
   }
-</style>
+
+    /* =================================================================
+       FASE 1 — SISTEMA VISUAL MONTE CASTELO (Modelo 2 evoluído)
+       ================================================================= */
+
+    /* HEADER PADRÃO */
+    .mc-header {
+      background: var(--bg-primary);
+      padding: 14px 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      box-shadow: var(--shadow-sm);
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+    .mc-header-back {
+      width: 34px; height: 34px;
+      border-radius: var(--r-md);
+      background: var(--bg-tertiary);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px; color: var(--text-secondary);
+      cursor: pointer; flex-shrink: 0;
+      border: none;
+      font-family: inherit;
+      transition: background 0.15s;
+    }
+    .mc-header-back:hover { background: var(--border); }
+
+    .mc-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-shrink: 0;
+    }
+    .mc-brand-logo {
+      width: 36px; height: 36px;
+      background: linear-gradient(135deg, var(--mc-azul) 0%, var(--mc-azul-medio) 100%);
+      border-radius: var(--r-md);
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; color: var(--mc-dourado);
+      font-size: 13px; letter-spacing: -0.5px;
+      flex-shrink: 0;
+    }
+    .mc-brand-text { display: flex; flex-direction: column; line-height: 1.2; }
+    .mc-brand-name {
+      font-size: 12px; font-weight: 600;
+      color: var(--mc-azul);
+      letter-spacing: -0.2px;
+    }
+    .mc-brand-sub {
+      font-size: 9px; color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      font-weight: 500;
+    }
+
+    .mc-divider-v {
+      width: 1px; height: 28px;
+      background: var(--border);
+      margin: 0 4px;
+      flex-shrink: 0;
+    }
+
+    .mc-page-info { flex: 1; min-width: 0; }
+    .mc-page-title {
+      font-size: 15px; font-weight: 600;
+      color: var(--text-primary);
+      letter-spacing: -0.2px;
+    }
+    .mc-page-sub {
+      font-size: 11px; color: var(--text-secondary);
+      margin-top: 1px;
+    }
+
+    .mc-header-actions {
+      margin-left: auto;
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-shrink: 0;
+    }
+    .mc-bell {
+      width: 34px; height: 34px;
+      border-radius: var(--r-md);
+      background: var(--bg-tertiary);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px; color: var(--text-secondary);
+      cursor: pointer;
+      border: none;
+      position: relative;
+      font-family: inherit;
+      transition: background 0.15s;
+    }
+    .mc-bell:hover { background: var(--border); }
+    .mc-bell.has-alert::after {
+      content: '';
+      position: absolute;
+      top: 7px; right: 7px;
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--mc-vermelho);
+      border: 2px solid var(--bg-tertiary);
+    }
+    .mc-act-btn-primary {
+      background: var(--mc-azul);
+      color: white;
+      padding: 7px 14px;
+      border-radius: var(--r-md);
+      font-size: 12px;
+      font-weight: 500;
+      border: none;
+      cursor: pointer;
+      font-family: inherit;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      white-space: nowrap;
+      transition: background 0.15s;
+    }
+    .mc-act-btn-primary:hover { background: var(--mc-azul-medio); }
+    .mc-act-btn-secondary {
+      background: var(--bg-primary);
+      color: var(--mc-azul);
+      padding: 7px 14px;
+      border-radius: var(--r-md);
+      font-size: 12px;
+      font-weight: 500;
+      border: 1px solid var(--border-md);
+      cursor: pointer;
+      font-family: inherit;
+      white-space: nowrap;
+      transition: background 0.15s;
+    }
+    .mc-act-btn-secondary:hover { background: var(--bg-tertiary); }
+
+    /* BANNER DE ALERTA */
+    .mc-banner {
+      background: var(--mc-laranja-claro);
+      border: 1px solid #fde68a;
+      border-left: 3px solid var(--mc-laranja);
+      border-radius: var(--r-lg);
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+    .mc-banner-icon { font-size: 14px; flex-shrink: 0; }
+    .mc-banner-text {
+      font-size: 12px;
+      color: #78350f;
+      font-weight: 500;
+      flex: 1;
+    }
+    .mc-banner-text strong {
+      color: #451a03;
+      font-weight: 600;
+    }
+
+    /* KPI CARDS */
+    .mc-kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+    .mc-kpi {
+      background: var(--bg-primary);
+      border: 1px solid var(--border);
+      border-radius: var(--r-lg);
+      padding: 12px 14px;
+      position: relative;
+      overflow: hidden;
+      box-shadow: var(--shadow-sm);
+    }
+    .mc-kpi::before {
+      content: '';
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      width: 3px;
+      background: var(--mc-azul-medio);
+    }
+    .mc-kpi.amber::before { background: var(--mc-laranja); }
+    .mc-kpi.green::before { background: var(--mc-verde); }
+    .mc-kpi.red::before { background: var(--mc-vermelho); }
+    .mc-kpi.blue::before { background: var(--mc-azul-medio); }
+    .mc-kpi-label {
+      font-size: 10px;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      font-weight: 600;
+    }
+    .mc-kpi-value {
+      font-size: 26px;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-top: 4px;
+      letter-spacing: -0.5px;
+      line-height: 1.1;
+    }
+    .mc-kpi-meta {
+      font-size: 10px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    /* CARDS DE SETOR */
+    .mc-sector-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 8px;
+    }
+    @media (min-width: 600px) {
+      .mc-sector-grid { grid-template-columns: 1fr 1fr; }
+    }
+    .mc-sector-card {
+      background: var(--bg-primary);
+      border: 1px solid var(--border);
+      border-radius: var(--r-lg);
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      cursor: pointer;
+      text-align: left;
+      font-family: inherit;
+      transition: all 0.15s;
+      box-shadow: var(--shadow-sm);
+      width: 100%;
+    }
+    .mc-sector-card:hover {
+      box-shadow: var(--shadow-md);
+      transform: translateY(-1px);
+      border-color: var(--border-md);
+    }
+    .mc-sector-icon {
+      width: 38px; height: 38px;
+      border-radius: 9px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px;
+      flex-shrink: 0;
+    }
+    .mc-sector-icon.blue { background: var(--mc-azul-claro); }
+    .mc-sector-icon.green { background: var(--mc-verde-claro); }
+    .mc-sector-icon.amber { background: var(--mc-laranja-claro); }
+    .mc-sector-icon.purple { background: var(--mc-roxo-claro); }
+    .mc-sector-icon.red { background: var(--mc-vermelho-claro); }
+    .mc-sector-icon.indigo { background: var(--mc-indigo-claro); }
+    .mc-sector-icon.gold { background: var(--mc-dourado-claro); }
+    .mc-sector-info { flex: 1; min-width: 0; }
+    .mc-sector-title {
+      font-size: 14px; font-weight: 600;
+      color: var(--text-primary);
+    }
+    .mc-sector-desc {
+      font-size: 11px; color: var(--text-secondary);
+      margin-top: 2px;
+    }
+    .mc-sector-arrow {
+      color: var(--text-muted);
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+
+    /* BADGES DE STATUS */
+    .mc-badge {
+      padding: 2px 8px;
+      border-radius: var(--r-sm);
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .mc-badge.green { background: var(--mc-verde-claro); color: #065f46; }
+    .mc-badge.amber { background: var(--mc-laranja-claro); color: #92400e; }
+    .mc-badge.red { background: var(--mc-vermelho-claro); color: #991b1b; }
+    .mc-badge.blue { background: var(--mc-azul-claro); color: var(--mc-azul); }
+    .mc-badge.gray { background: var(--bg-tertiary); color: var(--text-secondary); }
+
+    /* SEÇÕES */
+    .mc-section-header {
+      font-size: 11px;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-weight: 600;
+      margin: 16px 0 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .mc-section-header::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    /* HERO CARD (uso interno em telas de setor) */
+    .mc-hero {
+      background: var(--bg-primary);
+      border: 1px solid var(--border);
+      border-radius: var(--r-lg);
+      padding: 14px;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      border-left: 3px solid var(--mc-azul-medio);
+      box-shadow: var(--shadow-sm);
+    }
+    .mc-hero-icon {
+      width: 44px; height: 44px;
+      border-radius: var(--r-lg);
+      background: var(--mc-azul-claro);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px;
+      flex-shrink: 0;
+    }
+    .mc-hero-num {
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--text-primary);
+      letter-spacing: -0.5px;
+      line-height: 1;
+    }
+    .mc-hero-label {
+      font-size: 11px;
+      color: var(--text-secondary);
+      margin-top: 3px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      font-weight: 500;
+    }
+    </style>
 </head>
 <body>
 <div class="app-frame">
