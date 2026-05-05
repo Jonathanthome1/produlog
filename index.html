@@ -1329,11 +1329,22 @@
 
   <!-- PRESENÇA: FORM (shared, rendered dynamically) -->
   <div class="screen" id="s-presenca-form">
-    <div class="topbar" id="presenca-form-topbar">
-      <button class="back-btn" id="presenca-form-back" onclick="voltarPresenca()">‹</button>
-      <div><div class="topbar-title">Registro de Presença</div><div class="topbar-sub" id="presenca-form-sub"></div></div>
+    <div class="mc-header" id="presenca-form-topbar">
+      <button class="mc-header-back" id="presenca-form-back" onclick="voltarPresenca()">‹</button>
+      <div class="mc-brand">
+        <div class="mc-brand-logo">MC</div>
+        <div class="mc-brand-text">
+          <div class="mc-brand-name">Monte Castelo</div>
+          <div class="mc-brand-sub">Presença</div>
+        </div>
+      </div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info">
+        <div class="mc-page-title">👥 Registro de Presença</div>
+        <div class="mc-page-sub" id="presenca-form-sub"></div>
+      </div>
     </div>
-    <div class="content" id="presenca-form-content"></div>
+    <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;" id="presenca-form-content"></div>
   </div>
 
   <!-- PRESENÇA: REGISTROS CONF -->
@@ -1451,43 +1462,87 @@
 
   <!-- PLANO DA SEMANA -->
   <div class="screen" id="s-plano">
-    <div class="topbar roxo">
-      <button class="back-btn" onclick="voltarPlano()">‹</button>
-      <div><div class="topbar-title">Plano da Semana</div><div class="topbar-sub" id="plano-sub">Confeitaria</div></div>
-      <button class="topbar-right" onclick="salvarPlano()">Salvar</button>
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="voltarPlano()">‹</button>
+      <div class="mc-brand">
+        <div class="mc-brand-logo">MC</div>
+        <div class="mc-brand-text">
+          <div class="mc-brand-name">Monte Castelo</div>
+          <div class="mc-brand-sub">Plano da Semana</div>
+        </div>
+      </div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info">
+        <div class="mc-page-title">📅 Plano da Semana</div>
+        <div class="mc-page-sub" id="plano-sub">Confeitaria</div>
+      </div>
+      <div class="mc-header-actions">
+        <button class="mc-act-btn-primary" onclick="salvarPlano()">Salvar</button>
+      </div>
     </div>
-    <div class="content" id="plano-content"></div>
+    <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;" id="plano-content"></div>
   </div>
 
 
 
   <!-- RAFAEL HUB -->
   <div class="screen" id="s-rafael-home">
-    <div class="topbar" style="background:#059669;">
-      <div style="flex:1;"><div class="topbar-title">Rafael 📦</div><div class="topbar-sub">Gestão de estoques</div></div>
-      <button class="topbar-right" onclick="window.adminMode?goTo('s-adm-hub'):goTo('s-inicio')">Sair</button>
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="window.adminMode?goTo('s-adm-hub'):goTo('s-inicio')">‹</button>
+      <div class="mc-brand">
+        <div class="mc-brand-logo">MC</div>
+        <div class="mc-brand-text">
+          <div class="mc-brand-name">Monte Castelo</div>
+          <div class="mc-brand-sub">Rafael</div>
+        </div>
+      </div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info">
+        <div class="mc-page-title">📦 Rafael</div>
+        <div class="mc-page-sub">Gestão de estoques</div>
+      </div>
     </div>
-    <div class="content">
-      <button class="home-btn" style="border-left-color:#059669;" onclick="goTo('s-container-home')">
-        <div class="hb-icon" style="background:#ecfdf5;">🏭</div>
-        <div style="flex:1;"><div class="hb-title">Container</div><div class="hb-desc">Estoque de matérias primas por lote</div></div>
-        <span style="color:var(--text-secondary);font-size:20px;">›</span>
-      </button>
-      <button class="home-btn" style="border-left-color:#059669;" onclick="goTo('s-farinha-home')">
-        <div class="hb-icon" style="background:#ecfdf5;">🌾</div>
-        <div style="flex:1;"><div class="hb-title">Controle de Farinhas</div><div class="hb-desc" id="farinha-badge-home">Contagem diária por estoque</div></div>
-        <span style="color:var(--text-secondary);font-size:20px;">›</span>
-      </button>
+    <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;">
+      <div class="mc-section-header">Áreas</div>
+      <div class="mc-sector-grid">
+        <button class="mc-sector-card" onclick="goTo('s-container-home')">
+          <div class="mc-sector-icon green">🏭</div>
+          <div class="mc-sector-info">
+            <div class="mc-sector-title">Container</div>
+            <div class="mc-sector-desc">Estoque de matérias-primas por lote</div>
+          </div>
+          <span class="mc-sector-arrow">›</span>
+        </button>
+        <button class="mc-sector-card" onclick="goTo('s-farinha-home')">
+          <div class="mc-sector-icon green">🌾</div>
+          <div class="mc-sector-info">
+            <div class="mc-sector-title">Controle de Farinhas</div>
+            <div class="mc-sector-desc" id="farinha-badge-home">Contagem diária por estoque</div>
+          </div>
+          <span class="mc-sector-arrow">›</span>
+        </button>
+      </div>
     </div>
   </div>
 
   <!-- FARINHAS HOME -->
   <div class="screen" id="s-farinha-home">
-    <div class="topbar" style="background:#059669;">
-      <button class="back-btn" onclick="goTo('s-rafael-home')">‹</button>
-      <div><div class="topbar-title">Controle de Farinhas 🌾</div><div class="topbar-sub" id="farinha-home-sub">Contagem diária</div></div>
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="goTo('s-rafael-home')">‹</button>
+      <div class="mc-brand">
+        <div class="mc-brand-logo">MC</div>
+        <div class="mc-brand-text">
+          <div class="mc-brand-name">Monte Castelo</div>
+          <div class="mc-brand-sub">Farinhas</div>
+        </div>
+      </div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info">
+        <div class="mc-page-title">🌾 Controle de Farinhas</div>
+        <div class="mc-page-sub" id="farinha-home-sub">Contagem diária</div>
+      </div>
     </div>
-    <div class="content" id="farinha-home-content"></div>
+    <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;" id="farinha-home-content"></div>
   </div>
 
   <!-- FARINHAS: NOVA CONTAGEM -->
@@ -1510,12 +1565,23 @@
 
   <!-- CONTAINER HOME -->
   <div class="screen" id="s-container-home">
-    <div class="topbar" style="background:#059669;">
-      <div style="flex:1;"><div class="topbar-title">Container 🏭</div><div class="topbar-sub" id="cont-container-sub">Estoque de matérias primas</div></div>
-      <button class="topbar-right" onclick="window.adminMode?goTo('s-adm-hub'):goTo('s-rafael-home')">Sair</button>
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="goTo('s-rafael-home')">‹</button>
+      <div class="mc-brand">
+        <div class="mc-brand-logo">MC</div>
+        <div class="mc-brand-text">
+          <div class="mc-brand-name">Monte Castelo</div>
+          <div class="mc-brand-sub">Container</div>
+        </div>
+      </div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info">
+        <div class="mc-page-title">🏭 Container</div>
+        <div class="mc-page-sub" id="cont-container-sub">Estoque de matérias primas</div>
+      </div>
     </div>
-    <div class="content">
-      <div class="section-divider">Selecione o produto</div>
+    <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;">
+      <div class="mc-section-header">Selecione o produto</div>
       <button class="home-btn" style="border-left-color:#059669;" onclick="abrirContainerItem('Calabresa')"><div class="hb-icon" style="background:#ecfdf5;">📦</div><div style="flex:1;"><div class="hb-title">Calabresa</div><div class="hb-desc" id="container-badge-Calabresa">Verificando...</div></div><span style="color:var(--text-secondary);font-size:20px;">›</span></button>
       <button class="home-btn" style="border-left-color:#059669;" onclick="abrirContainerItem('Calabresa Fina')"><div class="hb-icon" style="background:#ecfdf5;">📦</div><div style="flex:1;"><div class="hb-title">Calabresa Fina</div><div class="hb-desc" id="container-badge-Calabresa-Fina">Verificando...</div></div><span style="color:var(--text-secondary);font-size:20px;">›</span></button>
       <button class="home-btn" style="border-left-color:#059669;" onclick="abrirContainerItem('Coxão')"><div class="hb-icon" style="background:#ecfdf5;">📦</div><div style="flex:1;"><div class="hb-title">Coxão</div><div class="hb-desc" id="container-badge-Coxão">Verificando...</div></div><span style="color:var(--text-secondary);font-size:20px;">›</span></button>
@@ -1588,22 +1654,51 @@
 
   <!-- QUADRA HOME -->
   <div class="screen" id="s-quadra-home">
-    <div class="topbar" style="background:#92400e;">
-      <div style="flex:1;"><div class="topbar-title">Quadra 🍞</div><div class="topbar-sub" id="quadra-date"></div></div>
-      <button class="topbar-right" onclick="window.adminMode?goTo('s-adm-hub'):goTo('s-inicio')">Sair</button>
-    </div>
-    <div class="content">
-      <div class="op-stat-card" style="background:#92400e;">
-        <div class="op-stat-num" id="quadra-count">0</div>
-        <div class="op-stat-lbl">lançamentos hoje</div>
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="window.adminMode?goTo('s-adm-hub'):goTo('s-inicio')">‹</button>
+      <div class="mc-brand">
+        <div class="mc-brand-logo">MC</div>
+        <div class="mc-brand-text">
+          <div class="mc-brand-name">Monte Castelo</div>
+          <div class="mc-brand-sub">Quadra</div>
+        </div>
       </div>
-      <div class="section-divider">O que deseja fazer?</div>
-      <button class="home-btn" style="border-left-color:#92400e;" onclick="iniciarNovoLancQuadra()">
-        <div class="hb-icon" style="background:#fef3c7;">📋</div>
-        <div style="flex:1;"><div class="hb-title">Novo Lançamento</div><div class="hb-desc">Registrar produção de kits</div></div>
-        <span style="color:var(--text-secondary);font-size:20px;">›</span>
-      </button>
-      <button class="btn btn-secondary" style="margin-top:8px;" onclick="goTo('s-quadra-reg')">Ver registros</button>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info">
+        <div class="mc-page-title">🍞 Quadra</div>
+        <div class="mc-page-sub" id="quadra-date"></div>
+      </div>
+      <div class="mc-header-actions">
+        <button class="mc-act-btn-primary" onclick="iniciarNovoLancQuadra()">+ Lançar</button>
+      </div>
+    </div>
+    <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;">
+      <div class="mc-hero" style="border-left-color:#92400e;">
+        <div class="mc-hero-icon" style="background:var(--mc-dourado-claro);">🍞</div>
+        <div style="flex:1;">
+          <div class="mc-hero-num" id="quadra-count">0</div>
+          <div class="mc-hero-label">Lançamentos hoje</div>
+        </div>
+      </div>
+      <div class="mc-section-header">Ações</div>
+      <div class="mc-sector-grid">
+        <button class="mc-sector-card" onclick="iniciarNovoLancQuadra()">
+          <div class="mc-sector-icon gold">📋</div>
+          <div class="mc-sector-info">
+            <div class="mc-sector-title">Novo Lançamento</div>
+            <div class="mc-sector-desc">Registrar produção de kits</div>
+          </div>
+          <span class="mc-sector-arrow">›</span>
+        </button>
+        <button class="mc-sector-card" onclick="goTo('s-quadra-reg')">
+          <div class="mc-sector-icon gold">📊</div>
+          <div class="mc-sector-info">
+            <div class="mc-sector-title">Ver registros</div>
+            <div class="mc-sector-desc">Histórico de produção</div>
+          </div>
+          <span class="mc-sector-arrow">›</span>
+        </button>
+      </div>
     </div>
   </div>
 
@@ -1663,13 +1758,25 @@
 
   <!-- TESTES MP HOME -->
   <div class="screen" id="s-testes-home">
-    <div class="topbar" style="background:#0f766e;">
-      <div style="flex:1;"><div class="topbar-title">Testes MP 🔬</div><div class="topbar-sub">Avaliação de fornecedores</div></div>
-      <button class="topbar-right" onclick="window.adminMode?goTo('s-adm-hub'):goTo('s-inicio')">Sair</button>
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="window.adminMode?goTo('s-adm-hub'):goTo('s-inicio')">‹</button>
+      <div class="mc-brand">
+        <div class="mc-brand-logo">MC</div>
+        <div class="mc-brand-text">
+          <div class="mc-brand-name">Monte Castelo</div>
+          <div class="mc-brand-sub">Testes MP</div>
+        </div>
+      </div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info">
+        <div class="mc-page-title">🔬 Testes MP</div>
+        <div class="mc-page-sub">Avaliação de fornecedores</div>
+      </div>
     </div>
-    <div class="content">
+    <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;">
+      <div class="mc-banner" style="background:var(--mc-indigo-claro);border-color:#c7d2fe;border-left-color:var(--mc-indigo);"><span class="mc-banner-icon">🔍</span><span class="mc-banner-text" style="color:#3730a3;">Busque por nome do produto e clique para ver/cadastrar testes</span></div>
       <div class="card" style="padding:10px;margin-bottom:10px;">
-        <input type="text" id="testes-srch" placeholder="Buscar produto..." oninput="renderTestesList()"
+        <input type="text" id="testes-srch" placeholder="🔍 Buscar produto..." oninput="renderTestesList()"
           style="font-size:15px;" autocomplete="off" />
       </div>
       <div id="testes-home-list"></div>
@@ -2013,42 +2120,75 @@
 
   <!-- CONTAGEM HOME -->
   <div class="screen" id="s-contagem-home">
-    <div class="topbar" style="background:#0891b2;">
-      <div style="flex:1;"><div class="topbar-title">Contagem 📋</div><div class="topbar-sub" id="cont-date"></div></div>
-      <button class="topbar-right" onclick="window.adminMode?goTo('s-adm-hub'):goTo('s-inicio')">Sair</button>
-    </div>
-    <div class="content">
-      <div class="card" style="background:#0891b2;border:none;border-bottom:3px solid var(--mc-dourado);margin-bottom:14px;">
-        <div style="font-size:13px;color:rgba(255,255,255,0.7);">Contagens realizadas</div>
-        <div style="font-size:36px;font-weight:700;color:white;" id="cont-total">0</div>
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="window.adminMode?goTo('s-adm-hub'):goTo('s-inicio')">‹</button>
+      <div class="mc-brand">
+        <div class="mc-brand-logo">MC</div>
+        <div class="mc-brand-text">
+          <div class="mc-brand-name">Monte Castelo</div>
+          <div class="mc-brand-sub">Contagem</div>
+        </div>
       </div>
-      <div class="section-divider">Selecione o grupo</div>
-      <button class="home-btn" style="border-left-color:#0891b2;" onclick="abrirContagem('Materia Prima')">
-        <div class="hb-icon" style="background:#ecfeff;">🧪</div>
-        <div style="flex:1;"><div class="hb-title">Matéria Prima</div><div class="hb-desc" id="cont-badge-Materia Prima">139 itens</div></div>
-        <span style="color:var(--text-secondary);font-size:20px;">›</span>
-      </button>
-      <button class="home-btn" style="border-left-color:#0891b2;" onclick="goTo('s-contagem-prod-acabado')">
-        <div class="hb-icon" style="background:#ecfeff;">✅</div>
-        <div style="flex:1;"><div class="hb-title">Produto Acabado</div><div class="hb-desc" id="cont-badge-prod-acabado">169 itens</div></div>
-        <span style="color:var(--text-secondary);font-size:20px;">›</span>
-      </button>
-      <button class="home-btn" style="border-left-color:#0891b2;" onclick="abrirContagem('Plastico')">
-        <div class="hb-icon" style="background:#ecfeff;">🛍️</div>
-        <div style="flex:1;"><div class="hb-title">Plásticos</div><div class="hb-desc" id="cont-badge-Plastico">54 itens</div></div>
-        <span style="color:var(--text-secondary);font-size:20px;">›</span>
-      </button>
-      <button class="home-btn" style="border-left-color:#0891b2;" onclick="abrirContagem('Kits Confeitaria')">
-        <div class="hb-icon" style="background:#ecfeff;">🎁</div>
-        <div style="flex:1;"><div class="hb-title">Kits Confeitaria</div><div class="hb-desc" id="cont-badge-Kits Confeitaria">41 itens</div></div>
-        <span style="color:var(--text-secondary);font-size:20px;">›</span>
-      </button>
-      <button class="home-btn" style="border-left-color:#0891b2;" onclick="abrirContagem('Kits Quadra')">
-        <div class="hb-icon" style="background:#ecfeff;">🎁</div>
-        <div style="flex:1;"><div class="hb-title">Kits Quadra</div><div class="hb-desc" id="cont-badge-Kits Quadra">27 itens</div></div>
-        <span style="color:var(--text-secondary);font-size:20px;">›</span>
-      </button>
-      <button class="btn btn-secondary" style="margin-top:8px;" onclick="goTo('s-contagem-hist')">📂 Ver histórico de contagens</button>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info">
+        <div class="mc-page-title">📋 Contagem</div>
+        <div class="mc-page-sub" id="cont-date"></div>
+      </div>
+      <div class="mc-header-actions">
+        <button class="mc-act-btn-secondary" onclick="goTo('s-contagem-hist')">📂 Histórico</button>
+      </div>
+    </div>
+    <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;">
+      <div class="mc-hero" style="border-left-color:#0891b2;">
+        <div class="mc-hero-icon" style="background:#ecfeff;">📋</div>
+        <div style="flex:1;">
+          <div class="mc-hero-num" id="cont-total">0</div>
+          <div class="mc-hero-label">Contagens realizadas</div>
+        </div>
+      </div>
+      <div class="mc-section-header">Selecione o grupo</div>
+      <div class="mc-sector-grid">
+        <button class="mc-sector-card" onclick="abrirContagem('Materia Prima')">
+          <div class="mc-sector-icon blue">🧪</div>
+          <div class="mc-sector-info">
+            <div class="mc-sector-title">Matéria Prima</div>
+            <div class="mc-sector-desc" id="cont-badge-Materia Prima">139 itens</div>
+          </div>
+          <span class="mc-sector-arrow">›</span>
+        </button>
+        <button class="mc-sector-card" onclick="goTo('s-contagem-prod-acabado')">
+          <div class="mc-sector-icon green">✅</div>
+          <div class="mc-sector-info">
+            <div class="mc-sector-title">Produto Acabado</div>
+            <div class="mc-sector-desc" id="cont-badge-prod-acabado">169 itens</div>
+          </div>
+          <span class="mc-sector-arrow">›</span>
+        </button>
+        <button class="mc-sector-card" onclick="abrirContagem('Plastico')">
+          <div class="mc-sector-icon amber">🛍️</div>
+          <div class="mc-sector-info">
+            <div class="mc-sector-title">Plásticos</div>
+            <div class="mc-sector-desc" id="cont-badge-Plastico">54 itens</div>
+          </div>
+          <span class="mc-sector-arrow">›</span>
+        </button>
+        <button class="mc-sector-card" onclick="abrirContagem('Kits Confeitaria')">
+          <div class="mc-sector-icon purple">🎁</div>
+          <div class="mc-sector-info">
+            <div class="mc-sector-title">Kits Confeitaria</div>
+            <div class="mc-sector-desc" id="cont-badge-Kits Confeitaria">41 itens</div>
+          </div>
+          <span class="mc-sector-arrow">›</span>
+        </button>
+        <button class="mc-sector-card" onclick="abrirContagem('Kits Quadra')">
+          <div class="mc-sector-icon gold">🎁</div>
+          <div class="mc-sector-info">
+            <div class="mc-sector-title">Kits Quadra</div>
+            <div class="mc-sector-desc" id="cont-badge-Kits Quadra">27 itens</div>
+          </div>
+          <span class="mc-sector-arrow">›</span>
+        </button>
+      </div>
     </div>
   </div>
 
