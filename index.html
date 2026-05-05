@@ -4693,6 +4693,116 @@ async function gerarExcel(){
     });
     XLSX.utils.book_append_sheet(wb,prodSheet,'Produção');
 
+    // ABA: RESUMO DIÁRIO (consolidação por dia + produto)
+    // Agrupa registros por data + produto, somando quantidades
+    const resumoMap={};
+    prod.forEach(r=>{
+      const p=r.prodData||{};
+      const qtdPct=p.qtdPct||1;
+      const unidades=r.qtdUnidades||(r.qtd*qtdPct);
+      const key=r.data+'|'+r.produto;
+      if(!resumoMap[key]){
+        resumoMap[key]={
+          data:r.data, produto:r.produto,
+          qtdPacotes:0, unidades:0,
+          massa:0, r1:0, r2:0,
+          grMassa:p.grMassa||0, grR1:p.grRecheio||0, grR2:p.grRecheio2||0
+        };
+      }
+      const acc=resumoMap[key];
+      acc.qtdPacotes+=r.qtd;
+      acc.unidades+=unidades;
+      acc.massa+=r.massa||0;
+      acc.r1+=r.r1||0;
+      acc.r2+=r.r2||0;
+    });
+    const resumoArr=Object.values(resumoMap).sort((a,b)=>{
+      // Sort by date desc, then product
+      const[da,ma,ya]=a.data.split('/'); const[db,mb,yb]=b.data.split('/');
+      const ta=new Date(ya+'-'+ma+'-'+da).getTime(); const tb=new Date(yb+'-'+mb+'-'+db).getTime();
+      if(ta!==tb)return tb-ta;
+      return a.produto.localeCompare(b.produto,'pt-BR');
+    });
+
+    const resumoRows=[['Data','Produto','Total Pacotes','Total Unidades',
+      'Massa Padrão (gr/un)','Massa Usada (kg)','Massa Esperada (kg)','Quebra Massa (kg)','Massa Média Real (gr/un)','Massa Variação %',
+      'R1 Padrão (gr/un)','R1 Usado (kg)','R1 Esperado (kg)','Quebra R1 (kg)','R1 Média Real (gr/un)','R1 Variação %',
+      'R2 Padrão (gr/un)','R2 Usado (kg)','R2 Esperado (kg)','Quebra R2 (kg)','R2 Média Real (gr/un)','R2 Variação %',
+      'Gramatura Padrão (gr/un)','Gramatura Real (gr/un)','Variação Total %']];
+
+    resumoArr.forEach(x=>{
+      const u=x.unidades||1;
+      // Esperados
+      const mEsp=x.grMassa*u/1000;
+      const r1Esp=x.grR1*u/1000;
+      const r2Esp=x.grR2*u/1000;
+      // Médias reais
+      const medM=x.massa*1000/u;
+      const medR1=x.r1*1000/u;
+      const medR2=x.r2*1000/u;
+      // Variações individuais
+      const fmtVar=(real,padrao)=>padrao>0?((real-padrao)/padrao*100):null;
+      const fmtVarStr=v=>v===null?'':(v>0?'+':'')+v.toFixed(1)+'%';
+      const varM=fmtVar(medM,x.grMassa);
+      const varR1=fmtVar(medR1,x.grR1);
+      const varR2=fmtVar(medR2,x.grR2);
+      // Gramatura total (massa + recheios)
+      const gramPadrao=x.grMassa+x.grR1+x.grR2;
+      const gramReal=medM+medR1+medR2;
+      const varTotal=gramPadrao>0?((gramReal-gramPadrao)/gramPadrao*100):null;
+
+      resumoRows.push([
+        x.data, x.produto, x.qtdPacotes, x.unidades,
+        x.grMassa, x.massa, +mEsp.toFixed(3), +(x.massa-mEsp).toFixed(3), x.grMassa>0?+medM.toFixed(2):'', fmtVarStr(varM),
+        x.grR1, x.r1, +r1Esp.toFixed(3), +(x.r1-r1Esp).toFixed(3), x.grR1>0?+medR1.toFixed(2):'', fmtVarStr(varR1),
+        x.grR2, x.r2, +r2Esp.toFixed(3), +(x.r2-r2Esp).toFixed(3), x.grR2>0?+medR2.toFixed(2):'', fmtVarStr(varR2),
+        gramPadrao>0?+gramPadrao.toFixed(2):'', gramPadrao>0?+gramReal.toFixed(2):'', fmtVarStr(varTotal)
+      ]);
+    });
+
+    const resumoSheet=XLSX.utils.aoa_to_sheet(resumoRows);
+    const refR=XLSX.utils.decode_range(resumoSheet['!ref']);
+
+    // Padrão columns (verde): E=4 (massa pad), K=10 (R1 pad), Q=16 (R2 pad), W=22 (gram pad)
+    [4,10,16,22].forEach(C=>{
+      for(let R=refR.s.r;R<=refR.e.r;R++){
+        const cell=resumoSheet[XLSX.utils.encode_cell({r:R,c:C})];
+        if(!cell)continue;
+        cell.s={fill:{fgColor:{rgb:'C6EFCE'},patternType:'solid'},font:{bold:R===0,color:{rgb:'006100'}}};
+      }
+    });
+    // Média Real (amarelo): I=8, O=14, U=20, X=23
+    [8,14,20,23].forEach(C=>{
+      for(let R=refR.s.r;R<=refR.e.r;R++){
+        const cell=resumoSheet[XLSX.utils.encode_cell({r:R,c:C})];
+        if(!cell)continue;
+        cell.s={fill:{fgColor:{rgb:'FFEB9C'},patternType:'solid'},font:{bold:R===0,color:{rgb:'9C5700'}}};
+      }
+    });
+    // Variação % com destaque vermelho >6%: J=9 (massa), P=15 (R1), V=21 (R2), Y=24 (total)
+    const varColsResumo=[{c:9,padCol:4,medCol:8},{c:15,padCol:10,medCol:14},{c:21,padCol:16,medCol:20},{c:24,padCol:22,medCol:23}];
+    varColsResumo.forEach(({c,padCol,medCol})=>{
+      const hdr=resumoSheet[XLSX.utils.encode_cell({r:0,c})];
+      if(hdr) hdr.s={font:{bold:true}};
+      for(let R=refR.s.r+1;R<=refR.e.r;R++){
+        const padCell=resumoSheet[XLSX.utils.encode_cell({r:R,c:padCol})];
+        const medCell=resumoSheet[XLSX.utils.encode_cell({r:R,c:medCol})];
+        const varCell=resumoSheet[XLSX.utils.encode_cell({r:R,c})];
+        if(!varCell)continue;
+        const padVal=padCell?parseFloat(padCell.v):0;
+        const medVal=medCell?parseFloat(medCell.v):0;
+        if(padVal>0&&medVal>0){
+          const variacao=Math.abs((medVal-padVal)/padVal*100);
+          if(variacao>6){
+            varCell.s={fill:{fgColor:{rgb:'FFC7CE'},patternType:'solid'},font:{bold:true,color:{rgb:'9C0006'}}};
+          } else {
+            varCell.s={font:{color:{rgb:'006100'}}};
+          }
+        }
+      }
+    });
+    XLSX.utils.book_append_sheet(wb,resumoSheet,'Resumo Diário');
+
     // ABA 2: MASSAS
     const mass=regMassas.filter(r=>inRange(r.data));
     const massRows=[['Data','Hora','Tipo de Massa','Quantidade (kg)','Observação','Editado em']];
