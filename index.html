@@ -814,48 +814,111 @@
 
   <!-- CONFEITARIA HOME -->
   <div class="screen" id="s-conf-home">
-    <div class="topbar">
-      <div style="flex:1;"><div class="topbar-title">Confeitaria 🥐</div><div class="topbar-sub" id="conf-date"></div></div>
-      <button class="topbar-right" onclick="window.adminMode?window.goTo('s-adm-hub'):window.goTo('s-inicio')">Sair</button>
-    </div>
-    <div class="content">
-      <div id="conf-banner" class="banner banner-ok" style="display:none;">✓ Registro salvo!</div>
-      <div class="op-stat-card">
-        <div class="op-stat-num" id="conf-count">0</div>
-        <div class="op-stat-lbl">lançamentos hoje</div>
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="window.adminMode?window.goTo('s-adm-hub'):window.goTo('s-inicio')">‹</button>
+      <div class="mc-brand">
+        <div class="mc-brand-logo">MC</div>
+        <div class="mc-brand-text">
+          <div class="mc-brand-name">Monte Castelo</div>
+          <div class="mc-brand-sub">Confeitaria</div>
+        </div>
       </div>
-      <div class="section-divider">O que deseja lançar?</div>
-      <button class="home-btn azul" onclick="iniciarNovoReg()">
-        <div class="hb-icon hb-azul">📋</div>
-        <div style="flex:1;"><div class="hb-title">Lançamento de Produção</div><div class="hb-desc">Registrar produtos produzidos</div></div>
-        <span style="color:var(--text-secondary);font-size:20px;">›</span>
-      </button>
-      <button class="home-btn azul" onclick="goTo('s-massa-data')">
-        <div class="hb-icon" style="background:#e3f2fd;">⚖️</div>
-        <div style="flex:1;"><div class="hb-title">Produção de Massas</div><div class="hb-desc">Registrar kg de massa produzido</div></div>
-        <span style="color:var(--text-secondary);font-size:20px;">›</span>
-      </button>
-      <button class="btn btn-secondary" style="margin-top:4px;" onclick="goTo('s-meus-reg')">Ver registros de produção</button>
-      <button class="btn btn-secondary" style="margin-top:4px;" onclick="goTo('s-conf-massas')">Ver registros de massas</button>
-      <button class="btn btn-secondary" style="margin-top:4px;margin-bottom:12px;" onclick="abrirExpView('conf')">Ver liberações da expedição</button>
-      <div class="section-divider">Equipe</div>
-      <button class="home-btn azul" onclick="abrirPresenca('conf')">
-        <div class="hb-icon" style="background:#e8eaff;">👥</div>
-        <div style="flex:1;"><div class="hb-title">Registro de Presença</div><div class="hb-desc" id="presenca-conf-status">Registrar equipe do dia</div></div>
-        <span style="color:var(--text-secondary);font-size:20px;">›</span>
-      </button>
-      <button class="btn btn-secondary" style="margin-top:4px;" onclick="goTo('s-presenca-reg-conf')">Ver registros de presença</button>
-      <div class="section-divider" style="margin-top:14px;">Equipamentos</div>
-      <button class="home-btn" style="border-left-color:#6b21a8;" onclick="abrirPlano()">
-        <div class="hb-icon" style="background:#f3e8ff;">📅</div>
-        <div style="flex:1;"><div class="hb-title">Plano da Semana</div><div class="hb-desc">Calcular massas e recheios por dia</div></div>
-        <span style="color:var(--text-secondary);font-size:20px;">›</span>
-      </button>
-      <button class="home-btn azul" onclick="abrirManut('conf')">
-        <div class="hb-icon" style="background:#fef3c7;">🔧</div>
-        <div style="flex:1;"><div class="hb-title">Manutenção de Máquinas</div><div class="hb-desc">Registrar manutenções e ocorrências</div></div>
-        <span style="color:var(--text-secondary);font-size:20px;">›</span>
-      </button>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info">
+        <div class="mc-page-title">🥐 Confeitaria</div>
+        <div class="mc-page-sub" id="conf-date"></div>
+      </div>
+      <div class="mc-header-actions">
+        <button class="mc-act-btn-secondary" onclick="abrirPlano()">📅 Plano</button>
+        <button class="mc-act-btn-primary" onclick="iniciarNovoReg()">+ Lançar</button>
+      </div>
+    </div>
+    <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;">
+      <div id="conf-banner" class="mc-banner" style="display:none;background:var(--mc-verde-claro);border-color:#a7f3d0;border-left-color:var(--mc-verde);"><span class="mc-banner-icon">✓</span><span class="mc-banner-text" style="color:#065f46;"><strong>Registro salvo!</strong></span></div>
+
+      <div class="mc-hero">
+        <div class="mc-hero-icon">🥐</div>
+        <div style="flex:1;">
+          <div class="mc-hero-num" id="conf-count">0</div>
+          <div class="mc-hero-label">Lançamentos hoje</div>
+        </div>
+      </div>
+
+      <div class="mc-section-header">O que deseja lançar?</div>
+      <div class="mc-sector-grid">
+        <button class="mc-sector-card" onclick="iniciarNovoReg()">
+          <div class="mc-sector-icon blue">📋</div>
+          <div class="mc-sector-info">
+            <div class="mc-sector-title">Produção</div>
+            <div class="mc-sector-desc">Registrar produtos produzidos</div>
+          </div>
+          <span class="mc-sector-arrow">›</span>
+        </button>
+        <button class="mc-sector-card" onclick="goTo('s-massa-data')">
+          <div class="mc-sector-icon blue">⚖️</div>
+          <div class="mc-sector-info">
+            <div class="mc-sector-title">Massas</div>
+            <div class="mc-sector-desc">Registrar kg de massa</div>
+          </div>
+          <span class="mc-sector-arrow">›</span>
+        </button>
+      </div>
+
+      <div class="mc-section-header">Consultas</div>
+      <div class="mc-sector-grid">
+        <button class="mc-sector-card" onclick="goTo('s-meus-reg')">
+          <div class="mc-sector-icon blue">📊</div>
+          <div class="mc-sector-info">
+            <div class="mc-sector-title">Registros de produção</div>
+            <div class="mc-sector-desc">Histórico de produtos</div>
+          </div>
+          <span class="mc-sector-arrow">›</span>
+        </button>
+        <button class="mc-sector-card" onclick="goTo('s-conf-massas')">
+          <div class="mc-sector-icon blue">🌾</div>
+          <div class="mc-sector-info">
+            <div class="mc-sector-title">Registros de massas</div>
+            <div class="mc-sector-desc">Histórico de massas</div>
+          </div>
+          <span class="mc-sector-arrow">›</span>
+        </button>
+        <button class="mc-sector-card" onclick="abrirExpView('conf')">
+          <div class="mc-sector-icon red">🚚</div>
+          <div class="mc-sector-info">
+            <div class="mc-sector-title">Liberações da expedição</div>
+            <div class="mc-sector-desc">Visualizar liberações</div>
+          </div>
+          <span class="mc-sector-arrow">›</span>
+        </button>
+      </div>
+
+      <div class="mc-section-header">Equipe & Equipamentos</div>
+      <div class="mc-sector-grid">
+        <button class="mc-sector-card" onclick="abrirPresenca('conf')">
+          <div class="mc-sector-icon purple">👥</div>
+          <div class="mc-sector-info">
+            <div class="mc-sector-title">Presença</div>
+            <div class="mc-sector-desc" id="presenca-conf-status">Registrar equipe do dia</div>
+          </div>
+          <span class="mc-sector-arrow">›</span>
+        </button>
+        <button class="mc-sector-card" onclick="goTo('s-presenca-reg-conf')">
+          <div class="mc-sector-icon purple">📋</div>
+          <div class="mc-sector-info">
+            <div class="mc-sector-title">Registros de presença</div>
+            <div class="mc-sector-desc">Histórico da equipe</div>
+          </div>
+          <span class="mc-sector-arrow">›</span>
+        </button>
+        <button class="mc-sector-card" onclick="abrirManut('conf')">
+          <div class="mc-sector-icon amber">🔧</div>
+          <div class="mc-sector-info">
+            <div class="mc-sector-title">Manutenção de máquinas</div>
+            <div class="mc-sector-desc">Registrar manutenções</div>
+          </div>
+          <span class="mc-sector-arrow">›</span>
+        </button>
+      </div>
     </div>
   </div>
 
@@ -1019,36 +1082,90 @@
 
   <!-- COZINHA HOME -->
   <div class="screen" id="s-coz-home">
-    <div class="topbar verde">
-      <div style="flex:1;"><div class="topbar-title">Cozinha 🍳</div><div class="topbar-sub" id="coz-date"></div></div>
-      <button class="topbar-right" onclick="window.adminMode?window.goTo('s-adm-hub'):window.goTo('s-inicio')">Sair</button>
-    </div>
-    <div class="content">
-      <div id="coz-banner" class="banner banner-ok" style="display:none;">✓ Registro salvo!</div>
-      <div class="op-stat-card verde">
-        <div class="op-stat-num" id="coz-count">0</div>
-        <div class="op-stat-lbl">lançamentos hoje</div>
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="window.adminMode?window.goTo('s-adm-hub'):window.goTo('s-inicio')">‹</button>
+      <div class="mc-brand">
+        <div class="mc-brand-logo">MC</div>
+        <div class="mc-brand-text">
+          <div class="mc-brand-name">Monte Castelo</div>
+          <div class="mc-brand-sub">Cozinha</div>
+        </div>
       </div>
-      <button class="btn btn-verde" style="margin-bottom:10px;" onclick="goTo('s-recheio-data')">+ Lançar produção de recheio</button>
-      <button class="btn btn-secondary" style="margin-bottom:10px;" onclick="goTo('s-coz-reg')">Ver registros</button>
-      <button class="home-btn verde" onclick="abrirPresenca('coz')">
-        <div class="hb-icon hb-verde">👥</div>
-        <div style="flex:1;"><div class="hb-title">Registro de Presença</div><div class="hb-desc" id="presenca-coz-status">Registrar equipe do dia</div></div>
-        <span style="color:var(--text-secondary);font-size:20px;">›</span>
-      </button>
-      <button class="btn btn-secondary" style="margin-top:4px;" onclick="goTo('s-presenca-reg-coz')">Ver registros de presença</button>
-      <div class="section-divider" style="margin-top:14px;">Planejamento</div>
-      <button class="home-btn" style="border-left-color:#6b21a8;" onclick="abrirPlano()">
-        <div class="hb-icon" style="background:#f3e8ff;">📅</div>
-        <div style="flex:1;"><div class="hb-title">Plano da Semana</div><div class="hb-desc">Ver plano de produção</div></div>
-        <span style="color:var(--text-secondary);font-size:20px;">›</span>
-      </button>
-      <div class="section-divider" style="margin-top:14px;">Equipamentos</div>
-      <button class="home-btn verde" onclick="abrirManut('coz')">
-        <div class="hb-icon" style="background:#fef3c7;">🔧</div>
-        <div style="flex:1;"><div class="hb-title">Manutenção de Máquinas</div><div class="hb-desc">Registrar manutenções e ocorrências</div></div>
-        <span style="color:var(--text-secondary);font-size:20px;">›</span>
-      </button>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info">
+        <div class="mc-page-title">🍳 Cozinha</div>
+        <div class="mc-page-sub" id="coz-date"></div>
+      </div>
+      <div class="mc-header-actions">
+        <button class="mc-act-btn-primary" onclick="goTo('s-recheio-data')">+ Lançar</button>
+      </div>
+    </div>
+    <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;">
+      <div id="coz-banner" class="mc-banner" style="display:none;background:var(--mc-verde-claro);border-color:#a7f3d0;border-left-color:var(--mc-verde);"><span class="mc-banner-icon">✓</span><span class="mc-banner-text" style="color:#065f46;"><strong>Registro salvo!</strong></span></div>
+
+      <div class="mc-hero" style="border-left-color:var(--mc-verde);">
+        <div class="mc-hero-icon" style="background:var(--mc-verde-claro);">🍳</div>
+        <div style="flex:1;">
+          <div class="mc-hero-num" id="coz-count">0</div>
+          <div class="mc-hero-label">Lançamentos hoje</div>
+        </div>
+      </div>
+
+      <div class="mc-section-header">Ações</div>
+      <div class="mc-sector-grid">
+        <button class="mc-sector-card" onclick="goTo('s-recheio-data')">
+          <div class="mc-sector-icon green">🥄</div>
+          <div class="mc-sector-info">
+            <div class="mc-sector-title">Lançar recheio</div>
+            <div class="mc-sector-desc">Registrar produção</div>
+          </div>
+          <span class="mc-sector-arrow">›</span>
+        </button>
+        <button class="mc-sector-card" onclick="goTo('s-coz-reg')">
+          <div class="mc-sector-icon green">📊</div>
+          <div class="mc-sector-info">
+            <div class="mc-sector-title">Ver registros</div>
+            <div class="mc-sector-desc">Histórico de recheios</div>
+          </div>
+          <span class="mc-sector-arrow">›</span>
+        </button>
+        <button class="mc-sector-card" onclick="abrirPlano()">
+          <div class="mc-sector-icon purple">📅</div>
+          <div class="mc-sector-info">
+            <div class="mc-sector-title">Plano da semana</div>
+            <div class="mc-sector-desc">Visualizar plano</div>
+          </div>
+          <span class="mc-sector-arrow">›</span>
+        </button>
+      </div>
+
+      <div class="mc-section-header">Equipe & Equipamentos</div>
+      <div class="mc-sector-grid">
+        <button class="mc-sector-card" onclick="abrirPresenca('coz')">
+          <div class="mc-sector-icon purple">👥</div>
+          <div class="mc-sector-info">
+            <div class="mc-sector-title">Presença</div>
+            <div class="mc-sector-desc" id="presenca-coz-status">Registrar equipe do dia</div>
+          </div>
+          <span class="mc-sector-arrow">›</span>
+        </button>
+        <button class="mc-sector-card" onclick="goTo('s-presenca-reg-coz')">
+          <div class="mc-sector-icon purple">📋</div>
+          <div class="mc-sector-info">
+            <div class="mc-sector-title">Registros de presença</div>
+            <div class="mc-sector-desc">Histórico</div>
+          </div>
+          <span class="mc-sector-arrow">›</span>
+        </button>
+        <button class="mc-sector-card" onclick="abrirManut('coz')">
+          <div class="mc-sector-icon amber">🔧</div>
+          <div class="mc-sector-info">
+            <div class="mc-sector-title">Manutenção de máquinas</div>
+            <div class="mc-sector-desc">Registrar manutenções</div>
+          </div>
+          <span class="mc-sector-arrow">›</span>
+        </button>
+      </div>
     </div>
   </div>
 
@@ -1140,11 +1257,27 @@
 
   <!-- EMBALAGEM: CHECKLIST -->
   <div class="screen" id="s-emb-home">
-    <div class="topbar">
-      <div style="flex:1;"><div class="topbar-title">Embalagem 📦</div><div class="topbar-sub" id="emb-data-topbar"></div></div>
-      <button class="emb-data-badge" onclick="abrirPresenca('emb')" style="margin-right:6px;">👥</button><button class="emb-data-badge" onclick="goTo('s-emb-manual')" style="margin-right:6px;">+ Produto</button><button class="emb-data-badge" onclick="abrirExpView('emb')" style="margin-right:6px;">🚚</button><button class="emb-data-badge" onclick="goTo('s-emb-sel-data')">Trocar dia</button>
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="goTo('s-emb-sel-data')">‹</button>
+      <div class="mc-brand">
+        <div class="mc-brand-logo">MC</div>
+        <div class="mc-brand-text">
+          <div class="mc-brand-name">Monte Castelo</div>
+          <div class="mc-brand-sub">Embalagem</div>
+        </div>
+      </div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info">
+        <div class="mc-page-title">📦 Embalagem</div>
+        <div class="mc-page-sub" id="emb-data-topbar"></div>
+      </div>
+      <div class="mc-header-actions">
+        <button class="mc-act-btn-secondary" onclick="abrirPresenca('emb')" title="Presença">👥</button>
+        <button class="mc-act-btn-secondary" onclick="abrirExpView('emb')" title="Ver expedição">🚚</button>
+        <button class="mc-act-btn-primary" onclick="goTo('s-emb-manual')">+ Produto</button>
+      </div>
     </div>
-    <div class="content" id="emb-content"></div>
+    <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;" id="emb-content"></div>
   </div>
 
 
@@ -1654,11 +1787,25 @@
 
   <!-- EXPEDIÇÃO: LIBERAÇÃO -->
   <div class="screen" id="s-exp-home">
-    <div class="topbar laranja">
-      <div style="flex:1;"><div class="topbar-title">Expedição 🚚</div><div class="topbar-sub" id="exp-data-topbar"></div></div>
-      <button class="emb-data-badge" onclick="goTo('s-exp-sel-data')">Trocar dia</button>
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="goTo('s-exp-sel-data')">‹</button>
+      <div class="mc-brand">
+        <div class="mc-brand-logo">MC</div>
+        <div class="mc-brand-text">
+          <div class="mc-brand-name">Monte Castelo</div>
+          <div class="mc-brand-sub">Expedição</div>
+        </div>
+      </div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info">
+        <div class="mc-page-title">🚚 Expedição</div>
+        <div class="mc-page-sub" id="exp-data-topbar"></div>
+      </div>
+      <div class="mc-header-actions">
+        <button class="mc-act-btn-secondary" onclick="goTo('s-exp-sel-data')">Trocar dia</button>
+      </div>
     </div>
-    <div class="content" id="exp-content"></div>
+    <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;" id="exp-content"></div>
   </div>
 
 
