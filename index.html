@@ -1917,7 +1917,7 @@
 
       <div class="mc-section-header">Relatórios & Equipe</div>
       <div class="mc-sector-grid">
-        <button class="mc-sector-card" onclick="goToAdmin('s-presenca-reg')">
+        <button class="mc-sector-card" onclick="goToAdmin('s-adm-presencas')">
           <div class="mc-sector-icon purple">👥</div>
           <div class="mc-sector-info">
             <div class="mc-sector-title">Registros de Presença</div>
@@ -1940,7 +1940,55 @@
 
 
 
-  <!-- ADMIN STATUS PANEL -->
+    <!-- ADMIN PRESENÇAS HUB -->
+  <div class="screen" id="s-adm-presencas">
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="goTo('s-adm-hub')">‹</button>
+      <div class="mc-brand">
+        <div class="mc-brand-logo">MC</div>
+        <div class="mc-brand-text">
+          <div class="mc-brand-name">Monte Castelo</div>
+          <div class="mc-brand-sub">Presenças</div>
+        </div>
+      </div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info">
+        <div class="mc-page-title">👥 Registros de Presença</div>
+        <div class="mc-page-sub">Selecione o setor</div>
+      </div>
+    </div>
+    <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;">
+      <div class="mc-section-header">Setores</div>
+      <div class="mc-sector-grid">
+        <button class="mc-sector-card" onclick="goToAdmin('s-presenca-reg-conf')">
+          <div class="mc-sector-icon blue">🥐</div>
+          <div class="mc-sector-info">
+            <div class="mc-sector-title">Confeitaria</div>
+            <div class="mc-sector-desc" id="adm-pres-conf-sub">Histórico da equipe</div>
+          </div>
+          <span class="mc-sector-arrow">›</span>
+        </button>
+        <button class="mc-sector-card" onclick="goToAdmin('s-presenca-reg-coz')">
+          <div class="mc-sector-icon green">🍳</div>
+          <div class="mc-sector-info">
+            <div class="mc-sector-title">Cozinha</div>
+            <div class="mc-sector-desc" id="adm-pres-coz-sub">Histórico da equipe</div>
+          </div>
+          <span class="mc-sector-arrow">›</span>
+        </button>
+        <button class="mc-sector-card" onclick="goToAdmin('s-presenca-reg-emb')">
+          <div class="mc-sector-icon amber">📦</div>
+          <div class="mc-sector-info">
+            <div class="mc-sector-title">Embalagem</div>
+            <div class="mc-sector-desc" id="adm-pres-emb-sub">Histórico da equipe</div>
+          </div>
+          <span class="mc-sector-arrow">›</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+<!-- ADMIN STATUS PANEL -->
   <div class="screen" id="s-adm-status">
     <div class="mc-header">
       <button class="mc-header-back" onclick="goTo('s-adm-hub')">‹</button>
@@ -2006,7 +2054,55 @@
 
 
 
-  <!-- ADMIN STATUS PANEL -->
+    <!-- ADMIN PRESENÇAS HUB -->
+  <div class="screen" id="s-adm-presencas">
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="goTo('s-adm-hub')">‹</button>
+      <div class="mc-brand">
+        <div class="mc-brand-logo">MC</div>
+        <div class="mc-brand-text">
+          <div class="mc-brand-name">Monte Castelo</div>
+          <div class="mc-brand-sub">Presenças</div>
+        </div>
+      </div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info">
+        <div class="mc-page-title">👥 Registros de Presença</div>
+        <div class="mc-page-sub">Selecione o setor</div>
+      </div>
+    </div>
+    <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;">
+      <div class="mc-section-header">Setores</div>
+      <div class="mc-sector-grid">
+        <button class="mc-sector-card" onclick="goToAdmin('s-presenca-reg-conf')">
+          <div class="mc-sector-icon blue">🥐</div>
+          <div class="mc-sector-info">
+            <div class="mc-sector-title">Confeitaria</div>
+            <div class="mc-sector-desc" id="adm-pres-conf-sub">Histórico da equipe</div>
+          </div>
+          <span class="mc-sector-arrow">›</span>
+        </button>
+        <button class="mc-sector-card" onclick="goToAdmin('s-presenca-reg-coz')">
+          <div class="mc-sector-icon green">🍳</div>
+          <div class="mc-sector-info">
+            <div class="mc-sector-title">Cozinha</div>
+            <div class="mc-sector-desc" id="adm-pres-coz-sub">Histórico da equipe</div>
+          </div>
+          <span class="mc-sector-arrow">›</span>
+        </button>
+        <button class="mc-sector-card" onclick="goToAdmin('s-presenca-reg-emb')">
+          <div class="mc-sector-icon amber">📦</div>
+          <div class="mc-sector-info">
+            <div class="mc-sector-title">Embalagem</div>
+            <div class="mc-sector-desc" id="adm-pres-emb-sub">Histórico da equipe</div>
+          </div>
+          <span class="mc-sector-arrow">›</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+<!-- ADMIN STATUS PANEL -->
     <!-- CONTAGEM: PRODUTO ACABADO SUB-MENU -->
   <div class="screen" id="s-contagem-prod-acabado">
     <div class="topbar" style="background:#0891b2;">
@@ -2028,7 +2124,55 @@
   </div>
 
 
-  <!-- ADMIN STATUS PANEL -->
+    <!-- ADMIN PRESENÇAS HUB -->
+  <div class="screen" id="s-adm-presencas">
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="goTo('s-adm-hub')">‹</button>
+      <div class="mc-brand">
+        <div class="mc-brand-logo">MC</div>
+        <div class="mc-brand-text">
+          <div class="mc-brand-name">Monte Castelo</div>
+          <div class="mc-brand-sub">Presenças</div>
+        </div>
+      </div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info">
+        <div class="mc-page-title">👥 Registros de Presença</div>
+        <div class="mc-page-sub">Selecione o setor</div>
+      </div>
+    </div>
+    <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;">
+      <div class="mc-section-header">Setores</div>
+      <div class="mc-sector-grid">
+        <button class="mc-sector-card" onclick="goToAdmin('s-presenca-reg-conf')">
+          <div class="mc-sector-icon blue">🥐</div>
+          <div class="mc-sector-info">
+            <div class="mc-sector-title">Confeitaria</div>
+            <div class="mc-sector-desc" id="adm-pres-conf-sub">Histórico da equipe</div>
+          </div>
+          <span class="mc-sector-arrow">›</span>
+        </button>
+        <button class="mc-sector-card" onclick="goToAdmin('s-presenca-reg-coz')">
+          <div class="mc-sector-icon green">🍳</div>
+          <div class="mc-sector-info">
+            <div class="mc-sector-title">Cozinha</div>
+            <div class="mc-sector-desc" id="adm-pres-coz-sub">Histórico da equipe</div>
+          </div>
+          <span class="mc-sector-arrow">›</span>
+        </button>
+        <button class="mc-sector-card" onclick="goToAdmin('s-presenca-reg-emb')">
+          <div class="mc-sector-icon amber">📦</div>
+          <div class="mc-sector-info">
+            <div class="mc-sector-title">Embalagem</div>
+            <div class="mc-sector-desc" id="adm-pres-emb-sub">Histórico da equipe</div>
+          </div>
+          <span class="mc-sector-arrow">›</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+<!-- ADMIN STATUS PANEL -->
     <!-- CONTAGEM: LANÇAMENTO -->
   <div class="screen" id="s-contagem-lanc">
     <div class="topbar" style="background:#0891b2;">
@@ -2039,7 +2183,55 @@
   </div>
 
 
-  <!-- ADMIN STATUS PANEL -->
+    <!-- ADMIN PRESENÇAS HUB -->
+  <div class="screen" id="s-adm-presencas">
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="goTo('s-adm-hub')">‹</button>
+      <div class="mc-brand">
+        <div class="mc-brand-logo">MC</div>
+        <div class="mc-brand-text">
+          <div class="mc-brand-name">Monte Castelo</div>
+          <div class="mc-brand-sub">Presenças</div>
+        </div>
+      </div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info">
+        <div class="mc-page-title">👥 Registros de Presença</div>
+        <div class="mc-page-sub">Selecione o setor</div>
+      </div>
+    </div>
+    <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;">
+      <div class="mc-section-header">Setores</div>
+      <div class="mc-sector-grid">
+        <button class="mc-sector-card" onclick="goToAdmin('s-presenca-reg-conf')">
+          <div class="mc-sector-icon blue">🥐</div>
+          <div class="mc-sector-info">
+            <div class="mc-sector-title">Confeitaria</div>
+            <div class="mc-sector-desc" id="adm-pres-conf-sub">Histórico da equipe</div>
+          </div>
+          <span class="mc-sector-arrow">›</span>
+        </button>
+        <button class="mc-sector-card" onclick="goToAdmin('s-presenca-reg-coz')">
+          <div class="mc-sector-icon green">🍳</div>
+          <div class="mc-sector-info">
+            <div class="mc-sector-title">Cozinha</div>
+            <div class="mc-sector-desc" id="adm-pres-coz-sub">Histórico da equipe</div>
+          </div>
+          <span class="mc-sector-arrow">›</span>
+        </button>
+        <button class="mc-sector-card" onclick="goToAdmin('s-presenca-reg-emb')">
+          <div class="mc-sector-icon amber">📦</div>
+          <div class="mc-sector-info">
+            <div class="mc-sector-title">Embalagem</div>
+            <div class="mc-sector-desc" id="adm-pres-emb-sub">Histórico da equipe</div>
+          </div>
+          <span class="mc-sector-arrow">›</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+<!-- ADMIN STATUS PANEL -->
     <!-- CONTAGEM: HISTÓRICO -->
   <div class="screen" id="s-contagem-hist">
     <div class="topbar" style="background:#0891b2;">
