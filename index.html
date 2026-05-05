@@ -2,8 +2,10 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
+  <meta name="color-scheme" content="light" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <meta name="theme-color" content="#2B2FA8" />
+  <meta name="theme-color" content="#1e3a8a" />
+  <meta name="color-scheme" content="light only" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <title>ProduLog · Monte Castelo</title>
@@ -263,10 +265,7 @@
     .btn-del-admin { display: none; }
 
     body.admin-mode .btn-del-admin { display: inline-block !important; }
-    @media (prefers-color-scheme: dark) {
-      :root { --bg-primary: #1c1c1e; --bg-secondary: #2c2c2e; --bg-tertiary: #242426; --text-primary: #f2f2f7; --text-secondary: #8e8e93; --border: rgba(255,255,255,0.1); --border-md: rgba(255,255,255,0.18); }
-      body { background: #000; }
-    }
+    /* Dark mode automático REMOVIDO — app sempre em tema claro Monte Castelo */
   
   /* LOGO */
   .app-logo {
