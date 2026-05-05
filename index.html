@@ -670,6 +670,12 @@
       letter-spacing: 0.04em;
       font-weight: 500;
     }
+    
+
+    /* Conteúdo padrão depois do mc-header — fundo claro consistente */
+    .mc-header + .content {
+      background: var(--bg-page) !important;
+    }
     </style>
 </head>
 <body>
@@ -924,18 +930,42 @@
 
   <!-- CONFEITARIA: VER MASSAS -->
   <div class="screen" id="s-conf-massas">
-    <div class="topbar">
-      <button class="back-btn" onclick="goTo('s-conf-home')">‹</button>
-      <div><div class="topbar-title">Registros de Massas</div><div class="topbar-sub" id="conf-massas-sub"></div></div>
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="goTo('s-conf-home')">‹</button>
+      <div class="mc-brand">
+        <div class="mc-brand-logo">MC</div>
+        <div class="mc-brand-text">
+          <div class="mc-brand-name">Monte Castelo</div>
+          <div class="mc-brand-sub">Confeitaria</div>
+        </div>
+      </div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info">
+        <div class="mc-page-title">Registros de Massas</div>
+        <div class="mc-page-sub" id="conf-massas-sub"></div>
+      </div>
+      
     </div>
     <div class="content" id="conf-massas-content"></div>
   </div>
 
   <!-- PASSO 1: DATA PRODUÇÃO -->
   <div class="screen" id="s-sel-data">
-    <div class="topbar">
-      <button class="back-btn" onclick="goTo('s-conf-home')">‹</button>
-      <div><div class="topbar-title">Novo registro</div><div class="topbar-sub">Passo 1 de 3 — Data</div></div>
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="goTo('s-conf-home')">‹</button>
+      <div class="mc-brand">
+        <div class="mc-brand-logo">MC</div>
+        <div class="mc-brand-text">
+          <div class="mc-brand-name">Monte Castelo</div>
+          <div class="mc-brand-sub">Lançamento</div>
+        </div>
+      </div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info">
+        <div class="mc-page-title">Novo registro</div>
+        <div class="mc-page-sub">Passo 1 de 3 — Data</div>
+      </div>
+      
     </div>
     <div class="content">
       <div class="card">
@@ -953,9 +983,21 @@
 
   <!-- PASSO 2: PRODUTO -->
   <div class="screen" id="s-novo-reg">
-    <div class="topbar">
-      <button class="back-btn" onclick="goTo('s-sel-data')">‹</button>
-      <div><div class="topbar-title">Novo registro</div><div class="topbar-sub">Passo 2 de 3 — Produto</div></div>
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="goTo('s-sel-data')">‹</button>
+      <div class="mc-brand">
+        <div class="mc-brand-logo">MC</div>
+        <div class="mc-brand-text">
+          <div class="mc-brand-name">Monte Castelo</div>
+          <div class="mc-brand-sub">Lançamento</div>
+        </div>
+      </div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info">
+        <div class="mc-page-title">Novo registro</div>
+        <div class="mc-page-sub">Passo 2 de 3 — Produto</div>
+      </div>
+      
     </div>
     <div class="content">
       <div id="data-sel-banner2" class="banner banner-info" style="margin-bottom:10px;"></div>
@@ -972,9 +1014,21 @@
 
   <!-- PASSO 3: QUANTIDADES -->
   <div class="screen" id="s-qtd">
-    <div class="topbar">
-      <button class="back-btn" onclick="goTo('s-novo-reg')">‹</button>
-      <div><div class="topbar-title">Novo registro</div><div class="topbar-sub">Passo 3 de 3 — Quantidades</div></div>
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="goTo('s-novo-reg')">‹</button>
+      <div class="mc-brand">
+        <div class="mc-brand-logo">MC</div>
+        <div class="mc-brand-text">
+          <div class="mc-brand-name">Monte Castelo</div>
+          <div class="mc-brand-sub">Lançamento</div>
+        </div>
+      </div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info">
+        <div class="mc-page-title">Novo registro</div>
+        <div class="mc-page-sub">Passo 3 de 3 — Quantidades</div>
+      </div>
+      
     </div>
     <div class="content">
       <div class="produto-sel-card">
@@ -1021,18 +1075,42 @@
 
   <!-- MEUS REGISTROS -->
   <div class="screen" id="s-meus-reg">
-    <div class="topbar">
-      <button class="back-btn" onclick="goTo('s-conf-home')">‹</button>
-      <div><div class="topbar-title">Registros de produção</div><div class="topbar-sub" id="mr-sub"></div></div>
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="goTo('s-conf-home')">‹</button>
+      <div class="mc-brand">
+        <div class="mc-brand-logo">MC</div>
+        <div class="mc-brand-text">
+          <div class="mc-brand-name">Monte Castelo</div>
+          <div class="mc-brand-sub">Registros</div>
+        </div>
+      </div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info">
+        <div class="mc-page-title">Registros de produção</div>
+        <div class="mc-page-sub" id="mr-sub"></div>
+      </div>
+      
     </div>
     <div class="content" id="mr-content"></div>
   </div>
 
   <!-- MASSAS: DATA -->
   <div class="screen" id="s-massa-data">
-    <div class="topbar">
-      <button class="back-btn" onclick="goTo('s-conf-home')">‹</button>
-      <div><div class="topbar-title">Produção de Massas</div><div class="topbar-sub">Passo 1 de 2 — Data</div></div>
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="goTo('s-conf-home')">‹</button>
+      <div class="mc-brand">
+        <div class="mc-brand-logo">MC</div>
+        <div class="mc-brand-text">
+          <div class="mc-brand-name">Monte Castelo</div>
+          <div class="mc-brand-sub">Confeitaria</div>
+        </div>
+      </div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info">
+        <div class="mc-page-title">Produção de Massas</div>
+        <div class="mc-page-sub">Passo 1 de 2 — Data</div>
+      </div>
+      
     </div>
     <div class="content">
       <div class="card">
@@ -1050,9 +1128,21 @@
 
   <!-- MASSAS: LANÇAMENTO -->
   <div class="screen" id="s-massa-lanc">
-    <div class="topbar">
-      <button class="back-btn" onclick="goTo('s-massa-data')">‹</button>
-      <div><div class="topbar-title">Produção de Massas</div><div class="topbar-sub">Passo 2 de 2 — Lançamento</div></div>
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="goTo('s-massa-data')">‹</button>
+      <div class="mc-brand">
+        <div class="mc-brand-logo">MC</div>
+        <div class="mc-brand-text">
+          <div class="mc-brand-name">Monte Castelo</div>
+          <div class="mc-brand-sub">Confeitaria</div>
+        </div>
+      </div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info">
+        <div class="mc-page-title">Produção de Massas</div>
+        <div class="mc-page-sub">Passo 2 de 2 — Lançamento</div>
+      </div>
+      
     </div>
     <div class="content">
       <div id="massa-data-banner2" class="banner banner-info" style="margin-bottom:10px;"></div>
@@ -1170,9 +1260,21 @@
 
   <!-- RECHEIO: DATA -->
   <div class="screen" id="s-recheio-data">
-    <div class="topbar verde">
-      <button class="back-btn" onclick="goTo('s-coz-home')">‹</button>
-      <div><div class="topbar-title">Produção de Recheio</div><div class="topbar-sub">Passo 1 de 2 — Data</div></div>
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="goTo('s-coz-home')">‹</button>
+      <div class="mc-brand">
+        <div class="mc-brand-logo">MC</div>
+        <div class="mc-brand-text">
+          <div class="mc-brand-name">Monte Castelo</div>
+          <div class="mc-brand-sub">Cozinha</div>
+        </div>
+      </div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info">
+        <div class="mc-page-title">Produção de Recheio</div>
+        <div class="mc-page-sub">Passo 1 de 2 — Data</div>
+      </div>
+      
     </div>
     <div class="content">
       <div class="card">
@@ -1190,9 +1292,21 @@
 
   <!-- RECHEIO: LANÇAMENTO -->
   <div class="screen" id="s-recheio-lanc">
-    <div class="topbar verde">
-      <button class="back-btn" onclick="goTo('s-recheio-data')">‹</button>
-      <div><div class="topbar-title">Produção de Recheio</div><div class="topbar-sub">Passo 2 de 2 — Lançamento</div></div>
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="goTo('s-recheio-data')">‹</button>
+      <div class="mc-brand">
+        <div class="mc-brand-logo">MC</div>
+        <div class="mc-brand-text">
+          <div class="mc-brand-name">Monte Castelo</div>
+          <div class="mc-brand-sub">Cozinha</div>
+        </div>
+      </div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info">
+        <div class="mc-page-title">Produção de Recheio</div>
+        <div class="mc-page-sub">Passo 2 de 2 — Lançamento</div>
+      </div>
+      
     </div>
     <div class="content">
       <div id="recheio-data-banner2" class="banner banner-info-verde" style="margin-bottom:10px;"></div>
@@ -1221,18 +1335,42 @@
 
   <!-- COZINHA REGISTROS -->
   <div class="screen" id="s-coz-reg">
-    <div class="topbar verde">
-      <button class="back-btn" onclick="goTo('s-coz-home')">‹</button>
-      <div><div class="topbar-title">Registros de recheio</div><div class="topbar-sub" id="coz-reg-sub"></div></div>
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="goTo('s-coz-home')">‹</button>
+      <div class="mc-brand">
+        <div class="mc-brand-logo">MC</div>
+        <div class="mc-brand-text">
+          <div class="mc-brand-name">Monte Castelo</div>
+          <div class="mc-brand-sub">Cozinha</div>
+        </div>
+      </div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info">
+        <div class="mc-page-title">Registros de recheio</div>
+        <div class="mc-page-sub" id="coz-reg-sub"></div>
+      </div>
+      
     </div>
     <div class="content" id="coz-reg-content"></div>
   </div>
 
   <!-- EMBALAGEM: SELECIONAR DATA -->
   <div class="screen" id="s-emb-sel-data">
-    <div class="topbar">
-      <button class="back-btn" onclick="window.adminMode?window.goTo('s-adm-hub'):window.goTo('s-inicio')">‹</button>
-      <div><div class="topbar-title">Embalagem 📦</div><div class="topbar-sub">Selecione o dia</div></div>
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="window.adminMode?window.goTo('s-adm-hub'):window.goTo('s-inicio')">‹</button>
+      <div class="mc-brand">
+        <div class="mc-brand-logo">MC</div>
+        <div class="mc-brand-text">
+          <div class="mc-brand-name">Monte Castelo</div>
+          <div class="mc-brand-sub">Embalagem</div>
+        </div>
+      </div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info">
+        <div class="mc-page-title">Embalagem 📦</div>
+        <div class="mc-page-sub">Selecione o dia</div>
+      </div>
+      
     </div>
     <div class="content" id="emb-sel-content-wrap">
       <div id="emb-sel-content"></div>
@@ -1284,9 +1422,21 @@
 
   <!-- EMBALAGEM: PRODUTO MANUAL -->
   <div class="screen" id="s-emb-manual">
-    <div class="topbar">
-      <button class="back-btn" onclick="goTo('s-emb-home')">‹</button>
-      <div><div class="topbar-title">Adicionar Produto</div><div class="topbar-sub">Embalagem manual</div></div>
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="goTo('s-emb-home')">‹</button>
+      <div class="mc-brand">
+        <div class="mc-brand-logo">MC</div>
+        <div class="mc-brand-text">
+          <div class="mc-brand-name">Monte Castelo</div>
+          <div class="mc-brand-sub">Embalagem</div>
+        </div>
+      </div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info">
+        <div class="mc-page-title">Adicionar Produto</div>
+        <div class="mc-page-sub">Embalagem manual</div>
+      </div>
+      
     </div>
     <div class="content">
       <div class="card">
@@ -1311,17 +1461,41 @@
 
   <!-- EXPEDIÇÃO VIEW (read-only) -->
   <div class="screen" id="s-exp-view-sel">
-    <div class="topbar">
-      <button class="back-btn" id="exp-view-back" onclick="goTo('s-conf-home')">‹</button>
-      <div><div class="topbar-title">Liberações da Expedição</div><div class="topbar-sub">Selecione o dia (somente visualização)</div></div>
+    <div class="mc-header">
+      <button class="mc-header-back" id="exp-view-back" onclick="goTo('s-conf-home')">‹</button>
+      <div class="mc-brand">
+        <div class="mc-brand-logo">MC</div>
+        <div class="mc-brand-text">
+          <div class="mc-brand-name">Monte Castelo</div>
+          <div class="mc-brand-sub">Expedição</div>
+        </div>
+      </div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info">
+        <div class="mc-page-title">Liberações da Expedição</div>
+        <div class="mc-page-sub">Selecione o dia (somente visualização)</div>
+      </div>
+      
     </div>
     <div class="content" id="exp-view-sel-content"></div>
   </div>
 
   <div class="screen" id="s-exp-view">
-    <div class="topbar">
-      <button class="back-btn" onclick="goTo('s-exp-view-sel')">‹</button>
-      <div><div class="topbar-title">Expedição</div><div class="topbar-sub" id="exp-view-data-topbar">data</div></div>
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="goTo('s-exp-view-sel')">‹</button>
+      <div class="mc-brand">
+        <div class="mc-brand-logo">MC</div>
+        <div class="mc-brand-text">
+          <div class="mc-brand-name">Monte Castelo</div>
+          <div class="mc-brand-sub">Expedição</div>
+        </div>
+      </div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info">
+        <div class="mc-page-title">Expedição</div>
+        <div class="mc-page-sub" id="exp-view-data-topbar">data</div>
+      </div>
+      
     </div>
     <div class="content" id="exp-view-content"></div>
   </div>
@@ -1348,27 +1522,63 @@
 
   <!-- PRESENÇA: REGISTROS CONF -->
   <div class="screen" id="s-presenca-reg-conf">
-    <div class="topbar">
-      <button class="back-btn" onclick="goTo('s-conf-home')">‹</button>
-      <div><div class="topbar-title">Presenças — Confeitaria</div><div class="topbar-sub" id="preg-conf-sub"></div></div>
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="goTo('s-conf-home')">‹</button>
+      <div class="mc-brand">
+        <div class="mc-brand-logo">MC</div>
+        <div class="mc-brand-text">
+          <div class="mc-brand-name">Monte Castelo</div>
+          <div class="mc-brand-sub">Confeitaria</div>
+        </div>
+      </div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info">
+        <div class="mc-page-title">Presenças — Confeitaria</div>
+        <div class="mc-page-sub" id="preg-conf-sub"></div>
+      </div>
+      
     </div>
     <div class="content" id="preg-conf-content"></div>
   </div>
 
   <!-- PRESENÇA: REGISTROS COZ -->
   <div class="screen" id="s-presenca-reg-coz">
-    <div class="topbar verde">
-      <button class="back-btn" onclick="goTo('s-coz-home')">‹</button>
-      <div><div class="topbar-title">Presenças — Cozinha</div><div class="topbar-sub" id="preg-coz-sub"></div></div>
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="goTo('s-coz-home')">‹</button>
+      <div class="mc-brand">
+        <div class="mc-brand-logo">MC</div>
+        <div class="mc-brand-text">
+          <div class="mc-brand-name">Monte Castelo</div>
+          <div class="mc-brand-sub">Cozinha</div>
+        </div>
+      </div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info">
+        <div class="mc-page-title">Presenças — Cozinha</div>
+        <div class="mc-page-sub" id="preg-coz-sub"></div>
+      </div>
+      
     </div>
     <div class="content" id="preg-coz-content"></div>
   </div>
 
   <!-- PRESENÇA: REGISTROS EMB -->
   <div class="screen" id="s-presenca-reg-emb">
-    <div class="topbar">
-      <button class="back-btn" onclick="goTo('s-emb-sel-data')">‹</button>
-      <div><div class="topbar-title">Presenças — Embalagem</div><div class="topbar-sub" id="preg-emb-sub"></div></div>
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="goTo('s-emb-sel-data')">‹</button>
+      <div class="mc-brand">
+        <div class="mc-brand-logo">MC</div>
+        <div class="mc-brand-text">
+          <div class="mc-brand-name">Monte Castelo</div>
+          <div class="mc-brand-sub">Embalagem</div>
+        </div>
+      </div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info">
+        <div class="mc-page-title">Presenças — Embalagem</div>
+        <div class="mc-page-sub" id="preg-emb-sub"></div>
+      </div>
+      
     </div>
     <div class="content" id="preg-emb-content"></div>
   </div>
@@ -1376,20 +1586,42 @@
 
   <!-- MANUTENÇÃO: HOME (shared, setor passado via JS) -->
   <div class="screen" id="s-manut-home">
-    <div class="topbar" id="manut-topbar">
-      <button class="back-btn" id="manut-back-btn" onclick="voltarManut()">‹</button>
-      <div><div class="topbar-title">Manutenção 🔧</div><div class="topbar-sub" id="manut-setor-sub"></div></div>
+    <div class="mc-header" id="manut-topbar">
+      <button class="mc-header-back" id="manut-back-btn" onclick="voltarManut()">‹</button>
+      <div class="mc-brand">
+        <div class="mc-brand-logo">MC</div>
+        <div class="mc-brand-text">
+          <div class="mc-brand-name">Monte Castelo</div>
+          <div class="mc-brand-sub">Manutenção</div>
+        </div>
+      </div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info">
+        <div class="mc-page-title">🔧 Manutenção</div>
+        <div class="mc-page-sub" id="manut-setor-sub"></div>
+      </div>
     </div>
-    <div class="content" id="manut-home-content"></div>
+    <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;" id="manut-home-content"></div>
   </div>
 
   <!-- MANUTENÇÃO: NOVA MÁQUINA -->
   <div class="screen" id="s-manut-nova-maq">
-    <div class="topbar" id="manut-nova-topbar">
-      <button class="back-btn" onclick="goTo('s-manut-home')">‹</button>
-      <div><div class="topbar-title">Nova Máquina</div><div class="topbar-sub" id="manut-nova-sub"></div></div>
+    <div class="mc-header" id="manut-nova-topbar">
+      <button class="mc-header-back" onclick="goTo('s-manut-home')">‹</button>
+      <div class="mc-brand">
+        <div class="mc-brand-logo">MC</div>
+        <div class="mc-brand-text">
+          <div class="mc-brand-name">Monte Castelo</div>
+          <div class="mc-brand-sub">Nova Máquina</div>
+        </div>
+      </div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info">
+        <div class="mc-page-title">⚙️ Nova Máquina</div>
+        <div class="mc-page-sub" id="manut-nova-sub"></div>
+      </div>
     </div>
-    <div class="content">
+    <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;">
       <div class="card">
         <div class="card-label">Nome da máquina</div>
         <input type="text" id="manut-nova-nome" placeholder="Ex: Fritadeira 1, Forno Principal..." />
@@ -1404,20 +1636,42 @@
 
   <!-- MANUTENÇÃO: DETALHES MÁQUINA -->
   <div class="screen" id="s-manut-maq">
-    <div class="topbar" id="manut-maq-topbar">
-      <button class="back-btn" onclick="goTo('s-manut-home')">‹</button>
-      <div><div class="topbar-title" id="manut-maq-title">Máquina</div><div class="topbar-sub" id="manut-maq-sub"></div></div>
+    <div class="mc-header" id="manut-maq-topbar">
+      <button class="mc-header-back" onclick="goTo('s-manut-home')">‹</button>
+      <div class="mc-brand">
+        <div class="mc-brand-logo">MC</div>
+        <div class="mc-brand-text">
+          <div class="mc-brand-name">Monte Castelo</div>
+          <div class="mc-brand-sub">Máquina</div>
+        </div>
+      </div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info">
+        <div class="mc-page-title" id="manut-maq-title">🔧 Máquina</div>
+        <div class="mc-page-sub" id="manut-maq-sub"></div>
+      </div>
     </div>
-    <div class="content" id="manut-maq-content"></div>
+    <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;" id="manut-maq-content"></div>
   </div>
 
   <!-- MANUTENÇÃO: NOVO LANÇAMENTO -->
   <div class="screen" id="s-manut-lanc">
-    <div class="topbar" id="manut-lanc-topbar">
-      <button class="back-btn" onclick="goTo('s-manut-maq')">‹</button>
-      <div><div class="topbar-title">Nova Manutenção</div><div class="topbar-sub" id="manut-lanc-maq"></div></div>
+    <div class="mc-header" id="manut-lanc-topbar">
+      <button class="mc-header-back" onclick="goTo('s-manut-maq')">‹</button>
+      <div class="mc-brand">
+        <div class="mc-brand-logo">MC</div>
+        <div class="mc-brand-text">
+          <div class="mc-brand-name">Monte Castelo</div>
+          <div class="mc-brand-sub">Nova Manutenção</div>
+        </div>
+      </div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info">
+        <div class="mc-page-title">🛠️ Nova Manutenção</div>
+        <div class="mc-page-sub" id="manut-lanc-maq"></div>
+      </div>
     </div>
-    <div class="content">
+    <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;">
       <div class="card">
         <div class="card-label">Data da manutenção</div>
         <div class="date-btn-grid" id="manut-date-grid"></div>
@@ -1546,18 +1800,42 @@
 
   <!-- FARINHAS: NOVA CONTAGEM -->
   <div class="screen" id="s-farinha-lanc">
-    <div class="topbar" style="background:#059669;">
-      <button class="back-btn" onclick="goTo('s-farinha-home')">‹</button>
-      <div><div class="topbar-title" id="farinha-lanc-title">Nova Contagem</div><div class="topbar-sub" id="farinha-lanc-sub"></div></div>
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="goTo('s-farinha-home')">‹</button>
+      <div class="mc-brand">
+        <div class="mc-brand-logo">MC</div>
+        <div class="mc-brand-text">
+          <div class="mc-brand-name">Monte Castelo</div>
+          <div class="mc-brand-sub">Farinhas</div>
+        </div>
+      </div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info">
+        <div class="mc-page-title" id="farinha-lanc-title">Nova Contagem</div>
+        <div class="mc-page-sub" id="farinha-lanc-sub"></div>
+      </div>
+      
     </div>
     <div class="content" id="farinha-lanc-content"></div>
   </div>
 
   <!-- FARINHAS: HISTÓRICO -->
   <div class="screen" id="s-farinha-hist">
-    <div class="topbar" style="background:#059669;">
-      <button class="back-btn" onclick="goTo('s-farinha-home')">‹</button>
-      <div><div class="topbar-title">Histórico de Farinhas</div><div class="topbar-sub" id="farinha-hist-sub"></div></div>
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="goTo('s-farinha-home')">‹</button>
+      <div class="mc-brand">
+        <div class="mc-brand-logo">MC</div>
+        <div class="mc-brand-text">
+          <div class="mc-brand-name">Monte Castelo</div>
+          <div class="mc-brand-sub">Farinhas</div>
+        </div>
+      </div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info">
+        <div class="mc-page-title">Histórico de Farinhas</div>
+        <div class="mc-page-sub" id="farinha-hist-sub"></div>
+      </div>
+      
     </div>
     <div class="content" id="farinha-hist-content"></div>
   </div>
@@ -1599,18 +1877,42 @@
 
   <!-- CONTAINER ITEM DETAIL -->
   <div class="screen" id="s-container-item">
-    <div class="topbar" style="background:#059669;">
-      <button class="back-btn" onclick="goTo('s-container-home')">‹</button>
-      <div><div class="topbar-title" id="container-item-title">Item</div><div class="topbar-sub" id="container-item-sub"></div></div>
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="goTo('s-container-home')">‹</button>
+      <div class="mc-brand">
+        <div class="mc-brand-logo">MC</div>
+        <div class="mc-brand-text">
+          <div class="mc-brand-name">Monte Castelo</div>
+          <div class="mc-brand-sub">Container</div>
+        </div>
+      </div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info">
+        <div class="mc-page-title" id="container-item-title">Item</div>
+        <div class="mc-page-sub" id="container-item-sub"></div>
+      </div>
+      
     </div>
     <div class="content" id="container-item-content"></div>
   </div>
 
   <!-- CONTAINER: ENTRADA -->
   <div class="screen" id="s-container-entrada">
-    <div class="topbar" style="background:#059669;">
-      <button class="back-btn" onclick="goTo('s-container-item')">‹</button>
-      <div><div class="topbar-title">Nova Entrada</div><div class="topbar-sub" id="container-entrada-sub"></div></div>
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="goTo('s-container-item')">‹</button>
+      <div class="mc-brand">
+        <div class="mc-brand-logo">MC</div>
+        <div class="mc-brand-text">
+          <div class="mc-brand-name">Monte Castelo</div>
+          <div class="mc-brand-sub">Container</div>
+        </div>
+      </div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info">
+        <div class="mc-page-title">Nova Entrada</div>
+        <div class="mc-page-sub" id="container-entrada-sub"></div>
+      </div>
+      
     </div>
     <div class="content">
       <div class="card">
@@ -1643,9 +1945,21 @@
 
   <!-- CONTAINER: SAÍDA -->
   <div class="screen" id="s-container-saida">
-    <div class="topbar" style="background:#059669;">
-      <button class="back-btn" onclick="goTo('s-container-item')">‹</button>
-      <div><div class="topbar-title">Registrar Saída</div><div class="topbar-sub" id="container-saida-sub"></div></div>
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="goTo('s-container-item')">‹</button>
+      <div class="mc-brand">
+        <div class="mc-brand-logo">MC</div>
+        <div class="mc-brand-text">
+          <div class="mc-brand-name">Monte Castelo</div>
+          <div class="mc-brand-sub">Container</div>
+        </div>
+      </div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info">
+        <div class="mc-page-title">Registrar Saída</div>
+        <div class="mc-page-sub" id="container-saida-sub"></div>
+      </div>
+      
     </div>
     <div class="content" id="container-saida-content"></div>
   </div>
@@ -1703,9 +2017,21 @@
 
   <!-- QUADRA: PASSO 1 - DATA -->
   <div class="screen" id="s-quadra-data">
-    <div class="topbar" style="background:#92400e;">
-      <button class="back-btn" onclick="goTo('s-quadra-home')">‹</button>
-      <div><div class="topbar-title">Novo Lançamento</div><div class="topbar-sub">Passo 1 — Data</div></div>
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="goTo('s-quadra-home')">‹</button>
+      <div class="mc-brand">
+        <div class="mc-brand-logo">MC</div>
+        <div class="mc-brand-text">
+          <div class="mc-brand-name">Monte Castelo</div>
+          <div class="mc-brand-sub">Quadra</div>
+        </div>
+      </div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info">
+        <div class="mc-page-title">Novo Lançamento</div>
+        <div class="mc-page-sub">Passo 1 — Data</div>
+      </div>
+      
     </div>
     <div class="content">
       <div class="card">
@@ -1722,9 +2048,21 @@
 
   <!-- QUADRA: PASSO 2 - KIT -->
   <div class="screen" id="s-quadra-kit">
-    <div class="topbar" style="background:#92400e;">
-      <button class="back-btn" onclick="goTo('s-quadra-data')">‹</button>
-      <div><div class="topbar-title">Novo Lançamento</div><div class="topbar-sub">Passo 2 — Selecionar Kit</div></div>
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="goTo('s-quadra-data')">‹</button>
+      <div class="mc-brand">
+        <div class="mc-brand-logo">MC</div>
+        <div class="mc-brand-text">
+          <div class="mc-brand-name">Monte Castelo</div>
+          <div class="mc-brand-sub">Quadra</div>
+        </div>
+      </div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info">
+        <div class="mc-page-title">Novo Lançamento</div>
+        <div class="mc-page-sub">Passo 2 — Selecionar Kit</div>
+      </div>
+      
     </div>
     <div class="content">
       <div id="quadra-data-banner" class="banner banner-info" style="margin-bottom:10px;"></div>
@@ -1738,18 +2076,42 @@
 
   <!-- QUADRA: PASSO 3 - RECEITA + PRODUTOS -->
   <div class="screen" id="s-quadra-lanc">
-    <div class="topbar" style="background:#92400e;">
-      <button class="back-btn" onclick="goTo('s-quadra-kit')">‹</button>
-      <div><div class="topbar-title" id="quadra-lanc-title">Lançamento</div><div class="topbar-sub" id="quadra-lanc-sub"></div></div>
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="goTo('s-quadra-kit')">‹</button>
+      <div class="mc-brand">
+        <div class="mc-brand-logo">MC</div>
+        <div class="mc-brand-text">
+          <div class="mc-brand-name">Monte Castelo</div>
+          <div class="mc-brand-sub">Quadra</div>
+        </div>
+      </div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info">
+        <div class="mc-page-title" id="quadra-lanc-title">Lançamento</div>
+        <div class="mc-page-sub" id="quadra-lanc-sub"></div>
+      </div>
+      
     </div>
     <div class="content" id="quadra-lanc-content"></div>
   </div>
 
   <!-- QUADRA: REGISTROS -->
   <div class="screen" id="s-quadra-reg">
-    <div class="topbar" style="background:#92400e;">
-      <button class="back-btn" onclick="goTo('s-quadra-home')">‹</button>
-      <div><div class="topbar-title">Registros Quadra</div><div class="topbar-sub" id="quadra-reg-sub"></div></div>
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="goTo('s-quadra-home')">‹</button>
+      <div class="mc-brand">
+        <div class="mc-brand-logo">MC</div>
+        <div class="mc-brand-text">
+          <div class="mc-brand-name">Monte Castelo</div>
+          <div class="mc-brand-sub">Quadra</div>
+        </div>
+      </div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info">
+        <div class="mc-page-title">Registros Quadra</div>
+        <div class="mc-page-sub" id="quadra-reg-sub"></div>
+      </div>
+      
     </div>
     <div class="content" id="quadra-reg-content"></div>
   </div>
@@ -1784,19 +2146,42 @@
 
   <!-- TESTES: PRODUTO DETALHE -->
   <div class="screen" id="s-testes-produto">
-    <div class="topbar" style="background:#0f766e;">
-      <button class="back-btn" onclick="goTo('s-testes-home')">‹</button>
-      <div><div class="topbar-title" id="testes-prod-title">Produto</div><div class="topbar-sub" id="testes-prod-sub"></div></div>
-      <button class="topbar-right" onclick="abrirNovoTeste()" style="font-size:13px;">+ Teste</button>
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="goTo('s-testes-home')">‹</button>
+      <div class="mc-brand">
+        <div class="mc-brand-logo">MC</div>
+        <div class="mc-brand-text">
+          <div class="mc-brand-name">Monte Castelo</div>
+          <div class="mc-brand-sub">Testes MP</div>
+        </div>
+      </div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info">
+        <div class="mc-page-title" id="testes-prod-title">Produto</div>
+        <div class="mc-page-sub" id="testes-prod-sub"></div>
+      </div>
+      <div class="mc-header-actions"><button class="mc-act-btn-secondary" onclick="abrirNovoTeste()" style="font-size:13px;">+ Teste</button></div>
     </div>
     <div class="content" id="testes-prod-content"></div>
   </div>
 
   <!-- TESTES: NOVO TESTE -->
   <div class="screen" id="s-testes-novo">
-    <div class="topbar" style="background:#0f766e;">
-      <button class="back-btn" onclick="goTo('s-testes-produto')">‹</button>
-      <div><div class="topbar-title">Novo Teste</div><div class="topbar-sub" id="testes-novo-sub"></div></div>
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="goTo('s-testes-produto')">‹</button>
+      <div class="mc-brand">
+        <div class="mc-brand-logo">MC</div>
+        <div class="mc-brand-text">
+          <div class="mc-brand-name">Monte Castelo</div>
+          <div class="mc-brand-sub">Testes MP</div>
+        </div>
+      </div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info">
+        <div class="mc-page-title">Novo Teste</div>
+        <div class="mc-page-sub" id="testes-novo-sub"></div>
+      </div>
+      
     </div>
     <div class="content">
       <div class="card">
@@ -1839,9 +2224,21 @@
 
   <!-- TESTES: EDITAR TESTE -->
   <div class="screen" id="s-testes-edit">
-    <div class="topbar" style="background:#0f766e;">
-      <button class="back-btn" onclick="goTo('s-testes-produto')">‹</button>
-      <div><div class="topbar-title">Editar Teste</div><div class="topbar-sub" id="testes-edit-sub"></div></div>
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="goTo('s-testes-produto')">‹</button>
+      <div class="mc-brand">
+        <div class="mc-brand-logo">MC</div>
+        <div class="mc-brand-text">
+          <div class="mc-brand-name">Monte Castelo</div>
+          <div class="mc-brand-sub">Testes MP</div>
+        </div>
+      </div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info">
+        <div class="mc-page-title">Editar Teste</div>
+        <div class="mc-page-sub" id="testes-edit-sub"></div>
+      </div>
+      
     </div>
     <div class="content">
       <input type="hidden" id="testes-edit-fid" />
@@ -1884,9 +2281,21 @@
 
   <!-- EXPEDIÇÃO: SELECIONAR DATA -->
   <div class="screen" id="s-exp-sel-data">
-    <div class="topbar laranja">
-      <button class="back-btn" onclick="window.adminMode?window.goTo('s-adm-hub'):window.goTo('s-inicio')">‹</button>
-      <div><div class="topbar-title">Expedição 🚚</div><div class="topbar-sub">Selecione o dia</div></div>
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="window.adminMode?window.goTo('s-adm-hub'):window.goTo('s-inicio')">‹</button>
+      <div class="mc-brand">
+        <div class="mc-brand-logo">MC</div>
+        <div class="mc-brand-text">
+          <div class="mc-brand-name">Monte Castelo</div>
+          <div class="mc-brand-sub">Expedição</div>
+        </div>
+      </div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info">
+        <div class="mc-page-title">Expedição 🚚</div>
+        <div class="mc-page-sub">Selecione o dia</div>
+      </div>
+      
     </div>
     <div class="content" id="exp-sel-content"></div>
   </div>
@@ -2244,9 +2653,21 @@
 <!-- ADMIN STATUS PANEL -->
     <!-- CONTAGEM: PRODUTO ACABADO SUB-MENU -->
   <div class="screen" id="s-contagem-prod-acabado">
-    <div class="topbar" style="background:#0891b2;">
-      <button class="back-btn" onclick="goTo('s-contagem-home')">‹</button>
-      <div><div class="topbar-title">Produto Acabado</div><div class="topbar-sub">Selecione a categoria</div></div>
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="goTo('s-contagem-home')">‹</button>
+      <div class="mc-brand">
+        <div class="mc-brand-logo">MC</div>
+        <div class="mc-brand-text">
+          <div class="mc-brand-name">Monte Castelo</div>
+          <div class="mc-brand-sub">Contagem</div>
+        </div>
+      </div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info">
+        <div class="mc-page-title">Produto Acabado</div>
+        <div class="mc-page-sub">Selecione a categoria</div>
+      </div>
+      
     </div>
     <div class="content">
       <button class="home-btn" style="border-left-color:#0891b2;" onclick="abrirContagem('Produto Acabado - Pão')">
@@ -2314,9 +2735,21 @@
 <!-- ADMIN STATUS PANEL -->
     <!-- CONTAGEM: LANÇAMENTO -->
   <div class="screen" id="s-contagem-lanc">
-    <div class="topbar" style="background:#0891b2;">
-      <button class="back-btn" onclick="goTo('s-contagem-home')">‹</button>
-      <div><div class="topbar-title" id="cont-lanc-title">Contagem</div><div class="topbar-sub" id="cont-lanc-sub"></div></div>
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="goTo('s-contagem-home')">‹</button>
+      <div class="mc-brand">
+        <div class="mc-brand-logo">MC</div>
+        <div class="mc-brand-text">
+          <div class="mc-brand-name">Monte Castelo</div>
+          <div class="mc-brand-sub">Contagem</div>
+        </div>
+      </div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info">
+        <div class="mc-page-title" id="cont-lanc-title">Contagem</div>
+        <div class="mc-page-sub" id="cont-lanc-sub"></div>
+      </div>
+      
     </div>
     <div class="content" id="cont-lanc-content"></div>
   </div>
@@ -2373,18 +2806,42 @@
 <!-- ADMIN STATUS PANEL -->
     <!-- CONTAGEM: HISTÓRICO -->
   <div class="screen" id="s-contagem-hist">
-    <div class="topbar" style="background:#0891b2;">
-      <button class="back-btn" onclick="goTo('s-contagem-home')">‹</button>
-      <div><div class="topbar-title">Histórico de Contagens</div><div class="topbar-sub" id="cont-hist-sub"></div></div>
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="goTo('s-contagem-home')">‹</button>
+      <div class="mc-brand">
+        <div class="mc-brand-logo">MC</div>
+        <div class="mc-brand-text">
+          <div class="mc-brand-name">Monte Castelo</div>
+          <div class="mc-brand-sub">Contagem</div>
+        </div>
+      </div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info">
+        <div class="mc-page-title">Histórico de Contagens</div>
+        <div class="mc-page-sub" id="cont-hist-sub"></div>
+      </div>
+      
     </div>
     <div class="content" id="cont-hist-content"></div>
   </div>
 
   <!-- ADMIN DASHBOARD -->
   <div class="screen" id="s-adm">
-    <div class="topbar roxo">
-      <div style="flex:1;"><div class="topbar-title">Administrativo</div><div class="topbar-sub" id="adm-sub"></div></div>
-      <button class="topbar-right" onclick="goTo('s-inicio')">Sair</button>
+    <div class="mc-header">
+      
+      <div class="mc-brand">
+        <div class="mc-brand-logo">MC</div>
+        <div class="mc-brand-text">
+          <div class="mc-brand-name">Monte Castelo</div>
+          <div class="mc-brand-sub">ProduLog</div>
+        </div>
+      </div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info">
+        <div class="mc-page-title">Administrativo</div>
+        <div class="mc-page-sub" id="adm-sub"></div>
+      </div>
+      <div class="mc-header-actions"><button class="mc-act-btn-secondary" onclick="goTo('s-inicio')">Sair</button></div>
     </div>
     <div class="tab-bar">
       <button class="tab active" onclick="tab('resumo',this)">Resumo</button>
@@ -4648,9 +5105,9 @@ function abrirManut(setor){
   manutSetorAtivo=setor;
   const cor=SETOR_CORES_MANUT[setor];
   document.getElementById('manut-topbar').className='topbar'+(cor?' '+cor:'');
-  document.getElementById('manut-nova-topbar').className='topbar'+(cor?' '+cor:'');
-  document.getElementById('manut-maq-topbar').className='topbar'+(cor?' '+cor:'');
-  document.getElementById('manut-lanc-topbar').className='topbar'+(cor?' '+cor:'');
+  // topbar agora usa mc-header padrão (sem cor dinâmica) — id=manut-nova-topbar mantido para refs
+  // topbar agora usa mc-header padrão (sem cor dinâmica) — id=manut-maq-topbar mantido para refs
+  // topbar agora usa mc-header padrão (sem cor dinâmica) — id=manut-lanc-topbar mantido para refs
   document.getElementById('manut-setor-sub').textContent=SETOR_NOMES_MANUT[setor];
   document.getElementById('manut-nova-sub').textContent=SETOR_NOMES_MANUT[setor];
   renderManutHome();
