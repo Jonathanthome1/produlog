@@ -2349,13 +2349,21 @@
     <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;">
 
       <!-- DESTAQUE: Status Geral -->
-      <button class="mc-sector-card" style="border-left:3px solid var(--mc-roxo);margin-bottom:16px;background:linear-gradient(135deg, var(--bg-primary) 0%, var(--mc-roxo-claro) 100%);" onclick="goTo('s-adm-status')">
+      <button class="mc-sector-card" style="border-left:3px solid var(--mc-roxo);margin-bottom:10px;background:linear-gradient(135deg, var(--bg-primary) 0%, var(--mc-roxo-claro) 100%);" onclick="goTo('s-adm-status')">
         <div class="mc-sector-icon purple">📊</div>
         <div class="mc-sector-info">
           <div class="mc-sector-title" style="color:var(--mc-roxo);">Status Geral</div>
           <div class="mc-sector-desc">Visão consolidada das pendências em todos os setores</div>
         </div>
         <span class="mc-sector-arrow" style="color:var(--mc-roxo);">›</span>
+      </button>
+      <button class="mc-sector-card" style="border-left:3px solid var(--mc-indigo);margin-bottom:16px;background:linear-gradient(135deg, var(--bg-primary) 0%, var(--mc-indigo-claro) 100%);" onclick="goTo('s-adm-buscar')">
+        <div class="mc-sector-icon indigo">🔎</div>
+        <div class="mc-sector-info">
+          <div class="mc-sector-title" style="color:var(--mc-indigo);">Buscar Produto</div>
+          <div class="mc-sector-desc">Histórico de qualquer produto em todos os setores</div>
+        </div>
+        <span class="mc-sector-arrow" style="color:var(--mc-indigo);">›</span>
       </button>
 
       <div class="mc-section-header">Setores de produção</div>
@@ -2500,6 +2508,36 @@
           <span class="mc-sector-arrow">›</span>
         </button>
       </div>
+    </div>
+  </div>
+
+  <!-- ADMIN BUSCAR PRODUTO -->
+  <div class="screen" id="s-adm-buscar">
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="goTo('s-adm-hub')">‹</button>
+      <div class="mc-brand">
+        <div class="mc-brand-logo">MC</div>
+        <div class="mc-brand-text">
+          <div class="mc-brand-name">Monte Castelo</div>
+          <div class="mc-brand-sub">Buscar Produto</div>
+        </div>
+      </div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info">
+        <div class="mc-page-title">🔎 Buscar Produto</div>
+        <div class="mc-page-sub">Histórico completo em todos os setores</div>
+      </div>
+    </div>
+    <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;">
+      <div class="card" style="padding:14px;margin-bottom:14px;">
+        <div class="card-label" style="margin-bottom:8px;">Pesquisar produto</div>
+        <input type="text" id="adm-buscar-input" placeholder="Digite o nome do produto..."
+          oninput="renderBuscarProduto()" autocomplete="off"
+          style="font-size:15px;width:100%;" list="adm-buscar-list" />
+        <datalist id="adm-buscar-list"></datalist>
+        <div style="font-size:11px;color:var(--text-secondary);margin-top:6px;">Aparecem sugestões baseadas nos produtos já lançados</div>
+      </div>
+      <div id="adm-buscar-content"></div>
     </div>
   </div>
 
@@ -2650,6 +2688,36 @@
     </div>
   </div>
 
+  <!-- ADMIN BUSCAR PRODUTO -->
+  <div class="screen" id="s-adm-buscar">
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="goTo('s-adm-hub')">‹</button>
+      <div class="mc-brand">
+        <div class="mc-brand-logo">MC</div>
+        <div class="mc-brand-text">
+          <div class="mc-brand-name">Monte Castelo</div>
+          <div class="mc-brand-sub">Buscar Produto</div>
+        </div>
+      </div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info">
+        <div class="mc-page-title">🔎 Buscar Produto</div>
+        <div class="mc-page-sub">Histórico completo em todos os setores</div>
+      </div>
+    </div>
+    <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;">
+      <div class="card" style="padding:14px;margin-bottom:14px;">
+        <div class="card-label" style="margin-bottom:8px;">Pesquisar produto</div>
+        <input type="text" id="adm-buscar-input" placeholder="Digite o nome do produto..."
+          oninput="renderBuscarProduto()" autocomplete="off"
+          style="font-size:15px;width:100%;" list="adm-buscar-list" />
+        <datalist id="adm-buscar-list"></datalist>
+        <div style="font-size:11px;color:var(--text-secondary);margin-top:6px;">Aparecem sugestões baseadas nos produtos já lançados</div>
+      </div>
+      <div id="adm-buscar-content"></div>
+    </div>
+  </div>
+
 <!-- ADMIN STATUS PANEL -->
     <!-- CONTAGEM: PRODUTO ACABADO SUB-MENU -->
   <div class="screen" id="s-contagem-prod-acabado">
@@ -2732,6 +2800,36 @@
     </div>
   </div>
 
+  <!-- ADMIN BUSCAR PRODUTO -->
+  <div class="screen" id="s-adm-buscar">
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="goTo('s-adm-hub')">‹</button>
+      <div class="mc-brand">
+        <div class="mc-brand-logo">MC</div>
+        <div class="mc-brand-text">
+          <div class="mc-brand-name">Monte Castelo</div>
+          <div class="mc-brand-sub">Buscar Produto</div>
+        </div>
+      </div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info">
+        <div class="mc-page-title">🔎 Buscar Produto</div>
+        <div class="mc-page-sub">Histórico completo em todos os setores</div>
+      </div>
+    </div>
+    <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;">
+      <div class="card" style="padding:14px;margin-bottom:14px;">
+        <div class="card-label" style="margin-bottom:8px;">Pesquisar produto</div>
+        <input type="text" id="adm-buscar-input" placeholder="Digite o nome do produto..."
+          oninput="renderBuscarProduto()" autocomplete="off"
+          style="font-size:15px;width:100%;" list="adm-buscar-list" />
+        <datalist id="adm-buscar-list"></datalist>
+        <div style="font-size:11px;color:var(--text-secondary);margin-top:6px;">Aparecem sugestões baseadas nos produtos já lançados</div>
+      </div>
+      <div id="adm-buscar-content"></div>
+    </div>
+  </div>
+
 <!-- ADMIN STATUS PANEL -->
     <!-- CONTAGEM: LANÇAMENTO -->
   <div class="screen" id="s-contagem-lanc">
@@ -2800,6 +2898,36 @@
           <span class="mc-sector-arrow">›</span>
         </button>
       </div>
+    </div>
+  </div>
+
+  <!-- ADMIN BUSCAR PRODUTO -->
+  <div class="screen" id="s-adm-buscar">
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="goTo('s-adm-hub')">‹</button>
+      <div class="mc-brand">
+        <div class="mc-brand-logo">MC</div>
+        <div class="mc-brand-text">
+          <div class="mc-brand-name">Monte Castelo</div>
+          <div class="mc-brand-sub">Buscar Produto</div>
+        </div>
+      </div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info">
+        <div class="mc-page-title">🔎 Buscar Produto</div>
+        <div class="mc-page-sub">Histórico completo em todos os setores</div>
+      </div>
+    </div>
+    <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;">
+      <div class="card" style="padding:14px;margin-bottom:14px;">
+        <div class="card-label" style="margin-bottom:8px;">Pesquisar produto</div>
+        <input type="text" id="adm-buscar-input" placeholder="Digite o nome do produto..."
+          oninput="renderBuscarProduto()" autocomplete="off"
+          style="font-size:15px;width:100%;" list="adm-buscar-list" />
+        <datalist id="adm-buscar-list"></datalist>
+        <div style="font-size:11px;color:var(--text-secondary);margin-top:6px;">Aparecem sugestões baseadas nos produtos já lançados</div>
+      </div>
+      <div id="adm-buscar-content"></div>
     </div>
   </div>
 
@@ -3072,6 +3200,7 @@ function goTo(id){
     if(n)n.value=''; if(o)o.value='';
   }
   if(id==='s-adm-status') renderAdmStatus();
+  if(id==='s-adm-buscar'){ const inp=document.getElementById('adm-buscar-input'); if(inp){inp.value='';} renderBuscarProduto(); }
   if(id==='s-manut-lanc'){
     const b=document.getElementById('manut-lanc-btn');
     if(b){b.textContent='Salvar manutenção ✓';b.disabled=false;}
@@ -6984,6 +7113,151 @@ function renderAdmStatus(){
 }
 
 
+
+// ===== BUSCAR PRODUTO (ADM) =====
+function renderBuscarProdutoDatalist(){
+  const dl=document.getElementById('adm-buscar-list');
+  if(!dl)return;
+  const nomes=[...new Set(registros.map(r=>r.produto))].filter(Boolean).sort();
+  dl.innerHTML=nomes.map(n=>'<option value="'+n.replace(/"/g,'&quot;')+'">').join('');
+}
+
+function renderBuscarProduto(){
+  const el=document.getElementById('adm-buscar-content');
+  if(!el)return;
+  renderBuscarProdutoDatalist();
+  const q=(document.getElementById('adm-buscar-input')?.value||'').trim().toLowerCase();
+  if(!q){
+    el.innerHTML='<div class="empty" style="padding:40px 20px;color:var(--text-secondary);font-size:14px;">Digite o nome de um produto para ver o histórico completo.</div>';
+    return;
+  }
+  // Normalize for accent-insensitive search
+  const norm=s=>(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+  const qN=norm(q);
+  const matches=registros.filter(r=>norm(r.produto).includes(qN));
+  if(!matches.length){
+    el.innerHTML='<div class="empty" style="padding:40px 20px;color:var(--text-secondary);font-size:14px;">Nenhum produto encontrado para <strong>"'+q+'"</strong></div>';
+    return;
+  }
+  // Group by produto name
+  const porProduto={};
+  matches.forEach(r=>{
+    if(!porProduto[r.produto])porProduto[r.produto]=[];
+    porProduto[r.produto].push(r);
+  });
+
+  let html='';
+  Object.keys(porProduto).sort().forEach(produto=>{
+    const regs=porProduto[produto].sort((a,b)=>(b.timestamp||0)-(a.timestamp||0));
+
+    // Resumo consolidado
+    const totalPacotes=regs.reduce((s,r)=>s+(r.qtd||0),0);
+    const totalUnidades=regs.reduce((s,r)=>s+(r.qtdUnidades||r.qtd||0),0);
+    const totalMassa=regs.reduce((s,r)=>s+(r.massa||0),0);
+    const totalR1=regs.reduce((s,r)=>s+(r.r1||0),0);
+    const totalR2=regs.reduce((s,r)=>s+(r.r2||0),0);
+    const totalEmb=regs.reduce((s,r)=>s+((r.embalagem&&r.embalagem.qtdEmbalada)||0),0);
+    const totalLib=regs.reduce((s,r)=>s+((r.expedicao&&r.expedicao.totalLiberado)||0),0);
+    const embPend=regs.filter(r=>!r.embalagem||!r.embalagem.feito).length;
+    const expPend=regs.filter(r=>{
+      if(!r.embalagem||!r.embalagem.feito)return false;
+      const e=r.expedicao||{totalLiberado:0};
+      return e.totalLiberado<(r.embalagem.qtdEmbalada||r.qtd);
+    }).length;
+
+    const safeId='busc-'+produto.replace(/[^a-zA-Z0-9]/g,'_');
+
+    html+='<div style="background:var(--bg-primary);border:1px solid var(--border);border-radius:var(--r-lg);margin-bottom:14px;overflow:hidden;box-shadow:var(--shadow-sm);">';
+
+    // Header do produto
+    html+='<div style="padding:14px 16px;background:linear-gradient(135deg, var(--mc-azul-claro) 0%, var(--bg-primary) 100%);border-bottom:1px solid var(--border);">'+
+      '<div style="font-size:16px;font-weight:700;color:var(--mc-azul);letter-spacing:-0.2px;">'+produto+'</div>'+
+      '<div style="font-size:12px;color:var(--text-secondary);margin-top:2px;">'+regs.length+' lançamento(s) encontrado(s)</div>'+
+      '</div>';
+
+    // KPIs do produto
+    html+='<div style="padding:12px 16px;display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:8px;background:var(--bg-secondary);border-bottom:1px solid var(--border);">';
+    html+='<div><div style="font-size:10px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.04em;font-weight:600;">Pacotes</div><div style="font-size:18px;font-weight:700;color:var(--mc-azul);">'+totalPacotes+'</div></div>';
+    html+='<div><div style="font-size:10px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.04em;font-weight:600;">Unidades</div><div style="font-size:18px;font-weight:700;color:var(--mc-azul);">'+totalUnidades+'</div></div>';
+    html+='<div><div style="font-size:10px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.04em;font-weight:600;">Embalado</div><div style="font-size:18px;font-weight:700;color:'+(embPend>0?'var(--mc-laranja)':'var(--mc-verde)')+';">'+totalEmb+'</div></div>';
+    html+='<div><div style="font-size:10px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.04em;font-weight:600;">Liberado</div><div style="font-size:18px;font-weight:700;color:'+(expPend>0?'var(--mc-laranja)':'var(--mc-verde)')+';">'+totalLib+'</div></div>';
+    html+='</div>';
+
+    // Pendências
+    if(embPend>0||expPend>0){
+      html+='<div style="padding:8px 16px;background:var(--mc-laranja-claro);border-bottom:1px solid var(--border);font-size:12px;color:#92400e;font-weight:500;">';
+      const partes=[];
+      if(embPend>0) partes.push('⏳ '+embPend+' pendente(s) de embalagem');
+      if(expPend>0) partes.push('🚚 '+expPend+' pendente(s) de liberação');
+      html+=partes.join(' · ')+'</div>';
+    }
+
+    // Lista de lançamentos
+    html+='<div style="padding:10px 16px;">';
+    regs.forEach(r=>{
+      const emb=r.embalagem||{feito:false,qtdEmbalada:0};
+      const exp=r.expedicao||{totalLiberado:0,parciais:[]};
+      const qtdProd=r.qtdUnidades||r.qtd;
+      const qtdEmb=emb.qtdEmbalada||0;
+      const lib=exp.totalLiberado||0;
+
+      // Status badges
+      let embBadge='';
+      if(!emb.feito){
+        embBadge='<span class="mc-badge amber">⏳ aguardando</span>';
+      } else if(qtdEmb<qtdProd){
+        embBadge='<span class="mc-badge red">⚠️ '+qtdEmb+'/'+qtdProd+' un</span>';
+      } else {
+        embBadge='<span class="mc-badge green">✓ embalado '+qtdEmb+' un</span>';
+      }
+      let expBadge='';
+      if(!emb.feito){
+        expBadge='<span class="mc-badge gray">— aguarda emb</span>';
+      } else if(lib===0){
+        expBadge='<span class="mc-badge amber">⏳ não liberado</span>';
+      } else if(lib<qtdEmb){
+        expBadge='<span class="mc-badge red">parcial '+lib+'/'+qtdEmb+'</span>';
+      } else {
+        expBadge='<span class="mc-badge green">✓ liberado '+lib+' un</span>';
+      }
+
+      html+='<div style="border-left:3px solid var(--mc-azul-medio);padding:10px 12px;margin-bottom:8px;background:var(--bg-secondary);border-radius:var(--r-md);">';
+      html+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;flex-wrap:wrap;gap:6px;">';
+      html+='<div style="font-size:13px;font-weight:600;color:var(--text-primary);">📅 '+r.data+' às '+r.hora+(r.origem==='quadra'?' <span style="color:var(--mc-dourado);font-size:11px;">· Quadra</span>':'')+'</div>';
+      html+='<div style="font-size:12px;color:var(--text-secondary);">'+r.qtd+' pct · '+qtdProd+' un</div>';
+      html+='</div>';
+
+      // Massa/Recheios
+      const detalhes=[];
+      if(r.massa>0) detalhes.push('Massa: <strong>'+r.massa+' kg</strong>');
+      if(r.r1>0) detalhes.push('R1: <strong>'+r.r1+' kg</strong>');
+      if(r.r2>0) detalhes.push('R2: <strong>'+r.r2+' kg</strong>');
+      if(detalhes.length>0){
+        html+='<div style="font-size:11px;color:var(--text-secondary);margin-bottom:6px;">'+detalhes.join(' · ')+'</div>';
+      }
+
+      // Status badges em linha
+      html+='<div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;">';
+      html+='<span style="font-size:10px;color:var(--text-secondary);text-transform:uppercase;font-weight:600;">📦</span>'+embBadge;
+      html+='<span style="font-size:10px;color:var(--text-secondary);text-transform:uppercase;font-weight:600;margin-left:6px;">🚚</span>'+expBadge;
+      html+='</div>';
+
+      // Obs/parciais
+      if(emb.obs){
+        html+='<div style="margin-top:6px;font-size:11px;color:var(--text-secondary);font-style:italic;">📝 '+emb.obs+'</div>';
+      }
+      if(exp.parciais&&exp.parciais.length>0){
+        html+='<div style="margin-top:6px;font-size:11px;color:var(--text-secondary);">Parciais: '+exp.parciais.map(p=>p.hora+': +'+p.qtd).join(' · ')+'</div>';
+      }
+      html+='</div>';
+    });
+    html+='</div>'; // close lista
+    html+='</div>'; // close produto card
+  });
+
+  el.innerHTML=html;
+}
+
 window.goTo=goTo; window.abrirPin=abrirPin; window.pinDigit=pinDigit; window.pinDel=pinDel;
 window.iniciarNovoReg=iniciarNovoReg; window.renderConfMassas=renderConfMassas; window.toggleManual=toggleManual;
 window.selecionarDataTipo=selecionarDataTipo; window.selecionarDataManual=selecionarDataManual;
@@ -6995,7 +7269,7 @@ window.selecionarDataEmb=selecionarDataEmb; window.irParaEmbalagem=irParaEmbalag
 window.toggleEmb=toggleEmb; window.toggleAjuste=toggleAjuste; window.confirmarAjuste=confirmarAjuste;
 window.selecionarDataExp=selecionarDataExp; window.irParaExpedicao=irParaExpedicao;
 window.adicionarLiberacao=adicionarLiberacao;
-window.tab=tab; window.toggleConf=toggleConf; window.admFiltrar=admFiltrar; window.toggleEditProd=toggleEditProd; window.salvarEditProd=salvarEditProd; window.toggleEditRecheio=toggleEditRecheio; window.salvarEditRecheio=salvarEditRecheio; window.renderMeusReg=renderMeusReg; window.renderCozReg=renderCozReg; window.abrirPresenca=abrirPresenca; window.adicionarParcialEmb=adicionarParcialEmb; window.salvarObsEmb=salvarObsEmb; window.abrirExpView=abrirExpView; window.renderAdmStatus=renderAdmStatus; window.abrirExpViewData=abrirExpViewData; window.renderExpView=renderExpView; window.renderExpViewSelData=renderExpViewSelData; window.confirmarEmbalagEmCompleto=confirmarEmbalagEmCompleto; window.subtrairParcialEmb=subtrairParcialEmb; window.salvarEmbManual=salvarEmbManual; window.excluirPresenca=excluirPresenca; window.salvarPresenca=salvarPresenca; window.voltarPresenca=voltarPresenca; window.renderPresencaForm=renderPresencaForm; window.selecionarDataPresenca=selecionarDataPresenca; window.selecionarDataPresencaManual=selecionarDataPresencaManual; window.adicionarColaborador=adicionarColaborador; window.removerColab=removerColab; window.updateColab=updateColab; window.renderPresencaReg=renderPresencaReg; window.abrirContagem=abrirContagem; window.subtrairContagem=subtrairContagem; window.filtrarContagem=filtrarContagem; window.adicionarContagem=adicionarContagem; window.renderContagemHist=renderContagemHist; window.verDetalheContagem=verDetalheContagem; window.renderContagemLanc=renderContagemLanc; window.renderContagemHome=renderContagemHome; window.toggleContDay=toggleContDay; window.abrirContainerItem=abrirContainerItem; window.iniciarContainerEntrada=iniciarContainerEntrada; window.selecionarDataContainerEntradaBtn=selecionarDataContainerEntradaBtn; window.selecionarDataContainerEntrada=selecionarDataContainerEntrada; window.salvarContainerEntrada=salvarContainerEntrada; window.iniciarContainerSaida=iniciarContainerSaida; window.selecionarLoteSaida=selecionarLoteSaida; window.salvarContainerSaida=salvarContainerSaida; window.excluirLoteContainer=excluirLoteContainer; window.iniciarNovoLancQuadra=iniciarNovoLancQuadra; window.selecionarDataQuadraBtn=selecionarDataQuadraBtn; window.selecionarDataQuadra=selecionarDataQuadra; window.filtrarKitsQuadra=filtrarKitsQuadra; window.selKitQuadra=selKitQuadra; window.atualizarProdQuadra=atualizarProdQuadra; window.salvarQuadra=salvarQuadra; window.renderQuadraReg=renderQuadraReg; window.excluirRegQuadra=excluirRegQuadra; window.renderQuadraDateGrid=renderQuadraDateGrid; window.atualizarResumoQuadra=atualizarResumoQuadra; window.renderTestesList=renderTestesList; window.abrirTestesProduto=abrirTestesProduto; window.abrirNovoTeste=abrirNovoTeste; window.salvarTeste=salvarTeste; window.excluirTeste=excluirTeste; window.adicionarProdutoTeste=adicionarProdutoTeste; window.abrirEditarTeste=abrirEditarTeste; window.salvarEdicaoTeste=salvarEdicaoTeste; window.excluirMovContainer=excluirMovContainer; window.abrirFarinhaLanc=abrirFarinhaLanc; window.atualizarPreviewFarinha=atualizarPreviewFarinha; window.salvarFarinhaLanc=salvarFarinhaLanc; window.renderFarinhaHist=renderFarinhaHist; window.excluirFarinhaRec=excluirFarinhaRec; window.excluirContagem=excluirContagem; window.abrirManut=abrirManut; window.voltarManut=voltarManut; window.salvarNovaMaquina=salvarNovaMaquina; window.excluirMaquina=excluirMaquina; window.abrirMaquina=abrirMaquina; window.iniciarNovaManutencao=iniciarNovaManutencao; window.selecionarDataManut=selecionarDataManut; window.salvarManutencao=salvarManutencao; window.selecionarDataManutBtn=selecionarDataManutBtn; window.abrirPlano=abrirPlano; window.voltarPlano=voltarPlano; window.salvarPlano=salvarPlano; window.adicionarItemPlano=adicionarItemPlano; window.atualizarQtdPlano=atualizarQtdPlano; window.removerItemPlano=removerItemPlano; window.trocarSemanaPlano=trocarSemanaPlano; window.togglePlanoDia=togglePlanoDia; window.toggleFeriado=toggleFeriado; window.importarPlanoPaste=importarPlanoPaste; window.limparPlano=limparPlano; window.renderManutDateGrid=renderManutDateGrid; window.toggleEditParcial=toggleEditParcial; window.salvarEditParcial=salvarEditParcial; window.excluirRegistro=excluirRegistro; window.gerarExcel=gerarExcel; window.renderPresencaForm=renderPresencaForm; window.goToAdmin=goToAdmin; window.sairAdmin=sairAdmin; window.backFromArea=backFromArea;
+window.tab=tab; window.toggleConf=toggleConf; window.admFiltrar=admFiltrar; window.toggleEditProd=toggleEditProd; window.salvarEditProd=salvarEditProd; window.toggleEditRecheio=toggleEditRecheio; window.salvarEditRecheio=salvarEditRecheio; window.renderMeusReg=renderMeusReg; window.renderCozReg=renderCozReg; window.abrirPresenca=abrirPresenca; window.adicionarParcialEmb=adicionarParcialEmb; window.salvarObsEmb=salvarObsEmb; window.abrirExpView=abrirExpView; window.renderAdmStatus=renderAdmStatus; window.renderBuscarProduto=renderBuscarProduto; window.abrirExpViewData=abrirExpViewData; window.renderExpView=renderExpView; window.renderExpViewSelData=renderExpViewSelData; window.confirmarEmbalagEmCompleto=confirmarEmbalagEmCompleto; window.subtrairParcialEmb=subtrairParcialEmb; window.salvarEmbManual=salvarEmbManual; window.excluirPresenca=excluirPresenca; window.salvarPresenca=salvarPresenca; window.voltarPresenca=voltarPresenca; window.renderPresencaForm=renderPresencaForm; window.selecionarDataPresenca=selecionarDataPresenca; window.selecionarDataPresencaManual=selecionarDataPresencaManual; window.adicionarColaborador=adicionarColaborador; window.removerColab=removerColab; window.updateColab=updateColab; window.renderPresencaReg=renderPresencaReg; window.abrirContagem=abrirContagem; window.subtrairContagem=subtrairContagem; window.filtrarContagem=filtrarContagem; window.adicionarContagem=adicionarContagem; window.renderContagemHist=renderContagemHist; window.verDetalheContagem=verDetalheContagem; window.renderContagemLanc=renderContagemLanc; window.renderContagemHome=renderContagemHome; window.toggleContDay=toggleContDay; window.abrirContainerItem=abrirContainerItem; window.iniciarContainerEntrada=iniciarContainerEntrada; window.selecionarDataContainerEntradaBtn=selecionarDataContainerEntradaBtn; window.selecionarDataContainerEntrada=selecionarDataContainerEntrada; window.salvarContainerEntrada=salvarContainerEntrada; window.iniciarContainerSaida=iniciarContainerSaida; window.selecionarLoteSaida=selecionarLoteSaida; window.salvarContainerSaida=salvarContainerSaida; window.excluirLoteContainer=excluirLoteContainer; window.iniciarNovoLancQuadra=iniciarNovoLancQuadra; window.selecionarDataQuadraBtn=selecionarDataQuadraBtn; window.selecionarDataQuadra=selecionarDataQuadra; window.filtrarKitsQuadra=filtrarKitsQuadra; window.selKitQuadra=selKitQuadra; window.atualizarProdQuadra=atualizarProdQuadra; window.salvarQuadra=salvarQuadra; window.renderQuadraReg=renderQuadraReg; window.excluirRegQuadra=excluirRegQuadra; window.renderQuadraDateGrid=renderQuadraDateGrid; window.atualizarResumoQuadra=atualizarResumoQuadra; window.renderTestesList=renderTestesList; window.abrirTestesProduto=abrirTestesProduto; window.abrirNovoTeste=abrirNovoTeste; window.salvarTeste=salvarTeste; window.excluirTeste=excluirTeste; window.adicionarProdutoTeste=adicionarProdutoTeste; window.abrirEditarTeste=abrirEditarTeste; window.salvarEdicaoTeste=salvarEdicaoTeste; window.excluirMovContainer=excluirMovContainer; window.abrirFarinhaLanc=abrirFarinhaLanc; window.atualizarPreviewFarinha=atualizarPreviewFarinha; window.salvarFarinhaLanc=salvarFarinhaLanc; window.renderFarinhaHist=renderFarinhaHist; window.excluirFarinhaRec=excluirFarinhaRec; window.excluirContagem=excluirContagem; window.abrirManut=abrirManut; window.voltarManut=voltarManut; window.salvarNovaMaquina=salvarNovaMaquina; window.excluirMaquina=excluirMaquina; window.abrirMaquina=abrirMaquina; window.iniciarNovaManutencao=iniciarNovaManutencao; window.selecionarDataManut=selecionarDataManut; window.salvarManutencao=salvarManutencao; window.selecionarDataManutBtn=selecionarDataManutBtn; window.abrirPlano=abrirPlano; window.voltarPlano=voltarPlano; window.salvarPlano=salvarPlano; window.adicionarItemPlano=adicionarItemPlano; window.atualizarQtdPlano=atualizarQtdPlano; window.removerItemPlano=removerItemPlano; window.trocarSemanaPlano=trocarSemanaPlano; window.togglePlanoDia=togglePlanoDia; window.toggleFeriado=toggleFeriado; window.importarPlanoPaste=importarPlanoPaste; window.limparPlano=limparPlano; window.renderManutDateGrid=renderManutDateGrid; window.toggleEditParcial=toggleEditParcial; window.salvarEditParcial=salvarEditParcial; window.excluirRegistro=excluirRegistro; window.gerarExcel=gerarExcel; window.renderPresencaForm=renderPresencaForm; window.goToAdmin=goToAdmin; window.sairAdmin=sairAdmin; window.backFromArea=backFromArea;
 </script>
 </body>
 </html>
