@@ -7043,6 +7043,9 @@ onSnapshot(collection(db,'quadraKitsCustom'), snap=>{
     kitsCustom=snap.docs.map(d=>({firestoreId:d.id,...d.data()}));
     aplicarKitsProdutosFirebase();
     atualizarTela();
+    // Se estamos na tela de admin kits, re-renderizar para mostrar mudanças
+    const ativa=document.querySelector('.screen.active');
+    if(ativa&&ativa.id==='s-adm-kits'&&typeof renderAdmKits==='function'){renderAdmKits();}
   }catch(e){ console.error('quadraKitsCustom snap:',e); }
 });
 
@@ -7051,6 +7054,8 @@ onSnapshot(collection(db,'quadraProdutosCustom'), snap=>{
     produtosCustom=snap.docs.map(d=>({firestoreId:d.id,...d.data()}));
     aplicarKitsProdutosFirebase();
     atualizarTela();
+    const ativa=document.querySelector('.screen.active');
+    if(ativa&&ativa.id==='s-adm-kits'&&typeof renderAdmKits==='function'){renderAdmKits();}
   }catch(e){ console.error('quadraProdutosCustom snap:',e); }
 });
 
