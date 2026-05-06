@@ -2357,13 +2357,21 @@
         </div>
         <span class="mc-sector-arrow" style="color:var(--mc-roxo);">›</span>
       </button>
-      <button class="mc-sector-card" style="border-left:3px solid var(--mc-indigo);margin-bottom:16px;background:linear-gradient(135deg, var(--bg-primary) 0%, var(--mc-indigo-claro) 100%);" onclick="goTo('s-adm-buscar')">
+      <button class="mc-sector-card" style="border-left:3px solid var(--mc-indigo);margin-bottom:10px;background:linear-gradient(135deg, var(--bg-primary) 0%, var(--mc-indigo-claro) 100%);" onclick="goTo('s-adm-buscar')">
         <div class="mc-sector-icon indigo">🔎</div>
         <div class="mc-sector-info">
           <div class="mc-sector-title" style="color:var(--mc-indigo);">Buscar Produto</div>
           <div class="mc-sector-desc">Histórico de qualquer produto em todos os setores</div>
         </div>
         <span class="mc-sector-arrow" style="color:var(--mc-indigo);">›</span>
+      </button>
+      <button class="mc-sector-card" style="border-left:3px solid var(--mc-dourado);margin-bottom:16px;background:linear-gradient(135deg, var(--bg-primary) 0%, var(--mc-dourado-claro) 100%);" onclick="goTo('s-adm-kits')">
+        <div class="mc-sector-icon gold">🍞</div>
+        <div class="mc-sector-info">
+          <div class="mc-sector-title" style="color:#92400e;">Kits & Produtos</div>
+          <div class="mc-sector-desc">Cadastrar receitas e produtos da Quadra</div>
+        </div>
+        <span class="mc-sector-arrow" style="color:#92400e;">›</span>
       </button>
 
       <div class="mc-section-header">Setores de produção</div>
@@ -2539,6 +2547,75 @@
       </div>
       <div id="adm-buscar-content"></div>
     </div>
+  </div>
+
+  <!-- ADMIN KITS HUB -->
+  <div class="screen" id="s-adm-kits">
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="goTo('s-adm-hub')">‹</button>
+      <div class="mc-brand">
+        <div class="mc-brand-logo">MC</div>
+        <div class="mc-brand-text">
+          <div class="mc-brand-name">Monte Castelo</div>
+          <div class="mc-brand-sub">Kits & Receitas</div>
+        </div>
+      </div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info">
+        <div class="mc-page-title">🍞 Kits & Produtos</div>
+        <div class="mc-page-sub">Gerenciar kits da Quadra</div>
+      </div>
+      <div class="mc-header-actions">
+        <button class="mc-act-btn-primary" onclick="abrirNovoKit()">+ Novo Kit</button>
+      </div>
+    </div>
+    <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;" id="adm-kits-content"></div>
+  </div>
+
+  <!-- ADMIN KIT FORM -->
+  <div class="screen" id="s-adm-kit-form">
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="goTo('s-adm-kits')">‹</button>
+      <div class="mc-brand">
+        <div class="mc-brand-logo">MC</div>
+        <div class="mc-brand-text">
+          <div class="mc-brand-name">Monte Castelo</div>
+          <div class="mc-brand-sub">Kit</div>
+        </div>
+      </div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info">
+        <div class="mc-page-title" id="kit-form-title">Novo Kit</div>
+        <div class="mc-page-sub">Receita e ingredientes</div>
+      </div>
+      <div class="mc-header-actions">
+        <button class="mc-act-btn-primary" onclick="salvarKit()">Salvar</button>
+      </div>
+    </div>
+    <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;" id="adm-kit-form-content"></div>
+  </div>
+
+  <!-- ADMIN PRODUTO FORM -->
+  <div class="screen" id="s-adm-prod-form">
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="goTo('s-adm-kits')">‹</button>
+      <div class="mc-brand">
+        <div class="mc-brand-logo">MC</div>
+        <div class="mc-brand-text">
+          <div class="mc-brand-name">Monte Castelo</div>
+          <div class="mc-brand-sub">Produto</div>
+        </div>
+      </div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info">
+        <div class="mc-page-title" id="prod-form-title">Novo Produto</div>
+        <div class="mc-page-sub" id="prod-form-sub"></div>
+      </div>
+      <div class="mc-header-actions">
+        <button class="mc-act-btn-primary" onclick="salvarProduto()">Salvar</button>
+      </div>
+    </div>
+    <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;" id="adm-prod-form-content"></div>
   </div>
 
 <!-- ADMIN STATUS PANEL -->
@@ -2718,6 +2795,75 @@
     </div>
   </div>
 
+  <!-- ADMIN KITS HUB -->
+  <div class="screen" id="s-adm-kits">
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="goTo('s-adm-hub')">‹</button>
+      <div class="mc-brand">
+        <div class="mc-brand-logo">MC</div>
+        <div class="mc-brand-text">
+          <div class="mc-brand-name">Monte Castelo</div>
+          <div class="mc-brand-sub">Kits & Receitas</div>
+        </div>
+      </div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info">
+        <div class="mc-page-title">🍞 Kits & Produtos</div>
+        <div class="mc-page-sub">Gerenciar kits da Quadra</div>
+      </div>
+      <div class="mc-header-actions">
+        <button class="mc-act-btn-primary" onclick="abrirNovoKit()">+ Novo Kit</button>
+      </div>
+    </div>
+    <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;" id="adm-kits-content"></div>
+  </div>
+
+  <!-- ADMIN KIT FORM -->
+  <div class="screen" id="s-adm-kit-form">
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="goTo('s-adm-kits')">‹</button>
+      <div class="mc-brand">
+        <div class="mc-brand-logo">MC</div>
+        <div class="mc-brand-text">
+          <div class="mc-brand-name">Monte Castelo</div>
+          <div class="mc-brand-sub">Kit</div>
+        </div>
+      </div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info">
+        <div class="mc-page-title" id="kit-form-title">Novo Kit</div>
+        <div class="mc-page-sub">Receita e ingredientes</div>
+      </div>
+      <div class="mc-header-actions">
+        <button class="mc-act-btn-primary" onclick="salvarKit()">Salvar</button>
+      </div>
+    </div>
+    <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;" id="adm-kit-form-content"></div>
+  </div>
+
+  <!-- ADMIN PRODUTO FORM -->
+  <div class="screen" id="s-adm-prod-form">
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="goTo('s-adm-kits')">‹</button>
+      <div class="mc-brand">
+        <div class="mc-brand-logo">MC</div>
+        <div class="mc-brand-text">
+          <div class="mc-brand-name">Monte Castelo</div>
+          <div class="mc-brand-sub">Produto</div>
+        </div>
+      </div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info">
+        <div class="mc-page-title" id="prod-form-title">Novo Produto</div>
+        <div class="mc-page-sub" id="prod-form-sub"></div>
+      </div>
+      <div class="mc-header-actions">
+        <button class="mc-act-btn-primary" onclick="salvarProduto()">Salvar</button>
+      </div>
+    </div>
+    <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;" id="adm-prod-form-content"></div>
+  </div>
+
 <!-- ADMIN STATUS PANEL -->
     <!-- CONTAGEM: PRODUTO ACABADO SUB-MENU -->
   <div class="screen" id="s-contagem-prod-acabado">
@@ -2830,6 +2976,75 @@
     </div>
   </div>
 
+  <!-- ADMIN KITS HUB -->
+  <div class="screen" id="s-adm-kits">
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="goTo('s-adm-hub')">‹</button>
+      <div class="mc-brand">
+        <div class="mc-brand-logo">MC</div>
+        <div class="mc-brand-text">
+          <div class="mc-brand-name">Monte Castelo</div>
+          <div class="mc-brand-sub">Kits & Receitas</div>
+        </div>
+      </div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info">
+        <div class="mc-page-title">🍞 Kits & Produtos</div>
+        <div class="mc-page-sub">Gerenciar kits da Quadra</div>
+      </div>
+      <div class="mc-header-actions">
+        <button class="mc-act-btn-primary" onclick="abrirNovoKit()">+ Novo Kit</button>
+      </div>
+    </div>
+    <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;" id="adm-kits-content"></div>
+  </div>
+
+  <!-- ADMIN KIT FORM -->
+  <div class="screen" id="s-adm-kit-form">
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="goTo('s-adm-kits')">‹</button>
+      <div class="mc-brand">
+        <div class="mc-brand-logo">MC</div>
+        <div class="mc-brand-text">
+          <div class="mc-brand-name">Monte Castelo</div>
+          <div class="mc-brand-sub">Kit</div>
+        </div>
+      </div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info">
+        <div class="mc-page-title" id="kit-form-title">Novo Kit</div>
+        <div class="mc-page-sub">Receita e ingredientes</div>
+      </div>
+      <div class="mc-header-actions">
+        <button class="mc-act-btn-primary" onclick="salvarKit()">Salvar</button>
+      </div>
+    </div>
+    <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;" id="adm-kit-form-content"></div>
+  </div>
+
+  <!-- ADMIN PRODUTO FORM -->
+  <div class="screen" id="s-adm-prod-form">
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="goTo('s-adm-kits')">‹</button>
+      <div class="mc-brand">
+        <div class="mc-brand-logo">MC</div>
+        <div class="mc-brand-text">
+          <div class="mc-brand-name">Monte Castelo</div>
+          <div class="mc-brand-sub">Produto</div>
+        </div>
+      </div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info">
+        <div class="mc-page-title" id="prod-form-title">Novo Produto</div>
+        <div class="mc-page-sub" id="prod-form-sub"></div>
+      </div>
+      <div class="mc-header-actions">
+        <button class="mc-act-btn-primary" onclick="salvarProduto()">Salvar</button>
+      </div>
+    </div>
+    <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;" id="adm-prod-form-content"></div>
+  </div>
+
 <!-- ADMIN STATUS PANEL -->
     <!-- CONTAGEM: LANÇAMENTO -->
   <div class="screen" id="s-contagem-lanc">
@@ -2929,6 +3144,75 @@
       </div>
       <div id="adm-buscar-content"></div>
     </div>
+  </div>
+
+  <!-- ADMIN KITS HUB -->
+  <div class="screen" id="s-adm-kits">
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="goTo('s-adm-hub')">‹</button>
+      <div class="mc-brand">
+        <div class="mc-brand-logo">MC</div>
+        <div class="mc-brand-text">
+          <div class="mc-brand-name">Monte Castelo</div>
+          <div class="mc-brand-sub">Kits & Receitas</div>
+        </div>
+      </div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info">
+        <div class="mc-page-title">🍞 Kits & Produtos</div>
+        <div class="mc-page-sub">Gerenciar kits da Quadra</div>
+      </div>
+      <div class="mc-header-actions">
+        <button class="mc-act-btn-primary" onclick="abrirNovoKit()">+ Novo Kit</button>
+      </div>
+    </div>
+    <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;" id="adm-kits-content"></div>
+  </div>
+
+  <!-- ADMIN KIT FORM -->
+  <div class="screen" id="s-adm-kit-form">
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="goTo('s-adm-kits')">‹</button>
+      <div class="mc-brand">
+        <div class="mc-brand-logo">MC</div>
+        <div class="mc-brand-text">
+          <div class="mc-brand-name">Monte Castelo</div>
+          <div class="mc-brand-sub">Kit</div>
+        </div>
+      </div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info">
+        <div class="mc-page-title" id="kit-form-title">Novo Kit</div>
+        <div class="mc-page-sub">Receita e ingredientes</div>
+      </div>
+      <div class="mc-header-actions">
+        <button class="mc-act-btn-primary" onclick="salvarKit()">Salvar</button>
+      </div>
+    </div>
+    <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;" id="adm-kit-form-content"></div>
+  </div>
+
+  <!-- ADMIN PRODUTO FORM -->
+  <div class="screen" id="s-adm-prod-form">
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="goTo('s-adm-kits')">‹</button>
+      <div class="mc-brand">
+        <div class="mc-brand-logo">MC</div>
+        <div class="mc-brand-text">
+          <div class="mc-brand-name">Monte Castelo</div>
+          <div class="mc-brand-sub">Produto</div>
+        </div>
+      </div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info">
+        <div class="mc-page-title" id="prod-form-title">Novo Produto</div>
+        <div class="mc-page-sub" id="prod-form-sub"></div>
+      </div>
+      <div class="mc-header-actions">
+        <button class="mc-act-btn-primary" onclick="salvarProduto()">Salvar</button>
+      </div>
+    </div>
+    <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;" id="adm-prod-form-content"></div>
   </div>
 
 <!-- ADMIN STATUS PANEL -->
@@ -3201,6 +3485,7 @@ function goTo(id){
   }
   if(id==='s-adm-status') renderAdmStatus();
   if(id==='s-adm-buscar'){ const inp=document.getElementById('adm-buscar-input'); if(inp){inp.value='';} renderBuscarProduto(); }
+  if(id==='s-adm-kits') renderAdmKits();
   if(id==='s-manut-lanc'){
     const b=document.getElementById('manut-lanc-btn');
     if(b){b.textContent='Salvar manutenção ✓';b.disabled=false;}
@@ -6747,6 +7032,52 @@ onSnapshot(collection(db,'testesProdutos'), snap=>{
   }catch(e){ console.error('testesProdutos snap:',e); }
 });
 
+// ===== KITS E PRODUTOS DA QUADRA (Firebase) =====
+// Migram de hardcoded para Firestore. Se vazio, usa defaults do código.
+let kitsCustom = []; // Firestore 'quadraKitsCustom'
+let produtosCustom = []; // Firestore 'quadraProdutosCustom'
+
+onSnapshot(collection(db,'quadraKitsCustom'), snap=>{
+  try{
+    kitsCustom=snap.docs.map(d=>({firestoreId:d.id,...d.data()}));
+    aplicarKitsProdutosFirebase();
+    atualizarTela();
+  }catch(e){ console.error('quadraKitsCustom snap:',e); }
+});
+
+onSnapshot(collection(db,'quadraProdutosCustom'), snap=>{
+  try{
+    produtosCustom=snap.docs.map(d=>({firestoreId:d.id,...d.data()}));
+    aplicarKitsProdutosFirebase();
+    atualizarTela();
+  }catch(e){ console.error('quadraProdutosCustom snap:',e); }
+});
+
+function aplicarKitsProdutosFirebase(){
+  // Mescla os dados do Firebase com os defaults hardcoded
+  // Kits: cada kit do Firebase substitui ou complementa os hardcoded
+  kitsCustom.forEach(k=>{
+    if(k.nome&&k.ingredientes){
+      QUADRA_KITS_RECEITAS[k.nome]={
+        ingredientes:k.ingredientes,
+        totalKg:k.totalKg||k.ingredientes.reduce((s,i)=>s+(i.qtd||0),0)
+      };
+      // Adicionar ao QUADRA_KITS array se não existir
+      if(!QUADRA_KITS.includes(k.nome)) QUADRA_KITS.push(k.nome);
+    }
+  });
+  // Produtos: cada produto do Firebase é adicionado ou substitui
+  produtosCustom.forEach(p=>{
+    if(p.nome&&p.kit){
+      const existing=QUADRA_PRODUTOS.findIndex(x=>x.cod===p.cod||x.nome===p.nome);
+      const novoProd={cod:p.cod||'',nome:p.nome,kit:p.kit,kgPacote:p.kgPacote||0};
+      if(existing>=0) QUADRA_PRODUTOS[existing]=novoProd;
+      else QUADRA_PRODUTOS.push(novoProd);
+    }
+  });
+}
+
+
 function getTestesProdutos(){
   const customNomes=testesCustomProdutos.map(p=>p.nome);
   const todos=[...MP_TESTES_LISTA,...customNomes.filter(n=>!MP_TESTES_LISTA.includes(n))];
@@ -7291,6 +7622,331 @@ function renderBuscarProduto(){
   el.innerHTML=html;
 }
 
+
+// ===== ADMIN KITS & PRODUTOS =====
+let _kitEditando=null; // null=novo, ou objeto com firestoreId
+let _kitIngredientes=[];
+let _produtoEditando=null;
+let _produtoKitContext=null;
+
+function renderAdmKits(){
+  const el=document.getElementById('adm-kits-content');
+  if(!el)return;
+
+  // Lista de kits cadastrados (Firebase + defaults)
+  const todosKits=Object.keys(QUADRA_KITS_RECEITAS).sort();
+  const kitsCustomNomes=new Set(kitsCustom.map(k=>k.nome));
+
+  let html='<div class="mc-banner" style="background:var(--mc-dourado-claro);border-color:#fde68a;border-left-color:var(--mc-dourado);"><span class="mc-banner-icon">💡</span><span class="mc-banner-text" style="color:#92400e;"><strong>Kits cadastrados aqui são salvos no Firebase</strong> · Os kits originais (do código) aparecem como "padrão" e podem ser sobrescritos</span></div>';
+
+  html+='<div class="mc-section-header">Kits cadastrados ('+todosKits.length+')</div>';
+
+  if(todosKits.length===0){
+    html+='<div class="empty" style="padding:40px 20px;color:var(--text-secondary);text-align:center;">Nenhum kit cadastrado.<br>Clique em <strong>+ Novo Kit</strong> para começar.</div>';
+  } else {
+    todosKits.forEach(nomeKit=>{
+      const receita=QUADRA_KITS_RECEITAS[nomeKit];
+      const isCustom=kitsCustomNomes.has(nomeKit);
+      const kitFs=isCustom?kitsCustom.find(k=>k.nome===nomeKit):null;
+      const ingredientes=receita.ingredientes||[];
+      const totalKg=receita.totalKg||0;
+
+      // Produtos derivados desse kit
+      const produtos=QUADRA_PRODUTOS.filter(p=>p.kit&&p.kit.toLowerCase()===nomeKit.toLowerCase());
+      const produtosCustomNomes=new Set(produtosCustom.map(p=>p.nome));
+
+      html+='<div style="background:var(--bg-primary);border:1px solid var(--border);border-radius:var(--r-lg);margin-bottom:14px;overflow:hidden;box-shadow:var(--shadow-sm);">';
+
+      // Header do kit
+      html+='<div style="padding:14px 16px;background:linear-gradient(135deg, var(--mc-dourado-claro) 0%, var(--bg-primary) 100%);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;flex-wrap:wrap;">'+
+        '<div style="flex:1;min-width:200px;">'+
+        '<div style="font-size:15px;font-weight:700;color:#92400e;">'+nomeKit+'</div>'+
+        '<div style="font-size:11px;color:var(--text-secondary);margin-top:2px;">'+ingredientes.length+' ingrediente(s) · '+totalKg.toFixed(2)+' kg total · '+produtos.length+' produto(s) derivado(s)</div>'+
+        '</div>';
+
+      if(isCustom){
+        html+='<span class="mc-badge gold" style="background:var(--mc-dourado-claro);color:#92400e;">📝 Editável</span>';
+        html+='<button class="mc-act-btn-secondary" style="font-size:11px;padding:5px 10px;" onclick="abrirEditarKit(\''+kitFs.firestoreId+'\')">Editar</button>';
+        html+='<button class="mc-act-btn-secondary" style="border-color:var(--mc-vermelho);color:var(--mc-vermelho);font-size:11px;padding:5px 10px;" onclick="excluirKit(\''+kitFs.firestoreId+'\',\''+nomeKit+'\')">Excluir</button>';
+      } else {
+        html+='<span class="mc-badge gray">🔒 Padrão</span>';
+        html+='<button class="mc-act-btn-secondary" style="font-size:11px;padding:5px 10px;" onclick="duplicarKitPadrao(\''+nomeKit+'\')">Duplicar p/ editar</button>';
+      }
+      html+='</div>';
+
+      // Ingredientes (collapsible)
+      const safeId='kit-'+nomeKit.replace(/[^a-zA-Z0-9]/g,'_');
+      html+='<details><summary style="cursor:pointer;padding:10px 16px;font-size:12px;color:var(--text-secondary);background:var(--bg-secondary);border-bottom:1px solid var(--border);">Ver ingredientes</summary>';
+      html+='<div style="padding:10px 16px;font-size:12px;border-bottom:1px solid var(--border);">';
+      ingredientes.forEach(ing=>{
+        html+='<div style="display:flex;justify-content:space-between;padding:3px 0;">'+
+          '<span>'+ing.nome+'</span>'+
+          '<strong>'+ing.qtd+' kg</strong>'+
+          '</div>';
+      });
+      html+='</div></details>';
+
+      // Produtos derivados
+      html+='<div style="padding:10px 16px;">';
+      html+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">';
+      html+='<div style="font-size:11px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.06em;font-weight:600;">Produtos derivados</div>';
+      html+='<button class="mc-act-btn-secondary" style="font-size:11px;padding:4px 10px;" onclick="abrirNovoProduto(\''+nomeKit+'\')">+ Adicionar produto</button>';
+      html+='</div>';
+
+      if(produtos.length===0){
+        html+='<div style="font-size:12px;color:var(--text-secondary);font-style:italic;padding:8px 0;">Nenhum produto derivado deste kit ainda.</div>';
+      } else {
+        produtos.forEach(p=>{
+          const isCustomP=produtosCustomNomes.has(p.nome);
+          const prodFs=isCustomP?produtosCustom.find(x=>x.nome===p.nome):null;
+          html+='<div style="display:flex;align-items:center;gap:8px;padding:6px 8px;background:var(--bg-secondary);border-radius:var(--r-md);margin-bottom:4px;flex-wrap:wrap;">';
+          html+='<div style="flex:1;min-width:180px;font-size:12px;">';
+          html+='<div style="font-weight:600;color:var(--text-primary);">'+p.nome+'</div>';
+          html+='<div style="font-size:10px;color:var(--text-secondary);">cod '+(p.cod||'-')+' · '+(p.kgPacote||0)+' kg/pct'+(p.qtdPct?' · '+p.qtdPct+' un/pct':'')+'</div>';
+          html+='</div>';
+          if(isCustomP){
+            html+='<button class="mc-act-btn-secondary" style="font-size:10px;padding:3px 8px;" onclick="abrirEditarProduto(\''+prodFs.firestoreId+'\')">Editar</button>';
+            html+='<button class="mc-act-btn-secondary" style="border-color:var(--mc-vermelho);color:var(--mc-vermelho);font-size:10px;padding:3px 8px;" onclick="excluirProduto(\''+prodFs.firestoreId+'\',\''+p.nome+'\')">×</button>';
+          } else {
+            html+='<span style="font-size:9px;color:var(--text-muted);">🔒 padrão</span>';
+          }
+          html+='</div>';
+        });
+      }
+      html+='</div></div>';
+    });
+  }
+
+  el.innerHTML=html;
+}
+
+function abrirNovoKit(){
+  _kitEditando=null;
+  _kitIngredientes=[{nome:'',qtd:0}];
+  document.getElementById('kit-form-title').textContent='Novo Kit';
+  renderKitForm();
+  goTo('s-adm-kit-form');
+}
+
+function abrirEditarKit(firestoreId){
+  const kit=kitsCustom.find(k=>k.firestoreId===firestoreId);
+  if(!kit)return;
+  _kitEditando=kit;
+  _kitIngredientes=kit.ingredientes?[...kit.ingredientes.map(i=>({...i}))]:[];
+  document.getElementById('kit-form-title').textContent='Editar Kit';
+  renderKitForm();
+  goTo('s-adm-kit-form');
+}
+
+function duplicarKitPadrao(nomeKit){
+  const orig=QUADRA_KITS_RECEITAS[nomeKit];
+  if(!orig)return;
+  if(!confirm('Isso vai criar uma cópia editável de "'+nomeKit+'". O kit original padrão continuará funcionando até você salvar a nova versão. Deseja continuar?'))return;
+  _kitEditando={nome:nomeKit,ingredientes:orig.ingredientes,totalKg:orig.totalKg};
+  _kitIngredientes=orig.ingredientes.map(i=>({...i}));
+  document.getElementById('kit-form-title').textContent='Editar (cópia de padrão)';
+  renderKitForm();
+  goTo('s-adm-kit-form');
+}
+
+function renderKitForm(){
+  const el=document.getElementById('adm-kit-form-content');
+  if(!el)return;
+  const nomeAtual=_kitEditando?_kitEditando.nome:'';
+  const totalKg=_kitIngredientes.reduce((s,i)=>s+(parseFloat(i.qtd)||0),0);
+
+  let html='<div class="card" style="padding:14px;margin-bottom:14px;">';
+  html+='<div class="card-label">Nome do kit</div>';
+  html+='<input type="text" id="kit-nome-input" placeholder="Ex: Kit Pão de Queijo" value="'+nomeAtual.replace(/"/g,'&quot;')+'" style="font-size:15px;width:100%;margin-top:6px;" />';
+  html+='<div style="font-size:11px;color:var(--text-secondary);margin-top:6px;">Use sempre maiúsculas (ex: KIT PÃO DE QUEIJO)</div>';
+  html+='</div>';
+
+  html+='<div class="card" style="padding:14px;margin-bottom:14px;">';
+  html+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">';
+  html+='<div class="card-label">Ingredientes</div>';
+  html+='<div style="font-size:13px;font-weight:600;color:var(--mc-azul);">Total: '+totalKg.toFixed(3)+' kg</div>';
+  html+='</div>';
+
+  _kitIngredientes.forEach((ing,i)=>{
+    html+='<div style="display:flex;gap:6px;margin-bottom:6px;align-items:center;">';
+    html+='<input type="text" placeholder="Nome do ingrediente" value="'+(ing.nome||'').replace(/"/g,'&quot;')+'" oninput="atualizarIngrediente('+i+',\'nome\',this.value)" style="flex:2;font-size:13px;padding:8px;border-radius:6px;border:1px solid var(--border-md);" />';
+    html+='<input type="number" placeholder="kg" value="'+(ing.qtd||'')+'" step="0.001" oninput="atualizarIngrediente('+i+',\'qtd\',this.value)" style="flex:1;min-width:80px;font-size:13px;padding:8px;border-radius:6px;border:1px solid var(--border-md);" />';
+    html+='<span style="font-size:12px;color:var(--text-secondary);">kg</span>';
+    html+='<button onclick="removerIngrediente('+i+')" style="background:none;border:1px solid var(--mc-vermelho);color:var(--mc-vermelho);border-radius:6px;padding:6px 10px;font-size:13px;cursor:pointer;" title="Remover">×</button>';
+    html+='</div>';
+  });
+
+  html+='<button class="mc-act-btn-secondary" style="margin-top:6px;font-size:12px;" onclick="adicionarIngrediente()">+ Adicionar ingrediente</button>';
+  html+='</div>';
+
+  el.innerHTML=html;
+}
+
+function adicionarIngrediente(){
+  _kitIngredientes.push({nome:'',qtd:0});
+  renderKitForm();
+}
+
+function removerIngrediente(idx){
+  _kitIngredientes.splice(idx,1);
+  if(_kitIngredientes.length===0) _kitIngredientes.push({nome:'',qtd:0});
+  renderKitForm();
+}
+
+function atualizarIngrediente(idx,campo,valor){
+  if(!_kitIngredientes[idx])return;
+  if(campo==='qtd'){
+    _kitIngredientes[idx].qtd=parseFloat(valor)||0;
+  } else {
+    _kitIngredientes[idx][campo]=valor;
+  }
+  // Re-render totalKg
+  const totalKg=_kitIngredientes.reduce((s,i)=>s+(parseFloat(i.qtd)||0),0);
+  const totalEl=document.querySelector('#adm-kit-form-content .card-label + div');
+  // Simples: render só recalcula em add/remove. Tot
+}
+
+async function salvarKit(){
+  const nome=(document.getElementById('kit-nome-input').value||'').trim();
+  if(!nome){ alert('Digite o nome do kit'); return; }
+  const ings=_kitIngredientes.filter(i=>i.nome&&i.nome.trim()&&i.qtd>0);
+  if(ings.length===0){ alert('Adicione pelo menos um ingrediente válido'); return; }
+  const totalKg=ings.reduce((s,i)=>s+(parseFloat(i.qtd)||0),0);
+  const dados={nome:nome,ingredientes:ings,totalKg:totalKg,atualizadoEm:new Date().toISOString()};
+  try{
+    if(_kitEditando&&_kitEditando.firestoreId){
+      await updateDoc(doc(db,'quadraKitsCustom',_kitEditando.firestoreId),dados);
+    } else {
+      await addDoc(collection(db,'quadraKitsCustom'),dados);
+    }
+    alert('Kit salvo!');
+    goTo('s-adm-kits');
+  } catch(e){
+    console.error('Erro salvando kit:',e);
+    alert('Erro ao salvar: '+e.message);
+  }
+}
+
+async function excluirKit(firestoreId,nomeKit){
+  if(!confirm('Excluir o kit "'+nomeKit+'"?\n\nOs produtos derivados continuarão existindo, mas não terão receita associada.'))return;
+  try{
+    await deleteDoc(doc(db,'quadraKitsCustom',firestoreId));
+    alert('Kit excluído.');
+  } catch(e){
+    console.error('Erro:',e);
+    alert('Erro ao excluir: '+e.message);
+  }
+}
+
+function abrirNovoProduto(kitNome){
+  _produtoEditando=null;
+  _produtoKitContext=kitNome;
+  document.getElementById('prod-form-title').textContent='Novo Produto';
+  document.getElementById('prod-form-sub').textContent=kitNome;
+  renderProdutoForm();
+  goTo('s-adm-prod-form');
+}
+
+function abrirEditarProduto(firestoreId){
+  const p=produtosCustom.find(x=>x.firestoreId===firestoreId);
+  if(!p)return;
+  _produtoEditando=p;
+  _produtoKitContext=p.kit;
+  document.getElementById('prod-form-title').textContent='Editar Produto';
+  document.getElementById('prod-form-sub').textContent=p.kit||'';
+  renderProdutoForm();
+  goTo('s-adm-prod-form');
+}
+
+function renderProdutoForm(){
+  const el=document.getElementById('adm-prod-form-content');
+  if(!el)return;
+  const p=_produtoEditando||{cod:'',nome:'',kit:_produtoKitContext||'',kgPacote:0,grMassa:0,grRecheio:0,grRecheio2:0,qtdPct:0};
+
+  // Lista de kits para selecionar
+  const todosKits=Object.keys(QUADRA_KITS_RECEITAS).sort();
+
+  let html='<div class="card" style="padding:14px;margin-bottom:10px;">';
+  html+='<div class="card-label">Código (opcional)</div>';
+  html+='<input type="text" id="prod-cod" value="'+(p.cod||'').replace(/"/g,'&quot;')+'" placeholder="Ex: 200" style="font-size:15px;width:100%;margin-top:6px;" />';
+  html+='</div>';
+
+  html+='<div class="card" style="padding:14px;margin-bottom:10px;">';
+  html+='<div class="card-label">Nome do produto</div>';
+  html+='<input type="text" id="prod-nome" value="'+(p.nome||'').replace(/"/g,'&quot;')+'" placeholder="Ex: PÃO DE QUEIJO 25GR" style="font-size:15px;width:100%;margin-top:6px;" />';
+  html+='<div style="font-size:11px;color:var(--text-secondary);margin-top:6px;">Sempre em maiúsculas</div>';
+  html+='</div>';
+
+  html+='<div class="card" style="padding:14px;margin-bottom:10px;">';
+  html+='<div class="card-label">Kit (receita usada)</div>';
+  html+='<select id="prod-kit" style="font-size:15px;width:100%;margin-top:6px;padding:8px;border-radius:6px;border:1px solid var(--border-md);">';
+  todosKits.forEach(k=>{
+    html+='<option value="'+k.replace(/"/g,'&quot;')+'"'+(p.kit===k?' selected':'')+'>'+k+'</option>';
+  });
+  html+='</select>';
+  html+='</div>';
+
+  html+='<div class="card" style="padding:14px;margin-bottom:10px;">';
+  html+='<div class="card-label">Detalhes do produto</div>';
+  html+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px;">';
+  html+='<div><label style="font-size:11px;color:var(--text-secondary);">Kg por pacote</label><input type="number" id="prod-kgpct" value="'+(p.kgPacote||'')+'" step="0.001" placeholder="Ex: 1.0" style="width:100%;font-size:14px;padding:8px;border-radius:6px;border:1px solid var(--border-md);" /></div>';
+  html+='<div><label style="font-size:11px;color:var(--text-secondary);">Unidades por pacote</label><input type="number" id="prod-qtdpct" value="'+(p.qtdPct||'')+'" placeholder="Ex: 40" style="width:100%;font-size:14px;padding:8px;border-radius:6px;border:1px solid var(--border-md);" /></div>';
+  html+='</div>';
+  html+='</div>';
+
+  html+='<div class="card" style="padding:14px;margin-bottom:10px;">';
+  html+='<div class="card-label">Gramatura padrão por unidade (gr)</div>';
+  html+='<div style="font-size:11px;color:var(--text-secondary);margin-top:4px;margin-bottom:8px;">Para o controle de quebra. Se o produto não tem recheio, deixe 0.</div>';
+  html+='<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;">';
+  html+='<div><label style="font-size:11px;color:var(--text-secondary);">Massa (gr/un)</label><input type="number" id="prod-grmassa" value="'+(p.grMassa||'')+'" step="0.01" style="width:100%;font-size:14px;padding:8px;border-radius:6px;border:1px solid var(--border-md);" /></div>';
+  html+='<div><label style="font-size:11px;color:var(--text-secondary);">Recheio 1 (gr/un)</label><input type="number" id="prod-grr1" value="'+(p.grRecheio||'')+'" step="0.01" style="width:100%;font-size:14px;padding:8px;border-radius:6px;border:1px solid var(--border-md);" /></div>';
+  html+='<div><label style="font-size:11px;color:var(--text-secondary);">Recheio 2 (gr/un)</label><input type="number" id="prod-grr2" value="'+(p.grRecheio2||'')+'" step="0.01" style="width:100%;font-size:14px;padding:8px;border-radius:6px;border:1px solid var(--border-md);" /></div>';
+  html+='</div>';
+  html+='</div>';
+
+  el.innerHTML=html;
+}
+
+async function salvarProduto(){
+  const cod=(document.getElementById('prod-cod').value||'').trim();
+  const nome=(document.getElementById('prod-nome').value||'').trim().toUpperCase();
+  const kit=document.getElementById('prod-kit').value;
+  const kgPacote=parseFloat(document.getElementById('prod-kgpct').value)||0;
+  const qtdPct=parseFloat(document.getElementById('prod-qtdpct').value)||0;
+  const grMassa=parseFloat(document.getElementById('prod-grmassa').value)||0;
+  const grRecheio=parseFloat(document.getElementById('prod-grr1').value)||0;
+  const grRecheio2=parseFloat(document.getElementById('prod-grr2').value)||0;
+
+  if(!nome){ alert('Digite o nome do produto'); return; }
+  if(!kit){ alert('Selecione o kit'); return; }
+
+  const dados={cod,nome,kit,kgPacote,qtdPct,grMassa,grRecheio,grRecheio2,atualizadoEm:new Date().toISOString()};
+  try{
+    if(_produtoEditando&&_produtoEditando.firestoreId){
+      await updateDoc(doc(db,'quadraProdutosCustom',_produtoEditando.firestoreId),dados);
+    } else {
+      await addDoc(collection(db,'quadraProdutosCustom'),dados);
+    }
+    alert('Produto salvo!');
+    goTo('s-adm-kits');
+  } catch(e){
+    console.error('Erro:',e);
+    alert('Erro: '+e.message);
+  }
+}
+
+async function excluirProduto(firestoreId,nome){
+  if(!confirm('Excluir o produto "'+nome+'"?'))return;
+  try{
+    await deleteDoc(doc(db,'quadraProdutosCustom',firestoreId));
+    alert('Produto excluído.');
+  } catch(e){
+    console.error('Erro:',e);
+    alert('Erro: '+e.message);
+  }
+}
+
+
 window.goTo=goTo; window.abrirPin=abrirPin; window.pinDigit=pinDigit; window.pinDel=pinDel;
 window.iniciarNovoReg=iniciarNovoReg; window.renderConfMassas=renderConfMassas; window.toggleManual=toggleManual;
 window.selecionarDataTipo=selecionarDataTipo; window.selecionarDataManual=selecionarDataManual;
@@ -7302,7 +7958,7 @@ window.selecionarDataEmb=selecionarDataEmb; window.irParaEmbalagem=irParaEmbalag
 window.toggleEmb=toggleEmb; window.toggleAjuste=toggleAjuste; window.confirmarAjuste=confirmarAjuste;
 window.selecionarDataExp=selecionarDataExp; window.irParaExpedicao=irParaExpedicao;
 window.adicionarLiberacao=adicionarLiberacao;
-window.tab=tab; window.toggleConf=toggleConf; window.admFiltrar=admFiltrar; window.toggleEditProd=toggleEditProd; window.salvarEditProd=salvarEditProd; window.toggleEditRecheio=toggleEditRecheio; window.salvarEditRecheio=salvarEditRecheio; window.renderMeusReg=renderMeusReg; window.renderCozReg=renderCozReg; window.abrirPresenca=abrirPresenca; window.adicionarParcialEmb=adicionarParcialEmb; window.salvarObsEmb=salvarObsEmb; window.abrirExpView=abrirExpView; window.renderAdmStatus=renderAdmStatus; window.renderBuscarProduto=renderBuscarProduto; window.abrirExpViewData=abrirExpViewData; window.renderExpView=renderExpView; window.renderExpViewSelData=renderExpViewSelData; window.confirmarEmbalagEmCompleto=confirmarEmbalagEmCompleto; window.subtrairParcialEmb=subtrairParcialEmb; window.salvarEmbManual=salvarEmbManual; window.excluirPresenca=excluirPresenca; window.salvarPresenca=salvarPresenca; window.voltarPresenca=voltarPresenca; window.renderPresencaForm=renderPresencaForm; window.selecionarDataPresenca=selecionarDataPresenca; window.selecionarDataPresencaManual=selecionarDataPresencaManual; window.adicionarColaborador=adicionarColaborador; window.removerColab=removerColab; window.updateColab=updateColab; window.renderPresencaReg=renderPresencaReg; window.abrirContagem=abrirContagem; window.subtrairContagem=subtrairContagem; window.filtrarContagem=filtrarContagem; window.adicionarContagem=adicionarContagem; window.renderContagemHist=renderContagemHist; window.verDetalheContagem=verDetalheContagem; window.renderContagemLanc=renderContagemLanc; window.renderContagemHome=renderContagemHome; window.toggleContDay=toggleContDay; window.abrirContainerItem=abrirContainerItem; window.iniciarContainerEntrada=iniciarContainerEntrada; window.selecionarDataContainerEntradaBtn=selecionarDataContainerEntradaBtn; window.selecionarDataContainerEntrada=selecionarDataContainerEntrada; window.salvarContainerEntrada=salvarContainerEntrada; window.iniciarContainerSaida=iniciarContainerSaida; window.selecionarLoteSaida=selecionarLoteSaida; window.salvarContainerSaida=salvarContainerSaida; window.excluirLoteContainer=excluirLoteContainer; window.iniciarNovoLancQuadra=iniciarNovoLancQuadra; window.selecionarDataQuadraBtn=selecionarDataQuadraBtn; window.selecionarDataQuadra=selecionarDataQuadra; window.filtrarKitsQuadra=filtrarKitsQuadra; window.selKitQuadra=selKitQuadra; window.atualizarProdQuadra=atualizarProdQuadra; window.salvarQuadra=salvarQuadra; window.renderQuadraReg=renderQuadraReg; window.excluirRegQuadra=excluirRegQuadra; window.renderQuadraDateGrid=renderQuadraDateGrid; window.atualizarResumoQuadra=atualizarResumoQuadra; window.renderTestesList=renderTestesList; window.abrirTestesProduto=abrirTestesProduto; window.abrirNovoTeste=abrirNovoTeste; window.salvarTeste=salvarTeste; window.excluirTeste=excluirTeste; window.adicionarProdutoTeste=adicionarProdutoTeste; window.abrirEditarTeste=abrirEditarTeste; window.salvarEdicaoTeste=salvarEdicaoTeste; window.excluirMovContainer=excluirMovContainer; window.abrirFarinhaLanc=abrirFarinhaLanc; window.atualizarPreviewFarinha=atualizarPreviewFarinha; window.salvarFarinhaLanc=salvarFarinhaLanc; window.renderFarinhaHist=renderFarinhaHist; window.excluirFarinhaRec=excluirFarinhaRec; window.excluirContagem=excluirContagem; window.abrirManut=abrirManut; window.voltarManut=voltarManut; window.salvarNovaMaquina=salvarNovaMaquina; window.excluirMaquina=excluirMaquina; window.abrirMaquina=abrirMaquina; window.iniciarNovaManutencao=iniciarNovaManutencao; window.selecionarDataManut=selecionarDataManut; window.salvarManutencao=salvarManutencao; window.selecionarDataManutBtn=selecionarDataManutBtn; window.abrirPlano=abrirPlano; window.voltarPlano=voltarPlano; window.salvarPlano=salvarPlano; window.adicionarItemPlano=adicionarItemPlano; window.atualizarQtdPlano=atualizarQtdPlano; window.removerItemPlano=removerItemPlano; window.trocarSemanaPlano=trocarSemanaPlano; window.togglePlanoDia=togglePlanoDia; window.toggleFeriado=toggleFeriado; window.importarPlanoPaste=importarPlanoPaste; window.limparPlano=limparPlano; window.renderManutDateGrid=renderManutDateGrid; window.toggleEditParcial=toggleEditParcial; window.salvarEditParcial=salvarEditParcial; window.excluirRegistro=excluirRegistro; window.gerarExcel=gerarExcel; window.renderPresencaForm=renderPresencaForm; window.goToAdmin=goToAdmin; window.sairAdmin=sairAdmin; window.backFromArea=backFromArea;
+window.tab=tab; window.toggleConf=toggleConf; window.admFiltrar=admFiltrar; window.toggleEditProd=toggleEditProd; window.salvarEditProd=salvarEditProd; window.toggleEditRecheio=toggleEditRecheio; window.salvarEditRecheio=salvarEditRecheio; window.renderMeusReg=renderMeusReg; window.renderCozReg=renderCozReg; window.abrirPresenca=abrirPresenca; window.adicionarParcialEmb=adicionarParcialEmb; window.salvarObsEmb=salvarObsEmb; window.abrirExpView=abrirExpView; window.renderAdmStatus=renderAdmStatus; window.renderBuscarProduto=renderBuscarProduto; window.renderAdmKits=renderAdmKits; window.abrirNovoKit=abrirNovoKit; window.abrirEditarKit=abrirEditarKit; window.duplicarKitPadrao=duplicarKitPadrao; window.salvarKit=salvarKit; window.excluirKit=excluirKit; window.adicionarIngrediente=adicionarIngrediente; window.removerIngrediente=removerIngrediente; window.atualizarIngrediente=atualizarIngrediente; window.abrirNovoProduto=abrirNovoProduto; window.abrirEditarProduto=abrirEditarProduto; window.salvarProduto=salvarProduto; window.excluirProduto=excluirProduto; window.abrirExpViewData=abrirExpViewData; window.renderExpView=renderExpView; window.renderExpViewSelData=renderExpViewSelData; window.confirmarEmbalagEmCompleto=confirmarEmbalagEmCompleto; window.subtrairParcialEmb=subtrairParcialEmb; window.salvarEmbManual=salvarEmbManual; window.excluirPresenca=excluirPresenca; window.salvarPresenca=salvarPresenca; window.voltarPresenca=voltarPresenca; window.renderPresencaForm=renderPresencaForm; window.selecionarDataPresenca=selecionarDataPresenca; window.selecionarDataPresencaManual=selecionarDataPresencaManual; window.adicionarColaborador=adicionarColaborador; window.removerColab=removerColab; window.updateColab=updateColab; window.renderPresencaReg=renderPresencaReg; window.abrirContagem=abrirContagem; window.subtrairContagem=subtrairContagem; window.filtrarContagem=filtrarContagem; window.adicionarContagem=adicionarContagem; window.renderContagemHist=renderContagemHist; window.verDetalheContagem=verDetalheContagem; window.renderContagemLanc=renderContagemLanc; window.renderContagemHome=renderContagemHome; window.toggleContDay=toggleContDay; window.abrirContainerItem=abrirContainerItem; window.iniciarContainerEntrada=iniciarContainerEntrada; window.selecionarDataContainerEntradaBtn=selecionarDataContainerEntradaBtn; window.selecionarDataContainerEntrada=selecionarDataContainerEntrada; window.salvarContainerEntrada=salvarContainerEntrada; window.iniciarContainerSaida=iniciarContainerSaida; window.selecionarLoteSaida=selecionarLoteSaida; window.salvarContainerSaida=salvarContainerSaida; window.excluirLoteContainer=excluirLoteContainer; window.iniciarNovoLancQuadra=iniciarNovoLancQuadra; window.selecionarDataQuadraBtn=selecionarDataQuadraBtn; window.selecionarDataQuadra=selecionarDataQuadra; window.filtrarKitsQuadra=filtrarKitsQuadra; window.selKitQuadra=selKitQuadra; window.atualizarProdQuadra=atualizarProdQuadra; window.salvarQuadra=salvarQuadra; window.renderQuadraReg=renderQuadraReg; window.excluirRegQuadra=excluirRegQuadra; window.renderQuadraDateGrid=renderQuadraDateGrid; window.atualizarResumoQuadra=atualizarResumoQuadra; window.renderTestesList=renderTestesList; window.abrirTestesProduto=abrirTestesProduto; window.abrirNovoTeste=abrirNovoTeste; window.salvarTeste=salvarTeste; window.excluirTeste=excluirTeste; window.adicionarProdutoTeste=adicionarProdutoTeste; window.abrirEditarTeste=abrirEditarTeste; window.salvarEdicaoTeste=salvarEdicaoTeste; window.excluirMovContainer=excluirMovContainer; window.abrirFarinhaLanc=abrirFarinhaLanc; window.atualizarPreviewFarinha=atualizarPreviewFarinha; window.salvarFarinhaLanc=salvarFarinhaLanc; window.renderFarinhaHist=renderFarinhaHist; window.excluirFarinhaRec=excluirFarinhaRec; window.excluirContagem=excluirContagem; window.abrirManut=abrirManut; window.voltarManut=voltarManut; window.salvarNovaMaquina=salvarNovaMaquina; window.excluirMaquina=excluirMaquina; window.abrirMaquina=abrirMaquina; window.iniciarNovaManutencao=iniciarNovaManutencao; window.selecionarDataManut=selecionarDataManut; window.salvarManutencao=salvarManutencao; window.selecionarDataManutBtn=selecionarDataManutBtn; window.abrirPlano=abrirPlano; window.voltarPlano=voltarPlano; window.salvarPlano=salvarPlano; window.adicionarItemPlano=adicionarItemPlano; window.atualizarQtdPlano=atualizarQtdPlano; window.removerItemPlano=removerItemPlano; window.trocarSemanaPlano=trocarSemanaPlano; window.togglePlanoDia=togglePlanoDia; window.toggleFeriado=toggleFeriado; window.importarPlanoPaste=importarPlanoPaste; window.limparPlano=limparPlano; window.renderManutDateGrid=renderManutDateGrid; window.toggleEditParcial=toggleEditParcial; window.salvarEditParcial=salvarEditParcial; window.excluirRegistro=excluirRegistro; window.gerarExcel=gerarExcel; window.renderPresencaForm=renderPresencaForm; window.goToAdmin=goToAdmin; window.sairAdmin=sairAdmin; window.backFromArea=backFromArea;
 </script>
 </body>
 </html>
