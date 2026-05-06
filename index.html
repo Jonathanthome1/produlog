@@ -7637,7 +7637,25 @@ function renderAdmKits(){
   const todosKits=Object.keys(QUADRA_KITS_RECEITAS).sort();
   const kitsCustomNomes=new Set(kitsCustom.map(k=>k.nome));
 
-  let html='<div class="mc-banner" style="background:var(--mc-dourado-claro);border-color:#fde68a;border-left-color:var(--mc-dourado);"><span class="mc-banner-icon">💡</span><span class="mc-banner-text" style="color:#92400e;"><strong>Kits cadastrados aqui são salvos no Firebase</strong> · Os kits originais (do código) aparecem como "padrão" e podem ser sobrescritos</span></div>';
+  // Banner com explicação + botão de migração se ainda houver kits no código
+  const kitsHardcoded=Object.keys(QUADRA_KITS_RECEITAS).filter(k=>!kitsCustom.some(c=>c.nome===k)).length;
+  const prodsHardcoded=QUADRA_PRODUTOS.filter(p=>!produtosCustom.some(c=>c.nome===p.nome)).length;
+  let html='';
+  if(kitsHardcoded>0||prodsHardcoded>0){
+    html+='<div class="mc-banner" style="background:var(--mc-laranja-claro);border-color:#fde68a;border-left-color:var(--mc-laranja);">'+
+      '<span class="mc-banner-icon">⚠️</span>'+
+      '<span class="mc-banner-text" style="color:#92400e;flex:1;">'+
+      '<strong>Migração pendente:</strong> '+kitsHardcoded+' kit(s) e '+prodsHardcoded+' produto(s) ainda estão no código (visíveis publicamente).<br>'+
+      'Clique no botão para copiar tudo para o Firebase de forma segura.'+
+      '</span>'+
+      '<button class="mc-act-btn-primary" style="background:var(--mc-laranja);" onclick="migrarKitsParaFirebase()">🔒 Migrar agora</button>'+
+      '</div>';
+  } else {
+    html+='<div class="mc-banner" style="background:var(--mc-verde-claro);border-color:#a7f3d0;border-left-color:var(--mc-verde);">'+
+      '<span class="mc-banner-icon">✓</span>'+
+      '<span class="mc-banner-text" style="color:#065f46;"><strong>Todos os kits estão protegidos no Firebase</strong> · Você pode editar livremente.</span>'+
+      '</div>';
+  }
 
   html+='<div class="mc-section-header">Kits cadastrados ('+todosKits.length+')</div>';
 
@@ -7946,6 +7964,59 @@ async function excluirProduto(firestoreId,nome){
   }
 }
 
+
+
+// ===== MIGRAÇÃO DE DADOS DO CÓDIGO PARA O FIREBASE (ETAPA 1: KITS QUADRA) =====
+async function migrarKitsParaFirebase(){
+  const senha=prompt('Esta operação vai copiar TODOS os kits e produtos do código para o Firebase.\n\nDigite "MIGRAR" (em maiúsculas) para confirmar:');
+  if(senha!=='MIGRAR'){ alert('Migração cancelada.'); return; }
+
+  try{
+    let totalKits=0, totalProds=0;
+    const ts=new Date().toISOString();
+
+    // ===== KITS =====
+    const kitsExistentes=new Set(kitsCustom.map(k=>k.nome));
+    for(const nome of Object.keys(QUADRA_KITS_RECEITAS)){
+      if(kitsExistentes.has(nome)){ console.log('Pulando (já existe):',nome); continue; }
+      const r=QUADRA_KITS_RECEITAS[nome];
+      await addDoc(collection(db,'quadraKitsCustom'),{
+        nome:nome,
+        ingredientes:r.ingredientes||[],
+        totalKg:r.totalKg||0,
+        migradoEm:ts,
+        atualizadoEm:ts
+      });
+      totalKits++;
+    }
+
+    // ===== PRODUTOS =====
+    const prodsExistentes=new Set(produtosCustom.map(p=>p.nome));
+    for(const p of QUADRA_PRODUTOS){
+      if(prodsExistentes.has(p.nome)){ console.log('Pulando produto (já existe):',p.nome); continue; }
+      await addDoc(collection(db,'quadraProdutosCustom'),{
+        cod:p.cod||'',
+        nome:p.nome,
+        kit:p.kit||'',
+        kgPacote:p.kgPacote||0,
+        qtdPct:p.qtdPct||0,
+        grMassa:p.grMassa||0,
+        grRecheio:p.grRecheio||0,
+        grRecheio2:p.grRecheio2||0,
+        migradoEm:ts,
+        atualizadoEm:ts
+      });
+      totalProds++;
+    }
+
+    alert('✓ Migração concluída!\n\n'+totalKits+' kit(s) e '+totalProds+' produto(s) salvos no Firebase.\n\nVerifique no console.firebase.google.com se está tudo ok antes de continuar.');
+  }catch(e){
+    console.error('Erro na migração:',e);
+    alert('Erro: '+e.message+'\n\nVerifique o console.');
+  }
+}
+
+window.migrarKitsParaFirebase=migrarKitsParaFirebase;
 
 window.goTo=goTo; window.abrirPin=abrirPin; window.pinDigit=pinDigit; window.pinDel=pinDel;
 window.iniciarNovoReg=iniciarNovoReg; window.renderConfMassas=renderConfMassas; window.toggleManual=toggleManual;
