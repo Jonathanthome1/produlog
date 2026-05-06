@@ -3297,7 +3297,7 @@ const MP_TESTES_LISTA = ["OVO EM GALÃO", "AÇUCAR CRISTAL", "AMIDO DE MILHO PIL
 let QUADRA_PRODUTOS = [];
 let QUADRA_KITS_RECEITAS = {};
   let QUADRA_KITS = []; // Lista de nomes de kits da Quadra
-const QUADRA_KIT_MAPPING = {"Kit Massa Especial Mini Sonho": "KIT MASSA ESPECIAL MINI SONHO", "Kit Pão Sovado": "KIT PÃO SOVADO", "Kit Pao De Milho Salgado Cacetinho": "KIT PAO DE MILHO SALGADO CACETINHO", "Kit Cuca Alemã": "KIT CUCA ALEMÃ", "Kit Rosca De Polvilho": "KIT ROSCA DE POLVILHO", "Kit Massa Especial Donuts E Cueca Grande": "KIT MASSA ESPECIAL DONUTS E CUECA GRANDE", "Kit Pão Preto": "KIT PÃO PRETO", "Kit Massa Sonho": "KIT MASSA SONHO", "Kit Massa Especial": "KIT MASSA ESPECIAL", "Kit Massa Doce": "KIT MASSA DOCE", "Kit Pão De Cenoura": "KIT PÃO DE CENOURA", "Kit Cueca Virada": "KIT CUECA VIRADA", "Kit Pão De Leite": "KIT PÃO DE LEITE", "Kit Cuca Colonial": "KIT CUCA COLONIAL", "Kit Pão De Aipim": "KIT PÃO DE AIPIM", "Kit Cuca Frutas": "KIT CUCA FRUTAS", "Kit Cuca Chocolate": "KIT CUCA CHOCOLATE", "Kit Vovo/Gajeta": "KIT VOVO/GAJETA", "Kit Pão De Milho Doce": "KIT PÃO DE MILHO DOCE", "Kit Pão De Batata": "KIT PÃO DE BATATA", "Kit Pão Caseiro": "KIT PÃO CASEIRO", "Kit Raminho": "KIT RAMINHO", "Kit Pão De Milho Salgado": "KIT PÃO DE MILHO SALGADO", "Kit Pão Folhado": "KIT PÃO FOLHADO", "Kit Pão Brioche": "KIT PÃO BRIOCHE", "Kit Pão Integral": "KIT PÃO INTEGRAL", "Kit Grande Premium 6/8": "KIT GRANDE PREMIUM 6/8", "Kit Pão 7 Grãos": "KIT PÃO 7 GRÃOS"};
+let QUADRA_KIT_MAPPING = {"Kit Massa Especial Mini Sonho": "KIT MASSA ESPECIAL MINI SONHO", "Kit Pão Sovado": "KIT PÃO SOVADO", "Kit Pao De Milho Salgado Cacetinho": "KIT PAO DE MILHO SALGADO CACETINHO", "Kit Cuca Alemã": "KIT CUCA ALEMÃ", "Kit Rosca De Polvilho": "KIT ROSCA DE POLVILHO", "Kit Massa Especial Donuts E Cueca Grande": "KIT MASSA ESPECIAL DONUTS E CUECA GRANDE", "Kit Pão Preto": "KIT PÃO PRETO", "Kit Massa Sonho": "KIT MASSA SONHO", "Kit Massa Especial": "KIT MASSA ESPECIAL", "Kit Massa Doce": "KIT MASSA DOCE", "Kit Pão De Cenoura": "KIT PÃO DE CENOURA", "Kit Cueca Virada": "KIT CUECA VIRADA", "Kit Pão De Leite": "KIT PÃO DE LEITE", "Kit Cuca Colonial": "KIT CUCA COLONIAL", "Kit Pão De Aipim": "KIT PÃO DE AIPIM", "Kit Cuca Frutas": "KIT CUCA FRUTAS", "Kit Cuca Chocolate": "KIT CUCA CHOCOLATE", "Kit Vovo/Gajeta": "KIT VOVO/GAJETA", "Kit Pão De Milho Doce": "KIT PÃO DE MILHO DOCE", "Kit Pão De Batata": "KIT PÃO DE BATATA", "Kit Pão Caseiro": "KIT PÃO CASEIRO", "Kit Raminho": "KIT RAMINHO", "Kit Pão De Milho Salgado": "KIT PÃO DE MILHO SALGADO", "Kit Pão Folhado": "KIT PÃO FOLHADO", "Kit Pão Brioche": "KIT PÃO BRIOCHE", "Kit Pão Integral": "KIT PÃO INTEGRAL", "Kit Grande Premium 6/8": "KIT GRANDE PREMIUM 6/8", "Kit Pão 7 Grãos": "KIT PÃO 7 GRÃOS"};
 const PINS = { confeitaria:'1234', cozinha:'5678', embalagem:'9101', expedicao:'1314', admin:'2504', contagem:'0000', container:'0001', quadra:'2020', testes:'7070' };
 const CORES = { confeitaria:'', cozinha:'verde', embalagem:'', expedicao:'laranja', admin:'roxo', contagem:'roxo', container:'', quadra:'', testes:'' };
 const NOMES = { confeitaria:'Confeitaria 🥐', cozinha:'Cozinha 🍳', embalagem:'Embalagem 📦', expedicao:'Expedição 🚚', admin:'Administrativo 📊', contagem:'Contagem 📋', container:'Rafael 📦', quadra:'Quadra 🍞', testes:'Testes MP 🔬' };
@@ -6552,7 +6552,7 @@ function renderQuadraLanc(){
   document.getElementById('quadra-lanc-title').textContent=quadraKitSel||'Lançamento';
   document.getElementById('quadra-lanc-sub').textContent=quadraDataSel||'';
 
-  const recKey=QUADRA_KIT_MAPPING[quadraKitSel];
+  const recKey=QUADRA_KIT_MAPPING[quadraKitSel]||(QUADRA_KITS_RECEITAS[quadraKitSel]?quadraKitSel:Object.keys(QUADRA_KITS_RECEITAS).find(k=>k.toLowerCase()===(quadraKitSel||'').toLowerCase()));
   const receita=recKey?QUADRA_KITS_RECEITAS[recKey]:null;
   const kgPorKit=receita?receita.totalKg:0;
   const produtosKit=QUADRA_PRODUTOS.filter(p=>p.kit===quadraKitSel);
@@ -6640,7 +6640,7 @@ function atualizarProdQuadra(cod, nome, kgPacote, val){
 function atualizarResumoQuadra(){
   const numKits=parseFloat(document.getElementById('quadra-num-kits')?.value)||0;
   const massaVelha=parseFloat(document.getElementById('quadra-massa-velha')?.value)||0;
-  const recKey=QUADRA_KIT_MAPPING[quadraKitSel];
+  const recKey=QUADRA_KIT_MAPPING[quadraKitSel]||(QUADRA_KITS_RECEITAS[quadraKitSel]?quadraKitSel:Object.keys(QUADRA_KITS_RECEITAS).find(k=>k.toLowerCase()===(quadraKitSel||'').toLowerCase()));
   const receita=recKey?QUADRA_KITS_RECEITAS[recKey]:null;
   const kgPorKit=receita?receita.totalKg:0;
   const totalEsperado=numKits*kgPorKit-massaVelha;
@@ -6668,7 +6668,7 @@ async function salvarQuadra(){
   if(numKits<=0){alert('Informe a quantidade de kits usados.');return;}
   if(!produtosArr.length){alert('Informe a produção de pelo menos um produto.');return;}
 
-  const recKey=QUADRA_KIT_MAPPING[quadraKitSel];
+  const recKey=QUADRA_KIT_MAPPING[quadraKitSel]||(QUADRA_KITS_RECEITAS[quadraKitSel]?quadraKitSel:Object.keys(QUADRA_KITS_RECEITAS).find(k=>k.toLowerCase()===(quadraKitSel||'').toLowerCase()));
   const receita=recKey?QUADRA_KITS_RECEITAS[recKey]:null;
   const kgPorKit=receita?receita.totalKg:0;
   const totalEsperado=numKits*kgPorKit-massaVelha;
@@ -7060,25 +7060,45 @@ onSnapshot(collection(db,'quadraProdutosCustom'), snap=>{
 });
 
 function aplicarKitsProdutosFirebase(){
-  // Mescla os dados do Firebase com os defaults hardcoded
-  // Kits: cada kit do Firebase substitui ou complementa os hardcoded
+  // Limpar primeiro para refletir exclusões
+  Object.keys(QUADRA_KITS_RECEITAS).forEach(k=>{ delete QUADRA_KITS_RECEITAS[k]; });
+  QUADRA_KITS.length=0;
+  QUADRA_PRODUTOS.length=0;
+
+  // Aplicar kits do Firebase
   kitsCustom.forEach(k=>{
     if(k.nome&&k.ingredientes){
       QUADRA_KITS_RECEITAS[k.nome]={
         ingredientes:k.ingredientes,
         totalKg:k.totalKg||k.ingredientes.reduce((s,i)=>s+(i.qtd||0),0)
       };
-      // Adicionar ao QUADRA_KITS array se não existir
       if(!QUADRA_KITS.includes(k.nome)) QUADRA_KITS.push(k.nome);
+      // Atualizar QUADRA_KIT_MAPPING — mapear nome do produto.kit (vários casos) para o nome do kit
+      // Adicionar tanto a chave exata quanto variações comuns (lowercase, capitalize)
+      QUADRA_KIT_MAPPING[k.nome]=k.nome;
+      // Mapeamento case-insensitive: tudo que cair em LowerCase deve voltar como o nome real
     }
   });
-  // Produtos: cada produto do Firebase é adicionado ou substitui
+
+  // Aplicar produtos do Firebase
   produtosCustom.forEach(p=>{
     if(p.nome&&p.kit){
-      const existing=QUADRA_PRODUTOS.findIndex(x=>x.cod===p.cod||x.nome===p.nome);
-      const novoProd={cod:p.cod||'',nome:p.nome,kit:p.kit,kgPacote:p.kgPacote||0};
-      if(existing>=0) QUADRA_PRODUTOS[existing]=novoProd;
-      else QUADRA_PRODUTOS.push(novoProd);
+      QUADRA_PRODUTOS.push({
+        cod:p.cod||'',
+        nome:p.nome,
+        kit:p.kit,
+        kgPacote:p.kgPacote||0,
+        qtdPct:p.qtdPct||0,
+        grMassa:p.grMassa||0,
+        grRecheio:p.grRecheio||0,
+        grRecheio2:p.grRecheio2||0
+      });
+      // Garantir que o p.kit também existe no MAPPING para resolver via lookup
+      if(!QUADRA_KIT_MAPPING[p.kit]){
+        // Procurar match case-insensitive em QUADRA_KITS_RECEITAS
+        const encontrado=Object.keys(QUADRA_KITS_RECEITAS).find(k=>k.toLowerCase()===p.kit.toLowerCase());
+        if(encontrado) QUADRA_KIT_MAPPING[p.kit]=encontrado;
+      }
     }
   });
 }
@@ -7855,6 +7875,9 @@ async function excluirKit(firestoreId,nomeKit){
   if(!confirm('Excluir o kit "'+nomeKit+'"?\n\nOs produtos derivados continuarão existindo, mas não terão receita associada.'))return;
   try{
     await deleteDoc(doc(db,'quadraKitsCustom',firestoreId));
+    // Re-render imediato para feedback visual
+    if(typeof renderAdmKits==='function') renderAdmKits();
+    setTimeout(()=>{ if(typeof renderAdmKits==='function') renderAdmKits(); },500);
     alert('Kit excluído.');
   } catch(e){
     console.error('Erro:',e);
@@ -7963,6 +7986,8 @@ async function excluirProduto(firestoreId,nome){
   if(!confirm('Excluir o produto "'+nome+'"?'))return;
   try{
     await deleteDoc(doc(db,'quadraProdutosCustom',firestoreId));
+    if(typeof renderAdmKits==='function') renderAdmKits();
+    setTimeout(()=>{ if(typeof renderAdmKits==='function') renderAdmKits(); },500);
     alert('Produto excluído.');
   } catch(e){
     console.error('Erro:',e);
