@@ -6980,45 +6980,82 @@ function renderAdmStatus(){
   if(!el)return;
 
   const hojeStr=hoje();
-  const ultimos7=[];
-  for(let i=0;i<7;i++){const d=new Date();d.setDate(d.getDate()-i);ultimos7.push(fmtData(d));}
+  // Olhar últimos 14 dias (suficiente sem ser exagero)
+  const ultimos14=[];
+  for(let i=0;i<14;i++){const d=new Date();d.setDate(d.getDate()-i);ultimos14.push(fmtData(d));}
 
-  // ===== CRITICAL =====
+  // ===== CRÍTICOS =====
   const criticos=[];
 
   // Embalagem pendente
-  const diasEmbPend=ultimos7.filter(data=>{
+  const diasEmbPend=ultimos14.filter(data=>{
     const regs=registros.filter(r=>r.data===data);
     return regs.some(r=>!r.embalagem||!r.embalagem.feito);
   });
   if(diasEmbPend.length>0) criticos.push({
     icone:'📦', titulo:'Embalagem com pendências',
-    msg:diasEmbPend.length+' dia(s) com produtos não embalados: '+diasEmbPend.slice(0,3).join(', ')+(diasEmbPend.length>3?'...':''),
+    msg:diasEmbPend.length+' dia(s) com produtos não embalados: '+diasEmbPend.slice(0,5).join(', ')+(diasEmbPend.length>5?'...':''),
     acao:'goToAdmin(\'s-emb-sel-data\')'
   });
 
   // Expedição pendente
-  const diasExpPend=ultimos7.filter(data=>{
+  const diasExpPend=ultimos14.filter(data=>{
     const regs=registros.filter(r=>r.data===data&&r.embalagem&&r.embalagem.feito);
     return regs.some(r=>{const e=r.expedicao||{totalLiberado:0};return e.totalLiberado<(r.embalagem.qtdEmbalada||r.qtd);});
   });
   if(diasExpPend.length>0) criticos.push({
     icone:'🚚', titulo:'Expedição com pendências',
-    msg:diasExpPend.length+' dia(s) com produtos não liberados: '+diasExpPend.slice(0,3).join(', ')+(diasExpPend.length>3?'...':''),
+    msg:diasExpPend.length+' dia(s) com produtos não liberados: '+diasExpPend.slice(0,5).join(', ')+(diasExpPend.length>5?'...':''),
     acao:'goToAdmin(\'s-exp-sel-data\')'
   });
 
-  // Presença sem registro hoje
-  const setoresKeys=['conf','coz','emb'];
-  const setoresNomes={conf:'Confeitaria',coz:'Cozinha',emb:'Embalagem'};
-  const presencasArray=Object.values(presencas||{});
-  const setoresSemPres=setoresKeys.filter(s=>{
-    return !presencasArray.some(p=>p.setor_key===s&&p.data===hojeStr);
+  // ===== PRESENÇA: dias que tiveram lançamento mas não têm registro de presença =====
+  const presencasArr=Array.isArray(presencas)?presencas:Object.values(presencas||{});
+
+  // CONFEITARIA — se houve registros de produção OU massas, tem que ter presença
+  const diasConfLanc=new Set();
+  registros.forEach(r=>{ if(r.origem!=='quadra') diasConfLanc.add(r.data); });
+  if(typeof regMassas!=='undefined'&&Array.isArray(regMassas)) regMassas.forEach(m=>diasConfLanc.add(m.data));
+  const diasConfSemPres=[...diasConfLanc].filter(data=>{
+    return ultimos14.includes(data)&&!presencasArr.some(p=>p.setor_key==='conf'&&p.data===data);
+  }).sort((a,b)=>{
+    const[da,ma,ya]=a.split('/'); const[db,mb,yb]=b.split('/');
+    return new Date(yb+'-'+mb+'-'+db)-new Date(ya+'-'+ma+'-'+da);
   });
-  if(setoresSemPres.length>0) criticos.push({
-    icone:'👥', titulo:'Presença não registrada hoje',
-    msg:setoresSemPres.map(s=>setoresNomes[s]).join(', '),
-    acao:null
+  if(diasConfSemPres.length>0) criticos.push({
+    icone:'👥', titulo:'Presença Confeitaria não registrada',
+    msg:diasConfSemPres.length+' dia(s) com lançamento sem presença: '+diasConfSemPres.slice(0,5).join(', ')+(diasConfSemPres.length>5?'...':''),
+    acao:'goToAdmin(\'s-presenca-reg-conf\')'
+  });
+
+  // COZINHA — se houve registros de recheios, tem que ter presença
+  const diasCozLanc=new Set();
+  if(typeof regRecheios!=='undefined'&&Array.isArray(regRecheios)) regRecheios.forEach(r=>diasCozLanc.add(r.data));
+  const diasCozSemPres=[...diasCozLanc].filter(data=>{
+    return ultimos14.includes(data)&&!presencasArr.some(p=>p.setor_key==='coz'&&p.data===data);
+  }).sort((a,b)=>{
+    const[da,ma,ya]=a.split('/'); const[db,mb,yb]=b.split('/');
+    return new Date(yb+'-'+mb+'-'+db)-new Date(ya+'-'+ma+'-'+da);
+  });
+  if(diasCozSemPres.length>0) criticos.push({
+    icone:'👥', titulo:'Presença Cozinha não registrada',
+    msg:diasCozSemPres.length+' dia(s) com lançamento sem presença: '+diasCozSemPres.slice(0,5).join(', ')+(diasCozSemPres.length>5?'...':''),
+    acao:'goToAdmin(\'s-presenca-reg-coz\')'
+  });
+
+  // EMBALAGEM — se houve produtos embalados (feito=true), tem que ter presença
+  const diasEmbLanc=new Set();
+  registros.forEach(r=>{ if(r.embalagem&&r.embalagem.feito) diasEmbLanc.add(r.data); });
+  const diasEmbSemPres=[...diasEmbLanc].filter(data=>{
+    return ultimos14.includes(data)&&!presencasArr.some(p=>p.setor_key==='emb'&&p.data===data);
+  }).sort((a,b)=>{
+    const[da,ma,ya]=a.split('/'); const[db,mb,yb]=b.split('/');
+    return new Date(yb+'-'+mb+'-'+db)-new Date(ya+'-'+ma+'-'+da);
+  });
+  if(diasEmbSemPres.length>0) criticos.push({
+    icone:'👥', titulo:'Presença Embalagem não registrada',
+    msg:diasEmbSemPres.length+' dia(s) com lançamento sem presença: '+diasEmbSemPres.slice(0,5).join(', ')+(diasEmbSemPres.length>5?'...':''),
+    acao:'goToAdmin(\'s-presenca-reg-emb\')'
   });
 
   // ===== AVISOS =====
@@ -7060,12 +7097,11 @@ function renderAdmStatus(){
 
   let html='';
 
-  // Banner se houver críticos
   if(criticos.length>0){
     html+='<div class="mc-banner"><span class="mc-banner-icon">⚠️</span><span class="mc-banner-text"><strong>'+criticos.length+' pendência'+(criticos.length>1?'s':'')+' crítica'+(criticos.length>1?'s':'')+'</strong> · Requer atenção imediata</span></div>';
   }
 
-  // KPIs - Atividade do dia
+  // KPIs
   html+='<div class="mc-kpi-grid">';
   html+='<div class="mc-kpi blue"><div class="mc-kpi-label">Produzido hoje</div><div class="mc-kpi-value">'+totalProdHoje+'</div><div class="mc-kpi-meta">'+hojeStr+'</div></div>';
   html+='<div class="mc-kpi amber"><div class="mc-kpi-label">Embalado</div><div class="mc-kpi-value">'+totalEmbHoje+'</div><div class="mc-kpi-meta">'+(totalProdHoje>0?Math.round(totalEmbHoje/totalProdHoje*100)+'% do dia':'-')+'</div></div>';
@@ -7073,15 +7109,13 @@ function renderAdmStatus(){
   html+='<div class="mc-kpi red"><div class="mc-kpi-label">Críticos</div><div class="mc-kpi-value">'+criticos.length+'</div><div class="mc-kpi-meta">'+(criticos.length===0?'tudo em dia':'requer atenção')+'</div></div>';
   html+='</div>';
 
-  // Status OK
   if(criticos.length===0&&avisos.length===0){
     html+='<div class="mc-sector-card" style="background:var(--mc-verde-claro);border-left:3px solid var(--mc-verde);padding:18px;cursor:default;">'+
       '<div class="mc-sector-icon green" style="background:white;">✓</div>'+
-      '<div class="mc-sector-info"><div class="mc-sector-title" style="color:#065f46;">Tudo em ordem!</div><div class="mc-sector-desc" style="color:#047857;">Nenhuma pendência crítica detectada nos últimos 7 dias.</div></div>'+
+      '<div class="mc-sector-info"><div class="mc-sector-title" style="color:#065f46;">Tudo em ordem!</div><div class="mc-sector-desc" style="color:#047857;">Nenhuma pendência crítica detectada nos últimos 14 dias.</div></div>'+
       '</div>';
   }
 
-  // Críticos
   if(criticos.length>0){
     html+='<div class="mc-section-header" style="color:#dc2626;">🔴 Pendências críticas ('+criticos.length+')</div>';
     criticos.forEach(c=>{
@@ -7093,7 +7127,6 @@ function renderAdmStatus(){
     });
   }
 
-  // Avisos
   if(avisos.length>0){
     html+='<div class="mc-section-header" style="color:#d97706;">🟡 Avisos ('+avisos.length+')</div>';
     avisos.forEach(c=>{
@@ -7105,12 +7138,12 @@ function renderAdmStatus(){
     });
   }
 
-  // Update sub
   const sub=document.getElementById('adm-status-sub');
   if(sub) sub.textContent=criticos.length+' crítico(s) · '+avisos.length+' aviso(s)';
 
   el.innerHTML=html;
 }
+
 
 
 
