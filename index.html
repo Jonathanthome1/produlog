@@ -2563,7 +2563,7 @@
     <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;">
       <div class="card" style="padding:14px;margin-bottom:14px;">
         <div class="card-label" style="margin-bottom:8px;">Pesquisar produto</div>
-        <input type="text" id="adm-buscar-input" placeholder="Digite o nome do produto..."
+        <input type="text" id="adm-buscar-input" placeholder="Digite nome ou código do produto..."
           oninput="renderBuscarProdutoDebounced()" autocomplete="off"
           style="font-size:15px;width:100%;" list="adm-buscar-list" />
         <datalist id="adm-buscar-list"></datalist>
@@ -2917,7 +2917,7 @@
     <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;">
       <div class="card" style="padding:14px;margin-bottom:14px;">
         <div class="card-label" style="margin-bottom:8px;">Pesquisar produto</div>
-        <input type="text" id="adm-buscar-input" placeholder="Digite o nome do produto..."
+        <input type="text" id="adm-buscar-input" placeholder="Digite nome ou código do produto..."
           oninput="renderBuscarProdutoDebounced()" autocomplete="off"
           style="font-size:15px;width:100%;" list="adm-buscar-list" />
         <datalist id="adm-buscar-list"></datalist>
@@ -3206,7 +3206,7 @@
     <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;">
       <div class="card" style="padding:14px;margin-bottom:14px;">
         <div class="card-label" style="margin-bottom:8px;">Pesquisar produto</div>
-        <input type="text" id="adm-buscar-input" placeholder="Digite o nome do produto..."
+        <input type="text" id="adm-buscar-input" placeholder="Digite nome ou código do produto..."
           oninput="renderBuscarProdutoDebounced()" autocomplete="off"
           style="font-size:15px;width:100%;" list="adm-buscar-list" />
         <datalist id="adm-buscar-list"></datalist>
@@ -3484,7 +3484,7 @@
     <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;">
       <div class="card" style="padding:14px;margin-bottom:14px;">
         <div class="card-label" style="margin-bottom:8px;">Pesquisar produto</div>
-        <input type="text" id="adm-buscar-input" placeholder="Digite o nome do produto..."
+        <input type="text" id="adm-buscar-input" placeholder="Digite nome ou código do produto..."
           oninput="renderBuscarProdutoDebounced()" autocomplete="off"
           style="font-size:15px;width:100%;" list="adm-buscar-list" />
         <datalist id="adm-buscar-list"></datalist>
@@ -8145,8 +8145,27 @@ function renderAdmStatus(){
 function renderBuscarProdutoDatalist(){
   const dl=document.getElementById('adm-buscar-list');
   if(!dl)return;
-  const nomes=[...new Set(registros.map(r=>r.produto))].filter(Boolean).sort();
-  dl.innerHTML=nomes.map(n=>'<option value="'+n.replace(/"/g,'&quot;')+'">').join('');
+  // Sugestões: produtos que JÁ foram lançados (de registros) + cadastro completo (PRODUTOS)
+  const sugestoes=new Map(); // chave: codigo+nome -> texto a mostrar
+  // Nomes dos registros
+  registros.forEach(r=>{
+    if(r.produto){
+      // Tentar achar código no PRODUTOS
+      const p=PRODUTOS.find(x=>x.nome===r.produto);
+      const cod=p&&p.cod?p.cod:'';
+      const txt=cod?cod+' - '+r.produto:r.produto;
+      sugestoes.set(r.produto,txt);
+    }
+  });
+  // Adiciona produtos cadastrados
+  PRODUTOS.forEach(p=>{
+    if(p.nome){
+      const txt=p.cod?p.cod+' - '+p.nome:p.nome;
+      sugestoes.set(p.nome,txt);
+    }
+  });
+  const opts=[...sugestoes.values()].sort();
+  dl.innerHTML=opts.map(t=>'<option value="'+t.replace(/"/g,'&quot;')+'">').join('');
 }
 
 
@@ -8168,8 +8187,28 @@ function renderBuscarProduto(){
   }
   // Normalize for accent-insensitive search
   const norm=s=>(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
-  const qN=norm(q);
-  const matches=registros.filter(r=>norm(r.produto).includes(qN));
+  // Permite buscar por "código - nome" do datalist, extrair só a parte relevante
+  let qLimpo=q;
+  // Se digitou no formato "123 - NOME", separar
+  const m=q.match(/^(\S+)\s*-\s*(.+)$/);
+  let qCod=null, qNome=null;
+  if(m){ qCod=m[1].trim(); qNome=m[2].trim(); }
+  const qN=norm(qLimpo);
+  const qCodN=qCod?norm(qCod):'';
+
+  // Procura nos registros
+  let matches=registros.filter(r=>{
+    if(norm(r.produto).includes(qN)) return true;
+    // Resolver código pelo PRODUTOS
+    if(qCod){
+      const p=PRODUTOS.find(x=>x.nome===r.produto);
+      if(p&&p.cod===qCod) return true;
+    }
+    // Buscar SÓ por código (sem ' - ' digitado)
+    const prodFromCode=PRODUTOS.find(x=>norm(x.cod||'')===qN);
+    if(prodFromCode&&r.produto===prodFromCode.nome) return true;
+    return false;
+  });
   if(!matches.length){
     el.innerHTML='<div class="empty" style="padding:40px 20px;color:var(--text-secondary);font-size:14px;">Nenhum produto encontrado para <strong>"'+q+'"</strong></div>';
     return;
@@ -8219,61 +8258,49 @@ function renderBuscarProduto(){
     html+='</div>';
 
     // ===== PREVISÃO DO PLANO DA SEMANA =====
-    let previsoes=[];
+    // Estrutura real: plano.itens[diaSemana] = [{nome, qtdPacotes}, ...]
+    let previsoes=[]; // {semana, dia, qtd}
     if(typeof planos!=='undefined'&&Array.isArray(planos)){
-      const norm=s=>(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();
-      const prodNorm=norm(produto);
+      const normP=s=>(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();
+      const prodNorm=normP(produto);
       planos.forEach(plano=>{
-        if(!plano.itens) return;
-        // plano.itens pode ter setores ('conf','coz') ou diretamente dias
-        Object.keys(plano.itens).forEach(setorOuDia=>{
-          const sub=plano.itens[setorOuDia];
-          if(!sub||typeof sub!=='object') return;
-          // Caso 1: sub é um dia diretamente (com produtos)
-          // Caso 2: sub é um setor com dias dentro
-          Object.keys(sub).forEach(diaOuProduto=>{
-            const valor=sub[diaOuProduto];
-            // Se valor é número, então diaOuProduto é nome de produto
-            if(typeof valor==='number'||typeof valor==='string'){
-              if(norm(diaOuProduto)===prodNorm||norm(diaOuProduto).includes(prodNorm)){
-                const qtd=parseFloat(valor)||0;
-                if(qtd>0) previsoes.push({semana:plano.semana||'',dia:setorOuDia,qtd:qtd,setor:''});
-              }
-            } else if(typeof valor==='object'){
-              // valor é um objeto de produtos -> qtd
-              Object.keys(valor).forEach(p=>{
-                if(norm(p)===prodNorm||norm(p).includes(prodNorm)){
-                  const qtd=parseFloat(valor[p])||0;
-                  if(qtd>0) previsoes.push({semana:plano.semana||'',dia:diaOuProduto,qtd:qtd,setor:setorOuDia});
-                }
-              });
+        if(!plano.itens||typeof plano.itens!=='object') return;
+        Object.keys(plano.itens).forEach(dia=>{
+          const arr=plano.itens[dia];
+          if(!Array.isArray(arr)) return;
+          arr.forEach(item=>{
+            if(!item||!item.nome) return;
+            // Match exato OU includes
+            if(normP(item.nome)===prodNorm||normP(item.nome).includes(prodNorm)){
+              const qtd=parseInt(item.qtdPacotes)||0;
+              if(qtd>0) previsoes.push({semana:plano.semana||'-',dia:dia,qtd:qtd});
             }
           });
         });
       });
     }
 
-    // Render previsão (sempre — mostrando "sem previsão" se vazio)
+    // Render previsão
     html+='<div style="padding:10px 16px;background:rgba(124,58,237,0.06);border-bottom:1px solid var(--border);">';
-    html+='<div style="font-size:11px;color:var(--mc-roxo);text-transform:uppercase;letter-spacing:0.04em;font-weight:600;margin-bottom:4px;">📅 Previsão de Produção (Plano)</div>';
+    html+='<div style="font-size:11px;color:var(--mc-roxo);text-transform:uppercase;letter-spacing:0.04em;font-weight:600;margin-bottom:6px;">📅 Previsão de Produção (Plano)</div>';
     if(previsoes.length>0){
-      // Agrupar por semana e somar
-      const totais={};
+      // Agrupar por semana
+      const porSemana={};
       previsoes.forEach(p=>{
-        const k=p.semana||'sem-data';
-        if(!totais[k]) totais[k]={qtd:0,detalhes:[]};
-        totais[k].qtd+=p.qtd;
-        totais[k].detalhes.push(p);
+        if(!porSemana[p.semana]) porSemana[p.semana]={total:0,dias:[]};
+        porSemana[p.semana].total+=p.qtd;
+        porSemana[p.semana].dias.push({dia:p.dia,qtd:p.qtd});
       });
-      const semanas=Object.keys(totais).sort();
+      const semanas=Object.keys(porSemana).sort().reverse(); // mais recentes primeiro
       semanas.forEach(s=>{
-        const d=totais[s];
-        html+='<div style="font-size:13px;color:var(--text-primary);margin-top:4px;">';
-        html+='<strong>'+s+':</strong> '+d.qtd+' pacote(s) planejado(s)';
-        if(d.detalhes.length>1){
-          const partes=d.detalhes.map(p=>p.dia+': '+p.qtd).join(' · ');
-          html+='<div style="font-size:11px;color:var(--text-secondary);margin-top:2px;">'+partes+'</div>';
-        }
+        const d=porSemana[s];
+        html+='<div style="margin-bottom:8px;padding:8px 10px;background:var(--bg-primary);border-radius:6px;border-left:2px solid var(--mc-roxo);">';
+        html+='<div style="font-size:13px;color:var(--text-primary);"><strong>Semana '+s+':</strong> <span style="color:var(--mc-roxo);font-weight:700;">'+d.total+' pacote(s)</span></div>';
+        // Ordenar dias da semana
+        const ordemDias=['Segunda','Terça','Quarta','Quinta','Sexta','Sábado','Domingo'];
+        d.dias.sort((a,b)=>ordemDias.indexOf(a.dia)-ordemDias.indexOf(b.dia));
+        const partes=d.dias.map(x=>x.dia+': <strong>'+x.qtd+'</strong>').join(' · ');
+        html+='<div style="font-size:11px;color:var(--text-secondary);margin-top:3px;">'+partes+'</div>';
         html+='</div>';
       });
     } else {
