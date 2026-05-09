@@ -4923,7 +4923,9 @@ function renderColabRow(i, c){
       <input type="text" id="colab-nome-${i}" value="${c.nome||''}" placeholder="Nome do colaborador" style="font-size:14px;padding:8px;margin-bottom:6px;" oninput="updateColab(${i},'nome',this.value)" />
       <select id="colab-status-${i}" style="font-size:14px;padding:8px;margin-bottom:6px;" onchange="updateColab(${i},'status',this.value)">
         <option value="Faltou" ${c.status==='Faltou'?'selected':''}>❌ Faltou</option>
+        <option value="Chegou mais tarde" ${c.status==='Chegou mais tarde'?'selected':''}>⏰ Chegou mais tarde</option>
         <option value="Saiu mais cedo" ${c.status==='Saiu mais cedo'?'selected':''}>🕐 Saiu mais cedo</option>
+        <option value="Férias" ${c.status==='Férias'?'selected':''}>🏖️ Férias</option>
       </select>
       <input type="text" id="colab-obs-${i}" value="${c.obs||''}" placeholder="Observação (opcional)" style="font-size:14px;padding:8px;" oninput="updateColab(${i},'obs',this.value)" />
     </div>
@@ -8214,6 +8216,69 @@ function renderBuscarProduto(){
     html+='<div><div style="font-size:10px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.04em;font-weight:600;">Unidades</div><div style="font-size:18px;font-weight:700;color:var(--mc-azul);">'+totalUnidades+'</div></div>';
     html+='<div><div style="font-size:10px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.04em;font-weight:600;">Embalado</div><div style="font-size:18px;font-weight:700;color:'+(embPend>0?'var(--mc-laranja)':'var(--mc-verde)')+';">'+totalEmb+'</div></div>';
     html+='<div><div style="font-size:10px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.04em;font-weight:600;">Liberado</div><div style="font-size:18px;font-weight:700;color:'+(expPend>0?'var(--mc-laranja)':'var(--mc-verde)')+';">'+totalLib+'</div></div>';
+    html+='</div>';
+
+    // ===== PREVISÃO DO PLANO DA SEMANA =====
+    let previsoes=[];
+    if(typeof planos!=='undefined'&&Array.isArray(planos)){
+      const norm=s=>(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();
+      const prodNorm=norm(produto);
+      planos.forEach(plano=>{
+        if(!plano.itens) return;
+        // plano.itens pode ter setores ('conf','coz') ou diretamente dias
+        Object.keys(plano.itens).forEach(setorOuDia=>{
+          const sub=plano.itens[setorOuDia];
+          if(!sub||typeof sub!=='object') return;
+          // Caso 1: sub é um dia diretamente (com produtos)
+          // Caso 2: sub é um setor com dias dentro
+          Object.keys(sub).forEach(diaOuProduto=>{
+            const valor=sub[diaOuProduto];
+            // Se valor é número, então diaOuProduto é nome de produto
+            if(typeof valor==='number'||typeof valor==='string'){
+              if(norm(diaOuProduto)===prodNorm||norm(diaOuProduto).includes(prodNorm)){
+                const qtd=parseFloat(valor)||0;
+                if(qtd>0) previsoes.push({semana:plano.semana||'',dia:setorOuDia,qtd:qtd,setor:''});
+              }
+            } else if(typeof valor==='object'){
+              // valor é um objeto de produtos -> qtd
+              Object.keys(valor).forEach(p=>{
+                if(norm(p)===prodNorm||norm(p).includes(prodNorm)){
+                  const qtd=parseFloat(valor[p])||0;
+                  if(qtd>0) previsoes.push({semana:plano.semana||'',dia:diaOuProduto,qtd:qtd,setor:setorOuDia});
+                }
+              });
+            }
+          });
+        });
+      });
+    }
+
+    // Render previsão (sempre — mostrando "sem previsão" se vazio)
+    html+='<div style="padding:10px 16px;background:rgba(124,58,237,0.06);border-bottom:1px solid var(--border);">';
+    html+='<div style="font-size:11px;color:var(--mc-roxo);text-transform:uppercase;letter-spacing:0.04em;font-weight:600;margin-bottom:4px;">📅 Previsão de Produção (Plano)</div>';
+    if(previsoes.length>0){
+      // Agrupar por semana e somar
+      const totais={};
+      previsoes.forEach(p=>{
+        const k=p.semana||'sem-data';
+        if(!totais[k]) totais[k]={qtd:0,detalhes:[]};
+        totais[k].qtd+=p.qtd;
+        totais[k].detalhes.push(p);
+      });
+      const semanas=Object.keys(totais).sort();
+      semanas.forEach(s=>{
+        const d=totais[s];
+        html+='<div style="font-size:13px;color:var(--text-primary);margin-top:4px;">';
+        html+='<strong>'+s+':</strong> '+d.qtd+' pacote(s) planejado(s)';
+        if(d.detalhes.length>1){
+          const partes=d.detalhes.map(p=>p.dia+': '+p.qtd).join(' · ');
+          html+='<div style="font-size:11px;color:var(--text-secondary);margin-top:2px;">'+partes+'</div>';
+        }
+        html+='</div>';
+      });
+    } else {
+      html+='<div style="font-size:12px;color:var(--text-secondary);font-style:italic;">Sem previsão no plano de produção até o momento.</div>';
+    }
     html+='</div>';
 
     // Pendências
