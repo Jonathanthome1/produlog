@@ -2548,7 +2548,7 @@
       <div class="card" style="padding:14px;margin-bottom:14px;">
         <div class="card-label" style="margin-bottom:8px;">Pesquisar produto</div>
         <input type="text" id="adm-buscar-input" placeholder="Digite o nome do produto..."
-          oninput="renderBuscarProduto()" autocomplete="off"
+          oninput="renderBuscarProdutoDebounced()" autocomplete="off"
           style="font-size:15px;width:100%;" list="adm-buscar-list" />
         <datalist id="adm-buscar-list"></datalist>
         <div style="font-size:11px;color:var(--text-secondary);margin-top:6px;">Aparecem sugestões baseadas nos produtos já lançados</div>
@@ -2840,7 +2840,7 @@
       <div class="card" style="padding:14px;margin-bottom:14px;">
         <div class="card-label" style="margin-bottom:8px;">Pesquisar produto</div>
         <input type="text" id="adm-buscar-input" placeholder="Digite o nome do produto..."
-          oninput="renderBuscarProduto()" autocomplete="off"
+          oninput="renderBuscarProdutoDebounced()" autocomplete="off"
           style="font-size:15px;width:100%;" list="adm-buscar-list" />
         <datalist id="adm-buscar-list"></datalist>
         <div style="font-size:11px;color:var(--text-secondary);margin-top:6px;">Aparecem sugestões baseadas nos produtos já lançados</div>
@@ -3067,7 +3067,7 @@
       <div class="card" style="padding:14px;margin-bottom:14px;">
         <div class="card-label" style="margin-bottom:8px;">Pesquisar produto</div>
         <input type="text" id="adm-buscar-input" placeholder="Digite o nome do produto..."
-          oninput="renderBuscarProduto()" autocomplete="off"
+          oninput="renderBuscarProdutoDebounced()" autocomplete="off"
           style="font-size:15px;width:100%;" list="adm-buscar-list" />
         <datalist id="adm-buscar-list"></datalist>
         <div style="font-size:11px;color:var(--text-secondary);margin-top:6px;">Aparecem sugestões baseadas nos produtos já lançados</div>
@@ -3283,7 +3283,7 @@
       <div class="card" style="padding:14px;margin-bottom:14px;">
         <div class="card-label" style="margin-bottom:8px;">Pesquisar produto</div>
         <input type="text" id="adm-buscar-input" placeholder="Digite o nome do produto..."
-          oninput="renderBuscarProduto()" autocomplete="off"
+          oninput="renderBuscarProdutoDebounced()" autocomplete="off"
           style="font-size:15px;width:100%;" list="adm-buscar-list" />
         <datalist id="adm-buscar-list"></datalist>
         <div style="font-size:11px;color:var(--text-secondary);margin-top:6px;">Aparecem sugestões baseadas nos produtos já lançados</div>
@@ -3575,7 +3575,7 @@ function atualizarTela(){
 
 function hoje(){return new Date().toLocaleDateString('pt-BR');}
 function agora(){return new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});}
-function diasUteis(n){const dias=[];const d=new Date();while(dias.length<n){if(d.getDay()!==0&&d.getDay()!==6)dias.push(new Date(d));d.setDate(d.getDate()-1);}return dias;}
+function diasUteis(n){const dias=[];const d=new Date();while(dias.length<n){if(d.getDay()!==0)dias.push(new Date(d));d.setDate(d.getDate()-1);}return dias;}
 function fmtData(d){return d.toLocaleDateString('pt-BR');}
 function labelDia(i){return['Hoje','Ontem','Anteontem'][i]||null;}
 function diaSemana(d){return['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'][d.getDay()];}
@@ -7748,6 +7748,14 @@ function renderBuscarProdutoDatalist(){
   dl.innerHTML=nomes.map(n=>'<option value="'+n.replace(/"/g,'&quot;')+'">').join('');
 }
 
+
+let _buscarProdTimer=null;
+function renderBuscarProdutoDebounced(){
+  if(_buscarProdTimer) clearTimeout(_buscarProdTimer);
+  _buscarProdTimer=setTimeout(()=>{ renderBuscarProduto(); _buscarProdTimer=null; },200);
+}
+window.renderBuscarProdutoDebounced=renderBuscarProdutoDebounced;
+
 function renderBuscarProduto(){
   const el=document.getElementById('adm-buscar-content');
   if(!el)return;
@@ -8316,7 +8324,7 @@ function renderAdmProdConf(){
 
   // Campo de busca
   html+='<div class="card" style="padding:14px;margin-bottom:14px;">';
-  html+='<input type="text" id="prod-conf-search" placeholder="🔍 Buscar produto..." value="'+_prodConfBuscaQuery.replace(/"/g,'&quot;')+'" oninput="_prodConfBuscaQuery=this.value;renderAdmProdConfList()" style="font-size:15px;width:100%;" />';
+  html+='<input type="text" id="prod-conf-search" placeholder="🔍 Buscar produto..." value="'+_prodConfBuscaQuery.replace(/"/g,'&quot;')+'" oninput="atualizarBuscaProdConf(this.value)" style="font-size:15px;width:100%;" />';
   html+='</div>';
 
   html+='<div id="adm-prod-conf-list"></div>';
@@ -8527,6 +8535,13 @@ async function migrarProdConfParaFirebase(){
     alert('Erro: '+e.message);
   }
 }
+
+
+function atualizarBuscaProdConf(valor){
+  _prodConfBuscaQuery=valor||'';
+  renderAdmProdConfList();
+}
+window.atualizarBuscaProdConf=atualizarBuscaProdConf;
 
 window.renderAdmProdConf=renderAdmProdConf;
 window.renderAdmProdConfList=renderAdmProdConfList;
