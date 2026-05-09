@@ -8257,54 +8257,43 @@ function renderBuscarProduto(){
     html+='<div><div style="font-size:10px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.04em;font-weight:600;">Liberado</div><div style="font-size:18px;font-weight:700;color:'+(expPend>0?'var(--mc-laranja)':'var(--mc-verde)')+';">'+totalLib+'</div></div>';
     html+='</div>';
 
-    // ===== PREVISÃO DO PLANO DA SEMANA =====
-    // Estrutura real: plano.itens[diaSemana] = [{nome, qtdPacotes}, ...]
+    // ===== PREVISÃO DO PLANO DA SEMANA (apenas plano mais recente) =====
     let previsoes=[]; // {semana, dia, qtd}
-    if(typeof planos!=='undefined'&&Array.isArray(planos)){
+    let planoUsado=null;
+    if(typeof planos!=='undefined'&&Array.isArray(planos)&&planos.length>0){
+      // planos já vem ordenado por timestamp desc (mais recente primeiro)
+      planoUsado=planos[0];
       const normP=s=>(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();
       const prodNorm=normP(produto);
-      planos.forEach(plano=>{
-        if(!plano.itens||typeof plano.itens!=='object') return;
-        Object.keys(plano.itens).forEach(dia=>{
-          const arr=plano.itens[dia];
+      if(planoUsado.itens&&typeof planoUsado.itens==='object'){
+        Object.keys(planoUsado.itens).forEach(dia=>{
+          const arr=planoUsado.itens[dia];
           if(!Array.isArray(arr)) return;
           arr.forEach(item=>{
             if(!item||!item.nome) return;
-            // Match exato OU includes
             if(normP(item.nome)===prodNorm||normP(item.nome).includes(prodNorm)){
               const qtd=parseInt(item.qtdPacotes)||0;
-              if(qtd>0) previsoes.push({semana:plano.semana||'-',dia:dia,qtd:qtd});
+              if(qtd>0) previsoes.push({semana:planoUsado.semana||'-',dia:dia,qtd:qtd});
             }
           });
         });
-      });
+      }
     }
 
-    // Render previsão
+    // Render previsão (apenas plano mais recente)
     html+='<div style="padding:10px 16px;background:rgba(124,58,237,0.06);border-bottom:1px solid var(--border);">';
-    html+='<div style="font-size:11px;color:var(--mc-roxo);text-transform:uppercase;letter-spacing:0.04em;font-weight:600;margin-bottom:6px;">📅 Previsão de Produção (Plano)</div>';
+    html+='<div style="font-size:11px;color:var(--mc-roxo);text-transform:uppercase;letter-spacing:0.04em;font-weight:600;margin-bottom:6px;">📅 Previsão de Produção'+(planoUsado?' · Semana '+(planoUsado.semana||'-'):'')+'</div>';
     if(previsoes.length>0){
-      // Agrupar por semana
-      const porSemana={};
-      previsoes.forEach(p=>{
-        if(!porSemana[p.semana]) porSemana[p.semana]={total:0,dias:[]};
-        porSemana[p.semana].total+=p.qtd;
-        porSemana[p.semana].dias.push({dia:p.dia,qtd:p.qtd});
-      });
-      const semanas=Object.keys(porSemana).sort().reverse(); // mais recentes primeiro
-      semanas.forEach(s=>{
-        const d=porSemana[s];
-        html+='<div style="margin-bottom:8px;padding:8px 10px;background:var(--bg-primary);border-radius:6px;border-left:2px solid var(--mc-roxo);">';
-        html+='<div style="font-size:13px;color:var(--text-primary);"><strong>Semana '+s+':</strong> <span style="color:var(--mc-roxo);font-weight:700;">'+d.total+' pacote(s)</span></div>';
-        // Ordenar dias da semana
-        const ordemDias=['Segunda','Terça','Quarta','Quinta','Sexta','Sábado','Domingo'];
-        d.dias.sort((a,b)=>ordemDias.indexOf(a.dia)-ordemDias.indexOf(b.dia));
-        const partes=d.dias.map(x=>x.dia+': <strong>'+x.qtd+'</strong>').join(' · ');
-        html+='<div style="font-size:11px;color:var(--text-secondary);margin-top:3px;">'+partes+'</div>';
-        html+='</div>';
-      });
+      const total=previsoes.reduce((s,p)=>s+p.qtd,0);
+      html+='<div style="padding:8px 10px;background:var(--bg-primary);border-radius:6px;border-left:2px solid var(--mc-roxo);">';
+      html+='<div style="font-size:14px;color:var(--text-primary);"><strong>Total:</strong> <span style="color:var(--mc-roxo);font-weight:700;">'+total+' pacote(s)</span></div>';
+      const ordemDias=['Segunda','Terça','Quarta','Quinta','Sexta','Sábado','Domingo'];
+      previsoes.sort((a,b)=>ordemDias.indexOf(a.dia)-ordemDias.indexOf(b.dia));
+      const partes=previsoes.map(x=>x.dia+': <strong>'+x.qtd+'</strong>').join(' · ');
+      html+='<div style="font-size:11px;color:var(--text-secondary);margin-top:4px;">'+partes+'</div>';
+      html+='</div>';
     } else {
-      html+='<div style="font-size:12px;color:var(--text-secondary);font-style:italic;">Sem previsão no plano de produção até o momento.</div>';
+      html+='<div style="font-size:12px;color:var(--text-secondary);font-style:italic;">Sem previsão no plano de produção'+(planoUsado?' da semana '+(planoUsado.semana||'-'):'')+'.</div>';
     }
     html+='</div>';
 
