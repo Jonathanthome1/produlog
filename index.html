@@ -8271,7 +8271,8 @@ function renderBuscarProduto(){
           if(!Array.isArray(arr)) return;
           arr.forEach(item=>{
             if(!item||!item.nome) return;
-            if(normP(item.nome)===prodNorm||normP(item.nome).includes(prodNorm)){
+            // Match EXATO: nome do produto no plano deve ser idêntico ao produto do card
+            if(normP(item.nome)===prodNorm){
               const qtd=parseInt(item.qtdPacotes)||0;
               if(qtd>0) previsoes.push({semana:planoUsado.semana||'-',dia:dia,qtd:qtd});
             }
