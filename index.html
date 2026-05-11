@@ -5852,6 +5852,59 @@ async function gerarExcel(){
     const sheetR2=gerarAbaQuebra('r2','Recheio 2');
     if(sheetR2) XLSX.utils.book_append_sheet(wb,sheetR2,'Quebra Recheio 2');
 
+    // ============================================================
+    // ABA: VARIAÇÕES CONSOLIDADAS — 1 linha por produto/dia com todas as variações
+    // ============================================================
+    (function(){
+      const rows=[['Data','Código','Produto','Variação Massa %','Variação Recheio 1 %','Variação Recheio 2 %']];
+      resumoArr.forEach(x=>{
+        // Busca código
+        let cod='';
+        const pConf=PRODUTOS.find(p=>p.nome===x.produto);
+        if(pConf&&pConf.cod) cod=pConf.cod;
+        else {
+          const pQ=QUADRA_PRODUTOS.find(p=>p.nome===x.produto);
+          if(pQ&&pQ.cod) cod=pQ.cod;
+        }
+        const u=x.unidades||1;
+        const medM=x.massa*1000/u;
+        const medR1=x.r1*1000/u;
+        const medR2=x.r2*1000/u;
+        const varM=x.grMassa>0?((medM-x.grMassa)/x.grMassa*100):null;
+        const varR1=x.grR1>0?((medR1-x.grR1)/x.grR1*100):null;
+        const varR2=x.grR2>0?((medR2-x.grR2)/x.grR2*100):null;
+        // Pular se nada tem dados
+        if(varM===null&&varR1===null&&varR2===null) return;
+        const fmt=v=>v===null?'':(v>0?'+':'')+v.toFixed(1)+'%';
+        rows.push([x.data, cod, x.produto, fmt(varM), fmt(varR1), fmt(varR2)]);
+      });
+      if(rows.length===1) return;
+      const sheet=XLSX.utils.aoa_to_sheet(rows);
+      const ref=XLSX.utils.decode_range(sheet['!ref']);
+      // Header bold
+      for(let C=0;C<=ref.e.c;C++){
+        const cell=sheet[XLSX.utils.encode_cell({r:0,c:C})];
+        if(cell) cell.s={font:{bold:true}};
+      }
+      // Variação columns (D=3, E=4, F=5): destaque vermelho se >6%, verde se <=6%
+      [3,4,5].forEach(C=>{
+        for(let R=1;R<=ref.e.r;R++){
+          const cell=sheet[XLSX.utils.encode_cell({r:R,c:C})];
+          if(!cell||!cell.v||cell.v==='') continue;
+          // Parse percentual: '+5.0%' ou '-7.2%'
+          const v=parseFloat(String(cell.v).replace('%','').replace('+',''));
+          if(isNaN(v)) continue;
+          if(Math.abs(v)>6){
+            cell.s={fill:{fgColor:{rgb:'FFC7CE'},patternType:'solid'},font:{bold:true,color:{rgb:'9C0006'}}};
+          } else {
+            cell.s={font:{color:{rgb:'006100'}}};
+          }
+        }
+      });
+      sheet['!cols']=[{wch:10},{wch:10},{wch:32},{wch:16},{wch:18},{wch:18}];
+      XLSX.utils.book_append_sheet(wb,sheet,'Variações');
+    })();
+
     // ABA 2: MASSAS
     const mass=regMassas.filter(r=>inRange(r.data));
     const massRows=[['Data','Hora','Tipo de Massa','Quantidade (kg)','Observação','Editado em']];
