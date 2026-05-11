@@ -5769,6 +5769,89 @@ async function gerarExcel(){
     });
     XLSX.utils.book_append_sheet(wb,resumoSheet,'Resumo Diário');
 
+    // ============================================================
+    // ABAS DE QUEBRA (Massa, Recheio 1, Recheio 2) — 1 linha por produto/dia
+    // Foco: comparar média real x padrão com destaque vermelho >6%
+    // ============================================================
+    function gerarAbaQuebra(tipo, label){
+      // tipo: 'massa' | 'r1' | 'r2'
+      const rows=[['Data','Código','Produto','Pacotes Produzidos',label+' Padrão (gr/un)',label+' Média Real (gr/un)','Variação %']];
+      // Reaproveita resumoArr (já agrupado por dia + produto)
+      resumoArr.forEach(x=>{
+        // Acha código no PRODUTOS (Confeitaria) ou QUADRA_PRODUTOS
+        let cod='';
+        const pConf=PRODUTOS.find(p=>p.nome===x.produto);
+        if(pConf&&pConf.cod) cod=pConf.cod;
+        else {
+          const pQ=QUADRA_PRODUTOS.find(p=>p.nome===x.produto);
+          if(pQ&&pQ.cod) cod=pQ.cod;
+        }
+        const u=x.unidades||1;
+        let padrao=0, real=0;
+        if(tipo==='massa'){ padrao=x.grMassa||0; real=x.massa*1000/u; }
+        else if(tipo==='r1'){ padrao=x.grR1||0; real=x.r1*1000/u; }
+        else if(tipo==='r2'){ padrao=x.grR2||0; real=x.r2*1000/u; }
+        // Pular linhas sem dados (produto não usa esse tipo)
+        if(padrao<=0&&real<=0) return;
+        const varPct=padrao>0?((real-padrao)/padrao*100):null;
+        const varStr=varPct===null?'':(varPct>0?'+':'')+varPct.toFixed(1)+'%';
+        rows.push([
+          x.data, cod, x.produto, x.qtdPacotes,
+          padrao>0?+padrao.toFixed(2):'',
+          (padrao>0&&real>0)?+real.toFixed(2):'',
+          varStr
+        ]);
+      });
+      if(rows.length===1) return null; // sem dados
+      const sheet=XLSX.utils.aoa_to_sheet(rows);
+      const ref=XLSX.utils.decode_range(sheet['!ref']);
+      // Coluna padrão (E=4) = verde
+      for(let R=0;R<=ref.e.r;R++){
+        const cell=sheet[XLSX.utils.encode_cell({r:R,c:4})];
+        if(!cell)continue;
+        cell.s={fill:{fgColor:{rgb:'C6EFCE'},patternType:'solid'},font:{bold:R===0,color:{rgb:'006100'}}};
+      }
+      // Coluna média real (F=5) = amarelo
+      for(let R=0;R<=ref.e.r;R++){
+        const cell=sheet[XLSX.utils.encode_cell({r:R,c:5})];
+        if(!cell)continue;
+        cell.s={fill:{fgColor:{rgb:'FFEB9C'},patternType:'solid'},font:{bold:R===0,color:{rgb:'9C5700'}}};
+      }
+      // Coluna variação (G=6) = vermelho se >6%, verde se <=6%
+      for(let R=1;R<=ref.e.r;R++){
+        const padCell=sheet[XLSX.utils.encode_cell({r:R,c:4})];
+        const medCell=sheet[XLSX.utils.encode_cell({r:R,c:5})];
+        const varCell=sheet[XLSX.utils.encode_cell({r:R,c:6})];
+        if(!varCell)continue;
+        const padVal=padCell?parseFloat(padCell.v):0;
+        const medVal=medCell?parseFloat(medCell.v):0;
+        if(padVal>0&&medVal>0){
+          const v=Math.abs((medVal-padVal)/padVal*100);
+          if(v>6){
+            varCell.s={fill:{fgColor:{rgb:'FFC7CE'},patternType:'solid'},font:{bold:true,color:{rgb:'9C0006'}}};
+          } else {
+            varCell.s={font:{color:{rgb:'006100'}}};
+          }
+        }
+      }
+      // Header bold
+      for(let C=0;C<=ref.e.c;C++){
+        const cell=sheet[XLSX.utils.encode_cell({r:0,c:C})];
+        if(cell&&!cell.s) cell.s={font:{bold:true}};
+        else if(cell&&cell.s) cell.s.font={...(cell.s.font||{}),bold:true};
+      }
+      // Column widths
+      sheet['!cols']=[{wch:10},{wch:10},{wch:30},{wch:10},{wch:14},{wch:14},{wch:11}];
+      return sheet;
+    }
+
+    const sheetMassa=gerarAbaQuebra('massa','Massa');
+    if(sheetMassa) XLSX.utils.book_append_sheet(wb,sheetMassa,'Quebra Massa');
+    const sheetR1=gerarAbaQuebra('r1','Recheio 1');
+    if(sheetR1) XLSX.utils.book_append_sheet(wb,sheetR1,'Quebra Recheio 1');
+    const sheetR2=gerarAbaQuebra('r2','Recheio 2');
+    if(sheetR2) XLSX.utils.book_append_sheet(wb,sheetR2,'Quebra Recheio 2');
+
     // ABA 2: MASSAS
     const mass=regMassas.filter(r=>inRange(r.data));
     const massRows=[['Data','Hora','Tipo de Massa','Quantidade (kg)','Observação','Editado em']];
@@ -7313,11 +7396,7 @@ async function excluirRegQuadra(fid){
 
 
 // ===== CONTROLE DE FARINHAS =====
-let FARINHAS_CONFIG = {
-  'Estoque de Dentro': ['Farinha Prifal','Farinha M Dias','Farinha Padeiro','Farinha Nevada Super'],
-  'Estoque da Quadra': ['Farinha M Dias','Farinha Prifal'],
-  'Estoque Confeitaria': ['Farinha Nevada Super']
-};
+let FARINHAS_CONFIG = {};
 const KG_POR_SC = 25;
 
 let farinhaContagens = []; // Firestore 'farinhaContagens'
@@ -7699,7 +7778,7 @@ function aplicarContagemItensFirebase(){
 
 // ===== FARINHAS CONFIG (Firebase) =====
 let farinhasConfigFirebase=[]; // Firestore 'farinhasConfig' - cada doc: {estoque, farinha}
-const _FARINHAS_CONFIG_ORIGINAL=JSON.parse(JSON.stringify(FARINHAS_CONFIG));
+const _FARINHAS_CONFIG_ORIGINAL={};
 
 onSnapshot(collection(db,'farinhasConfig'), snap=>{
   try{
