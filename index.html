@@ -5856,7 +5856,7 @@ async function gerarExcel(){
     // ABA: VARIAÇÕES CONSOLIDADAS — 1 linha por produto/dia com todas as variações
     // ============================================================
     (function(){
-      const rows=[['Data','Código','Produto','Variação Massa %','Variação Recheio 1 %','Variação Recheio 2 %']];
+      const rows=[['Data','Código','Produto','Variação Massa %','Variação Recheio 1 %','Variação Recheio 2 %','Variação Total %']];
       resumoArr.forEach(x=>{
         // Busca código
         let cod='';
@@ -5873,10 +5873,14 @@ async function gerarExcel(){
         const varM=x.grMassa>0?((medM-x.grMassa)/x.grMassa*100):null;
         const varR1=x.grR1>0?((medR1-x.grR1)/x.grR1*100):null;
         const varR2=x.grR2>0?((medR2-x.grR2)/x.grR2*100):null;
+        // Variação total: comparar gramatura total (padrão x real) considerando todos os componentes do produto
+        const gramPadrao=(x.grMassa||0)+(x.grR1||0)+(x.grR2||0);
+        const gramReal=medM+medR1+medR2;
+        const varTotal=gramPadrao>0?((gramReal-gramPadrao)/gramPadrao*100):null;
         // Pular se nada tem dados
         if(varM===null&&varR1===null&&varR2===null) return;
         const fmt=v=>v===null?'':(v>0?'+':'')+v.toFixed(1)+'%';
-        rows.push([x.data, cod, x.produto, fmt(varM), fmt(varR1), fmt(varR2)]);
+        rows.push([x.data, cod, x.produto, fmt(varM), fmt(varR1), fmt(varR2), fmt(varTotal)]);
       });
       if(rows.length===1) return;
       const sheet=XLSX.utils.aoa_to_sheet(rows);
@@ -5886,8 +5890,8 @@ async function gerarExcel(){
         const cell=sheet[XLSX.utils.encode_cell({r:0,c:C})];
         if(cell) cell.s={font:{bold:true}};
       }
-      // Variação columns (D=3, E=4, F=5): destaque vermelho se >6%, verde se <=6%
-      [3,4,5].forEach(C=>{
+      // Variação columns (D=3, E=4, F=5, G=6 total): destaque vermelho se >6%, verde se <=6%
+      [3,4,5,6].forEach(C=>{
         for(let R=1;R<=ref.e.r;R++){
           const cell=sheet[XLSX.utils.encode_cell({r:R,c:C})];
           if(!cell||!cell.v||cell.v==='') continue;
@@ -5901,7 +5905,7 @@ async function gerarExcel(){
           }
         }
       });
-      sheet['!cols']=[{wch:10},{wch:10},{wch:32},{wch:16},{wch:18},{wch:18}];
+      sheet['!cols']=[{wch:10},{wch:10},{wch:32},{wch:16},{wch:18},{wch:18},{wch:16}];
       XLSX.utils.book_append_sheet(wb,sheet,'Variações');
     })();
 
