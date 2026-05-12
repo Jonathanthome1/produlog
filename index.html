@@ -771,6 +771,14 @@
           </div>
           <span class="mc-sector-arrow">›</span>
         </button>
+        <button class="mc-sector-card" onclick="goTo('s-prioridades')">
+          <div class="mc-sector-icon red">🚩</div>
+          <div class="mc-sector-info">
+            <div class="mc-sector-title">Prioridades</div>
+            <div class="mc-sector-desc">Lista de produtos prioritários</div>
+          </div>
+          <span class="mc-sector-arrow">›</span>
+        </button>
         <button class="mc-sector-card" style="border-left:3px solid var(--mc-roxo);" onclick="abrirPin('admin')">
           <div class="mc-sector-icon purple">📊</div>
           <div class="mc-sector-info">
@@ -1774,6 +1782,14 @@
           </div>
           <span class="mc-sector-arrow">›</span>
         </button>
+        <button class="mc-sector-card" onclick="goTo('s-devolucoes')">
+          <div class="mc-sector-icon red">↩️</div>
+          <div class="mc-sector-info">
+            <div class="mc-sector-title">Devoluções</div>
+            <div class="mc-sector-desc" id="devolucoes-badge">Produtos com problema para devolver</div>
+          </div>
+          <span class="mc-sector-arrow">›</span>
+        </button>
       </div>
     </div>
   </div>
@@ -2365,6 +2381,14 @@
         </div>
         <span class="mc-sector-arrow" style="color:var(--mc-indigo);">›</span>
       </button>
+      <button class="mc-sector-card" style="border-left:3px solid var(--mc-vermelho);margin-bottom:10px;background:linear-gradient(135deg, var(--bg-primary) 0%, var(--mc-vermelho-claro) 100%);" onclick="goTo('s-prioridades')">
+        <div class="mc-sector-icon red">🚩</div>
+        <div class="mc-sector-info">
+          <div class="mc-sector-title" style="color:var(--mc-vermelho);">Prioridades</div>
+          <div class="mc-sector-desc">Lista de produtos prioritários (paralelo à produção)</div>
+        </div>
+        <span class="mc-sector-arrow" style="color:var(--mc-vermelho);">›</span>
+      </button>
       <button class="mc-sector-card" style="border-left:3px solid var(--mc-dourado);margin-bottom:10px;background:linear-gradient(135deg, var(--bg-primary) 0%, var(--mc-dourado-claro) 100%);" onclick="goTo('s-adm-kits')">
         <div class="mc-sector-icon gold">🍞</div>
         <div class="mc-sector-info">
@@ -2778,6 +2802,96 @@
     <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;" id="adm-farinhas-cfg-content"></div>
   </div>
 
+  <!-- DEVOLUÇÕES -->
+  <div class="screen" id="s-devolucoes">
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="goTo('s-rafael-home')">‹</button>
+      <div class="mc-brand">
+        <div class="mc-brand-logo">MC</div>
+        <div class="mc-brand-text">
+          <div class="mc-brand-name">Monte Castelo</div>
+          <div class="mc-brand-sub">Devoluções</div>
+        </div>
+      </div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info">
+        <div class="mc-page-title">↩️ Devoluções</div>
+        <div class="mc-page-sub" id="devolucoes-sub">Produtos com problema</div>
+      </div>
+      <div class="mc-header-actions">
+        <button class="mc-act-btn-primary" onclick="goTo('s-devolucao-form')">+ Nova</button>
+      </div>
+    </div>
+    <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;" id="devolucoes-content"></div>
+  </div>
+
+  <div class="screen" id="s-devolucao-form">
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="goTo('s-devolucoes')">‹</button>
+      <div class="mc-brand">
+        <div class="mc-brand-logo">MC</div>
+        <div class="mc-brand-text">
+          <div class="mc-brand-name">Monte Castelo</div>
+          <div class="mc-brand-sub">Devolução</div>
+        </div>
+      </div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info">
+        <div class="mc-page-title" id="devolucao-form-title">Nova Devolução</div>
+        <div class="mc-page-sub">Preencha os dados</div>
+      </div>
+      <div class="mc-header-actions">
+        <button class="mc-act-btn-primary" onclick="salvarDevolucao()">Salvar</button>
+      </div>
+    </div>
+    <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;" id="devolucao-form-content"></div>
+  </div>
+
+  <!-- PRIORIDADES -->
+  <div class="screen" id="s-prioridades">
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="window.prioridadesOrigem?goTo(window.prioridadesOrigem):(window.adminMode?goTo('s-adm-hub'):goTo('s-inicio'))">‹</button>
+      <div class="mc-brand">
+        <div class="mc-brand-logo">MC</div>
+        <div class="mc-brand-text">
+          <div class="mc-brand-name">Monte Castelo</div>
+          <div class="mc-brand-sub">Prioridades</div>
+        </div>
+      </div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info">
+        <div class="mc-page-title">🚩 Prioridades</div>
+        <div class="mc-page-sub" id="prioridades-sub"></div>
+      </div>
+      <div class="mc-header-actions">
+        <button class="mc-act-btn-primary" onclick="goTo('s-prioridade-form')">+ Nova</button>
+      </div>
+    </div>
+    <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;" id="prioridades-content"></div>
+  </div>
+
+  <div class="screen" id="s-prioridade-form">
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="goTo('s-prioridades')">‹</button>
+      <div class="mc-brand">
+        <div class="mc-brand-logo">MC</div>
+        <div class="mc-brand-text">
+          <div class="mc-brand-name">Monte Castelo</div>
+          <div class="mc-brand-sub">Prioridade</div>
+        </div>
+      </div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info">
+        <div class="mc-page-title">+ Nova Prioridade</div>
+        <div class="mc-page-sub">Produto e quantidade</div>
+      </div>
+      <div class="mc-header-actions">
+        <button class="mc-act-btn-primary" onclick="salvarPrioridade()">Salvar</button>
+      </div>
+    </div>
+    <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;" id="prioridade-form-content"></div>
+  </div>
+
 <!-- ADMIN STATUS PANEL -->
   <div class="screen" id="s-adm-status">
     <div class="mc-header">
@@ -3152,6 +3266,96 @@
     <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;" id="adm-farinhas-cfg-content"></div>
   </div>
 
+  <!-- DEVOLUÇÕES -->
+  <div class="screen" id="s-devolucoes">
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="goTo('s-rafael-home')">‹</button>
+      <div class="mc-brand">
+        <div class="mc-brand-logo">MC</div>
+        <div class="mc-brand-text">
+          <div class="mc-brand-name">Monte Castelo</div>
+          <div class="mc-brand-sub">Devoluções</div>
+        </div>
+      </div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info">
+        <div class="mc-page-title">↩️ Devoluções</div>
+        <div class="mc-page-sub" id="devolucoes-sub">Produtos com problema</div>
+      </div>
+      <div class="mc-header-actions">
+        <button class="mc-act-btn-primary" onclick="goTo('s-devolucao-form')">+ Nova</button>
+      </div>
+    </div>
+    <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;" id="devolucoes-content"></div>
+  </div>
+
+  <div class="screen" id="s-devolucao-form">
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="goTo('s-devolucoes')">‹</button>
+      <div class="mc-brand">
+        <div class="mc-brand-logo">MC</div>
+        <div class="mc-brand-text">
+          <div class="mc-brand-name">Monte Castelo</div>
+          <div class="mc-brand-sub">Devolução</div>
+        </div>
+      </div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info">
+        <div class="mc-page-title" id="devolucao-form-title">Nova Devolução</div>
+        <div class="mc-page-sub">Preencha os dados</div>
+      </div>
+      <div class="mc-header-actions">
+        <button class="mc-act-btn-primary" onclick="salvarDevolucao()">Salvar</button>
+      </div>
+    </div>
+    <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;" id="devolucao-form-content"></div>
+  </div>
+
+  <!-- PRIORIDADES -->
+  <div class="screen" id="s-prioridades">
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="window.prioridadesOrigem?goTo(window.prioridadesOrigem):(window.adminMode?goTo('s-adm-hub'):goTo('s-inicio'))">‹</button>
+      <div class="mc-brand">
+        <div class="mc-brand-logo">MC</div>
+        <div class="mc-brand-text">
+          <div class="mc-brand-name">Monte Castelo</div>
+          <div class="mc-brand-sub">Prioridades</div>
+        </div>
+      </div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info">
+        <div class="mc-page-title">🚩 Prioridades</div>
+        <div class="mc-page-sub" id="prioridades-sub"></div>
+      </div>
+      <div class="mc-header-actions">
+        <button class="mc-act-btn-primary" onclick="goTo('s-prioridade-form')">+ Nova</button>
+      </div>
+    </div>
+    <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;" id="prioridades-content"></div>
+  </div>
+
+  <div class="screen" id="s-prioridade-form">
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="goTo('s-prioridades')">‹</button>
+      <div class="mc-brand">
+        <div class="mc-brand-logo">MC</div>
+        <div class="mc-brand-text">
+          <div class="mc-brand-name">Monte Castelo</div>
+          <div class="mc-brand-sub">Prioridade</div>
+        </div>
+      </div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info">
+        <div class="mc-page-title">+ Nova Prioridade</div>
+        <div class="mc-page-sub">Produto e quantidade</div>
+      </div>
+      <div class="mc-header-actions">
+        <button class="mc-act-btn-primary" onclick="salvarPrioridade()">Salvar</button>
+      </div>
+    </div>
+    <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;" id="prioridade-form-content"></div>
+  </div>
+
 <!-- ADMIN STATUS PANEL -->
     <!-- CONTAGEM: PRODUTO ACABADO SUB-MENU -->
   <div class="screen" id="s-contagem-prod-acabado">
@@ -3461,6 +3665,96 @@
     <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;" id="adm-farinhas-cfg-content"></div>
   </div>
 
+  <!-- DEVOLUÇÕES -->
+  <div class="screen" id="s-devolucoes">
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="goTo('s-rafael-home')">‹</button>
+      <div class="mc-brand">
+        <div class="mc-brand-logo">MC</div>
+        <div class="mc-brand-text">
+          <div class="mc-brand-name">Monte Castelo</div>
+          <div class="mc-brand-sub">Devoluções</div>
+        </div>
+      </div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info">
+        <div class="mc-page-title">↩️ Devoluções</div>
+        <div class="mc-page-sub" id="devolucoes-sub">Produtos com problema</div>
+      </div>
+      <div class="mc-header-actions">
+        <button class="mc-act-btn-primary" onclick="goTo('s-devolucao-form')">+ Nova</button>
+      </div>
+    </div>
+    <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;" id="devolucoes-content"></div>
+  </div>
+
+  <div class="screen" id="s-devolucao-form">
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="goTo('s-devolucoes')">‹</button>
+      <div class="mc-brand">
+        <div class="mc-brand-logo">MC</div>
+        <div class="mc-brand-text">
+          <div class="mc-brand-name">Monte Castelo</div>
+          <div class="mc-brand-sub">Devolução</div>
+        </div>
+      </div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info">
+        <div class="mc-page-title" id="devolucao-form-title">Nova Devolução</div>
+        <div class="mc-page-sub">Preencha os dados</div>
+      </div>
+      <div class="mc-header-actions">
+        <button class="mc-act-btn-primary" onclick="salvarDevolucao()">Salvar</button>
+      </div>
+    </div>
+    <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;" id="devolucao-form-content"></div>
+  </div>
+
+  <!-- PRIORIDADES -->
+  <div class="screen" id="s-prioridades">
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="window.prioridadesOrigem?goTo(window.prioridadesOrigem):(window.adminMode?goTo('s-adm-hub'):goTo('s-inicio'))">‹</button>
+      <div class="mc-brand">
+        <div class="mc-brand-logo">MC</div>
+        <div class="mc-brand-text">
+          <div class="mc-brand-name">Monte Castelo</div>
+          <div class="mc-brand-sub">Prioridades</div>
+        </div>
+      </div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info">
+        <div class="mc-page-title">🚩 Prioridades</div>
+        <div class="mc-page-sub" id="prioridades-sub"></div>
+      </div>
+      <div class="mc-header-actions">
+        <button class="mc-act-btn-primary" onclick="goTo('s-prioridade-form')">+ Nova</button>
+      </div>
+    </div>
+    <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;" id="prioridades-content"></div>
+  </div>
+
+  <div class="screen" id="s-prioridade-form">
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="goTo('s-prioridades')">‹</button>
+      <div class="mc-brand">
+        <div class="mc-brand-logo">MC</div>
+        <div class="mc-brand-text">
+          <div class="mc-brand-name">Monte Castelo</div>
+          <div class="mc-brand-sub">Prioridade</div>
+        </div>
+      </div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info">
+        <div class="mc-page-title">+ Nova Prioridade</div>
+        <div class="mc-page-sub">Produto e quantidade</div>
+      </div>
+      <div class="mc-header-actions">
+        <button class="mc-act-btn-primary" onclick="salvarPrioridade()">Salvar</button>
+      </div>
+    </div>
+    <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;" id="prioridade-form-content"></div>
+  </div>
+
 <!-- ADMIN STATUS PANEL -->
     <!-- CONTAGEM: LANÇAMENTO -->
   <div class="screen" id="s-contagem-lanc">
@@ -3759,6 +4053,96 @@
     <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;" id="adm-farinhas-cfg-content"></div>
   </div>
 
+  <!-- DEVOLUÇÕES -->
+  <div class="screen" id="s-devolucoes">
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="goTo('s-rafael-home')">‹</button>
+      <div class="mc-brand">
+        <div class="mc-brand-logo">MC</div>
+        <div class="mc-brand-text">
+          <div class="mc-brand-name">Monte Castelo</div>
+          <div class="mc-brand-sub">Devoluções</div>
+        </div>
+      </div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info">
+        <div class="mc-page-title">↩️ Devoluções</div>
+        <div class="mc-page-sub" id="devolucoes-sub">Produtos com problema</div>
+      </div>
+      <div class="mc-header-actions">
+        <button class="mc-act-btn-primary" onclick="goTo('s-devolucao-form')">+ Nova</button>
+      </div>
+    </div>
+    <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;" id="devolucoes-content"></div>
+  </div>
+
+  <div class="screen" id="s-devolucao-form">
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="goTo('s-devolucoes')">‹</button>
+      <div class="mc-brand">
+        <div class="mc-brand-logo">MC</div>
+        <div class="mc-brand-text">
+          <div class="mc-brand-name">Monte Castelo</div>
+          <div class="mc-brand-sub">Devolução</div>
+        </div>
+      </div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info">
+        <div class="mc-page-title" id="devolucao-form-title">Nova Devolução</div>
+        <div class="mc-page-sub">Preencha os dados</div>
+      </div>
+      <div class="mc-header-actions">
+        <button class="mc-act-btn-primary" onclick="salvarDevolucao()">Salvar</button>
+      </div>
+    </div>
+    <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;" id="devolucao-form-content"></div>
+  </div>
+
+  <!-- PRIORIDADES -->
+  <div class="screen" id="s-prioridades">
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="window.prioridadesOrigem?goTo(window.prioridadesOrigem):(window.adminMode?goTo('s-adm-hub'):goTo('s-inicio'))">‹</button>
+      <div class="mc-brand">
+        <div class="mc-brand-logo">MC</div>
+        <div class="mc-brand-text">
+          <div class="mc-brand-name">Monte Castelo</div>
+          <div class="mc-brand-sub">Prioridades</div>
+        </div>
+      </div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info">
+        <div class="mc-page-title">🚩 Prioridades</div>
+        <div class="mc-page-sub" id="prioridades-sub"></div>
+      </div>
+      <div class="mc-header-actions">
+        <button class="mc-act-btn-primary" onclick="goTo('s-prioridade-form')">+ Nova</button>
+      </div>
+    </div>
+    <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;" id="prioridades-content"></div>
+  </div>
+
+  <div class="screen" id="s-prioridade-form">
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="goTo('s-prioridades')">‹</button>
+      <div class="mc-brand">
+        <div class="mc-brand-logo">MC</div>
+        <div class="mc-brand-text">
+          <div class="mc-brand-name">Monte Castelo</div>
+          <div class="mc-brand-sub">Prioridade</div>
+        </div>
+      </div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info">
+        <div class="mc-page-title">+ Nova Prioridade</div>
+        <div class="mc-page-sub">Produto e quantidade</div>
+      </div>
+      <div class="mc-header-actions">
+        <button class="mc-act-btn-primary" onclick="salvarPrioridade()">Salvar</button>
+      </div>
+    </div>
+    <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;" id="prioridade-form-content"></div>
+  </div>
+
 <!-- ADMIN STATUS PANEL -->
     <!-- CONTAGEM: HISTÓRICO -->
   <div class="screen" id="s-contagem-hist">
@@ -3960,6 +4344,7 @@ function pinDel(){
 }
 function verificarPin(){
   if(pinBuffer===PINS[setorAtivo]){
+    window.setorAtual=setorAtivo; // Para validações de permissão
     if(setorAtivo==='admin'){ adminMode=true; window.adminMode=true; document.body.classList.add('admin-mode'); }
     else { adminMode=false; window.adminMode=false; document.body.classList.remove('admin-mode'); }
     goTo(DESTINOS[setorAtivo]);
@@ -4036,6 +4421,10 @@ function goTo(id){
   if(id==='s-adm-contagem-itens') renderAdmContagemItens();
   if(id==='s-adm-contagem-grupo') renderAdmContGrupo();
   if(id==='s-adm-farinhas-cfg') renderAdmFarinhasCfg();
+  if(id==='s-devolucoes') renderDevolucoes();
+  if(id==='s-devolucao-form') renderDevolucaoForm();
+  if(id==='s-prioridades') renderPrioridades();
+  if(id==='s-prioridade-form') renderPrioridadeForm();
   if(id==='s-manut-lanc'){
     const b=document.getElementById('manut-lanc-btn');
     if(b){b.textContent='Salvar manutenção ✓';b.disabled=false;}
@@ -7869,6 +8258,28 @@ function aplicarFarinhasConfigFirebase(){
   }
 }
 
+// ===== DEVOLUÇÕES E PRIORIDADES (Firebase) =====
+let devolucoes=[]; // Firestore 'devolucoes'
+let prioridades=[]; // Firestore 'prioridades'
+
+onSnapshot(collection(db,'devolucoes'), snap=>{
+  try{
+    devolucoes=snap.docs.map(d=>({firestoreId:d.id,...d.data()})).sort((a,b)=>(b.timestamp||0)-(a.timestamp||0));
+    atualizarTela();
+    const ativa=document.querySelector('.screen.active');
+    if(ativa&&ativa.id==='s-devolucoes'&&typeof renderDevolucoes==='function'){renderDevolucoes();}
+  }catch(e){ console.error('devolucoes snap:',e); }
+});
+
+onSnapshot(collection(db,'prioridades'), snap=>{
+  try{
+    prioridades=snap.docs.map(d=>({firestoreId:d.id,...d.data()})).sort((a,b)=>(b.timestamp||0)-(a.timestamp||0));
+    atualizarTela();
+    const ativa=document.querySelector('.screen.active');
+    if(ativa&&ativa.id==='s-prioridades'&&typeof renderPrioridades==='function'){renderPrioridades();}
+  }catch(e){ console.error('prioridades snap:',e); }
+});
+
 // ===== MASSAS E RECHEIOS (Firebase) =====
 let massasFirebase=[]; // Firestore 'massasList'
 let recheiosFirebase=[]; // Firestore 'recheiosList'
@@ -9817,6 +10228,300 @@ window.adicionarFarinhaEstoque=adicionarFarinhaEstoque;
 window.editarFarinha=editarFarinha;
 window.excluirFarinha=excluirFarinha;
 window.migrarFarinhasConfig=migrarFarinhasConfig;
+
+
+// ===== DEVOLUÇÕES =====
+let _devEditando=null;
+
+function renderDevolucoes(){
+  const el=document.getElementById('devolucoes-content');
+  if(!el)return;
+  const sub=document.getElementById('devolucoes-sub');
+  if(sub) sub.textContent=devolucoes.length+' registro(s)';
+
+  if(devolucoes.length===0){
+    el.innerHTML='<div class="empty" style="padding:40px 20px;color:var(--text-secondary);text-align:center;">Nenhuma devolução registrada.<br>Clique em <strong>+ Nova</strong> para começar.</div>';
+    return;
+  }
+
+  let html='';
+  devolucoes.forEach(d=>{
+    html+='<div style="background:var(--bg-primary);border:1px solid var(--border);border-left:3px solid var(--mc-vermelho);border-radius:var(--r-lg);padding:12px 14px;margin-bottom:10px;box-shadow:var(--shadow-sm);">';
+    html+='<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap;">';
+    html+='<div style="flex:1;min-width:200px;">';
+    html+='<div style="font-size:14px;font-weight:600;color:var(--text-primary);">'+(d.produto||'-')+'</div>';
+    html+='<div style="font-size:11px;color:var(--text-secondary);margin-top:2px;">'+(d.fornecedor||'-')+' · NF '+(d.nf||'-')+' · chegou '+(d.dataChegada||'-')+'</div>';
+    html+='</div>';
+    html+='<div style="text-align:right;">';
+    html+='<div style="font-size:14px;font-weight:700;color:var(--mc-vermelho);">'+(d.pesoDevolucao||0)+' kg</div>';
+    html+='<div style="font-size:10px;color:var(--text-muted);">de '+(d.pesoTotal||0)+' kg</div>';
+    html+='</div>';
+    html+='</div>';
+    if(d.motivo){
+      html+='<div style="margin-top:8px;padding:8px 10px;background:var(--mc-vermelho-claro);border-radius:6px;font-size:12px;color:#991b1b;"><strong>Motivo:</strong> '+d.motivo+'</div>';
+    }
+    html+='<div style="display:flex;gap:6px;margin-top:8px;justify-content:flex-end;">';
+    html+='<button class="mc-act-btn-secondary" style="font-size:11px;padding:5px 10px;" onclick="editarDevolucao(\''+d.firestoreId+'\')">Editar</button>';
+    html+='<button class="mc-act-btn-secondary" style="border-color:var(--mc-vermelho);color:var(--mc-vermelho);font-size:11px;padding:5px 10px;" onclick="excluirDevolucao(\''+d.firestoreId+'\')">×</button>';
+    html+='</div>';
+    if(d.atualizadoEm){
+      html+='<div style="font-size:10px;color:var(--text-muted);margin-top:6px;">📅 '+d.atualizadoEm+'</div>';
+    }
+    html+='</div>';
+  });
+  el.innerHTML=html;
+}
+
+function abrirNovaDevolucao(){
+  _devEditando=null;
+  document.getElementById('devolucao-form-title').textContent='Nova Devolução';
+  renderDevolucaoForm();
+}
+
+function editarDevolucao(firestoreId){
+  const d=devolucoes.find(x=>x.firestoreId===firestoreId);
+  if(!d)return;
+  _devEditando=d;
+  document.getElementById('devolucao-form-title').textContent='Editar Devolução';
+  renderDevolucaoForm();
+  goTo('s-devolucao-form');
+}
+
+function renderDevolucaoForm(){
+  const el=document.getElementById('devolucao-form-content');
+  if(!el)return;
+  const d=_devEditando||{fornecedor:'',dataChegada:hoje(),nf:'',produto:'',pesoTotal:0,pesoDevolucao:0,motivo:''};
+
+  let html='';
+  html+='<div class="card" style="padding:14px;margin-bottom:10px;">';
+  html+='<div class="card-label">Fornecedor</div>';
+  html+='<input type="text" id="dev-fornec" value="'+(d.fornecedor||'').replace(/"/g,'&quot;')+'" placeholder="Nome do fornecedor" style="font-size:15px;width:100%;margin-top:6px;" />';
+  html+='</div>';
+
+  html+='<div class="card" style="padding:14px;margin-bottom:10px;">';
+  html+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">';
+  html+='<div><div class="card-label">Data de chegada</div><input type="text" id="dev-data" value="'+(d.dataChegada||hoje())+'" placeholder="dd/mm/aaaa" style="font-size:15px;width:100%;margin-top:6px;" /></div>';
+  html+='<div><div class="card-label">Nota Fiscal</div><input type="text" id="dev-nf" value="'+(d.nf||'').replace(/"/g,'&quot;')+'" placeholder="Nº NF" style="font-size:15px;width:100%;margin-top:6px;" /></div>';
+  html+='</div>';
+  html+='</div>';
+
+  html+='<div class="card" style="padding:14px;margin-bottom:10px;">';
+  html+='<div class="card-label">Produto</div>';
+  html+='<input type="text" id="dev-produto" value="'+(d.produto||'').replace(/"/g,'&quot;')+'" placeholder="Nome do produto" style="font-size:15px;width:100%;margin-top:6px;" />';
+  html+='</div>';
+
+  html+='<div class="card" style="padding:14px;margin-bottom:10px;">';
+  html+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">';
+  html+='<div><div class="card-label">Peso total recebido (kg)</div><input type="number" id="dev-peso-total" step="0.01" value="'+(d.pesoTotal||'')+'" placeholder="Ex: 50" style="font-size:15px;width:100%;margin-top:6px;" /></div>';
+  html+='<div><div class="card-label" style="color:var(--mc-vermelho);">Peso a devolver (kg)</div><input type="number" id="dev-peso-dev" step="0.01" value="'+(d.pesoDevolucao||'')+'" placeholder="Ex: 5" style="font-size:15px;width:100%;margin-top:6px;border-color:var(--mc-vermelho);" /></div>';
+  html+='</div>';
+  html+='</div>';
+
+  html+='<div class="card" style="padding:14px;margin-bottom:10px;">';
+  html+='<div class="card-label">Motivo da troca/devolução</div>';
+  html+='<textarea id="dev-motivo" placeholder="Descreva o problema..." style="font-size:14px;width:100%;margin-top:6px;min-height:80px;padding:10px;border-radius:8px;border:1px solid var(--border-md);font-family:inherit;resize:vertical;">'+(d.motivo||'')+'</textarea>';
+  html+='</div>';
+
+  el.innerHTML=html;
+}
+
+async function salvarDevolucao(){
+  const dados={
+    fornecedor:(document.getElementById('dev-fornec').value||'').trim(),
+    dataChegada:(document.getElementById('dev-data').value||'').trim(),
+    nf:(document.getElementById('dev-nf').value||'').trim(),
+    produto:(document.getElementById('dev-produto').value||'').trim(),
+    pesoTotal:parseFloat(document.getElementById('dev-peso-total').value)||0,
+    pesoDevolucao:parseFloat(document.getElementById('dev-peso-dev').value)||0,
+    motivo:(document.getElementById('dev-motivo').value||'').trim(),
+    atualizadoEm:agora(),
+    timestamp:Date.now()
+  };
+  if(!dados.produto){ alert('Informe o produto'); return; }
+  if(!dados.fornecedor){ alert('Informe o fornecedor'); return; }
+  try{
+    if(_devEditando&&_devEditando.firestoreId){
+      await updateDoc(doc(db,'devolucoes',_devEditando.firestoreId),dados);
+    } else {
+      await addDoc(collection(db,'devolucoes'),dados);
+    }
+    alert('Devolução salva!');
+    goTo('s-devolucoes');
+  } catch(e){
+    console.error('Erro:',e);
+    alert('Erro: '+e.message);
+  }
+}
+
+async function excluirDevolucao(firestoreId){
+  if(!confirm('Excluir esta devolução?')) return;
+  try{
+    await deleteDoc(doc(db,'devolucoes',firestoreId));
+  } catch(e){ alert('Erro: '+e.message); }
+}
+
+// ===== PRIORIDADES =====
+function renderPrioridades(){
+  const el=document.getElementById('prioridades-content');
+  if(!el)return;
+  const sub=document.getElementById('prioridades-sub');
+  const pendentes=prioridades.filter(p=>!p.embalado).length;
+  const concluidas=prioridades.filter(p=>p.embalado).length;
+  if(sub) sub.textContent=pendentes+' pendente(s) · '+concluidas+' concluída(s)';
+
+  if(prioridades.length===0){
+    el.innerHTML='<div class="empty" style="padding:40px 20px;color:var(--text-secondary);text-align:center;">Nenhuma prioridade registrada.<br>Clique em <strong>+ Nova</strong> para começar.</div>';
+    return;
+  }
+
+  // Identificar perfil do usuário atual
+  const podeMarcarEmbalado=window.adminMode||(window.setorAtual==='embalagem');
+
+  let html='';
+
+  // Pendentes primeiro
+  const lista=[...prioridades].sort((a,b)=>{
+    if(a.embalado!==b.embalado) return a.embalado?1:-1;
+    return (b.timestamp||0)-(a.timestamp||0);
+  });
+
+  lista.forEach(p=>{
+    const cor=p.embalado?'var(--mc-verde)':'var(--mc-laranja)';
+    const bg=p.embalado?'var(--mc-verde-claro)':'var(--bg-primary)';
+    html+='<div style="background:'+bg+';border:1px solid var(--border);border-left:3px solid '+cor+';border-radius:var(--r-lg);padding:12px 14px;margin-bottom:8px;box-shadow:var(--shadow-sm);">';
+    html+='<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">';
+
+    // Check box
+    if(p.embalado){
+      html+='<div style="width:32px;height:32px;border-radius:50%;background:var(--mc-verde);display:flex;align-items:center;justify-content:center;font-size:18px;color:white;flex-shrink:0;">✓</div>';
+    } else if(podeMarcarEmbalado){
+      html+='<button onclick="marcarPrioridadeEmbalada(\''+p.firestoreId+'\')" style="width:32px;height:32px;border-radius:50%;border:2px solid var(--mc-laranja);background:white;cursor:pointer;flex-shrink:0;font-family:inherit;font-size:14px;color:var(--mc-laranja);">○</button>';
+    } else {
+      html+='<div style="width:32px;height:32px;border-radius:50%;border:2px solid var(--text-muted);background:white;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--text-muted);font-size:14px;">○</div>';
+    }
+
+    html+='<div style="flex:1;min-width:140px;">';
+    html+='<div style="font-size:14px;font-weight:600;color:var(--text-primary);'+(p.embalado?'text-decoration:line-through;opacity:0.7;':'')+'">'+(p.produto||'-')+'</div>';
+    html+='<div style="font-size:11px;color:var(--text-secondary);margin-top:2px;">Solicitado por <strong>'+(p.solicitanteSetor||'-')+'</strong> · '+(p.atualizadoEm||'')+'</div>';
+    if(p.obs){
+      html+='<div style="font-size:11px;color:var(--text-secondary);font-style:italic;margin-top:4px;">📝 '+p.obs+'</div>';
+    }
+    if(p.embalado&&p.embaladoEm){
+      html+='<div style="font-size:11px;color:var(--mc-verde);margin-top:4px;">✓ Embalado em '+p.embaladoEm+'</div>';
+    }
+    html+='</div>';
+
+    html+='<div style="text-align:right;flex-shrink:0;">';
+    html+='<div style="font-size:18px;font-weight:700;color:'+cor+';">'+(p.qtd||0)+'</div>';
+    html+='<div style="font-size:10px;color:var(--text-muted);">'+(p.unidade||'un')+'</div>';
+    html+='</div>';
+    html+='</div>';
+
+    // Actions - apenas quem criou ou admin
+    if(window.adminMode){
+      html+='<div style="display:flex;gap:6px;margin-top:8px;justify-content:flex-end;">';
+      html+='<button class="mc-act-btn-secondary" style="border-color:var(--mc-vermelho);color:var(--mc-vermelho);font-size:11px;padding:4px 10px;" onclick="excluirPrioridade(\''+p.firestoreId+'\')">Excluir</button>';
+      html+='</div>';
+    }
+
+    html+='</div>';
+  });
+
+  el.innerHTML=html;
+}
+
+function abrirNovaPrioridade(){
+  goTo('s-prioridade-form');
+  setTimeout(renderPrioridadeForm,10);
+}
+
+function renderPrioridadeForm(){
+  const el=document.getElementById('prioridade-form-content');
+  if(!el)return;
+
+  let html='';
+  html+='<div class="card" style="padding:14px;margin-bottom:10px;">';
+  html+='<div class="card-label">Produto</div>';
+  html+='<input type="text" id="prio-produto" placeholder="Nome do produto" style="font-size:15px;width:100%;margin-top:6px;" />';
+  html+='</div>';
+
+  html+='<div class="card" style="padding:14px;margin-bottom:10px;">';
+  html+='<div style="display:grid;grid-template-columns:2fr 1fr;gap:10px;">';
+  html+='<div><div class="card-label">Quantidade</div><input type="number" id="prio-qtd" placeholder="Ex: 50" style="font-size:15px;width:100%;margin-top:6px;" /></div>';
+  html+='<div><div class="card-label">Unidade</div><select id="prio-un" style="font-size:15px;width:100%;margin-top:6px;padding:10px;border-radius:8px;border:1px solid var(--border-md);">';
+  html+='<option value="un">un</option>';
+  html+='<option value="pct" selected>pct</option>';
+  html+='<option value="kg">kg</option>';
+  html+='<option value="cx">cx</option>';
+  html+='</select></div>';
+  html+='</div>';
+  html+='</div>';
+
+  html+='<div class="card" style="padding:14px;margin-bottom:10px;">';
+  html+='<div class="card-label">Observação (opcional)</div>';
+  html+='<textarea id="prio-obs" placeholder="Detalhes adicionais..." style="font-size:14px;width:100%;margin-top:6px;min-height:60px;padding:10px;border-radius:8px;border:1px solid var(--border-md);font-family:inherit;resize:vertical;"></textarea>';
+  html+='</div>';
+
+  el.innerHTML=html;
+}
+
+async function salvarPrioridade(){
+  const produto=(document.getElementById('prio-produto').value||'').trim();
+  const qtd=parseFloat(document.getElementById('prio-qtd').value)||0;
+  const unidade=document.getElementById('prio-un').value;
+  const obs=(document.getElementById('prio-obs').value||'').trim();
+
+  if(!produto){ alert('Informe o produto'); return; }
+  if(qtd<=0){ alert('Informe a quantidade'); return; }
+
+  const setorAtual=window.setorAtual||(window.adminMode?'admin':'sistema');
+  const setorLabel={confeitaria:'Confeitaria',cozinha:'Cozinha',embalagem:'Embalagem',expedicao:'Expedição',quadra:'Quadra',rafael:'Rafael',container:'Rafael',contagem:'Contagem',testes:'Testes',admin:'Admin'}[setorAtual]||setorAtual;
+
+  try{
+    await addDoc(collection(db,'prioridades'),{
+      produto,qtd,unidade,obs,
+      solicitanteSetor:setorLabel,
+      embalado:false,
+      atualizadoEm:agora(),
+      timestamp:Date.now()
+    });
+    alert('Prioridade criada!');
+    goTo('s-prioridades');
+  } catch(e){
+    console.error('Erro:',e);
+    alert('Erro: '+e.message);
+  }
+}
+
+async function marcarPrioridadeEmbalada(firestoreId){
+  if(!confirm('Marcar como embalado? Esta ação confirma que o produto foi embalado.')) return;
+  try{
+    await updateDoc(doc(db,'prioridades',firestoreId),{
+      embalado:true,
+      embaladoEm:agora()
+    });
+  } catch(e){ alert('Erro: '+e.message); }
+}
+
+async function excluirPrioridade(firestoreId){
+  if(!confirm('Excluir esta prioridade?')) return;
+  try{
+    await deleteDoc(doc(db,'prioridades',firestoreId));
+  } catch(e){ alert('Erro: '+e.message); }
+}
+
+window.renderDevolucoes=renderDevolucoes;
+window.abrirNovaDevolucao=abrirNovaDevolucao;
+window.editarDevolucao=editarDevolucao;
+window.renderDevolucaoForm=renderDevolucaoForm;
+window.salvarDevolucao=salvarDevolucao;
+window.excluirDevolucao=excluirDevolucao;
+window.renderPrioridades=renderPrioridades;
+window.abrirNovaPrioridade=abrirNovaPrioridade;
+window.renderPrioridadeForm=renderPrioridadeForm;
+window.salvarPrioridade=salvarPrioridade;
+window.marcarPrioridadeEmbalada=marcarPrioridadeEmbalada;
+window.excluirPrioridade=excluirPrioridade;
 
 window.goTo=goTo; window.abrirPin=abrirPin; window.pinDigit=pinDigit; window.pinDel=pinDel;
 window.iniciarNovoReg=iniciarNovoReg; window.renderConfMassas=renderConfMassas; window.toggleManual=toggleManual;
