@@ -10524,32 +10524,24 @@ function renderPrioridadeForm(){
   html+='<input type="hidden" id="prio-data" value="'+hojeData+'" />';
   html+='</div>';
 
-  // Produto: dropdown com todos os cadastrados
+  // Produto: input com autocomplete (digita o nome OU código)
   html+='<div class="card" style="padding:14px;margin-bottom:10px;">';
   html+='<div class="card-label">Produto</div>';
-  html+='<select id="prio-produto" style="font-size:15px;width:100%;margin-top:6px;padding:10px;border-radius:8px;border:1px solid var(--border-md);font-family:inherit;">';
-  html+='<option value="">— Selecione um produto —</option>';
-
-  // Separador: PÃES (Quadra) primeiro
+  html+='<input type="text" id="prio-produto" list="prio-produto-list" placeholder="Digite nome ou código do produto..." autocomplete="off" style="font-size:15px;width:100%;margin-top:6px;padding:10px;border-radius:8px;border:1px solid var(--border-md);font-family:inherit;" />';
+  html+='<datalist id="prio-produto-list">';
+  // Pães primeiro
   const paes=todosProdutos.filter(p=>p.origem==='quadra');
   const salgados=todosProdutos.filter(p=>p.origem==='confeitaria');
-  if(paes.length>0){
-    html+='<optgroup label="🍞 PÃES (Quadra)">';
-    paes.forEach(p=>{
-      const lbl=p.cod?p.cod+' - '+p.nome:p.nome;
-      html+='<option value="'+p.nome.replace(/"/g,'&quot;')+'" data-cod="'+(p.cod||'').replace(/"/g,'&quot;')+'">'+lbl+'</option>';
-    });
-    html+='</optgroup>';
-  }
-  if(salgados.length>0){
-    html+='<optgroup label="🥐 SALGADOS (Confeitaria)">';
-    salgados.forEach(p=>{
-      const lbl=p.cod?p.cod+' - '+p.nome:p.nome;
-      html+='<option value="'+p.nome.replace(/"/g,'&quot;')+'" data-cod="'+(p.cod||'').replace(/"/g,'&quot;')+'">'+lbl+'</option>';
-    });
-    html+='</optgroup>';
-  }
-  html+='</select>';
+  paes.forEach(p=>{
+    const lbl=p.cod?p.cod+' - '+p.nome:p.nome;
+    html+='<option value="'+lbl.replace(/"/g,'&quot;')+'">'+p.nome.replace(/"/g,'&quot;')+' (🍞 Pão)</option>';
+  });
+  salgados.forEach(p=>{
+    const lbl=p.cod?p.cod+' - '+p.nome:p.nome;
+    html+='<option value="'+lbl.replace(/"/g,'&quot;')+'">'+p.nome.replace(/"/g,'&quot;')+' (🥐 Salgado)</option>';
+  });
+  html+='</datalist>';
+  html+='<div style="font-size:11px;color:var(--text-secondary);margin-top:6px;">💡 Digite parte do nome ou código para filtrar. Só produtos cadastrados.</div>';
   html+='</div>';
 
   // Qtd + Unidade
@@ -10607,16 +10599,59 @@ function selecionarPrioData(qual){
 window.selecionarPrioData=selecionarPrioData;
 
 async function salvarPrioridade(){
-  const produtoSel=document.getElementById('prio-produto');
-  const produto=(produtoSel.value||'').trim();
-  const cod=produtoSel.selectedOptions[0]?produtoSel.selectedOptions[0].getAttribute('data-cod')||'':'';
+  const produtoInp=document.getElementById('prio-produto');
+  let entrada=(produtoInp.value||'').trim();
   const qtd=parseFloat(document.getElementById('prio-qtd').value)||0;
   const unidade=document.getElementById('prio-un').value;
   const obs=(document.getElementById('prio-obs').value||'').trim();
   const data=document.getElementById('prio-data').value||hoje();
 
-  if(!produto){ alert('Selecione um produto'); return; }
+  if(!entrada){ alert('Selecione um produto'); return; }
   if(qtd<=0){ alert('Informe a quantidade'); return; }
+
+  // Resolve: entrada pode ser "cod - nome", só nome, ou só código
+  const norm=s=>(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();
+  let produto='', cod='';
+
+  // Tentar formato "cod - nome"
+  const m=entrada.match(/^(\S+)\s*-\s*(.+)$/);
+  if(m){
+    const codTest=m[1].trim();
+    const nomeTest=m[2].trim();
+    // Match exato em PRODUTOS+QUADRA_PRODUTOS
+    const p=PRODUTOS.find(x=>x.cod===codTest&&x.nome===nomeTest)||
+            QUADRA_PRODUTOS.find(x=>x.cod===codTest&&x.nome===nomeTest);
+    if(p){ produto=p.nome; cod=p.cod||''; }
+  }
+  // Tentar match exato pelo nome
+  if(!produto){
+    const p=PRODUTOS.find(x=>norm(x.nome)===norm(entrada))||
+            QUADRA_PRODUTOS.find(x=>norm(x.nome)===norm(entrada));
+    if(p){ produto=p.nome; cod=p.cod||''; }
+  }
+  // Tentar match exato pelo código
+  if(!produto){
+    const p=PRODUTOS.find(x=>x.cod===entrada)||QUADRA_PRODUTOS.find(x=>x.cod===entrada);
+    if(p){ produto=p.nome; cod=p.cod||''; }
+  }
+  // Match parcial pelo nome (único)
+  if(!produto){
+    const q=norm(entrada);
+    const candidatos=[...PRODUTOS,...QUADRA_PRODUTOS].filter(x=>norm(x.nome).includes(q));
+    if(candidatos.length===1){
+      produto=candidatos[0].nome;
+      cod=candidatos[0].cod||'';
+    } else if(candidatos.length>1){
+      const lista=candidatos.slice(0,5).map(x=>'• '+(x.cod?x.cod+' - ':'')+x.nome).join('\n');
+      alert('Produto ambíguo. Encontrados '+candidatos.length+' produtos com "'+entrada+'":\n\n'+lista+(candidatos.length>5?'\n...':'')+'\n\nSelecione um da lista (datalist).');
+      return;
+    }
+  }
+
+  if(!produto){
+    alert('Produto "'+entrada+'" não encontrado nos cadastros.\nDigite parte do nome ou código e selecione um da lista.');
+    return;
+  }
 
   const setorAtual=window.setorAtual||(window.adminMode?'admin':'sistema');
   const setorLabel={confeitaria:'Confeitaria',cozinha:'Cozinha',embalagem:'Embalagem',expedicao:'Expedição',quadra:'Quadra',rafael:'Rafael',container:'Rafael',contagem:'Contagem',testes:'Testes',admin:'Admin'}[setorAtual]||setorAtual;
