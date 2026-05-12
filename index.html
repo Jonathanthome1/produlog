@@ -10236,20 +10236,35 @@ let _devEditando=null;
 function renderDevolucoes(){
   const el=document.getElementById('devolucoes-content');
   if(!el)return;
+
+  const pendentes=devolucoes.filter(d=>!d.produtoEnviado).length;
+  const concluidas=devolucoes.filter(d=>d.produtoEnviado).length;
   const sub=document.getElementById('devolucoes-sub');
-  if(sub) sub.textContent=devolucoes.length+' registro(s)';
+  if(sub) sub.textContent=pendentes+' pendente(s) · '+concluidas+' concluída(s)';
 
   if(devolucoes.length===0){
     el.innerHTML='<div class="empty" style="padding:40px 20px;color:var(--text-secondary);text-align:center;">Nenhuma devolução registrada.<br>Clique em <strong>+ Nova</strong> para começar.</div>';
     return;
   }
 
+  // Ordenar: pendentes primeiro, depois concluídas
+  const lista=[...devolucoes].sort((a,b)=>{
+    if(!!a.produtoEnviado!==!!b.produtoEnviado) return a.produtoEnviado?1:-1;
+    return (b.timestamp||0)-(a.timestamp||0);
+  });
+
   let html='';
-  devolucoes.forEach(d=>{
-    html+='<div style="background:var(--bg-primary);border:1px solid var(--border);border-left:3px solid var(--mc-vermelho);border-radius:var(--r-lg);padding:12px 14px;margin-bottom:10px;box-shadow:var(--shadow-sm);">';
+  lista.forEach(d=>{
+    const notaPronta=!!d.notaPronta;
+    const produtoEnviado=!!d.produtoEnviado;
+    const concluido=produtoEnviado;
+    const borderColor=concluido?'var(--mc-verde)':(notaPronta?'var(--mc-laranja)':'var(--mc-vermelho)');
+    const bgColor=concluido?'var(--mc-verde-claro)':'var(--bg-primary)';
+
+    html+='<div style="background:'+bgColor+';border:1px solid var(--border);border-left:3px solid '+borderColor+';border-radius:var(--r-lg);padding:12px 14px;margin-bottom:10px;box-shadow:var(--shadow-sm);'+(concluido?'opacity:0.85;':'')+'">';
     html+='<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap;">';
     html+='<div style="flex:1;min-width:200px;">';
-    html+='<div style="font-size:14px;font-weight:600;color:var(--text-primary);">'+(d.produto||'-')+'</div>';
+    html+='<div style="font-size:14px;font-weight:600;color:var(--text-primary);'+(concluido?'text-decoration:line-through;':'')+'">'+(d.produto||'-')+'</div>';
     html+='<div style="font-size:11px;color:var(--text-secondary);margin-top:2px;">'+(d.fornecedor||'-')+' · NF '+(d.nf||'-')+' · chegou '+(d.dataChegada||'-')+'</div>';
     html+='</div>';
     html+='<div style="text-align:right;">';
@@ -10260,17 +10275,63 @@ function renderDevolucoes(){
     if(d.motivo){
       html+='<div style="margin-top:8px;padding:8px 10px;background:var(--mc-vermelho-claro);border-radius:6px;font-size:12px;color:#991b1b;"><strong>Motivo:</strong> '+d.motivo+'</div>';
     }
+
+    // CHECKBOXES de status
+    html+='<div style="display:flex;gap:8px;margin-top:10px;padding-top:10px;border-top:1px solid var(--border);flex-wrap:wrap;">';
+
+    // Nota pronta
+    const notaIcon=notaPronta?'✓':'○';
+    const notaCor=notaPronta?'var(--mc-verde)':'var(--text-muted)';
+    const notaBg=notaPronta?'var(--mc-verde-claro)':'transparent';
+    html+='<button onclick="toggleDevNota(\''+d.firestoreId+'\','+(!notaPronta)+')" style="flex:1;min-width:130px;display:flex;align-items:center;gap:6px;padding:8px 10px;background:'+notaBg+';border:1px solid '+notaCor+';color:'+notaCor+';border-radius:8px;cursor:pointer;font-family:inherit;font-size:12px;font-weight:600;">';
+    html+='<span style="font-size:14px;">'+notaIcon+'</span><span>Nota pronta</span>';
+    if(notaPronta&&d.notaProntaEm) html+='<span style="font-size:10px;font-weight:400;opacity:0.7;margin-left:auto;">'+d.notaProntaEm+'</span>';
+    html+='</button>';
+
+    // Produto enviado
+    const envIcon=produtoEnviado?'✓':'○';
+    const envCor=produtoEnviado?'var(--mc-verde)':'var(--text-muted)';
+    const envBg=produtoEnviado?'var(--mc-verde-claro)':'transparent';
+    html+='<button onclick="toggleDevEnviado(\''+d.firestoreId+'\','+(!produtoEnviado)+')" style="flex:1;min-width:130px;display:flex;align-items:center;gap:6px;padding:8px 10px;background:'+envBg+';border:1px solid '+envCor+';color:'+envCor+';border-radius:8px;cursor:pointer;font-family:inherit;font-size:12px;font-weight:600;">';
+    html+='<span style="font-size:14px;">'+envIcon+'</span><span>Produto enviado</span>';
+    if(produtoEnviado&&d.produtoEnviadoEm) html+='<span style="font-size:10px;font-weight:400;opacity:0.7;margin-left:auto;">'+d.produtoEnviadoEm+'</span>';
+    html+='</button>';
+
+    html+='</div>';
+
+    // Ações
     html+='<div style="display:flex;gap:6px;margin-top:8px;justify-content:flex-end;">';
     html+='<button class="mc-act-btn-secondary" style="font-size:11px;padding:5px 10px;" onclick="editarDevolucao(\''+d.firestoreId+'\')">Editar</button>';
     html+='<button class="mc-act-btn-secondary" style="border-color:var(--mc-vermelho);color:var(--mc-vermelho);font-size:11px;padding:5px 10px;" onclick="excluirDevolucao(\''+d.firestoreId+'\')">×</button>';
     html+='</div>';
     if(d.atualizadoEm){
-      html+='<div style="font-size:10px;color:var(--text-muted);margin-top:6px;">📅 '+d.atualizadoEm+'</div>';
+      html+='<div style="font-size:10px;color:var(--text-muted);margin-top:6px;">📅 Criado: '+d.atualizadoEm+'</div>';
     }
     html+='</div>';
   });
   el.innerHTML=html;
 }
+
+async function toggleDevNota(firestoreId,novoValor){
+  try{
+    const dados={notaPronta:novoValor};
+    if(novoValor) dados.notaProntaEm=agora();
+    else dados.notaProntaEm=null;
+    await updateDoc(doc(db,'devolucoes',firestoreId),dados);
+  } catch(e){ alert('Erro: '+e.message); }
+}
+
+async function toggleDevEnviado(firestoreId,novoValor){
+  try{
+    const dados={produtoEnviado:novoValor};
+    if(novoValor) dados.produtoEnviadoEm=agora();
+    else dados.produtoEnviadoEm=null;
+    await updateDoc(doc(db,'devolucoes',firestoreId),dados);
+  } catch(e){ alert('Erro: '+e.message); }
+}
+
+window.toggleDevNota=toggleDevNota;
+window.toggleDevEnviado=toggleDevEnviado;
 
 function abrirNovaDevolucao(){
   _devEditando=null;
@@ -10401,8 +10462,8 @@ function renderPrioridades(){
     }
 
     html+='<div style="flex:1;min-width:140px;">';
-    html+='<div style="font-size:14px;font-weight:600;color:var(--text-primary);'+(p.embalado?'text-decoration:line-through;opacity:0.7;':'')+'">'+(p.produto||'-')+'</div>';
-    html+='<div style="font-size:11px;color:var(--text-secondary);margin-top:2px;">Solicitado por <strong>'+(p.solicitanteSetor||'-')+'</strong> · '+(p.atualizadoEm||'')+'</div>';
+    html+='<div style="font-size:14px;font-weight:600;color:var(--text-primary);'+(p.embalado?'text-decoration:line-through;opacity:0.7;':'')+'">'+(p.cod?'<span style="color:var(--mc-azul);font-weight:500;font-size:12px;">'+p.cod+'</span> · ':'')+(p.produto||'-')+'</div>';
+    html+='<div style="font-size:11px;color:var(--text-secondary);margin-top:2px;">📅 <strong>'+(p.data||'-')+'</strong> · Por '+(p.solicitanteSetor||'-')+' em '+(p.atualizadoEm||'')+'</div>';
     if(p.obs){
       html+='<div style="font-size:11px;color:var(--text-secondary);font-style:italic;margin-top:4px;">📝 '+p.obs+'</div>';
     }
@@ -10439,12 +10500,59 @@ function renderPrioridadeForm(){
   const el=document.getElementById('prioridade-form-content');
   if(!el)return;
 
+  // Combinar produtos da Confeitaria + Quadra
+  const todosProdutos=[];
+  PRODUTOS.forEach(p=>{ if(p.nome) todosProdutos.push({cod:p.cod||'',nome:p.nome,origem:'confeitaria'}); });
+  QUADRA_PRODUTOS.forEach(p=>{ if(p.nome) todosProdutos.push({cod:p.cod||'',nome:p.nome,origem:'quadra'}); });
+  todosProdutos.sort((a,b)=>(a.nome||'').localeCompare(b.nome||'','pt-BR'));
+
+  // Datas: hoje e amanhã
+  const hojeData=hoje();
+  const amanha=new Date();
+  amanha.setDate(amanha.getDate()+1);
+  const amanhaData=fmtData(amanha);
+
   let html='';
+
+  // Seletor de data
   html+='<div class="card" style="padding:14px;margin-bottom:10px;">';
-  html+='<div class="card-label">Produto</div>';
-  html+='<input type="text" id="prio-produto" placeholder="Nome do produto" style="font-size:15px;width:100%;margin-top:6px;" />';
+  html+='<div class="card-label">Data</div>';
+  html+='<div style="display:flex;gap:8px;margin-top:8px;">';
+  html+='<button type="button" id="prio-data-hoje" onclick="selecionarPrioData(\'hoje\')" style="flex:1;padding:12px;border:2px solid var(--mc-azul);background:var(--mc-azul);color:white;border-radius:8px;font-weight:600;cursor:pointer;font-family:inherit;font-size:14px;">📅 Hoje<br><span style="font-size:11px;font-weight:400;opacity:0.85;">'+hojeData+'</span></button>';
+  html+='<button type="button" id="prio-data-amanha" onclick="selecionarPrioData(\'amanha\')" style="flex:1;padding:12px;border:2px solid var(--border-md);background:var(--bg-primary);color:var(--text-primary);border-radius:8px;font-weight:600;cursor:pointer;font-family:inherit;font-size:14px;">📆 Amanhã<br><span style="font-size:11px;font-weight:400;opacity:0.7;">'+amanhaData+'</span></button>';
+  html+='</div>';
+  html+='<input type="hidden" id="prio-data" value="'+hojeData+'" />';
   html+='</div>';
 
+  // Produto: dropdown com todos os cadastrados
+  html+='<div class="card" style="padding:14px;margin-bottom:10px;">';
+  html+='<div class="card-label">Produto</div>';
+  html+='<select id="prio-produto" style="font-size:15px;width:100%;margin-top:6px;padding:10px;border-radius:8px;border:1px solid var(--border-md);font-family:inherit;">';
+  html+='<option value="">— Selecione um produto —</option>';
+
+  // Separador: PÃES (Quadra) primeiro
+  const paes=todosProdutos.filter(p=>p.origem==='quadra');
+  const salgados=todosProdutos.filter(p=>p.origem==='confeitaria');
+  if(paes.length>0){
+    html+='<optgroup label="🍞 PÃES (Quadra)">';
+    paes.forEach(p=>{
+      const lbl=p.cod?p.cod+' - '+p.nome:p.nome;
+      html+='<option value="'+p.nome.replace(/"/g,'&quot;')+'" data-cod="'+(p.cod||'').replace(/"/g,'&quot;')+'">'+lbl+'</option>';
+    });
+    html+='</optgroup>';
+  }
+  if(salgados.length>0){
+    html+='<optgroup label="🥐 SALGADOS (Confeitaria)">';
+    salgados.forEach(p=>{
+      const lbl=p.cod?p.cod+' - '+p.nome:p.nome;
+      html+='<option value="'+p.nome.replace(/"/g,'&quot;')+'" data-cod="'+(p.cod||'').replace(/"/g,'&quot;')+'">'+lbl+'</option>';
+    });
+    html+='</optgroup>';
+  }
+  html+='</select>';
+  html+='</div>';
+
+  // Qtd + Unidade
   html+='<div class="card" style="padding:14px;margin-bottom:10px;">';
   html+='<div style="display:grid;grid-template-columns:2fr 1fr;gap:10px;">';
   html+='<div><div class="card-label">Quantidade</div><input type="number" id="prio-qtd" placeholder="Ex: 50" style="font-size:15px;width:100%;margin-top:6px;" /></div>';
@@ -10457,6 +10565,7 @@ function renderPrioridadeForm(){
   html+='</div>';
   html+='</div>';
 
+  // Observação
   html+='<div class="card" style="padding:14px;margin-bottom:10px;">';
   html+='<div class="card-label">Observação (opcional)</div>';
   html+='<textarea id="prio-obs" placeholder="Detalhes adicionais..." style="font-size:14px;width:100%;margin-top:6px;min-height:60px;padding:10px;border-radius:8px;border:1px solid var(--border-md);font-family:inherit;resize:vertical;"></textarea>';
@@ -10465,13 +10574,48 @@ function renderPrioridadeForm(){
   el.innerHTML=html;
 }
 
+function selecionarPrioData(qual){
+  const hojeData=hoje();
+  const amanha=new Date();
+  amanha.setDate(amanha.getDate()+1);
+  const amanhaData=fmtData(amanha);
+
+  const btnHoje=document.getElementById('prio-data-hoje');
+  const btnAmanha=document.getElementById('prio-data-amanha');
+  const input=document.getElementById('prio-data');
+  if(!btnHoje||!btnAmanha||!input) return;
+
+  if(qual==='hoje'){
+    btnHoje.style.background='var(--mc-azul)';
+    btnHoje.style.color='white';
+    btnHoje.style.borderColor='var(--mc-azul)';
+    btnAmanha.style.background='var(--bg-primary)';
+    btnAmanha.style.color='var(--text-primary)';
+    btnAmanha.style.borderColor='var(--border-md)';
+    input.value=hojeData;
+  } else {
+    btnAmanha.style.background='var(--mc-azul)';
+    btnAmanha.style.color='white';
+    btnAmanha.style.borderColor='var(--mc-azul)';
+    btnHoje.style.background='var(--bg-primary)';
+    btnHoje.style.color='var(--text-primary)';
+    btnHoje.style.borderColor='var(--border-md)';
+    input.value=amanhaData;
+  }
+}
+
+window.selecionarPrioData=selecionarPrioData;
+
 async function salvarPrioridade(){
-  const produto=(document.getElementById('prio-produto').value||'').trim();
+  const produtoSel=document.getElementById('prio-produto');
+  const produto=(produtoSel.value||'').trim();
+  const cod=produtoSel.selectedOptions[0]?produtoSel.selectedOptions[0].getAttribute('data-cod')||'':'';
   const qtd=parseFloat(document.getElementById('prio-qtd').value)||0;
   const unidade=document.getElementById('prio-un').value;
   const obs=(document.getElementById('prio-obs').value||'').trim();
+  const data=document.getElementById('prio-data').value||hoje();
 
-  if(!produto){ alert('Informe o produto'); return; }
+  if(!produto){ alert('Selecione um produto'); return; }
   if(qtd<=0){ alert('Informe a quantidade'); return; }
 
   const setorAtual=window.setorAtual||(window.adminMode?'admin':'sistema');
@@ -10479,7 +10623,7 @@ async function salvarPrioridade(){
 
   try{
     await addDoc(collection(db,'prioridades'),{
-      produto,qtd,unidade,obs,
+      data,produto,cod,qtd,unidade,obs,
       solicitanteSetor:setorLabel,
       embalado:false,
       atualizadoEm:agora(),
