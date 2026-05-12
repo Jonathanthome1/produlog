@@ -5973,7 +5973,7 @@ async function gerarExcel(){
 
     // ABA 1: PRODUÇÃO
     const prod=registros.filter(r=>inRange(r.data));
-    const prodRows=[['Data','Hora','Produto','Qtd Pacotes','Qtd Unidades',
+    const prodRows=[['Data','Hora','Código','Produto','Qtd Pacotes','Qtd Unidades',
       'Massa Padrão (gr/un)','Massa Usada (kg)','Massa Esperada (kg)','Quebra Massa (kg)','Massa Média Real (gr/un)','Massa Variação %',
       'Recheio 1 Padrão (gr/un)','Recheio 1 Usado (kg)','Recheio 1 Esperado (kg)','Quebra Recheio 1 (kg)','Recheio 1 Média Real (gr/un)','Recheio 1 Variação %',
       'Recheio 2 Padrão (gr/un)','Recheio 2 Usado (kg)','Recheio 2 Esperado (kg)','Quebra Recheio 2 (kg)','Recheio 2 Média Real (gr/un)','Recheio 2 Variação %',
@@ -5996,8 +5996,16 @@ async function gerarExcel(){
       const varR1=grR1>0?((medR1-grR1)/grR1*100):null;
       const varR2=grR2>0?((medR2-grR2)/grR2*100):null;
       const fmtVar=v=>v===null?'':(v>0?'+':'')+v.toFixed(1)+'%';
+      // Buscar código do produto
+      let codProd='';
+      const pConf=PRODUTOS.find(x=>x.nome===r.produto);
+      if(pConf&&pConf.cod) codProd=pConf.cod;
+      else {
+        const pQ=QUADRA_PRODUTOS.find(x=>x.nome===r.produto);
+        if(pQ&&pQ.cod) codProd=pQ.cod;
+      }
       prodRows.push([
-        r.data,r.hora,r.produto,r.qtd,unidades,
+        r.data,r.hora,codProd,r.produto,r.qtd,unidades,
         grMassa,massa,+mEsp.toFixed(3),+(massa-mEsp).toFixed(3),grMassa>0?+medMassa.toFixed(2):'',fmtVar(varMassa),
         grR1,r1,+r1Esp.toFixed(3),+(r1-r1Esp).toFixed(3),grR1>0?+medR1.toFixed(2):'',fmtVar(varR1),
         grR2,r2,+r2Esp.toFixed(3),+(r2-r2Esp).toFixed(3),grR2>0?+medR2.toFixed(2):'',fmtVar(varR2),
@@ -6007,24 +6015,24 @@ async function gerarExcel(){
     });
     const prodSheet=XLSX.utils.aoa_to_sheet(prodRows);
     const ref=XLSX.utils.decode_range(prodSheet['!ref']);
-    // Padrão columns (F=5, L=11, R=17) → verde
-    [5,11,17].forEach(C=>{
+    // Padrão columns (G=6, M=12, S=18) → verde (deslocado +1 por causa do Código)
+    [6,12,18].forEach(C=>{
       for(let R=ref.s.r;R<=ref.e.r;R++){
         const cell=prodSheet[XLSX.utils.encode_cell({r:R,c:C})];
         if(!cell)continue;
         cell.s={fill:{fgColor:{rgb:'C6EFCE'},patternType:'solid'},font:{bold:R===0,color:{rgb:'006100'}}};
       }
     });
-    // Média Real columns (J=9, P=15, V=21) → amarelo
-    [9,15,21].forEach(C=>{
+    // Média Real columns (K=10, Q=16, W=22) → amarelo
+    [10,16,22].forEach(C=>{
       for(let R=ref.s.r;R<=ref.e.r;R++){
         const cell=prodSheet[XLSX.utils.encode_cell({r:R,c:C})];
         if(!cell)continue;
         cell.s={fill:{fgColor:{rgb:'FFEB9C'},patternType:'solid'},font:{bold:R===0,color:{rgb:'9C5700'}}};
       }
     });
-    // Variação % columns (K=10, Q=16, W=22) → vermelho se >6%, neutro caso contrário
-    const varCols=[{c:10,padCol:5,medCol:9},{c:16,padCol:11,medCol:15},{c:22,padCol:17,medCol:21}];
+    // Variação % columns (L=11, R=17, X=23) → vermelho se >6%, neutro caso contrário
+    const varCols=[{c:11,padCol:6,medCol:10},{c:17,padCol:12,medCol:16},{c:23,padCol:18,medCol:22}];
     varCols.forEach(({c,padCol,medCol})=>{
       // Header bold
       const hdr=prodSheet[XLSX.utils.encode_cell({r:0,c})];
