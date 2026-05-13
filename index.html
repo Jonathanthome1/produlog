@@ -779,6 +779,14 @@
           </div>
           <span class="mc-sector-arrow">›</span>
         </button>
+        <button class="mc-sector-card" onclick="abrirPin('simone')">
+          <div class="mc-sector-icon indigo">💼</div>
+          <div class="mc-sector-info">
+            <div class="mc-sector-title">Simone - Financeiro</div>
+            <div class="mc-sector-desc">Devoluções e testes MP</div>
+          </div>
+          <span class="mc-sector-arrow">›</span>
+        </button>
         <button class="mc-sector-card" style="border-left:3px solid var(--mc-roxo);" onclick="abrirPin('admin')">
           <div class="mc-sector-icon purple">📊</div>
           <div class="mc-sector-info">
@@ -2136,7 +2144,7 @@
   <!-- TESTES MP HOME -->
   <div class="screen" id="s-testes-home">
     <div class="mc-header">
-      <button class="mc-header-back" onclick="window.adminMode?goTo('s-adm-hub'):goTo('s-inicio')">‹</button>
+      <button class="mc-header-back" onclick="window.setorAtual==='simone'?goTo('s-simone-home'):(window.adminMode?goTo('s-adm-hub'):goTo('s-inicio'))">‹</button>
       <div class="mc-brand">
         <div class="mc-brand-logo">MC</div>
         <div class="mc-brand-text">
@@ -2149,15 +2157,44 @@
         <div class="mc-page-title">🔬 Testes MP</div>
         <div class="mc-page-sub">Avaliação de fornecedores</div>
       </div>
+      <div class="mc-header-actions">
+        <button class="mc-act-btn-primary" onclick="abrirNovaPendenciaTeste()">+ Pendência</button>
+      </div>
     </div>
     <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;">
-      <div class="mc-banner" style="background:var(--mc-indigo-claro);border-color:#c7d2fe;border-left-color:var(--mc-indigo);"><span class="mc-banner-icon">🔍</span><span class="mc-banner-text" style="color:#3730a3;">Busque por nome do produto e clique para ver/cadastrar testes</span></div>
+      <!-- PENDÊNCIAS DE TESTE -->
+      <div id="testes-pendencias-block"></div>
+
+      <div class="mc-section-header" style="margin-top:14px;">🔍 Buscar produto</div>
       <div class="card" style="padding:10px;margin-bottom:10px;">
         <input type="text" id="testes-srch" placeholder="🔍 Buscar produto..." oninput="renderTestesList()"
           style="font-size:15px;" autocomplete="off" />
       </div>
       <div id="testes-home-list"></div>
     </div>
+  </div>
+
+  <!-- NOVA PENDÊNCIA DE TESTE -->
+  <div class="screen" id="s-teste-pendencia-form">
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="goTo('s-testes-home')">‹</button>
+      <div class="mc-brand">
+        <div class="mc-brand-logo">MC</div>
+        <div class="mc-brand-text">
+          <div class="mc-brand-name">Monte Castelo</div>
+          <div class="mc-brand-sub">Pendência de Teste</div>
+        </div>
+      </div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info">
+        <div class="mc-page-title">⏳ Nova Pendência de Teste</div>
+        <div class="mc-page-sub">Produto a ser testado</div>
+      </div>
+      <div class="mc-header-actions">
+        <button class="mc-act-btn-primary" onclick="salvarPendenciaTeste()">Salvar</button>
+      </div>
+    </div>
+    <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;" id="pendencia-teste-form-content"></div>
   </div>
 
   <!-- TESTES: PRODUTO DETALHE -->
@@ -2805,7 +2842,7 @@
   <!-- DEVOLUÇÕES -->
   <div class="screen" id="s-devolucoes">
     <div class="mc-header">
-      <button class="mc-header-back" onclick="goTo('s-rafael-home')">‹</button>
+      <button class="mc-header-back" onclick="goTo(window.setorAtual==='simone'?'s-simone-home':'s-rafael-home')">‹</button>
       <div class="mc-brand">
         <div class="mc-brand-logo">MC</div>
         <div class="mc-brand-text">
@@ -2890,6 +2927,46 @@
       </div>
     </div>
     <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;" id="prioridade-form-content"></div>
+  </div>
+
+  <!-- SIMONE - FINANCEIRO -->
+  <div class="screen" id="s-simone-home">
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="goTo('s-inicio')">‹</button>
+      <div class="mc-brand">
+        <div class="mc-brand-logo">MC</div>
+        <div class="mc-brand-text">
+          <div class="mc-brand-name">Monte Castelo</div>
+          <div class="mc-brand-sub">Simone - Financeiro</div>
+        </div>
+      </div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info">
+        <div class="mc-page-title">💼 Simone - Financeiro</div>
+        <div class="mc-page-sub">Painel de acesso</div>
+      </div>
+    </div>
+    <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;">
+      <div class="mc-section-header">Áreas de acesso</div>
+      <div class="mc-sector-grid">
+        <button class="mc-sector-card" onclick="goTo('s-devolucoes')">
+          <div class="mc-sector-icon red">↩️</div>
+          <div class="mc-sector-info">
+            <div class="mc-sector-title">Devoluções</div>
+            <div class="mc-sector-desc">Produtos com problema para devolver</div>
+          </div>
+          <span class="mc-sector-arrow">›</span>
+        </button>
+        <button class="mc-sector-card" onclick="goTo('s-testes-home')">
+          <div class="mc-sector-icon indigo">🔬</div>
+          <div class="mc-sector-info">
+            <div class="mc-sector-title">Testes MP</div>
+            <div class="mc-sector-desc">Pendências e histórico de testes</div>
+          </div>
+          <span class="mc-sector-arrow">›</span>
+        </button>
+      </div>
+    </div>
   </div>
 
 <!-- ADMIN STATUS PANEL -->
@@ -3269,7 +3346,7 @@
   <!-- DEVOLUÇÕES -->
   <div class="screen" id="s-devolucoes">
     <div class="mc-header">
-      <button class="mc-header-back" onclick="goTo('s-rafael-home')">‹</button>
+      <button class="mc-header-back" onclick="goTo(window.setorAtual==='simone'?'s-simone-home':'s-rafael-home')">‹</button>
       <div class="mc-brand">
         <div class="mc-brand-logo">MC</div>
         <div class="mc-brand-text">
@@ -3354,6 +3431,46 @@
       </div>
     </div>
     <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;" id="prioridade-form-content"></div>
+  </div>
+
+  <!-- SIMONE - FINANCEIRO -->
+  <div class="screen" id="s-simone-home">
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="goTo('s-inicio')">‹</button>
+      <div class="mc-brand">
+        <div class="mc-brand-logo">MC</div>
+        <div class="mc-brand-text">
+          <div class="mc-brand-name">Monte Castelo</div>
+          <div class="mc-brand-sub">Simone - Financeiro</div>
+        </div>
+      </div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info">
+        <div class="mc-page-title">💼 Simone - Financeiro</div>
+        <div class="mc-page-sub">Painel de acesso</div>
+      </div>
+    </div>
+    <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;">
+      <div class="mc-section-header">Áreas de acesso</div>
+      <div class="mc-sector-grid">
+        <button class="mc-sector-card" onclick="goTo('s-devolucoes')">
+          <div class="mc-sector-icon red">↩️</div>
+          <div class="mc-sector-info">
+            <div class="mc-sector-title">Devoluções</div>
+            <div class="mc-sector-desc">Produtos com problema para devolver</div>
+          </div>
+          <span class="mc-sector-arrow">›</span>
+        </button>
+        <button class="mc-sector-card" onclick="goTo('s-testes-home')">
+          <div class="mc-sector-icon indigo">🔬</div>
+          <div class="mc-sector-info">
+            <div class="mc-sector-title">Testes MP</div>
+            <div class="mc-sector-desc">Pendências e histórico de testes</div>
+          </div>
+          <span class="mc-sector-arrow">›</span>
+        </button>
+      </div>
+    </div>
   </div>
 
 <!-- ADMIN STATUS PANEL -->
@@ -3668,7 +3785,7 @@
   <!-- DEVOLUÇÕES -->
   <div class="screen" id="s-devolucoes">
     <div class="mc-header">
-      <button class="mc-header-back" onclick="goTo('s-rafael-home')">‹</button>
+      <button class="mc-header-back" onclick="goTo(window.setorAtual==='simone'?'s-simone-home':'s-rafael-home')">‹</button>
       <div class="mc-brand">
         <div class="mc-brand-logo">MC</div>
         <div class="mc-brand-text">
@@ -3753,6 +3870,46 @@
       </div>
     </div>
     <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;" id="prioridade-form-content"></div>
+  </div>
+
+  <!-- SIMONE - FINANCEIRO -->
+  <div class="screen" id="s-simone-home">
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="goTo('s-inicio')">‹</button>
+      <div class="mc-brand">
+        <div class="mc-brand-logo">MC</div>
+        <div class="mc-brand-text">
+          <div class="mc-brand-name">Monte Castelo</div>
+          <div class="mc-brand-sub">Simone - Financeiro</div>
+        </div>
+      </div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info">
+        <div class="mc-page-title">💼 Simone - Financeiro</div>
+        <div class="mc-page-sub">Painel de acesso</div>
+      </div>
+    </div>
+    <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;">
+      <div class="mc-section-header">Áreas de acesso</div>
+      <div class="mc-sector-grid">
+        <button class="mc-sector-card" onclick="goTo('s-devolucoes')">
+          <div class="mc-sector-icon red">↩️</div>
+          <div class="mc-sector-info">
+            <div class="mc-sector-title">Devoluções</div>
+            <div class="mc-sector-desc">Produtos com problema para devolver</div>
+          </div>
+          <span class="mc-sector-arrow">›</span>
+        </button>
+        <button class="mc-sector-card" onclick="goTo('s-testes-home')">
+          <div class="mc-sector-icon indigo">🔬</div>
+          <div class="mc-sector-info">
+            <div class="mc-sector-title">Testes MP</div>
+            <div class="mc-sector-desc">Pendências e histórico de testes</div>
+          </div>
+          <span class="mc-sector-arrow">›</span>
+        </button>
+      </div>
+    </div>
   </div>
 
 <!-- ADMIN STATUS PANEL -->
@@ -4056,7 +4213,7 @@
   <!-- DEVOLUÇÕES -->
   <div class="screen" id="s-devolucoes">
     <div class="mc-header">
-      <button class="mc-header-back" onclick="goTo('s-rafael-home')">‹</button>
+      <button class="mc-header-back" onclick="goTo(window.setorAtual==='simone'?'s-simone-home':'s-rafael-home')">‹</button>
       <div class="mc-brand">
         <div class="mc-brand-logo">MC</div>
         <div class="mc-brand-text">
@@ -4141,6 +4298,46 @@
       </div>
     </div>
     <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;" id="prioridade-form-content"></div>
+  </div>
+
+  <!-- SIMONE - FINANCEIRO -->
+  <div class="screen" id="s-simone-home">
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="goTo('s-inicio')">‹</button>
+      <div class="mc-brand">
+        <div class="mc-brand-logo">MC</div>
+        <div class="mc-brand-text">
+          <div class="mc-brand-name">Monte Castelo</div>
+          <div class="mc-brand-sub">Simone - Financeiro</div>
+        </div>
+      </div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info">
+        <div class="mc-page-title">💼 Simone - Financeiro</div>
+        <div class="mc-page-sub">Painel de acesso</div>
+      </div>
+    </div>
+    <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;">
+      <div class="mc-section-header">Áreas de acesso</div>
+      <div class="mc-sector-grid">
+        <button class="mc-sector-card" onclick="goTo('s-devolucoes')">
+          <div class="mc-sector-icon red">↩️</div>
+          <div class="mc-sector-info">
+            <div class="mc-sector-title">Devoluções</div>
+            <div class="mc-sector-desc">Produtos com problema para devolver</div>
+          </div>
+          <span class="mc-sector-arrow">›</span>
+        </button>
+        <button class="mc-sector-card" onclick="goTo('s-testes-home')">
+          <div class="mc-sector-icon indigo">🔬</div>
+          <div class="mc-sector-info">
+            <div class="mc-sector-title">Testes MP</div>
+            <div class="mc-sector-desc">Pendências e histórico de testes</div>
+          </div>
+          <span class="mc-sector-arrow">›</span>
+        </button>
+      </div>
+    </div>
   </div>
 
 <!-- ADMIN STATUS PANEL -->
@@ -4229,7 +4426,7 @@ let QUADRA_KIT_MAPPING = {"Kit Massa Especial Mini Sonho": "KIT MASSA ESPECIAL M
 const PINS = { confeitaria:'1234', cozinha:'5678', embalagem:'9101', expedicao:'1314', admin:'2504', contagem:'0000', container:'0001', quadra:'2020', testes:'7070' };
 const CORES = { confeitaria:'', cozinha:'verde', embalagem:'', expedicao:'laranja', admin:'roxo', contagem:'roxo', container:'', quadra:'', testes:'' };
 const NOMES = { confeitaria:'Confeitaria 🥐', cozinha:'Cozinha 🍳', embalagem:'Embalagem 📦', expedicao:'Expedição 🚚', admin:'Administrativo 📊', contagem:'Contagem 📋', container:'Rafael 📦', quadra:'Quadra 🍞', testes:'Testes MP 🔬' };
-const DESTINOS = { confeitaria:'s-conf-home', cozinha:'s-coz-home', embalagem:'s-emb-sel-data', expedicao:'s-exp-sel-data', admin:'s-adm-hub', contagem:'s-contagem-home', container:'s-rafael-home', quadra:'s-quadra-home', testes:'s-testes-home' };
+const DESTINOS = { confeitaria:'s-conf-home', cozinha:'s-coz-home', embalagem:'s-emb-sel-data', expedicao:'s-exp-sel-data', admin:'s-adm-hub', contagem:'s-contagem-home', container:'s-rafael-home', quadra:'s-quadra-home', testes:'s-testes-home', simone:'s-simone-home' };
 
 let pinAtual = '';
 let setorAtivo = '';
@@ -4425,6 +4622,8 @@ function goTo(id){
   if(id==='s-devolucao-form') renderDevolucaoForm();
   if(id==='s-prioridades') renderPrioridades();
   if(id==='s-prioridade-form') renderPrioridadeForm();
+  if(id==='s-testes-home'&&typeof renderTestesPendencias==='function') renderTestesPendencias();
+  if(id==='s-teste-pendencia-form') renderPendenciaTesteForm();
   if(id==='s-manut-lanc'){
     const b=document.getElementById('manut-lanc-btn');
     if(b){b.textContent='Salvar manutenção ✓';b.disabled=false;}
@@ -8266,6 +8465,18 @@ function aplicarFarinhasConfigFirebase(){
   }
 }
 
+// ===== TESTES MP PENDÊNCIAS (Firebase) =====
+let testesPendencias=[]; // Firestore 'testesPendencias'
+
+onSnapshot(collection(db,'testesPendencias'), snap=>{
+  try{
+    testesPendencias=snap.docs.map(d=>({firestoreId:d.id,...d.data()})).sort((a,b)=>(b.timestamp||0)-(a.timestamp||0));
+    atualizarTela();
+    const ativa=document.querySelector('.screen.active');
+    if(ativa&&ativa.id==='s-testes-home'&&typeof renderTestesPendencias==='function'){renderTestesPendencias();}
+  }catch(e){ console.error('testesPendencias snap:',e); }
+});
+
 // ===== DEVOLUÇÕES E PRIORIDADES (Firebase) =====
 let devolucoes=[]; // Firestore 'devolucoes'
 let prioridades=[]; // Firestore 'prioridades'
@@ -10709,6 +10920,132 @@ window.renderPrioridadeForm=renderPrioridadeForm;
 window.salvarPrioridade=salvarPrioridade;
 window.marcarPrioridadeEmbalada=marcarPrioridadeEmbalada;
 window.excluirPrioridade=excluirPrioridade;
+
+
+// ===== PENDÊNCIAS DE TESTE MP =====
+function renderTestesPendencias(){
+  const el=document.getElementById('testes-pendencias-block');
+  if(!el)return;
+  if(testesPendencias.length===0){
+    el.innerHTML='';
+    return;
+  }
+  let html='<div class="mc-section-header" style="color:var(--mc-laranja);">⏳ Pendências de Teste ('+testesPendencias.length+')</div>';
+  testesPendencias.forEach(p=>{
+    html+='<div style="background:var(--mc-laranja-claro);border:1px solid #fde68a;border-left:3px solid var(--mc-laranja);border-radius:var(--r-lg);padding:12px 14px;margin-bottom:8px;">';
+    html+='<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap;">';
+    html+='<div style="flex:1;min-width:180px;">';
+    html+='<div style="font-size:14px;font-weight:600;color:#78350f;">🧪 '+(p.produto||'-')+'</div>';
+    html+='<div style="font-size:11px;color:#92400e;margin-top:2px;">Fornecedor: <strong>'+(p.fornecedor||'-')+'</strong></div>';
+    html+='<div style="font-size:11px;color:#92400e;margin-top:2px;">Quantidade: <strong>'+(p.quantidade||0)+' '+(p.unidade||'kg')+'</strong> · Preço: <strong>R$ '+((p.precoKg||0).toFixed(2))+'/kg</strong></div>';
+    if(p.obs) html+='<div style="font-size:11px;color:#78350f;font-style:italic;margin-top:4px;">📝 '+p.obs+'</div>';
+    html+='</div>';
+    html+='<div style="display:flex;flex-direction:column;gap:4px;">';
+    html+='<button class="mc-act-btn-primary" style="font-size:11px;padding:5px 10px;background:var(--mc-verde);" onclick="marcarPendenciaTestada(\''+p.firestoreId+'\')">✓ Testado</button>';
+    html+='<button class="mc-act-btn-secondary" style="border-color:var(--mc-vermelho);color:var(--mc-vermelho);font-size:11px;padding:5px 10px;" onclick="excluirPendenciaTeste(\''+p.firestoreId+'\')">× Cancelar</button>';
+    html+='</div>';
+    html+='</div>';
+    if(p.atualizadoEm) html+='<div style="font-size:10px;color:#92400e;margin-top:6px;">📅 Solicitado em '+p.atualizadoEm+' por '+(p.solicitante||'-')+'</div>';
+    html+='</div>';
+  });
+  el.innerHTML=html;
+}
+
+function abrirNovaPendenciaTeste(){
+  goTo('s-teste-pendencia-form');
+  setTimeout(renderPendenciaTesteForm,10);
+}
+
+function renderPendenciaTesteForm(){
+  const el=document.getElementById('pendencia-teste-form-content');
+  if(!el)return;
+
+  let html='';
+  html+='<div class="card" style="padding:14px;margin-bottom:10px;">';
+  html+='<div class="card-label">Fornecedor</div>';
+  html+='<input type="text" id="pt-fornec" placeholder="Nome do fornecedor" style="font-size:15px;width:100%;margin-top:6px;" />';
+  html+='</div>';
+
+  html+='<div class="card" style="padding:14px;margin-bottom:10px;">';
+  html+='<div class="card-label">Nome do produto</div>';
+  html+='<input type="text" id="pt-produto" placeholder="Ex: AÇUCAR REFINADO" style="font-size:15px;width:100%;margin-top:6px;" />';
+  html+='</div>';
+
+  html+='<div class="card" style="padding:14px;margin-bottom:10px;">';
+  html+='<div style="display:grid;grid-template-columns:2fr 1fr;gap:10px;">';
+  html+='<div><div class="card-label">Quantidade que vai chegar</div><input type="number" id="pt-qtd" step="0.01" placeholder="Ex: 25" style="font-size:15px;width:100%;margin-top:6px;" /></div>';
+  html+='<div><div class="card-label">Unidade</div><select id="pt-un" style="font-size:15px;width:100%;margin-top:6px;padding:10px;border-radius:8px;border:1px solid var(--border-md);">';
+  html+='<option value="kg" selected>kg</option>';
+  html+='<option value="un">un</option>';
+  html+='<option value="L">L</option>';
+  html+='<option value="cx">cx</option>';
+  html+='</select></div>';
+  html+='</div>';
+  html+='</div>';
+
+  html+='<div class="card" style="padding:14px;margin-bottom:10px;">';
+  html+='<div class="card-label">Preço por kg (R$)</div>';
+  html+='<input type="number" id="pt-preco" step="0.01" placeholder="Ex: 5.50" style="font-size:15px;width:100%;margin-top:6px;" />';
+  html+='</div>';
+
+  html+='<div class="card" style="padding:14px;margin-bottom:10px;">';
+  html+='<div class="card-label">Observação (opcional)</div>';
+  html+='<textarea id="pt-obs" placeholder="Detalhes adicionais..." style="font-size:14px;width:100%;margin-top:6px;min-height:60px;padding:10px;border-radius:8px;border:1px solid var(--border-md);font-family:inherit;resize:vertical;"></textarea>';
+  html+='</div>';
+
+  el.innerHTML=html;
+}
+
+async function salvarPendenciaTeste(){
+  const fornecedor=(document.getElementById('pt-fornec').value||'').trim();
+  const produto=(document.getElementById('pt-produto').value||'').trim();
+  const quantidade=parseFloat(document.getElementById('pt-qtd').value)||0;
+  const unidade=document.getElementById('pt-un').value;
+  const precoKg=parseFloat(document.getElementById('pt-preco').value)||0;
+  const obs=(document.getElementById('pt-obs').value||'').trim();
+
+  if(!fornecedor){ alert('Informe o fornecedor'); return; }
+  if(!produto){ alert('Informe o produto'); return; }
+  if(quantidade<=0){ alert('Informe a quantidade'); return; }
+
+  const setor=window.setorAtual||(window.adminMode?'admin':'sistema');
+  const solicitante=NOMES[setor]?NOMES[setor].replace(/[^\w\sçáéíóúâêîôûãõà]+/gi,'').trim():setor;
+
+  try{
+    await addDoc(collection(db,'testesPendencias'),{
+      fornecedor, produto, quantidade, unidade, precoKg, obs,
+      solicitante,
+      atualizadoEm:agora(),
+      timestamp:Date.now()
+    });
+    alert('Pendência criada!');
+    goTo('s-testes-home');
+  } catch(e){
+    console.error('Erro:',e);
+    alert('Erro: '+e.message);
+  }
+}
+
+async function marcarPendenciaTestada(firestoreId){
+  if(!confirm('Marcar este produto como TESTADO?\n\nIsso vai remover da lista de pendências. Você poderá então cadastrar o teste normalmente.')) return;
+  try{
+    await deleteDoc(doc(db,'testesPendencias',firestoreId));
+  } catch(e){ alert('Erro: '+e.message); }
+}
+
+async function excluirPendenciaTeste(firestoreId){
+  if(!confirm('Cancelar esta pendência de teste?')) return;
+  try{
+    await deleteDoc(doc(db,'testesPendencias',firestoreId));
+  } catch(e){ alert('Erro: '+e.message); }
+}
+
+window.renderTestesPendencias=renderTestesPendencias;
+window.abrirNovaPendenciaTeste=abrirNovaPendenciaTeste;
+window.renderPendenciaTesteForm=renderPendenciaTesteForm;
+window.salvarPendenciaTeste=salvarPendenciaTeste;
+window.marcarPendenciaTestada=marcarPendenciaTestada;
+window.excluirPendenciaTeste=excluirPendenciaTeste;
 
 window.goTo=goTo; window.abrirPin=abrirPin; window.pinDigit=pinDigit; window.pinDel=pinDel;
 window.iniciarNovoReg=iniciarNovoReg; window.renderConfMassas=renderConfMassas; window.toggleManual=toggleManual;
