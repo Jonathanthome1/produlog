@@ -990,7 +990,7 @@
         <div class="date-btn-grid" id="date-btn-grid"></div>
         <button class="date-manual-toggle" onclick="toggleManual('manual-date-wrap')">Outra data →</button>
         <div id="manual-date-wrap" style="display:none;margin-top:8px;">
-          <input type="date" id="input-data-manual" min="2024-01-01" max="2030-12-31" onchange="selecionarDataManual('prod')" />
+          <input type="date" id="input-data-manual" onchange="selecionarDataManual('prod')" />
         </div>
       </div>
       <div id="data-sel-banner" class="banner banner-info" style="display:none;"></div>
@@ -1135,7 +1135,7 @@
         <div class="date-btn-grid" id="massa-date-grid"></div>
         <button class="date-manual-toggle" onclick="toggleManual('massa-manual-wrap')">Outra data →</button>
         <div id="massa-manual-wrap" style="display:none;margin-top:8px;">
-          <input type="date" id="massa-input-data" min="2024-01-01" max="2030-12-31" onchange="selecionarDataManual('massa')" />
+          <input type="date" id="massa-input-data" onchange="selecionarDataManual('massa')" />
         </div>
       </div>
       <div id="massa-data-banner" class="banner banner-info" style="display:none;"></div>
@@ -1300,7 +1300,7 @@
         <div class="date-btn-grid" id="recheio-date-grid"></div>
         <button class="date-manual-toggle" onclick="toggleManual('recheio-manual-wrap')">Outra data →</button>
         <div id="recheio-manual-wrap" style="display:none;margin-top:8px;">
-          <input type="date" id="recheio-input-data" min="2024-01-01" max="2030-12-31" onchange="selecionarDataManual('recheio')" />
+          <input type="date" id="recheio-input-data" onchange="selecionarDataManual('recheio')" />
         </div>
       </div>
       <div id="recheio-data-banner" class="banner banner-info-verde" style="display:none;"></div>
@@ -1700,7 +1700,7 @@
         <div class="date-btn-grid" id="manut-date-grid"></div>
         <button class="date-manual-toggle" onclick="toggleManual('manut-manual-wrap')">Outra data →</button>
         <div id="manut-manual-wrap" style="display:none;margin-top:8px;">
-          <input type="date" id="manut-input-data" min="2024-01-01" max="2030-12-31" onchange="selecionarDataManut()" />
+          <input type="date" id="manut-input-data" onchange="selecionarDataManut()" />
         </div>
       </div>
       <div class="card">
@@ -1951,7 +1951,7 @@
         <div class="date-btn-grid" id="container-entrada-date-grid"></div>
         <button class="date-manual-toggle" onclick="toggleManual('container-manual-wrap')">Outra data →</button>
         <div id="container-manual-wrap" style="display:none;margin-top:8px;">
-          <input type="date" id="container-entrada-data-input" min="2024-01-01" max="2030-12-31" onchange="selecionarDataContainerEntrada()" />
+          <input type="date" id="container-entrada-data-input" onchange="selecionarDataContainerEntrada()" />
         </div>
       </div>
       <div class="card">
@@ -1963,7 +1963,7 @@
       </div>
       <div class="card">
         <div class="card-label">Data de validade</div>
-        <input type="date" id="container-entrada-validade" min="2024-01-01" max="2030-12-31" />
+        <input type="date" id="container-entrada-validade" />
         <div style="font-size:11px;color:var(--text-secondary);margin-top:4px;">Deixe em branco se não houver validade</div>
       </div>
       <div class="card">
@@ -2070,7 +2070,7 @@
         <div class="date-btn-grid" id="quadra-date-grid"></div>
         <button class="date-manual-toggle" onclick="toggleManual('quadra-manual-wrap')">Outra data →</button>
         <div id="quadra-manual-wrap" style="display:none;margin-top:8px;">
-          <input type="date" id="quadra-input-data" min="2024-01-01" max="2030-12-31" onchange="selecionarDataQuadra()" />
+          <input type="date" id="quadra-input-data" onchange="selecionarDataQuadra()" />
         </div>
       </div>
       <button id="quadra-btn-prox-data" class="btn btn-disabled">Próximo →</button>
@@ -2250,7 +2250,7 @@
       </div>
       <div class="card">
         <div class="card-label">Data do teste</div>
-        <input type="date" id="testes-data" min="2024-01-01" max="2030-12-31" />
+        <input type="date" id="testes-data" />
       </div>
       <div class="card">
         <div class="card-label">Preço por kg (R$)</div>
@@ -2308,7 +2308,7 @@
       </div>
       <div class="card">
         <div class="card-label">Data do teste</div>
-        <input type="date" id="testes-edit-data" min="2024-01-01" max="2030-12-31" />
+        <input type="date" id="testes-edit-data" />
       </div>
       <div class="card">
         <div class="card-label">Preço por kg (R$)</div>
@@ -3526,6 +3526,7 @@ function selecionarDataManual(tipo){
   if(tipo==='recheio'){val=document.getElementById('recheio-input-data').value;inputId='recheio-input-data';}
   if(!val)return;
   const[y,m,d]=val.split('-');
+  if(!y||y.length!==4) return;
   const yNum=parseInt(y);
   if(isNaN(yNum)||yNum<2024||yNum>2030){
     alert('Data inválida. Ano deve estar entre 2024 e 2030.');
@@ -4431,7 +4432,7 @@ function renderPresencaForm(){
       <div class="date-btn-grid">${dateGrid}</div>
       <button class="date-manual-toggle" onclick="toggleManual('pr-manual-wrap')">Outra data →</button>
       <div id="pr-manual-wrap" style="display:none;margin-top:8px;">
-        <input type="date" id="pr-input-data" min="2024-01-01" max="2030-12-31" onchange="selecionarDataPresencaManual()" />
+        <input type="date" id="pr-input-data" onchange="selecionarDataPresencaManual()" />
       </div>
     </div>
     ${dfAtual?`
@@ -4567,7 +4568,8 @@ function selecionarDataPresencaManual(){
   const val=document.getElementById('pr-input-data').value;
   if(!val)return;
   const[y,m,d]=val.split('-');
-  // Validar: ano de 4 dígitos entre 2024-2030
+  // Só processar se o ano tiver 4 dígitos completos (evita disparar a cada tecla)
+  if(!y||y.length!==4) return;
   const yNum=parseInt(y);
   if(isNaN(yNum)||yNum<2024||yNum>2030){
     alert('Data inválida. Ano deve estar entre 2024 e 2030.');
@@ -4999,11 +5001,11 @@ function renderAdm(t){
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">
           <div>
             <div style="font-size:11px;color:var(--text-secondary);margin-bottom:4px;">Data inicial</div>
-            <input type="date" id="exp-inicio" min="2024-01-01" max="2030-12-31" style="font-size:14px;padding:10px;" />
+            <input type="date" id="exp-inicio" style="font-size:14px;padding:10px;" />
           </div>
           <div>
             <div style="font-size:11px;color:var(--text-secondary);margin-bottom:4px;">Data final</div>
-            <input type="date" id="exp-fim" min="2024-01-01" max="2030-12-31" style="font-size:14px;padding:10px;" />
+            <input type="date" id="exp-fim" style="font-size:14px;padding:10px;" />
           </div>
         </div>
         <button class="btn" style="background:var(--mc-roxo);color:white;margin-bottom:8px;" onclick="gerarExcel()">📥 Baixar Excel</button>
@@ -9953,9 +9955,10 @@ function calcularPresencaPendenteSetor(setorKey){
   }
 
   const pend=[...dias].filter(data=>ultimos14.includes(data)&&!presencasArr.some(p=>p.setor_key===setorKey&&p.data===data));
+  // Ordem cronológica: mais antiga primeiro (mais urgente)
   pend.sort((a,b)=>{
     const[da,ma,ya]=a.split('/'); const[db,mb,yb]=b.split('/');
-    return new Date(yb+'-'+mb+'-'+db)-new Date(ya+'-'+ma+'-'+da);
+    return new Date(ya+'-'+ma+'-'+da)-new Date(yb+'-'+mb+'-'+db);
   });
   return pend;
 }
