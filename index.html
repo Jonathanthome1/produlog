@@ -705,6 +705,8 @@
     </div>
 
     <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;">
+      <!-- Banner de presença pendente -->
+      <div id="presenca-pendente-banner"></div>
       <div class="mc-section-header">Selecione seu setor</div>
       <div class="mc-sector-grid">
         <button class="mc-sector-card" onclick="abrirPin('confeitaria')">
@@ -989,7 +991,7 @@
         <div class="date-btn-grid" id="date-btn-grid"></div>
         <button class="date-manual-toggle" onclick="toggleManual('manual-date-wrap')">Outra data →</button>
         <div id="manual-date-wrap" style="display:none;margin-top:8px;">
-          <input type="date" id="input-data-manual" onchange="selecionarDataManual('prod')" />
+          <input type="date" id="input-data-manual" min="2024-01-01" max="2030-12-31" onchange="selecionarDataManual('prod')" />
         </div>
       </div>
       <div id="data-sel-banner" class="banner banner-info" style="display:none;"></div>
@@ -1134,7 +1136,7 @@
         <div class="date-btn-grid" id="massa-date-grid"></div>
         <button class="date-manual-toggle" onclick="toggleManual('massa-manual-wrap')">Outra data →</button>
         <div id="massa-manual-wrap" style="display:none;margin-top:8px;">
-          <input type="date" id="massa-input-data" onchange="selecionarDataManual('massa')" />
+          <input type="date" id="massa-input-data" min="2024-01-01" max="2030-12-31" onchange="selecionarDataManual('massa')" />
         </div>
       </div>
       <div id="massa-data-banner" class="banner banner-info" style="display:none;"></div>
@@ -1298,7 +1300,7 @@
         <div class="date-btn-grid" id="recheio-date-grid"></div>
         <button class="date-manual-toggle" onclick="toggleManual('recheio-manual-wrap')">Outra data →</button>
         <div id="recheio-manual-wrap" style="display:none;margin-top:8px;">
-          <input type="date" id="recheio-input-data" onchange="selecionarDataManual('recheio')" />
+          <input type="date" id="recheio-input-data" min="2024-01-01" max="2030-12-31" onchange="selecionarDataManual('recheio')" />
         </div>
       </div>
       <div id="recheio-data-banner" class="banner banner-info-verde" style="display:none;"></div>
@@ -1398,7 +1400,12 @@
           <span style="color:var(--text-secondary);font-size:20px;">›</span>
         </button>
         <button class="btn btn-secondary" style="margin-top:4px;" onclick="goTo('s-presenca-reg-emb')">Ver registros de presença</button>
-        <div class="section-divider" style="margin-top:14px;">Equipamentos</div>
+        <div class="section-divider" style="margin-top:14px;">Estoque & Equipamentos</div>
+        <button class="home-btn" onclick="goTo('s-estoque-emb')" style="border-left-color:#8b5cf6;margin-bottom:4px;">
+          <div class="hb-icon" style="background:#ede9fe;">📦</div>
+          <div style="flex:1;"><div class="hb-title">Estoque Embalagem</div><div class="hb-desc" id="estoque-emb-badge">Etiquetas e Embaflux</div></div>
+          <span style="color:var(--text-secondary);font-size:20px;">›</span>
+        </button>
         <button class="home-btn" onclick="abrirManut('emb')" style="border-left-color:var(--mc-azul);">
           <div class="hb-icon" style="background:#fef3c7;">🔧</div>
           <div style="flex:1;"><div class="hb-title">Manutenção de Máquinas</div><div class="hb-desc">Registrar manutenções e ocorrências</div></div>
@@ -1693,7 +1700,7 @@
         <div class="date-btn-grid" id="manut-date-grid"></div>
         <button class="date-manual-toggle" onclick="toggleManual('manut-manual-wrap')">Outra data →</button>
         <div id="manut-manual-wrap" style="display:none;margin-top:8px;">
-          <input type="date" id="manut-input-data" onchange="selecionarDataManut()" />
+          <input type="date" id="manut-input-data" min="2024-01-01" max="2030-12-31" onchange="selecionarDataManut()" />
         </div>
       </div>
       <div class="card">
@@ -1944,7 +1951,7 @@
         <div class="date-btn-grid" id="container-entrada-date-grid"></div>
         <button class="date-manual-toggle" onclick="toggleManual('container-manual-wrap')">Outra data →</button>
         <div id="container-manual-wrap" style="display:none;margin-top:8px;">
-          <input type="date" id="container-entrada-data-input" onchange="selecionarDataContainerEntrada()" />
+          <input type="date" id="container-entrada-data-input" min="2024-01-01" max="2030-12-31" onchange="selecionarDataContainerEntrada()" />
         </div>
       </div>
       <div class="card">
@@ -1956,7 +1963,7 @@
       </div>
       <div class="card">
         <div class="card-label">Data de validade</div>
-        <input type="date" id="container-entrada-validade" />
+        <input type="date" id="container-entrada-validade" min="2024-01-01" max="2030-12-31" />
         <div style="font-size:11px;color:var(--text-secondary);margin-top:4px;">Deixe em branco se não houver validade</div>
       </div>
       <div class="card">
@@ -2063,7 +2070,7 @@
         <div class="date-btn-grid" id="quadra-date-grid"></div>
         <button class="date-manual-toggle" onclick="toggleManual('quadra-manual-wrap')">Outra data →</button>
         <div id="quadra-manual-wrap" style="display:none;margin-top:8px;">
-          <input type="date" id="quadra-input-data" onchange="selecionarDataQuadra()" />
+          <input type="date" id="quadra-input-data" min="2024-01-01" max="2030-12-31" onchange="selecionarDataQuadra()" />
         </div>
       </div>
       <button id="quadra-btn-prox-data" class="btn btn-disabled">Próximo →</button>
@@ -2243,7 +2250,7 @@
       </div>
       <div class="card">
         <div class="card-label">Data do teste</div>
-        <input type="date" id="testes-data" />
+        <input type="date" id="testes-data" min="2024-01-01" max="2030-12-31" />
       </div>
       <div class="card">
         <div class="card-label">Preço por kg (R$)</div>
@@ -2301,7 +2308,7 @@
       </div>
       <div class="card">
         <div class="card-label">Data do teste</div>
-        <input type="date" id="testes-edit-data" />
+        <input type="date" id="testes-edit-data" min="2024-01-01" max="2030-12-31" />
       </div>
       <div class="card">
         <div class="card-label">Preço por kg (R$)</div>
@@ -2969,6 +2976,29 @@
     </div>
   </div>
 
+  <!-- ESTOQUE EMBALAGEM -->
+  <div class="screen" id="s-estoque-emb">
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="goTo('s-emb-sel-data')">‹</button>
+      <div class="mc-brand">
+        <div class="mc-brand-logo">MC</div>
+        <div class="mc-brand-text">
+          <div class="mc-brand-name">Monte Castelo</div>
+          <div class="mc-brand-sub">Estoque Embalagem</div>
+        </div>
+      </div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info">
+        <div class="mc-page-title">📦 Estoque Embalagem</div>
+        <div class="mc-page-sub" id="estoque-emb-sub">Etiquetas e Embaflux</div>
+      </div>
+      <div class="mc-header-actions">
+        <button class="mc-act-btn-primary" onclick="abrirNovoEstoqueItem()">+ Item</button>
+      </div>
+    </div>
+    <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;" id="estoque-emb-content"></div>
+  </div>
+
 <!-- ADMIN STATUS PANEL -->
   <div class="screen" id="s-adm-status">
     <div class="mc-header">
@@ -3433,6 +3463,29 @@
     <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;" id="prioridade-form-content"></div>
   </div>
 
+  <!-- ESTOQUE EMBALAGEM -->
+  <div class="screen" id="s-estoque-emb">
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="goTo('s-emb-sel-data')">‹</button>
+      <div class="mc-brand">
+        <div class="mc-brand-logo">MC</div>
+        <div class="mc-brand-text">
+          <div class="mc-brand-name">Monte Castelo</div>
+          <div class="mc-brand-sub">Estoque Embalagem</div>
+        </div>
+      </div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info">
+        <div class="mc-page-title">📦 Estoque Embalagem</div>
+        <div class="mc-page-sub" id="estoque-emb-sub">Etiquetas e Embaflux</div>
+      </div>
+      <div class="mc-header-actions">
+        <button class="mc-act-btn-primary" onclick="abrirNovoEstoqueItem()">+ Item</button>
+      </div>
+    </div>
+    <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;" id="estoque-emb-content"></div>
+  </div>
+
 <!-- ADMIN STATUS PANEL -->
     <!-- CONTAGEM: PRODUTO ACABADO SUB-MENU -->
   <div class="screen" id="s-contagem-prod-acabado">
@@ -3832,6 +3885,29 @@
     <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;" id="prioridade-form-content"></div>
   </div>
 
+  <!-- ESTOQUE EMBALAGEM -->
+  <div class="screen" id="s-estoque-emb">
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="goTo('s-emb-sel-data')">‹</button>
+      <div class="mc-brand">
+        <div class="mc-brand-logo">MC</div>
+        <div class="mc-brand-text">
+          <div class="mc-brand-name">Monte Castelo</div>
+          <div class="mc-brand-sub">Estoque Embalagem</div>
+        </div>
+      </div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info">
+        <div class="mc-page-title">📦 Estoque Embalagem</div>
+        <div class="mc-page-sub" id="estoque-emb-sub">Etiquetas e Embaflux</div>
+      </div>
+      <div class="mc-header-actions">
+        <button class="mc-act-btn-primary" onclick="abrirNovoEstoqueItem()">+ Item</button>
+      </div>
+    </div>
+    <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;" id="estoque-emb-content"></div>
+  </div>
+
 <!-- ADMIN STATUS PANEL -->
     <!-- CONTAGEM: LANÇAMENTO -->
   <div class="screen" id="s-contagem-lanc">
@@ -4220,6 +4296,29 @@
     <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;" id="prioridade-form-content"></div>
   </div>
 
+  <!-- ESTOQUE EMBALAGEM -->
+  <div class="screen" id="s-estoque-emb">
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="goTo('s-emb-sel-data')">‹</button>
+      <div class="mc-brand">
+        <div class="mc-brand-logo">MC</div>
+        <div class="mc-brand-text">
+          <div class="mc-brand-name">Monte Castelo</div>
+          <div class="mc-brand-sub">Estoque Embalagem</div>
+        </div>
+      </div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info">
+        <div class="mc-page-title">📦 Estoque Embalagem</div>
+        <div class="mc-page-sub" id="estoque-emb-sub">Etiquetas e Embaflux</div>
+      </div>
+      <div class="mc-header-actions">
+        <button class="mc-act-btn-primary" onclick="abrirNovoEstoqueItem()">+ Item</button>
+      </div>
+    </div>
+    <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;" id="estoque-emb-content"></div>
+  </div>
+
 <!-- ADMIN STATUS PANEL -->
     <!-- CONTAGEM: HISTÓRICO -->
   <div class="screen" id="s-contagem-hist">
@@ -4350,6 +4449,9 @@ setTimeout(()=>{
 },4000);
 
 function atualizarTela(){
+  if(document.querySelector('.screen.active')&&document.querySelector('.screen.active').id==='s-inicio'){
+    if(typeof renderBannerPresencaPendente==='function') renderBannerPresencaPendente();
+  }
   document.getElementById('loading').style.display='none';
   const tela=document.querySelector('.screen.active')?.id;
   if(!tela||tela==='loading'){ goTo('s-inicio'); return; }
@@ -4502,6 +4604,8 @@ function goTo(id){
   if(id==='s-devolucao-form') renderDevolucaoForm();
   if(id==='s-prioridades') renderPrioridades();
   if(id==='s-prioridade-form') renderPrioridadeForm();
+  if(id==='s-inicio') renderBannerPresencaPendente();
+  if(id==='s-estoque-emb') renderEstoqueEmb();
   if(id==='s-testes-home'&&typeof renderTestesPendencias==='function') renderTestesPendencias();
   if(id==='s-teste-pendencia-form') renderPendenciaTesteForm();
   if(id==='s-manut-lanc'){
@@ -4539,12 +4643,19 @@ function selecionarDataTipo(data,tipo){
 }
 function toggleManual(id){const w=document.getElementById(id);w.style.display=w.style.display==='none'?'block':'none';}
 function selecionarDataManual(tipo){
-  let val='';
-  if(tipo==='prod')val=document.getElementById('input-data-manual').value;
-  if(tipo==='massa')val=document.getElementById('massa-input-data').value;
-  if(tipo==='recheio')val=document.getElementById('recheio-input-data').value;
+  let val='', inputId='';
+  if(tipo==='prod'){val=document.getElementById('input-data-manual').value;inputId='input-data-manual';}
+  if(tipo==='massa'){val=document.getElementById('massa-input-data').value;inputId='massa-input-data';}
+  if(tipo==='recheio'){val=document.getElementById('recheio-input-data').value;inputId='recheio-input-data';}
   if(!val)return;
-  const[y,m,d]=val.split('-');selecionarDataTipo(`${d}/${m}/${y}`,tipo);
+  const[y,m,d]=val.split('-');
+  const yNum=parseInt(y);
+  if(isNaN(yNum)||yNum<2024||yNum>2030){
+    alert('Data inválida. Ano deve estar entre 2024 e 2030.');
+    document.getElementById(inputId).value='';
+    return;
+  }
+  selecionarDataTipo(`${d}/${m}/${y}`,tipo);
 }
 
 // ===== PRODUÇÃO =====
@@ -5443,7 +5554,7 @@ function renderPresencaForm(){
       <div class="date-btn-grid">${dateGrid}</div>
       <button class="date-manual-toggle" onclick="toggleManual('pr-manual-wrap')">Outra data →</button>
       <div id="pr-manual-wrap" style="display:none;margin-top:8px;">
-        <input type="date" id="pr-input-data" onchange="selecionarDataPresencaManual()" />
+        <input type="date" id="pr-input-data" min="2024-01-01" max="2030-12-31" onchange="selecionarDataPresencaManual()" />
       </div>
     </div>
     ${dfAtual?`
@@ -5579,6 +5690,13 @@ function selecionarDataPresencaManual(){
   const val=document.getElementById('pr-input-data').value;
   if(!val)return;
   const[y,m,d]=val.split('-');
+  // Validar: ano de 4 dígitos entre 2024-2030
+  const yNum=parseInt(y);
+  if(isNaN(yNum)||yNum<2024||yNum>2030){
+    alert('Data inválida. Ano deve estar entre 2024 e 2030.');
+    document.getElementById('pr-input-data').value='';
+    return;
+  }
   selecionarDataPresenca(`${d}/${m}/${y}`);
 }
 
@@ -6004,11 +6122,11 @@ function renderAdm(t){
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">
           <div>
             <div style="font-size:11px;color:var(--text-secondary);margin-bottom:4px;">Data inicial</div>
-            <input type="date" id="exp-inicio" style="font-size:14px;padding:10px;" />
+            <input type="date" id="exp-inicio" min="2024-01-01" max="2030-12-31" style="font-size:14px;padding:10px;" />
           </div>
           <div>
             <div style="font-size:11px;color:var(--text-secondary);margin-bottom:4px;">Data final</div>
-            <input type="date" id="exp-fim" style="font-size:14px;padding:10px;" />
+            <input type="date" id="exp-fim" min="2024-01-01" max="2030-12-31" style="font-size:14px;padding:10px;" />
           </div>
         </div>
         <button class="btn" style="background:var(--mc-roxo);color:white;margin-bottom:8px;" onclick="gerarExcel()">📥 Baixar Excel</button>
@@ -8344,6 +8462,18 @@ function aplicarFarinhasConfigFirebase(){
     });
   }
 }
+
+// ===== ESTOQUE EMBALAGEM (Firebase) =====
+let estoqueEmbalagem=[]; // Firestore 'estoqueEmbalagem'
+
+onSnapshot(collection(db,'estoqueEmbalagem'), snap=>{
+  try{
+    estoqueEmbalagem=snap.docs.map(d=>({firestoreId:d.id,...d.data()})).sort((a,b)=>(a.grupo||'').localeCompare(b.grupo||'')||(a.nome||'').localeCompare(b.nome||''));
+    atualizarTela();
+    const ativa=document.querySelector('.screen.active');
+    if(ativa&&ativa.id==='s-estoque-emb'&&typeof renderEstoqueEmb==='function'){renderEstoqueEmb();}
+  }catch(e){ console.error('estoqueEmbalagem snap:',e); }
+});
 
 // ===== TESTES MP PENDÊNCIAS (Firebase) =====
 let testesPendencias=[]; // Firestore 'testesPendencias'
@@ -10926,6 +11056,266 @@ window.renderPendenciaTesteForm=renderPendenciaTesteForm;
 window.salvarPendenciaTeste=salvarPendenciaTeste;
 window.marcarPendenciaTestada=marcarPendenciaTestada;
 window.excluirPendenciaTeste=excluirPendenciaTeste;
+
+
+// ===== BANNER DE PRESENÇA PENDENTE NA TELA INICIAL =====
+function renderBannerPresencaPendente(){
+  const el=document.getElementById('presenca-pendente-banner');
+  if(!el)return;
+
+  const hojeStr=hoje();
+  const ultimos14=[];
+  for(let i=0;i<14;i++){const d=new Date();d.setDate(d.getDate()-i);ultimos14.push(fmtData(d));}
+  const presencasArr=Array.isArray(presencas)?presencas:Object.values(presencas||{});
+
+  // CONFEITARIA
+  const diasConfLanc=new Set();
+  registros.forEach(r=>{ if(r.origem!=='quadra') diasConfLanc.add(r.data); });
+  if(typeof regMassas!=='undefined'&&Array.isArray(regMassas)) regMassas.forEach(m=>diasConfLanc.add(m.data));
+  const confPend=[...diasConfLanc].filter(data=>ultimos14.includes(data)&&!presencasArr.some(p=>p.setor_key==='conf'&&p.data===data));
+
+  // COZINHA
+  const diasCozLanc=new Set();
+  if(typeof regRecheios!=='undefined'&&Array.isArray(regRecheios)) regRecheios.forEach(r=>diasCozLanc.add(r.data));
+  const cozPend=[...diasCozLanc].filter(data=>ultimos14.includes(data)&&!presencasArr.some(p=>p.setor_key==='coz'&&p.data===data));
+
+  // EMBALAGEM
+  const diasEmbLanc=new Set();
+  registros.forEach(r=>{ if(r.embalagem&&r.embalagem.feito) diasEmbLanc.add(r.data); });
+  const embPend=[...diasEmbLanc].filter(data=>ultimos14.includes(data)&&!presencasArr.some(p=>p.setor_key==='emb'&&p.data===data));
+
+  const sortDesc=arr=>arr.sort((a,b)=>{
+    const[da,ma,ya]=a.split('/'); const[db,mb,yb]=b.split('/');
+    return new Date(yb+'-'+mb+'-'+db)-new Date(ya+'-'+ma+'-'+da);
+  });
+  sortDesc(confPend); sortDesc(cozPend); sortDesc(embPend);
+
+  const totalPend=confPend.length+cozPend.length+embPend.length;
+  if(totalPend===0){ el.innerHTML=''; return; }
+
+  let html='<div style="background:linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);border:1px solid #fcd34d;border-left:4px solid var(--mc-laranja);border-radius:var(--r-lg);padding:14px 16px;margin-bottom:16px;box-shadow:var(--shadow-md);">';
+  html+='<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">';
+  html+='<span style="font-size:20px;">⚠️</span>';
+  html+='<div style="font-size:14px;font-weight:700;color:#92400e;">Presenças pendentes ('+totalPend+')</div>';
+  html+='</div>';
+  html+='<div style="font-size:12px;color:#78350f;">Alguns setores fizeram lançamento mas não registraram presença:</div>';
+
+  function bloco(label,dias,icon){
+    if(dias.length===0) return '';
+    const datas=dias.slice(0,5).join(', ')+(dias.length>5?'...':'');
+    return '<div style="margin-top:8px;padding:8px 10px;background:rgba(255,255,255,0.6);border-radius:8px;font-size:12px;color:#78350f;">'+
+      '<strong>'+icon+' '+label+':</strong> '+dias.length+' dia(s) — '+datas+
+      '</div>';
+  }
+  html+=bloco('Confeitaria',confPend,'🥐');
+  html+=bloco('Cozinha',cozPend,'🍳');
+  html+=bloco('Embalagem',embPend,'📦');
+  html+='</div>';
+
+  el.innerHTML=html;
+}
+window.renderBannerPresencaPendente=renderBannerPresencaPendente;
+
+
+// ===== ESTOQUE EMBALAGEM =====
+const _ESTOQUE_EMB_INICIAL=[
+  {grupo:'Etiquetas',nome:'Bobina Branca',quantidade:112,minimo:20,unidade:'un'},
+  {grupo:'Etiquetas',nome:'Bobina Azul',quantidade:22,minimo:10,unidade:'un'},
+  {grupo:'Etiquetas',nome:'Bobina Amarela',quantidade:0,minimo:10,unidade:'un'},
+  {grupo:'Etiquetas',nome:'Bobina Vermelha',quantidade:12,minimo:10,unidade:'un'},
+  {grupo:'Etiquetas',nome:'Bobina Laranja',quantidade:11,minimo:10,unidade:'un'},
+  {grupo:'Embaflux',nome:'Resistência',quantidade:6,minimo:2,unidade:'un'},
+  {grupo:'Embaflux',nome:'Kit Borracha Preta',quantidade:2,minimo:1,unidade:'un'},
+  {grupo:'Embaflux',nome:'Kit Borracha Azul',quantidade:2,minimo:1,unidade:'un'},
+  {grupo:'Embaflux',nome:'Kit Números',quantidade:1,minimo:1,unidade:'un'},
+  {grupo:'Embaflux',nome:'Ribbon (Embaflux Velha)',quantidade:1,minimo:1,unidade:'un'}
+];
+
+function renderEstoqueEmb(){
+  const el=document.getElementById('estoque-emb-content');
+  if(!el)return;
+
+  // Se vazio, mostrar botão de inicialização
+  if(estoqueEmbalagem.length===0){
+    let html='<div class="mc-banner" style="background:var(--mc-laranja-claro);border-color:#fde68a;border-left-color:var(--mc-laranja);">'+
+      '<span class="mc-banner-icon">📦</span>'+
+      '<span class="mc-banner-text" style="color:#92400e;flex:1;"><strong>Estoque vazio.</strong> Clique para cadastrar os itens iniciais (etiquetas e Embaflux).</span>'+
+      '<button class="mc-act-btn-primary" style="background:var(--mc-laranja);" onclick="popularEstoqueInicial()">Inicializar</button>'+
+      '</div>';
+    el.innerHTML=html;
+    return;
+  }
+
+  // Calcular alertas
+  const baixos=estoqueEmbalagem.filter(it=>it.quantidade<=(it.minimo||0));
+  const sub=document.getElementById('estoque-emb-sub');
+  if(sub) sub.textContent=estoqueEmbalagem.length+' itens · '+baixos.length+' abaixo do mínimo';
+
+  let html='';
+
+  // Alerta de baixo estoque
+  if(baixos.length>0){
+    html+='<div class="mc-banner" style="background:var(--mc-vermelho-claro);border-color:#fecaca;border-left-color:var(--mc-vermelho);">'+
+      '<span class="mc-banner-icon">🚨</span>'+
+      '<span class="mc-banner-text" style="color:#991b1b;"><strong>'+baixos.length+' item(ns) abaixo do estoque mínimo</strong> · '+baixos.map(b=>b.nome).join(', ')+'</span>'+
+      '</div>';
+  }
+
+  // Agrupar por grupo
+  const grupos={};
+  estoqueEmbalagem.forEach(it=>{
+    if(!grupos[it.grupo]) grupos[it.grupo]=[];
+    grupos[it.grupo].push(it);
+  });
+
+  Object.keys(grupos).sort().forEach(gp=>{
+    const itens=grupos[gp];
+    const icones={'Etiquetas':'🏷️','Embaflux':'⚙️'};
+    const icon=icones[gp]||'📦';
+    html+='<div class="mc-section-header" style="margin-top:16px;">'+icon+' '+gp+' ('+itens.length+')</div>';
+
+    itens.forEach(it=>{
+      const min=it.minimo||0;
+      const baixo=it.quantidade<=min;
+      const semEstoque=it.quantidade<=0;
+
+      const borderColor=semEstoque?'var(--mc-vermelho)':(baixo?'var(--mc-laranja)':'var(--mc-verde)');
+      const bgColor=semEstoque?'var(--mc-vermelho-claro)':(baixo?'var(--mc-laranja-claro)':'var(--bg-primary)');
+      const qtdColor=semEstoque?'var(--mc-vermelho)':(baixo?'var(--mc-laranja)':'var(--text-primary)');
+
+      html+='<div style="background:'+bgColor+';border:1px solid var(--border);border-left:3px solid '+borderColor+';border-radius:var(--r-lg);padding:12px 14px;margin-bottom:8px;box-shadow:var(--shadow-sm);">';
+      html+='<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap;">';
+
+      // Nome e indicadores
+      html+='<div style="flex:1;min-width:160px;">';
+      html+='<div style="font-size:14px;font-weight:600;color:var(--text-primary);">'+it.nome;
+      if(semEstoque) html+=' <span style="background:var(--mc-vermelho);color:white;font-size:10px;padding:2px 6px;border-radius:4px;margin-left:6px;">SEM ESTOQUE</span>';
+      else if(baixo) html+=' <span style="background:var(--mc-laranja);color:white;font-size:10px;padding:2px 6px;border-radius:4px;margin-left:6px;">⚠ BAIXO</span>';
+      html+='</div>';
+      html+='<div style="font-size:11px;color:var(--text-secondary);margin-top:2px;">Mínimo: '+min+' '+(it.unidade||'un')+(it.atualizadoEm?' · 📅 '+it.atualizadoEm:'')+'</div>';
+      html+='</div>';
+
+      // Quantidade atual
+      html+='<div style="text-align:right;flex-shrink:0;">';
+      html+='<div style="font-size:24px;font-weight:700;color:'+qtdColor+';line-height:1;">'+it.quantidade+'</div>';
+      html+='<div style="font-size:10px;color:var(--text-muted);">'+(it.unidade||'un')+'</div>';
+      html+='</div>';
+
+      html+='</div>';
+
+      // Botões de ação
+      html+='<div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;">';
+      html+='<button class="mc-act-btn-primary" style="flex:1;font-size:12px;padding:8px;min-width:90px;background:var(--mc-verde);" onclick="ajustarEstoqueQuick(\''+it.firestoreId+'\',1)">+ Entrada</button>';
+      html+='<button class="mc-act-btn-primary" style="flex:1;font-size:12px;padding:8px;min-width:90px;background:var(--mc-laranja);" onclick="ajustarEstoqueQuick(\''+it.firestoreId+'\',-1)">− Saída</button>';
+      html+='<button class="mc-act-btn-secondary" style="font-size:11px;padding:8px 12px;" onclick="editarEstoqueItem(\''+it.firestoreId+'\')">Editar</button>';
+      html+='<button class="mc-act-btn-secondary" style="border-color:var(--mc-vermelho);color:var(--mc-vermelho);font-size:11px;padding:8px 12px;" onclick="excluirEstoqueItem(\''+it.firestoreId+'\',\''+escapeJsStr(it.nome)+'\')">×</button>';
+      html+='</div>';
+
+      html+='</div>';
+    });
+  });
+
+  el.innerHTML=html;
+}
+
+async function popularEstoqueInicial(){
+  if(!confirm('Cadastrar '+_ESTOQUE_EMB_INICIAL.length+' itens iniciais no estoque?'))return;
+  try{
+    const ts=agora();
+    for(const it of _ESTOQUE_EMB_INICIAL){
+      await addDoc(collection(db,'estoqueEmbalagem'),{
+        ...it,
+        atualizadoEm:ts
+      });
+    }
+    alert('✓ Itens iniciais cadastrados!');
+  } catch(e){
+    console.error('Erro:',e);
+    alert('Erro: '+e.message);
+  }
+}
+
+async function ajustarEstoqueQuick(firestoreId,delta){
+  const it=estoqueEmbalagem.find(x=>x.firestoreId===firestoreId);
+  if(!it)return;
+  const acao=delta>0?'entrada':'saída';
+  const valorStr=prompt('Quantidade de '+acao+':',1);
+  if(!valorStr)return;
+  const valor=parseFloat(valorStr)||0;
+  if(valor<=0){ alert('Quantidade inválida'); return; }
+  const novaQtd=(it.quantidade||0)+(delta*valor);
+  if(novaQtd<0){
+    if(!confirm('Isso vai deixar o estoque negativo ('+novaQtd+'). Continuar mesmo assim?'))return;
+  }
+  try{
+    await updateDoc(doc(db,'estoqueEmbalagem',firestoreId),{
+      quantidade:novaQtd,
+      atualizadoEm:agora()
+    });
+  } catch(e){ alert('Erro: '+e.message); }
+}
+
+async function abrirNovoEstoqueItem(){
+  const grupo=prompt('Grupo (ex: Etiquetas, Embaflux, Outros):','Etiquetas');
+  if(!grupo)return;
+  const nome=prompt('Nome do item:');
+  if(!nome||!nome.trim())return;
+  const qtdStr=prompt('Quantidade inicial:','0');
+  if(qtdStr===null)return;
+  const minStr=prompt('Estoque mínimo (alerta quando atingir):','5');
+  if(minStr===null)return;
+  const un=prompt('Unidade (un, kg, rolo, etc):','un');
+  if(un===null)return;
+  try{
+    await addDoc(collection(db,'estoqueEmbalagem'),{
+      grupo:grupo.trim(),
+      nome:nome.trim(),
+      quantidade:parseFloat(qtdStr)||0,
+      minimo:parseFloat(minStr)||0,
+      unidade:(un||'un').trim(),
+      atualizadoEm:agora()
+    });
+  } catch(e){ alert('Erro: '+e.message); }
+}
+
+async function editarEstoqueItem(firestoreId){
+  const it=estoqueEmbalagem.find(x=>x.firestoreId===firestoreId);
+  if(!it)return;
+  const grupo=prompt('Grupo:',it.grupo||'');
+  if(grupo===null)return;
+  const nome=prompt('Nome:',it.nome||'');
+  if(nome===null||!nome.trim())return;
+  const qtd=prompt('Quantidade atual:',it.quantidade||0);
+  if(qtd===null)return;
+  const min=prompt('Estoque mínimo:',it.minimo||0);
+  if(min===null)return;
+  const un=prompt('Unidade:',it.unidade||'un');
+  if(un===null)return;
+  try{
+    await updateDoc(doc(db,'estoqueEmbalagem',firestoreId),{
+      grupo:grupo.trim(),
+      nome:nome.trim(),
+      quantidade:parseFloat(qtd)||0,
+      minimo:parseFloat(min)||0,
+      unidade:(un||'un').trim(),
+      atualizadoEm:agora()
+    });
+  } catch(e){ alert('Erro: '+e.message); }
+}
+
+async function excluirEstoqueItem(firestoreId,nome){
+  if(!confirm('Excluir "'+nome+'" do estoque?'))return;
+  try{
+    await deleteDoc(doc(db,'estoqueEmbalagem',firestoreId));
+  } catch(e){ alert('Erro: '+e.message); }
+}
+
+window.renderEstoqueEmb=renderEstoqueEmb;
+window.popularEstoqueInicial=popularEstoqueInicial;
+window.ajustarEstoqueQuick=ajustarEstoqueQuick;
+window.abrirNovoEstoqueItem=abrirNovoEstoqueItem;
+window.editarEstoqueItem=editarEstoqueItem;
+window.excluirEstoqueItem=excluirEstoqueItem;
 
 window.goTo=goTo; window.abrirPin=abrirPin; window.pinDigit=pinDigit; window.pinDel=pinDel;
 window.iniciarNovoReg=iniciarNovoReg; window.renderConfMassas=renderConfMassas; window.toggleManual=toggleManual;
