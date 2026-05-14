@@ -705,8 +705,6 @@
     </div>
 
     <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;">
-      <!-- Banner de presença pendente -->
-      <div id="presenca-pendente-banner"></div>
       <div class="mc-section-header">Selecione seu setor</div>
       <div class="mc-sector-grid">
         <button class="mc-sector-card" onclick="abrirPin('confeitaria')">
@@ -857,6 +855,7 @@
       </div>
     </div>
     <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;">
+      <div id="banner-presenca-conf"></div>
       <div id="conf-banner" class="mc-banner" style="display:none;background:var(--mc-verde-claro);border-color:#a7f3d0;border-left-color:var(--mc-verde);"><span class="mc-banner-icon">✓</span><span class="mc-banner-text" style="color:#065f46;"><strong>Registro salvo!</strong></span></div>
 
       <div class="mc-hero">
@@ -1208,6 +1207,7 @@
       </div>
     </div>
     <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;">
+      <div id="banner-presenca-coz"></div>
       <div id="coz-banner" class="mc-banner" style="display:none;background:var(--mc-verde-claro);border-color:#a7f3d0;border-left-color:var(--mc-verde);"><span class="mc-banner-icon">✓</span><span class="mc-banner-text" style="color:#065f46;"><strong>Registro salvo!</strong></span></div>
 
       <div class="mc-hero" style="border-left-color:var(--mc-verde);">
@@ -1390,7 +1390,7 @@
       </div>
       
     </div>
-    <div class="content" id="emb-sel-content-wrap">
+    <div class="content" id="emb-sel-content-wrap"><div id="banner-presenca-emb"></div>
       <div id="emb-sel-content"></div>
       <div style="margin-top:14px;">
         <div class="section-divider">Equipe</div>
@@ -2999,6 +2999,29 @@
     <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;" id="estoque-emb-content"></div>
   </div>
 
+  <!-- ESTOQUE EMBALAGEM FORM -->
+  <div class="screen" id="s-estoque-emb-form">
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="goTo('s-estoque-emb')">‹</button>
+      <div class="mc-brand">
+        <div class="mc-brand-logo">MC</div>
+        <div class="mc-brand-text">
+          <div class="mc-brand-name">Monte Castelo</div>
+          <div class="mc-brand-sub">Estoque</div>
+        </div>
+      </div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info">
+        <div class="mc-page-title" id="estoque-form-title">Item</div>
+        <div class="mc-page-sub">Preencha os dados</div>
+      </div>
+      <div class="mc-header-actions">
+        <button class="mc-act-btn-primary" onclick="salvarEstoqueForm()">Salvar</button>
+      </div>
+    </div>
+    <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;" id="estoque-emb-form-content"></div>
+  </div>
+
 <!-- ADMIN STATUS PANEL -->
   <div class="screen" id="s-adm-status">
     <div class="mc-header">
@@ -3486,6 +3509,29 @@
     <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;" id="estoque-emb-content"></div>
   </div>
 
+  <!-- ESTOQUE EMBALAGEM FORM -->
+  <div class="screen" id="s-estoque-emb-form">
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="goTo('s-estoque-emb')">‹</button>
+      <div class="mc-brand">
+        <div class="mc-brand-logo">MC</div>
+        <div class="mc-brand-text">
+          <div class="mc-brand-name">Monte Castelo</div>
+          <div class="mc-brand-sub">Estoque</div>
+        </div>
+      </div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info">
+        <div class="mc-page-title" id="estoque-form-title">Item</div>
+        <div class="mc-page-sub">Preencha os dados</div>
+      </div>
+      <div class="mc-header-actions">
+        <button class="mc-act-btn-primary" onclick="salvarEstoqueForm()">Salvar</button>
+      </div>
+    </div>
+    <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;" id="estoque-emb-form-content"></div>
+  </div>
+
 <!-- ADMIN STATUS PANEL -->
     <!-- CONTAGEM: PRODUTO ACABADO SUB-MENU -->
   <div class="screen" id="s-contagem-prod-acabado">
@@ -3908,6 +3954,29 @@
     <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;" id="estoque-emb-content"></div>
   </div>
 
+  <!-- ESTOQUE EMBALAGEM FORM -->
+  <div class="screen" id="s-estoque-emb-form">
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="goTo('s-estoque-emb')">‹</button>
+      <div class="mc-brand">
+        <div class="mc-brand-logo">MC</div>
+        <div class="mc-brand-text">
+          <div class="mc-brand-name">Monte Castelo</div>
+          <div class="mc-brand-sub">Estoque</div>
+        </div>
+      </div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info">
+        <div class="mc-page-title" id="estoque-form-title">Item</div>
+        <div class="mc-page-sub">Preencha os dados</div>
+      </div>
+      <div class="mc-header-actions">
+        <button class="mc-act-btn-primary" onclick="salvarEstoqueForm()">Salvar</button>
+      </div>
+    </div>
+    <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;" id="estoque-emb-form-content"></div>
+  </div>
+
 <!-- ADMIN STATUS PANEL -->
     <!-- CONTAGEM: LANÇAMENTO -->
   <div class="screen" id="s-contagem-lanc">
@@ -4319,6 +4388,29 @@
     <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;" id="estoque-emb-content"></div>
   </div>
 
+  <!-- ESTOQUE EMBALAGEM FORM -->
+  <div class="screen" id="s-estoque-emb-form">
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="goTo('s-estoque-emb')">‹</button>
+      <div class="mc-brand">
+        <div class="mc-brand-logo">MC</div>
+        <div class="mc-brand-text">
+          <div class="mc-brand-name">Monte Castelo</div>
+          <div class="mc-brand-sub">Estoque</div>
+        </div>
+      </div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info">
+        <div class="mc-page-title" id="estoque-form-title">Item</div>
+        <div class="mc-page-sub">Preencha os dados</div>
+      </div>
+      <div class="mc-header-actions">
+        <button class="mc-act-btn-primary" onclick="salvarEstoqueForm()">Salvar</button>
+      </div>
+    </div>
+    <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;" id="estoque-emb-form-content"></div>
+  </div>
+
 <!-- ADMIN STATUS PANEL -->
     <!-- CONTAGEM: HISTÓRICO -->
   <div class="screen" id="s-contagem-hist">
@@ -4449,9 +4541,6 @@ setTimeout(()=>{
 },4000);
 
 function atualizarTela(){
-  if(document.querySelector('.screen.active')&&document.querySelector('.screen.active').id==='s-inicio'){
-    if(typeof renderBannerPresencaPendente==='function') renderBannerPresencaPendente();
-  }
   document.getElementById('loading').style.display='none';
   const tela=document.querySelector('.screen.active')?.id;
   if(!tela||tela==='loading'){ goTo('s-inicio'); return; }
@@ -4604,8 +4693,11 @@ function goTo(id){
   if(id==='s-devolucao-form') renderDevolucaoForm();
   if(id==='s-prioridades') renderPrioridades();
   if(id==='s-prioridade-form') renderPrioridadeForm();
-  if(id==='s-inicio') renderBannerPresencaPendente();
   if(id==='s-estoque-emb') renderEstoqueEmb();
+  if(id==='s-estoque-emb-form') renderEstoqueEmbForm();
+  if(id==='s-conf-home'&&typeof renderBannerPresencaSetor==='function') renderBannerPresencaSetor('conf','banner-presenca-conf');
+  if(id==='s-coz-home'&&typeof renderBannerPresencaSetor==='function') renderBannerPresencaSetor('coz','banner-presenca-coz');
+  if((id==='s-emb-sel-data'||id==='s-emb-home')&&typeof renderBannerPresencaSetor==='function') renderBannerPresencaSetor('emb','banner-presenca-emb');
   if(id==='s-testes-home'&&typeof renderTestesPendencias==='function') renderTestesPendencias();
   if(id==='s-teste-pendencia-form') renderPendenciaTesteForm();
   if(id==='s-manut-lanc'){
@@ -11058,91 +11150,81 @@ window.marcarPendenciaTestada=marcarPendenciaTestada;
 window.excluirPendenciaTeste=excluirPendenciaTeste;
 
 
-// ===== BANNER DE PRESENÇA PENDENTE NA TELA INICIAL =====
-function renderBannerPresencaPendente(){
-  const el=document.getElementById('presenca-pendente-banner');
-  if(!el)return;
-
-  const hojeStr=hoje();
+// ===== BANNER DE PRESENÇA PENDENTE POR SETOR =====
+// Cada setor vê apenas seus próprios dias pendentes na sua tela home
+function calcularPresencaPendenteSetor(setorKey){
   const ultimos14=[];
   for(let i=0;i<14;i++){const d=new Date();d.setDate(d.getDate()-i);ultimos14.push(fmtData(d));}
   const presencasArr=Array.isArray(presencas)?presencas:Object.values(presencas||{});
 
-  // CONFEITARIA
-  const diasConfLanc=new Set();
-  registros.forEach(r=>{ if(r.origem!=='quadra') diasConfLanc.add(r.data); });
-  if(typeof regMassas!=='undefined'&&Array.isArray(regMassas)) regMassas.forEach(m=>diasConfLanc.add(m.data));
-  const confPend=[...diasConfLanc].filter(data=>ultimos14.includes(data)&&!presencasArr.some(p=>p.setor_key==='conf'&&p.data===data));
+  const dias=new Set();
+  if(setorKey==='conf'){
+    registros.forEach(r=>{ if(r.origem!=='quadra') dias.add(r.data); });
+    if(typeof regMassas!=='undefined'&&Array.isArray(regMassas)) regMassas.forEach(m=>dias.add(m.data));
+  } else if(setorKey==='coz'){
+    if(typeof regRecheios!=='undefined'&&Array.isArray(regRecheios)) regRecheios.forEach(r=>dias.add(r.data));
+  } else if(setorKey==='emb'){
+    registros.forEach(r=>{ if(r.embalagem&&r.embalagem.feito) dias.add(r.data); });
+  }
 
-  // COZINHA
-  const diasCozLanc=new Set();
-  if(typeof regRecheios!=='undefined'&&Array.isArray(regRecheios)) regRecheios.forEach(r=>diasCozLanc.add(r.data));
-  const cozPend=[...diasCozLanc].filter(data=>ultimos14.includes(data)&&!presencasArr.some(p=>p.setor_key==='coz'&&p.data===data));
-
-  // EMBALAGEM
-  const diasEmbLanc=new Set();
-  registros.forEach(r=>{ if(r.embalagem&&r.embalagem.feito) diasEmbLanc.add(r.data); });
-  const embPend=[...diasEmbLanc].filter(data=>ultimos14.includes(data)&&!presencasArr.some(p=>p.setor_key==='emb'&&p.data===data));
-
-  const sortDesc=arr=>arr.sort((a,b)=>{
+  const pend=[...dias].filter(data=>ultimos14.includes(data)&&!presencasArr.some(p=>p.setor_key===setorKey&&p.data===data));
+  pend.sort((a,b)=>{
     const[da,ma,ya]=a.split('/'); const[db,mb,yb]=b.split('/');
     return new Date(yb+'-'+mb+'-'+db)-new Date(ya+'-'+ma+'-'+da);
   });
-  sortDesc(confPend); sortDesc(cozPend); sortDesc(embPend);
+  return pend;
+}
 
-  const totalPend=confPend.length+cozPend.length+embPend.length;
-  if(totalPend===0){ el.innerHTML=''; return; }
+function renderBannerPresencaSetor(setorKey,elId){
+  const el=document.getElementById(elId);
+  if(!el) return;
+  const pend=calcularPresencaPendenteSetor(setorKey);
+  if(pend.length===0){ el.innerHTML=''; return; }
 
-  let html='<div style="background:linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);border:1px solid #fcd34d;border-left:4px solid var(--mc-laranja);border-radius:var(--r-lg);padding:14px 16px;margin-bottom:16px;box-shadow:var(--shadow-md);">';
-  html+='<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">';
-  html+='<span style="font-size:20px;">⚠️</span>';
-  html+='<div style="font-size:14px;font-weight:700;color:#92400e;">Presenças pendentes ('+totalPend+')</div>';
+  const datas=pend.slice(0,7).join(', ')+(pend.length>7?'...':'');
+  const goPresenca={conf:'s-presenca-reg-conf',coz:'s-presenca-reg-coz',emb:'s-presenca-reg-emb'}[setorKey];
+
+  let html='<div style="background:linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);border:1px solid #fcd34d;border-left:4px solid var(--mc-laranja);border-radius:var(--r-lg);padding:12px 14px;margin-bottom:14px;box-shadow:var(--shadow-sm);">';
+  html+='<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">';
+  html+='<span style="font-size:18px;">⚠️</span>';
+  html+='<div style="font-size:13px;font-weight:700;color:#92400e;">Presença pendente em '+pend.length+' dia(s)</div>';
+  if(goPresenca) html+='<button onclick="goTo(\''+goPresenca+'\')" class="mc-act-btn-primary" style="background:var(--mc-laranja);font-size:11px;padding:4px 10px;margin-left:auto;">Registrar →</button>';
   html+='</div>';
-  html+='<div style="font-size:12px;color:#78350f;">Alguns setores fizeram lançamento mas não registraram presença:</div>';
-
-  function bloco(label,dias,icon){
-    if(dias.length===0) return '';
-    const datas=dias.slice(0,5).join(', ')+(dias.length>5?'...':'');
-    return '<div style="margin-top:8px;padding:8px 10px;background:rgba(255,255,255,0.6);border-radius:8px;font-size:12px;color:#78350f;">'+
-      '<strong>'+icon+' '+label+':</strong> '+dias.length+' dia(s) — '+datas+
-      '</div>';
-  }
-  html+=bloco('Confeitaria',confPend,'🥐');
-  html+=bloco('Cozinha',cozPend,'🍳');
-  html+=bloco('Embalagem',embPend,'📦');
+  html+='<div style="font-size:12px;color:#78350f;">Houve lançamento, mas presença não foi registrada em: <strong>'+datas+'</strong></div>';
   html+='</div>';
 
   el.innerHTML=html;
 }
-window.renderBannerPresencaPendente=renderBannerPresencaPendente;
+window.renderBannerPresencaSetor=renderBannerPresencaSetor;
 
 
 // ===== ESTOQUE EMBALAGEM =====
 const _ESTOQUE_EMB_INICIAL=[
-  {grupo:'Etiquetas',nome:'Bobina Branca',quantidade:112,minimo:20,unidade:'un'},
-  {grupo:'Etiquetas',nome:'Bobina Azul',quantidade:22,minimo:10,unidade:'un'},
-  {grupo:'Etiquetas',nome:'Bobina Amarela',quantidade:0,minimo:10,unidade:'un'},
-  {grupo:'Etiquetas',nome:'Bobina Vermelha',quantidade:12,minimo:10,unidade:'un'},
-  {grupo:'Etiquetas',nome:'Bobina Laranja',quantidade:11,minimo:10,unidade:'un'},
-  {grupo:'Embaflux',nome:'Resistência',quantidade:6,minimo:2,unidade:'un'},
-  {grupo:'Embaflux',nome:'Kit Borracha Preta',quantidade:2,minimo:1,unidade:'un'},
-  {grupo:'Embaflux',nome:'Kit Borracha Azul',quantidade:2,minimo:1,unidade:'un'},
-  {grupo:'Embaflux',nome:'Kit Números',quantidade:1,minimo:1,unidade:'un'},
-  {grupo:'Embaflux',nome:'Ribbon (Embaflux Velha)',quantidade:1,minimo:1,unidade:'un'}
+  {grupo:'Etiquetas',nome:'Bobina Branca',quantidade:112,minimo:0,unidade:''},
+  {grupo:'Etiquetas',nome:'Bobina Azul',quantidade:22,minimo:0,unidade:''},
+  {grupo:'Etiquetas',nome:'Bobina Amarela',quantidade:0,minimo:0,unidade:''},
+  {grupo:'Etiquetas',nome:'Bobina Vermelha',quantidade:12,minimo:0,unidade:''},
+  {grupo:'Etiquetas',nome:'Bobina Laranja',quantidade:11,minimo:0,unidade:''},
+  {grupo:'Embaflux',nome:'Resistência',quantidade:6,minimo:0,unidade:''},
+  {grupo:'Embaflux',nome:'Kit Borracha Preta',quantidade:2,minimo:0,unidade:''},
+  {grupo:'Embaflux',nome:'Kit Borracha Azul',quantidade:2,minimo:0,unidade:''},
+  {grupo:'Embaflux',nome:'Kit Números',quantidade:1,minimo:0,unidade:''},
+  {grupo:'Embaflux',nome:'Ribbon (Embaflux Velha)',quantidade:1,minimo:0,unidade:''}
 ];
 
 function renderEstoqueEmb(){
   const el=document.getElementById('estoque-emb-content');
   if(!el)return;
 
-  // Se vazio, mostrar botão de inicialização
+  // Auto-cadastrar itens iniciais na primeira vez (estoque vazio)
+  if(estoqueEmbalagem.length===0&&!window._autoInitEstoqueRodando){
+    window._autoInitEstoqueRodando=true;
+    el.innerHTML='<div style="padding:40px 20px;text-align:center;color:var(--text-secondary);">Cadastrando itens iniciais...</div>';
+    popularEstoqueInicial(true);
+    return;
+  }
   if(estoqueEmbalagem.length===0){
-    let html='<div class="mc-banner" style="background:var(--mc-laranja-claro);border-color:#fde68a;border-left-color:var(--mc-laranja);">'+
-      '<span class="mc-banner-icon">📦</span>'+
-      '<span class="mc-banner-text" style="color:#92400e;flex:1;"><strong>Estoque vazio.</strong> Clique para cadastrar os itens iniciais (etiquetas e Embaflux).</span>'+
-      '<button class="mc-act-btn-primary" style="background:var(--mc-laranja);" onclick="popularEstoqueInicial()">Inicializar</button>'+
-      '</div>';
-    el.innerHTML=html;
+    el.innerHTML='<div style="padding:40px 20px;text-align:center;color:var(--text-secondary);">Aguarde, cadastrando itens...</div>';
     return;
   }
 
@@ -11218,8 +11300,10 @@ function renderEstoqueEmb(){
   el.innerHTML=html;
 }
 
-async function popularEstoqueInicial(){
-  if(!confirm('Cadastrar '+_ESTOQUE_EMB_INICIAL.length+' itens iniciais no estoque?'))return;
+async function popularEstoqueInicial(silent){
+  if(!silent){
+    if(!confirm('Cadastrar '+_ESTOQUE_EMB_INICIAL.length+' itens iniciais no estoque?'))return;
+  }
   try{
     const ts=agora();
     for(const it of _ESTOQUE_EMB_INICIAL){
@@ -11228,10 +11312,12 @@ async function popularEstoqueInicial(){
         atualizadoEm:ts
       });
     }
-    alert('✓ Itens iniciais cadastrados!');
+    window._autoInitEstoqueRodando=false;
+    if(!silent) alert('✓ Itens iniciais cadastrados!');
   } catch(e){
     console.error('Erro:',e);
-    alert('Erro: '+e.message);
+    window._autoInitEstoqueRodando=false;
+    if(!silent) alert('Erro: '+e.message);
   }
 }
 
@@ -11278,30 +11364,87 @@ async function abrirNovoEstoqueItem(){
   } catch(e){ alert('Erro: '+e.message); }
 }
 
-async function editarEstoqueItem(firestoreId){
-  const it=estoqueEmbalagem.find(x=>x.firestoreId===firestoreId);
-  if(!it)return;
-  const grupo=prompt('Grupo:',it.grupo||'');
-  if(grupo===null)return;
-  const nome=prompt('Nome:',it.nome||'');
-  if(nome===null||!nome.trim())return;
-  const qtd=prompt('Quantidade atual:',it.quantidade||0);
-  if(qtd===null)return;
-  const min=prompt('Estoque mínimo:',it.minimo||0);
-  if(min===null)return;
-  const un=prompt('Unidade:',it.unidade||'un');
-  if(un===null)return;
+let _estoqueEditandoId=null;
+function editarEstoqueItem(firestoreId){
+  _estoqueEditandoId=firestoreId;
+  goTo('s-estoque-emb-form');
+  setTimeout(renderEstoqueEmbForm,10);
+}
+
+function abrirNovoEstoqueItem(){
+  _estoqueEditandoId=null;
+  goTo('s-estoque-emb-form');
+  setTimeout(renderEstoqueEmbForm,10);
+}
+
+function renderEstoqueEmbForm(){
+  const el=document.getElementById('estoque-emb-form-content');
+  if(!el)return;
+  const it=_estoqueEditandoId
+    ?estoqueEmbalagem.find(x=>x.firestoreId===_estoqueEditandoId)||{}
+    :{grupo:'',nome:'',quantidade:0,minimo:0,unidade:''};
+
+  document.getElementById('estoque-form-title').textContent=_estoqueEditandoId?'Editar Item':'Novo Item';
+
+  let html='<div class="card" style="padding:14px;margin-bottom:10px;">';
+  html+='<div class="card-label">Grupo</div>';
+  html+='<select id="est-grupo-sel" onchange="if(this.value===\'__novo__\'){document.getElementById(\'est-grupo-novo\').style.display=\'block\';this.style.display=\'none\';}" style="font-size:15px;width:100%;margin-top:6px;padding:10px;border-radius:8px;border:1px solid var(--border-md);font-family:inherit;">';
+  // Grupos existentes
+  const gruposExistentes=[...new Set(estoqueEmbalagem.map(x=>x.grupo))].filter(Boolean).sort();
+  if(!gruposExistentes.includes(it.grupo)&&it.grupo) gruposExistentes.push(it.grupo);
+  gruposExistentes.forEach(g=>{
+    html+='<option value="'+g.replace(/"/g,'&quot;')+'"'+(it.grupo===g?' selected':'')+'>'+g+'</option>';
+  });
+  html+='<option value="__novo__">+ Criar novo grupo...</option>';
+  html+='</select>';
+  html+='<input type="text" id="est-grupo-novo" placeholder="Nome do novo grupo" style="display:none;font-size:15px;width:100%;margin-top:6px;" />';
+  html+='</div>';
+
+  html+='<div class="card" style="padding:14px;margin-bottom:10px;">';
+  html+='<div class="card-label">Nome do item</div>';
+  html+='<input type="text" id="est-nome" value="'+(it.nome||'').replace(/"/g,'&quot;')+'" placeholder="Ex: Bobina Branca" style="font-size:15px;width:100%;margin-top:6px;" />';
+  html+='</div>';
+
+  html+='<div class="card" style="padding:14px;margin-bottom:10px;">';
+  html+='<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;">';
+  html+='<div><div class="card-label">Quantidade</div><input type="number" id="est-qtd" step="0.01" value="'+(it.quantidade!==undefined?it.quantidade:0)+'" style="font-size:15px;width:100%;margin-top:6px;" /></div>';
+  html+='<div><div class="card-label">Estoque Mínimo</div><input type="number" id="est-min" step="0.01" value="'+(it.minimo||0)+'" placeholder="0" style="font-size:15px;width:100%;margin-top:6px;" /></div>';
+  html+='<div><div class="card-label">Unidade</div><input type="text" id="est-un" value="'+(it.unidade||'').replace(/"/g,'&quot;')+'" placeholder="un, kg, rolo..." style="font-size:15px;width:100%;margin-top:6px;" /></div>';
+  html+='</div>';
+  html+='</div>';
+
+  el.innerHTML=html;
+}
+
+async function salvarEstoqueForm(){
+  let grupo='';
+  const sel=document.getElementById('est-grupo-sel');
+  if(sel.value==='__novo__'||sel.style.display==='none'){
+    grupo=(document.getElementById('est-grupo-novo').value||'').trim();
+  } else {
+    grupo=sel.value;
+  }
+  const nome=(document.getElementById('est-nome').value||'').trim();
+  const qtd=parseFloat(document.getElementById('est-qtd').value)||0;
+  const min=parseFloat(document.getElementById('est-min').value)||0;
+  const un=(document.getElementById('est-un').value||'').trim();
+
+  if(!grupo){ alert('Selecione ou digite um grupo'); return; }
+  if(!nome){ alert('Digite o nome do item'); return; }
+
+  const dados={grupo,nome,quantidade:qtd,minimo:min,unidade:un,atualizadoEm:agora()};
   try{
-    await updateDoc(doc(db,'estoqueEmbalagem',firestoreId),{
-      grupo:grupo.trim(),
-      nome:nome.trim(),
-      quantidade:parseFloat(qtd)||0,
-      minimo:parseFloat(min)||0,
-      unidade:(un||'un').trim(),
-      atualizadoEm:agora()
-    });
+    if(_estoqueEditandoId){
+      await updateDoc(doc(db,'estoqueEmbalagem',_estoqueEditandoId),dados);
+    } else {
+      await addDoc(collection(db,'estoqueEmbalagem'),dados);
+    }
+    goTo('s-estoque-emb');
   } catch(e){ alert('Erro: '+e.message); }
 }
+
+window.renderEstoqueEmbForm=renderEstoqueEmbForm;
+window.salvarEstoqueForm=salvarEstoqueForm;
 
 async function excluirEstoqueItem(firestoreId,nome){
   if(!confirm('Excluir "'+nome+'" do estoque?'))return;
