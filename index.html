@@ -1390,29 +1390,113 @@
       </div>
       
     </div>
-    <div class="content" id="emb-sel-content-wrap"><div id="banner-presenca-emb"></div>
-      <div id="emb-sel-content"></div>
-      <div style="margin-top:14px;">
-        <div class="section-divider">Equipe</div>
-        <button class="home-btn" onclick="abrirPresenca('emb')" style="border-left-color:var(--mc-azul);">
-          <div class="hb-icon" style="background:#e8eaff;">👥</div>
-          <div style="flex:1;"><div class="hb-title">Registro de Presença</div><div class="hb-desc" id="presenca-emb-status">Registrar equipe do dia</div></div>
-          <span style="color:var(--text-secondary);font-size:20px;">›</span>
-        </button>
-        <button class="btn btn-secondary" style="margin-top:4px;" onclick="goTo('s-presenca-reg-emb')">Ver registros de presença</button>
-        <div class="section-divider" style="margin-top:14px;">Estoque & Equipamentos</div>
-        <button class="home-btn" onclick="goTo('s-estoque-emb')" style="border-left-color:#8b5cf6;margin-bottom:4px;">
-          <div class="hb-icon" style="background:#ede9fe;">📦</div>
-          <div style="flex:1;"><div class="hb-title">Estoque Embalagem</div><div class="hb-desc" id="estoque-emb-badge">Etiquetas e Embaflux</div></div>
-          <span style="color:var(--text-secondary);font-size:20px;">›</span>
-        </button>
-        <button class="home-btn" onclick="abrirManut('emb')" style="border-left-color:var(--mc-azul);">
-          <div class="hb-icon" style="background:#fef3c7;">🔧</div>
-          <div style="flex:1;"><div class="hb-title">Manutenção de Máquinas</div><div class="hb-desc">Registrar manutenções e ocorrências</div></div>
-          <span style="color:var(--text-secondary);font-size:20px;">›</span>
-        </button>
+    <div class="content" id="emb-sel-content-wrap">
+      <div id="banner-presenca-emb"></div>
+      <div class="section-divider">Embalagem</div>
+      <button class="home-btn" onclick="goTo('s-emb-produtos-pendentes')" style="border-left-color:var(--mc-laranja);margin-bottom:4px;">
+        <div class="hb-icon" style="background:#fef3c7;">📋</div>
+        <div style="flex:1;"><div class="hb-title">Produtos a Embalar</div><div class="hb-desc" id="emb-produtos-badge">Selecionar o dia</div></div>
+        <span style="color:var(--text-secondary);font-size:20px;">›</span>
+      </button>
+      <button class="home-btn" onclick="goTo('s-emb-inconformidades')" style="border-left-color:var(--mc-vermelho);margin-bottom:4px;">
+        <div class="hb-icon" style="background:var(--mc-vermelho-claro);">⚠️</div>
+        <div style="flex:1;"><div class="hb-title">Produtos com Inconformidade</div><div class="hb-desc" id="inconf-badge">Produtos com problema</div></div>
+        <span style="color:var(--text-secondary);font-size:20px;">›</span>
+      </button>
+      <button class="home-btn" onclick="window.prioridadesOrigem='s-emb-sel-data';goTo('s-prioridades')" style="border-left-color:#dc2626;margin-bottom:4px;">
+        <div class="hb-icon" style="background:#fee2e2;">🚩</div>
+        <div style="flex:1;"><div class="hb-title">Prioridades</div><div class="hb-desc" id="prioridades-emb-badge">Produtos prioritários para embalar</div></div>
+        <span style="color:var(--text-secondary);font-size:20px;">›</span>
+      </button>
+
+      <div class="section-divider" style="margin-top:14px;">Equipe</div>
+      <button class="home-btn" onclick="abrirPresenca('emb')" style="border-left-color:var(--mc-azul);">
+        <div class="hb-icon" style="background:#e8eaff;">👥</div>
+        <div style="flex:1;"><div class="hb-title">Registro de Presença</div><div class="hb-desc" id="presenca-emb-status">Registrar equipe do dia</div></div>
+        <span style="color:var(--text-secondary);font-size:20px;">›</span>
+      </button>
+      <button class="btn btn-secondary" style="margin-top:4px;" onclick="goTo('s-presenca-reg-emb')">Ver registros de presença</button>
+
+      <div class="section-divider" style="margin-top:14px;">Estoque & Equipamentos</div>
+      <button class="home-btn" onclick="goTo('s-estoque-emb')" style="border-left-color:#8b5cf6;margin-bottom:4px;">
+        <div class="hb-icon" style="background:#ede9fe;">📦</div>
+        <div style="flex:1;"><div class="hb-title">Estoque Embalagem</div><div class="hb-desc" id="estoque-emb-badge">Etiquetas e Embaflux</div></div>
+        <span style="color:var(--text-secondary);font-size:20px;">›</span>
+      </button>
+      <button class="home-btn" onclick="abrirManut('emb')" style="border-left-color:var(--mc-azul);">
+        <div class="hb-icon" style="background:#fef3c7;">🔧</div>
+        <div style="flex:1;"><div class="hb-title">Manutenção de Máquinas</div><div class="hb-desc">Registrar manutenções e ocorrências</div></div>
+        <span style="color:var(--text-secondary);font-size:20px;">›</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- EMBALAGEM: LISTA DE DIAS COM PRODUTOS PENDENTES -->
+  <div class="screen" id="s-emb-produtos-pendentes">
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="goTo('s-emb-sel-data')">‹</button>
+      <div class="mc-brand">
+        <div class="mc-brand-logo">MC</div>
+        <div class="mc-brand-text">
+          <div class="mc-brand-name">Monte Castelo</div>
+          <div class="mc-brand-sub">Embalagem</div>
+        </div>
+      </div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info">
+        <div class="mc-page-title">📋 Produtos a Embalar</div>
+        <div class="mc-page-sub">Selecione o dia</div>
       </div>
     </div>
+    <div class="content">
+      <div id="emb-sel-content"></div>
+    </div>
+  </div>
+
+  <!-- EMBALAGEM: INCONFORMIDADES -->
+  <div class="screen" id="s-emb-inconformidades">
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="goTo(window.setorAtual==='admin'||window.adminMode?'s-adm-hub':'s-emb-sel-data')">‹</button>
+      <div class="mc-brand">
+        <div class="mc-brand-logo">MC</div>
+        <div class="mc-brand-text">
+          <div class="mc-brand-name">Monte Castelo</div>
+          <div class="mc-brand-sub">Inconformidades</div>
+        </div>
+      </div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info">
+        <div class="mc-page-title">⚠️ Produtos com Inconformidade</div>
+        <div class="mc-page-sub" id="inconf-sub">Produtos com problema</div>
+      </div>
+      <div class="mc-header-actions">
+        <button class="mc-act-btn-primary" onclick="abrirNovaInconformidade()">+ Nova</button>
+      </div>
+    </div>
+    <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;" id="inconformidades-content"></div>
+  </div>
+
+  <!-- INCONFORMIDADE FORM -->
+  <div class="screen" id="s-inconformidade-form">
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="goTo('s-emb-inconformidades')">‹</button>
+      <div class="mc-brand">
+        <div class="mc-brand-logo">MC</div>
+        <div class="mc-brand-text">
+          <div class="mc-brand-name">Monte Castelo</div>
+          <div class="mc-brand-sub">Inconformidade</div>
+        </div>
+      </div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info">
+        <div class="mc-page-title" id="inconf-form-title">Nova Inconformidade</div>
+        <div class="mc-page-sub">Preencha os dados</div>
+      </div>
+      <div class="mc-header-actions">
+        <button class="mc-act-btn-primary" onclick="salvarInconformidade()">Salvar</button>
+      </div>
+    </div>
+    <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;" id="inconformidade-form-content"></div>
   </div>
 
   <!-- EMBALAGEM: CHECKLIST -->
@@ -2894,7 +2978,7 @@
   <!-- PRIORIDADES -->
   <div class="screen" id="s-prioridades">
     <div class="mc-header">
-      <button class="mc-header-back" onclick="window.prioridadesOrigem?goTo(window.prioridadesOrigem):(window.adminMode?goTo('s-adm-hub'):goTo('s-inicio'))">‹</button>
+      <button class="mc-header-back" onclick="(function(){const o=window.prioridadesOrigem;window.prioridadesOrigem=null;if(o){goTo(o);}else if(window.adminMode){goTo('s-adm-hub');}else{goTo('s-inicio');}})()">‹</button>
       <div class="mc-brand">
         <div class="mc-brand-logo">MC</div>
         <div class="mc-brand-text">
@@ -3483,6 +3567,11 @@ function goTo(id){
   if(id==='s-conf-home'&&typeof renderBannerPresencaSetor==='function') renderBannerPresencaSetor('conf','banner-presenca-conf');
   if(id==='s-coz-home'&&typeof renderBannerPresencaSetor==='function') renderBannerPresencaSetor('coz','banner-presenca-coz');
   if((id==='s-emb-sel-data'||id==='s-emb-home')&&typeof renderBannerPresencaSetor==='function') renderBannerPresencaSetor('emb','banner-presenca-emb');
+  if(id==='s-emb-sel-data'&&typeof atualizarBadgeProdutosEmb==='function') atualizarBadgeProdutosEmb();
+  if(id==='s-emb-sel-data'&&typeof atualizarBadgePrioridadesEmb==='function') atualizarBadgePrioridadesEmb();
+  if(id==='s-emb-produtos-pendentes'&&typeof renderEmbSelData==='function') renderEmbSelData();
+  if(id==='s-emb-inconformidades') renderInconformidades();
+  if(id==='s-inconformidade-form') renderInconformidadeForm();
   if(id==='s-testes-home'&&typeof renderTestesPendencias==='function') renderTestesPendencias();
   if(id==='s-teste-pendencia-form') renderPendenciaTesteForm();
   if(id==='s-manut-lanc'){
@@ -7342,6 +7431,18 @@ function aplicarFarinhasConfigFirebase(){
   }
 }
 
+// ===== INCONFORMIDADES (Firebase) =====
+let inconformidades=[]; // Firestore 'inconformidades'
+
+onSnapshot(collection(db,'inconformidades'), snap=>{
+  try{
+    inconformidades=snap.docs.map(d=>({firestoreId:d.id,...d.data()})).sort((a,b)=>(b.timestamp||0)-(a.timestamp||0));
+    atualizarTela();
+    const ativa=document.querySelector('.screen.active');
+    if(ativa&&ativa.id==='s-emb-inconformidades'&&typeof renderInconformidades==='function'){renderInconformidades();}
+  }catch(e){ console.error('inconformidades snap:',e); }
+});
+
 // ===== ESTOQUE EMBALAGEM (Firebase) =====
 let estoqueEmbalagem=[]; // Firestore 'estoqueEmbalagem'
 
@@ -7831,6 +7932,19 @@ function renderAdmStatus(){
     msg:diasEmbSemPres.length+' dia(s) com lançamento sem presença: '+diasEmbSemPres.slice(0,5).join(', ')+(diasEmbSemPres.length>5?'...':''),
     acao:'goToAdmin(\'s-presenca-reg-emb\')'
   });
+
+  // INCONFORMIDADES — aguardando instrução do admin
+  if(typeof inconformidades!=='undefined'&&Array.isArray(inconformidades)){
+    const inconfPend=inconformidades.filter(i=>!i.acao||i.acao==='');
+    if(inconfPend.length>0){
+      const exemplos=inconfPend.slice(0,3).map(i=>i.produto).filter(Boolean).join(', ');
+      criticos.push({
+        icone:'⚠️', titulo:'Inconformidades aguardando sua instrução',
+        msg:inconfPend.length+' produto(s) sem instrução'+(exemplos?': '+exemplos:'')+(inconfPend.length>3?'...':''),
+        acao:'goToAdmin(\'s-emb-inconformidades\')'
+      });
+    }
+  }
 
   // ===== AVISOS =====
   const avisos=[];
@@ -10227,6 +10341,208 @@ window.abrirNovoEstoqueItem=abrirNovoEstoqueItem;
 window.editarEstoqueItem=editarEstoqueItem;
 window.excluirEstoqueItem=excluirEstoqueItem;
 
+
+// ===== INCONFORMIDADES =====
+let _inconfEditandoId=null;
+
+function renderInconformidades(){
+  const el=document.getElementById('inconformidades-content');
+  if(!el)return;
+
+  const pendentes=inconformidades.filter(i=>!i.acao||i.acao==='').length;
+  const sub=document.getElementById('inconf-sub');
+  if(sub) sub.textContent=inconformidades.length+' registro(s) · '+pendentes+' aguardando instrução';
+
+  const badge=document.getElementById('inconf-badge');
+  if(badge){
+    if(inconformidades.length===0) badge.textContent='Nenhum produto registrado';
+    else if(pendentes>0) badge.textContent=inconformidades.length+' produto(s) · '+pendentes+' aguardando instrução';
+    else badge.textContent=inconformidades.length+' produto(s) registrado(s)';
+  }
+
+  if(inconformidades.length===0){
+    el.innerHTML='<div class="empty" style="padding:40px 20px;color:var(--text-secondary);text-align:center;">Nenhuma inconformidade registrada.<br>Clique em <strong>+ Nova</strong> para começar.</div>';
+    return;
+  }
+
+  const lista=[...inconformidades].sort((a,b)=>{
+    const aPend=!a.acao||a.acao==='';
+    const bPend=!b.acao||b.acao==='';
+    if(aPend!==bPend) return aPend?-1:1;
+    return (b.timestamp||0)-(a.timestamp||0);
+  });
+
+  let html='';
+  lista.forEach(i=>{
+    const temAcao=i.acao&&i.acao!=='';
+    const acaoLabels={'descartar':'🗑️ Descartar','testar':'🧪 Testar antes','embalar':'✅ Pode embalar'};
+    const acaoCores={'descartar':'var(--mc-vermelho)','testar':'var(--mc-laranja)','embalar':'var(--mc-verde)'};
+    const acaoColor=temAcao?(acaoCores[i.acao]||'var(--mc-azul)'):'var(--text-muted)';
+    const borderColor=temAcao?acaoColor:'var(--mc-laranja)';
+
+    html+='<div style="background:var(--bg-primary);border:1px solid var(--border);border-left:3px solid '+borderColor+';border-radius:var(--r-lg);padding:12px 14px;margin-bottom:10px;box-shadow:var(--shadow-sm);">';
+    html+='<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap;">';
+    html+='<div style="flex:1;min-width:180px;">';
+    html+='<div style="font-size:14px;font-weight:600;color:var(--text-primary);">'+(i.produto||'-')+'</div>';
+    html+='<div style="font-size:11px;color:var(--text-secondary);margin-top:2px;">📅 '+(i.data||'-')+' · Por '+(i.lancanteSetor||'-')+' em '+(i.atualizadoEm||'')+'</div>';
+    html+='</div>';
+    html+='<div style="text-align:right;flex-shrink:0;">';
+    html+='<div style="font-size:14px;font-weight:700;color:var(--mc-vermelho);">'+(i.qtdProblema||0)+'</div>';
+    html+='<div style="font-size:10px;color:var(--text-muted);">de '+(i.qtdTotal||0)+' '+(i.unidade||'pct')+'</div>';
+    html+='</div>';
+    html+='</div>';
+
+    if(i.problema){
+      html+='<div style="margin-top:8px;padding:8px 10px;background:var(--mc-vermelho-claro);border-radius:6px;font-size:12px;color:#991b1b;"><strong>Problema:</strong> '+i.problema+'</div>';
+    }
+
+    if(temAcao){
+      const labelAcao=acaoLabels[i.acao]||i.acao;
+      html+='<div style="margin-top:8px;padding:10px 12px;background:'+acaoColor+';color:white;border-radius:6px;font-size:13px;font-weight:600;">'+labelAcao;
+      if(i.instrucaoAdmin) html+='<div style="font-size:11px;font-weight:400;margin-top:4px;opacity:0.95;">'+i.instrucaoAdmin+'</div>';
+      if(i.instrucaoEm) html+='<div style="font-size:10px;font-weight:400;margin-top:4px;opacity:0.85;">📅 '+i.instrucaoEm+'</div>';
+      html+='</div>';
+    } else {
+      html+='<div style="margin-top:8px;padding:8px 10px;background:var(--mc-laranja-claro);border-radius:6px;font-size:12px;color:#92400e;font-style:italic;">⏳ Aguardando instrução do admin</div>';
+    }
+
+    html+='<div style="display:flex;gap:6px;margin-top:10px;justify-content:flex-end;flex-wrap:wrap;">';
+    if(window.adminMode){
+      html+='<button class="mc-act-btn-secondary" style="font-size:11px;padding:5px 10px;" onclick="darInstrucaoInconf(\''+i.firestoreId+'\')">📝 '+(temAcao?'Alterar instrução':'Dar instrução')+'</button>';
+    }
+    html+='<button class="mc-act-btn-secondary" style="font-size:11px;padding:5px 10px;" onclick="editarInconformidade(\''+i.firestoreId+'\')">Editar</button>';
+    html+='<button class="mc-act-btn-secondary" style="border-color:var(--mc-vermelho);color:var(--mc-vermelho);font-size:11px;padding:5px 10px;" onclick="excluirInconformidade(\''+i.firestoreId+'\')">×</button>';
+    html+='</div>';
+    html+='</div>';
+  });
+
+  el.innerHTML=html;
+}
+
+function abrirNovaInconformidade(){
+  _inconfEditandoId=null;
+  goTo('s-inconformidade-form');
+  setTimeout(renderInconformidadeForm,10);
+}
+
+function editarInconformidade(firestoreId){
+  _inconfEditandoId=firestoreId;
+  goTo('s-inconformidade-form');
+  setTimeout(renderInconformidadeForm,10);
+}
+
+function renderInconformidadeForm(){
+  const el=document.getElementById('inconformidade-form-content');
+  if(!el)return;
+  const i=_inconfEditandoId?inconformidades.find(x=>x.firestoreId===_inconfEditandoId)||{}:{data:hoje(),produto:'',qtdTotal:0,qtdProblema:0,problema:'',unidade:'pct'};
+  document.getElementById('inconf-form-title').textContent=_inconfEditandoId?'Editar Inconformidade':'Nova Inconformidade';
+
+  let html='';
+  html+='<div class="card" style="padding:14px;margin-bottom:10px;">';
+  html+='<div class="card-label">Data</div>';
+  html+='<input type="text" id="inc-data" value="'+(i.data||hoje())+'" placeholder="dd/mm/aaaa" style="font-size:15px;width:100%;margin-top:6px;" />';
+  html+='</div>';
+
+  html+='<div class="card" style="padding:14px;margin-bottom:10px;">';
+  html+='<div class="card-label">Produto</div>';
+  html+='<input type="text" id="inc-produto" value="'+(i.produto||'').replace(/"/g,'&quot;')+'" placeholder="Nome do produto" style="font-size:15px;width:100%;margin-top:6px;" />';
+  html+='</div>';
+
+  html+='<div class="card" style="padding:14px;margin-bottom:10px;">';
+  html+='<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;">';
+  html+='<div><div class="card-label">Total produzido</div><input type="number" id="inc-qtd-total" step="0.01" value="'+(i.qtdTotal||'')+'" placeholder="Ex: 100" style="font-size:15px;width:100%;margin-top:6px;" /></div>';
+  html+='<div><div class="card-label" style="color:var(--mc-vermelho);">Com problema</div><input type="number" id="inc-qtd-prob" step="0.01" value="'+(i.qtdProblema||'')+'" placeholder="Ex: 5" style="font-size:15px;width:100%;margin-top:6px;border-color:var(--mc-vermelho);" /></div>';
+  html+='<div><div class="card-label">Unidade</div><select id="inc-un" style="font-size:15px;width:100%;margin-top:6px;padding:10px;border-radius:8px;border:1px solid var(--border-md);"><option value="pct"'+(i.unidade==='pct'?' selected':'')+'>pct</option><option value="un"'+(i.unidade==='un'?' selected':'')+'>un</option><option value="kg"'+(i.unidade==='kg'?' selected':'')+'>kg</option><option value="cx"'+(i.unidade==='cx'?' selected':'')+'>cx</option></select></div>';
+  html+='</div>';
+  html+='</div>';
+
+  html+='<div class="card" style="padding:14px;margin-bottom:10px;">';
+  html+='<div class="card-label">Problema identificado</div>';
+  html+='<textarea id="inc-problema" placeholder="Descreva o problema..." style="font-size:14px;width:100%;margin-top:6px;min-height:80px;padding:10px;border-radius:8px;border:1px solid var(--border-md);font-family:inherit;resize:vertical;">'+(i.problema||'')+'</textarea>';
+  html+='</div>';
+
+  el.innerHTML=html;
+}
+
+async function salvarInconformidade(){
+  const data=(document.getElementById('inc-data').value||'').trim();
+  const produto=(document.getElementById('inc-produto').value||'').trim();
+  const qtdTotal=parseFloat(document.getElementById('inc-qtd-total').value)||0;
+  const qtdProblema=parseFloat(document.getElementById('inc-qtd-prob').value)||0;
+  const unidade=document.getElementById('inc-un').value;
+  const problema=(document.getElementById('inc-problema').value||'').trim();
+
+  if(!produto){ alert('Informe o produto'); return; }
+  if(qtdProblema<=0){ alert('Informe a quantidade com problema'); return; }
+
+  const setor=window.setorAtual||(window.adminMode?'admin':'sistema');
+  const lancanteSetor=NOMES[setor]?NOMES[setor].replace(/[^\w\sçáéíóúâêîôûãõà]+/gi,'').trim():setor;
+
+  const dados={data,produto,qtdTotal,qtdProblema,unidade,problema,lancanteSetor,atualizadoEm:agora(),timestamp:Date.now()};
+  try{
+    if(_inconfEditandoId){
+      await updateDoc(doc(db,'inconformidades',_inconfEditandoId),dados);
+    } else {
+      await addDoc(collection(db,'inconformidades'),dados);
+    }
+    alert('Inconformidade salva!');
+    goTo('s-emb-inconformidades');
+  } catch(e){
+    console.error('Erro:',e);
+    alert('Erro: '+e.message);
+  }
+}
+
+async function darInstrucaoInconf(firestoreId){
+  const i=inconformidades.find(x=>x.firestoreId===firestoreId);
+  if(!i)return;
+  const acoes={'1':'descartar','2':'testar','3':'embalar'};
+  const escolha=prompt('Instrução:\n\n1 - 🗑️ Descartar produto\n2 - 🧪 Testar antes\n3 - ✅ Pode embalar mesmo assim\n\nDigite o número:',i.acao==='descartar'?'1':(i.acao==='testar'?'2':(i.acao==='embalar'?'3':'')));
+  if(!escolha) return;
+  const acao=acoes[escolha.trim()];
+  if(!acao){ alert('Opção inválida'); return; }
+  const instrucao=prompt('Detalhes adicionais (opcional):',i.instrucaoAdmin||'');
+  if(instrucao===null) return;
+  try{
+    await updateDoc(doc(db,'inconformidades',firestoreId),{acao,instrucaoAdmin:(instrucao||'').trim(),instrucaoEm:agora()});
+  } catch(e){ alert('Erro: '+e.message); }
+}
+
+async function excluirInconformidade(firestoreId){
+  if(!confirm('Excluir esta inconformidade?')) return;
+  try{
+    await deleteDoc(doc(db,'inconformidades',firestoreId));
+  } catch(e){ alert('Erro: '+e.message); }
+}
+
+function atualizarBadgeProdutosEmb(){
+  const badge=document.getElementById('emb-produtos-badge');
+  if(!badge) return;
+  const ultimos14=[];
+  for(let i=0;i<14;i++){const d=new Date();d.setDate(d.getDate()-i);ultimos14.push(fmtData(d));}
+  const naoEmb=registros.filter(r=>(!r.embalagem||!r.embalagem.feito)&&ultimos14.includes(r.data)).length;
+  if(naoEmb===0) badge.textContent='Tudo em dia ✓';
+  else badge.textContent=naoEmb+' produto(s) pendente(s)';
+}
+
+window.renderInconformidades=renderInconformidades;
+window.abrirNovaInconformidade=abrirNovaInconformidade;
+window.editarInconformidade=editarInconformidade;
+window.renderInconformidadeForm=renderInconformidadeForm;
+window.salvarInconformidade=salvarInconformidade;
+window.darInstrucaoInconf=darInstrucaoInconf;
+window.excluirInconformidade=excluirInconformidade;
+window.atualizarBadgeProdutosEmb=atualizarBadgeProdutosEmb;
+
+
+function atualizarBadgePrioridadesEmb(){
+  const b=document.getElementById('prioridades-emb-badge');
+  if(!b) return;
+  const pend=prioridades.filter(p=>!p.embalado).length;
+  if(pend===0) b.textContent='Nenhuma pendente';
+  else b.textContent=pend+' pendente(s)';
+}
+window.atualizarBadgePrioridadesEmb=atualizarBadgePrioridadesEmb;
 window.goTo=goTo; window.abrirPin=abrirPin; window.pinDigit=pinDigit; window.pinDel=pinDel;
 window.iniciarNovoReg=iniciarNovoReg; window.renderConfMassas=renderConfMassas; window.toggleManual=toggleManual;
 window.selecionarDataTipo=selecionarDataTipo; window.selecionarDataManual=selecionarDataManual;
