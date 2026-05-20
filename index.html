@@ -1851,7 +1851,30 @@
 
 
   <!-- RAFAEL HUB -->
-  <div class="screen" id="s-rafael-home">
+    <!-- PLANO DA QUADRA -->
+  <div class="screen" id="s-plano-quadra">
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="voltarPlanoQuadra()">‹</button>
+      <div class="mc-brand">
+        <div class="mc-brand-logo">MC</div>
+        <div class="mc-brand-text">
+          <div class="mc-brand-name">Monte Castelo</div>
+          <div class="mc-brand-sub">Plano da Quadra</div>
+        </div>
+      </div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info">
+        <div class="mc-page-title">📅 Plano da Quadra</div>
+        <div class="mc-page-sub" id="plano-quadra-sub"></div>
+      </div>
+      <div class="mc-header-actions">
+        <button class="mc-act-btn-primary" onclick="salvarPlanoQuadra()">Salvar</button>
+      </div>
+    </div>
+    <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;" id="plano-quadra-content"></div>
+  </div>
+
+<div class="screen" id="s-rafael-home">
     <div class="mc-header">
       <button class="mc-header-back" onclick="window.adminMode?goTo('s-adm-hub'):goTo('s-inicio')">‹</button>
       <div class="mc-brand">
