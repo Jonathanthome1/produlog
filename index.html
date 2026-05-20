@@ -2131,6 +2131,14 @@
           </div>
           <span class="mc-sector-arrow">›</span>
         </button>
+        <button class="mc-sector-card" onclick="abrirPlanoQuadra()">
+          <div class="mc-sector-icon" style="background:#ede9fe;color:#7c3aed;">📅</div>
+          <div class="mc-sector-info">
+            <div class="mc-sector-title">Plano de Produção</div>
+            <div class="mc-sector-desc">Cronograma da semana</div>
+          </div>
+          <span class="mc-sector-arrow">›</span>
+        </button>
       </div>
     </div>
   </div>
@@ -3572,6 +3580,7 @@ function goTo(id){
   if(id==='s-conf-home'&&typeof renderBannerPresencaSetor==='function') renderBannerPresencaSetor('conf','banner-presenca-conf');
   if(id==='s-coz-home'&&typeof renderBannerPresencaSetor==='function') renderBannerPresencaSetor('coz','banner-presenca-coz');
   if((id==='s-emb-sel-data'||id==='s-emb-home')&&typeof renderBannerPresencaSetor==='function') renderBannerPresencaSetor('emb','banner-presenca-emb');
+  if(id==='s-plano-quadra'&&typeof renderPlanoQuadra==='function') renderPlanoQuadra();
   if(id==='s-emb-sel-data'&&typeof atualizarBadgeProdutosEmb==='function') atualizarBadgeProdutosEmb();
   if(id==='s-emb-sel-data'&&typeof atualizarBadgePrioridadesEmb==='function') atualizarBadgePrioridadesEmb();
   if(id==='s-emb-produtos-pendentes'&&typeof renderEmbSelData==='function') renderEmbSelData();
@@ -4093,7 +4102,10 @@ function renderEmbalagem(){
           <input type="number" class="emb-input-qtd" id="input-emb-${r.firestoreId}" value="${emb.qtdEmbalada||r.qtd}" min="0" inputmode="numeric" />
           <button class="btn-sm-green" onclick="confirmarAjuste('${r.firestoreId}',${r.qtdUnidades||r.qtd})">OK</button>
         </div>
-        <button class="btn-sm-outline" style="margin-top:6px;font-size:11px;" onclick="toggleAjuste('${r.firestoreId}',${r.qtdUnidades||r.qtd},${emb.qtdEmbalada||r.qtd})">Ajustar qtd</button>`:''}
+        <div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap;">
+          <button class="btn-sm-outline" style="font-size:11px;" onclick="toggleAjuste('${r.firestoreId}',${r.qtdUnidades||r.qtd},${emb.qtdEmbalada||r.qtd})">Ajustar qtd</button>
+          <button class="btn-sm-outline" style="font-size:11px;border-color:#ef9a9a;color:#c62828;" onclick="desfazerEmbalagem('${r.firestoreId}')">↶ Desfazer embalagem</button>
+        </div>`:''}
       </div>`;
     }).join('')}
     ${manuais.length>0?`<div class="section-divider" style="margin-top:8px;">Adicionados manualmente</div>`:''}
@@ -6150,7 +6162,8 @@ function voltarPlano(){
 function abrirPlano(){
   window._planoOrigin=document.querySelector('.screen.active')?.id||'s-conf-home';
   const semAtual=semanaAtual();
-  const recExist=planos.find(p=>p.semana===semAtual);
+  // Filtra apenas planos da Confeitaria (sem setor ou setor='conf')
+  const recExist=planos.find(p=>p.semana===semAtual&&(!p.setor||p.setor==='conf'));
   if(recExist){
     planoAtual={semana:semAtual, firestoreId:recExist.firestoreId, itens:JSON.parse(JSON.stringify(recExist.itens||{}))};
   } else {
@@ -8156,24 +8169,30 @@ function renderBuscarProduto(){
     html+='<div><div style="font-size:10px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.04em;font-weight:600;">Liberado</div><div style="font-size:18px;font-weight:700;color:'+(expPend>0?'var(--mc-laranja)':'var(--mc-verde)')+';">'+totalLib+'</div></div>';
     html+='</div>';
 
-    // ===== PREVISÃO DO PLANO DA SEMANA (apenas plano mais recente) =====
+    // ===== PREVISÃO DO PLANO DA SEMANA (mais recente de cada setor) =====
     let previsoes=[]; // {semana, dia, qtd}
     let planoUsado=null;
     if(typeof planos!=='undefined'&&Array.isArray(planos)&&planos.length>0){
-      // planos já vem ordenado por timestamp desc (mais recente primeiro)
-      planoUsado=planos[0];
+      // Procurar produto nos planos mais recentes (Confeitaria E Quadra)
       const normP=s=>(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();
       const prodNorm=normP(produto);
-      if(planoUsado.itens&&typeof planoUsado.itens==='object'){
-        Object.keys(planoUsado.itens).forEach(dia=>{
-          const arr=planoUsado.itens[dia];
+      // Pegar plano mais recente de cada setor
+      const planoConf=planos.find(p=>!p.setor||p.setor==='conf');
+      const planoQuadra=planos.find(p=>p.setor==='quadra');
+      const candidatos=[planoConf,planoQuadra].filter(Boolean);
+      for(const plano of candidatos){
+        if(!plano.itens||typeof plano.itens!=='object') continue;
+        Object.keys(plano.itens).forEach(dia=>{
+          const arr=plano.itens[dia];
           if(!Array.isArray(arr)) return;
           arr.forEach(item=>{
             if(!item||!item.nome) return;
-            // Match EXATO: nome do produto no plano deve ser idêntico ao produto do card
             if(normP(item.nome)===prodNorm){
               const qtd=parseInt(item.qtdPacotes)||0;
-              if(qtd>0) previsoes.push({semana:planoUsado.semana||'-',dia:dia,qtd:qtd});
+              if(qtd>0){
+                if(!planoUsado) planoUsado=plano;
+                previsoes.push({semana:plano.semana||'-',dia:dia,qtd:qtd,setor:plano.setor||'conf'});
+              }
             }
           });
         });
@@ -10548,6 +10567,180 @@ function atualizarBadgePrioridadesEmb(){
   else b.textContent=pend+' pendente(s)';
 }
 window.atualizarBadgePrioridadesEmb=atualizarBadgePrioridadesEmb;
+
+// Desfaz a marcação de "embalado" de um produto. Se já foi liberado na expedição, zera também.
+async function desfazerEmbalagem(fid){
+  const reg=registros.find(r=>r.firestoreId===fid);
+  if(!reg)return;
+  const exp=reg.expedicao||{totalLiberado:0};
+  const jaLiberadoNaExp=(exp.totalLiberado||0)>0;
+  let msg='Desfazer a marcação de embalado deste produto?\n\nO produto voltará a aparecer como pendente na Embalagem.';
+  if(jaLiberadoNaExp){
+    msg='⚠️ Este produto já foi liberado na expedição ('+exp.totalLiberado+' un).\n\nDesfazer a embalagem vai REMOVER o produto da Expedição também (zerar a liberação).\n\nDeseja continuar?';
+  }
+  if(!confirm(msg))return;
+  try{
+    await updateDoc(doc(db,'registros',fid),{
+      embalagem:{feito:false,qtdEmbalada:0,parciais:[]},
+      expedicao:{totalLiberado:0,parciais:[]}
+    });
+  } catch(e){ alert('Erro: '+e.message); }
+}
+window.desfazerEmbalagem=desfazerEmbalagem;
+
+
+// ===== PLANO DA QUADRA =====
+let planoQuadraAtual = { semana:'', firestoreId:null, itens:{}, setor:'quadra' };
+
+function abrirPlanoQuadra(){
+  window._planoQuadraOrigin=document.querySelector('.screen.active')?.id||'s-quadra-home';
+  const semAtual=semanaAtual();
+  // Procurar plano da Quadra para a semana atual (campo setor==='quadra')
+  const recExist=planos.find(p=>p.semana===semAtual&&p.setor==='quadra');
+  if(recExist){
+    planoQuadraAtual={semana:semAtual, firestoreId:recExist.firestoreId, itens:JSON.parse(JSON.stringify(recExist.itens||{})), setor:'quadra'};
+  } else {
+    planoQuadraAtual={semana:semAtual, firestoreId:null, itens:{}, setor:'quadra'};
+  }
+  document.getElementById('plano-quadra-sub').textContent=semanaLabel(semAtual);
+  renderPlanoQuadra();
+  goTo('s-plano-quadra');
+}
+
+function voltarPlanoQuadra(){
+  const o=window._planoQuadraOrigin||'s-quadra-home';
+  window._planoQuadraOrigin=null;
+  goTo(o);
+}
+
+function renderPlanoQuadra(){
+  const el=document.getElementById('plano-quadra-content');
+  if(!el)return;
+  const dias=['Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
+
+  let html='';
+
+  // Bloco de importação (estilo similar ao plano normal)
+  html+='<div class="card" style="margin-bottom:10px;border-left:3px solid var(--mc-dourado);">';
+  html+='<div style="font-size:13px;font-weight:600;color:#92400e;margin-bottom:10px;">📥 Importar do Excel</div>';
+  html+='<div class="card-label">Dia da semana</div>';
+  html+='<select id="plano-q-import-dia" style="font-size:14px;margin-bottom:10px;">';
+  html+='<option value="">Selecione o dia...</option>';
+  dias.forEach(d=>{html+='<option value="'+d+'">'+d+'-feira</option>';});
+  html+='</select>';
+  html+='<div class="card-label">Cole os dados (Código + Quantidade, um por linha)</div>';
+  html+='<textarea id="plano-q-import-txt" placeholder="100&#9;50&#10;101&#9;30" style="width:100%;height:120px;font-size:14px;padding:8px;border-radius:8px;border:1px solid var(--mc-dourado);background:var(--bg-primary);color:var(--text-primary);font-family:monospace;resize:vertical;"></textarea>';
+  html+='<div style="display:flex;gap:8px;margin-top:8px;">';
+  html+='<button onclick="importarPlanoQuadraPaste()" style="flex:1;padding:10px;background:var(--mc-dourado);color:#92400e;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;">Importar →</button>';
+  html+='<button onclick="limparPlanoQuadra()" style="padding:10px 14px;background:none;border:1px solid #ef9a9a;color:#c62828;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">🗑 Limpar semana</button>';
+  html+='</div>';
+  html+='<div id="plano-q-import-result" style="margin-top:6px;font-size:12px;"></div>';
+  html+='</div>';
+
+  // Total geral da semana
+  let totalSemana=0;
+  dias.forEach(d=>{
+    const its=planoQuadraAtual.itens[d]||[];
+    its.forEach(i=>totalSemana+=(parseInt(i.qtdPacotes)||0));
+  });
+
+  if(totalSemana>0){
+    html+='<div class="card" style="background:var(--mc-dourado-claro);border-left:3px solid var(--mc-dourado);margin-bottom:14px;padding:12px;">';
+    html+='<div style="font-size:13px;font-weight:600;color:#92400e;">📊 Total da semana: '+totalSemana+' pacote(s)</div>';
+    html+='</div>';
+  }
+
+  // Por dia
+  dias.forEach(dia=>{
+    const itens=planoQuadraAtual.itens[dia]||[];
+    const totalDia=itens.reduce((s,i)=>s+(parseInt(i.qtdPacotes)||0),0);
+    html+='<div class="mc-section-header" style="margin-top:10px;display:flex;align-items:center;gap:8px;">';
+    html+='<span>'+dia+'</span>';
+    html+='<span style="font-size:11px;color:var(--text-secondary);font-weight:400;text-transform:none;">('+itens.length+' produto(s) · '+totalDia+' pacote(s))</span>';
+    html+='</div>';
+
+    if(itens.length===0){
+      html+='<div style="padding:12px;background:var(--bg-secondary);border-radius:8px;font-size:12px;color:var(--text-secondary);font-style:italic;text-align:center;margin-bottom:6px;">Sem produtos planejados</div>';
+    } else {
+      itens.forEach((item,i)=>{
+        const prod=QUADRA_PRODUTOS.find(p=>p.nome===item.nome);
+        const cod=prod&&prod.cod?prod.cod:'';
+        html+='<div style="background:var(--bg-primary);border:1px solid var(--border);border-left:3px solid var(--mc-dourado);border-radius:8px;padding:10px 12px;margin-bottom:5px;display:flex;align-items:center;gap:10px;">';
+        html+='<div style="flex:1;min-width:140px;font-size:13px;">'+(cod?'<span style="color:var(--mc-azul);font-weight:500;">'+cod+'</span> · ':'')+item.nome+'</div>';
+        html+='<div style="font-size:14px;font-weight:700;color:#92400e;">'+item.qtdPacotes+' pct</div>';
+        html+='<button onclick="removerItemPlanoQuadra(\''+dia+'\','+i+')" style="background:none;border:1px solid #ef9a9a;color:#c62828;font-size:11px;padding:3px 8px;border-radius:6px;cursor:pointer;font-family:inherit;">×</button>';
+        html+='</div>';
+      });
+    }
+  });
+
+  el.innerHTML=html;
+}
+
+async function importarPlanoQuadraPaste(){
+  const dia=document.getElementById('plano-q-import-dia').value;
+  const txt=(document.getElementById('plano-q-import-txt').value||'').trim();
+  const resultEl=document.getElementById('plano-q-import-result');
+  if(!dia){ resultEl.innerHTML='<span style="color:#c62828;">Selecione o dia</span>'; return; }
+  if(!txt){ resultEl.innerHTML='<span style="color:#c62828;">Cole os dados</span>'; return; }
+
+  const linhas=txt.split('\n').map(l=>l.trim()).filter(Boolean);
+  if(!planoQuadraAtual.itens[dia]) planoQuadraAtual.itens[dia]=[];
+  let importados=0, naoEncontrados=[];
+  for(const linha of linhas){
+    // tab ou múltiplos espaços
+    const partes=linha.split(/\t+|\s{2,}|\s+/);
+    if(partes.length<2) continue;
+    const cod=partes[0].trim();
+    const qtd=parseInt(partes[1])||0;
+    if(qtd<=0) continue;
+    const prod=QUADRA_PRODUTOS.find(p=>p.cod===cod);
+    if(!prod){ naoEncontrados.push(cod); continue; }
+    // Já existe? atualizar
+    const idx=planoQuadraAtual.itens[dia].findIndex(i=>i.nome===prod.nome);
+    if(idx>=0) planoQuadraAtual.itens[dia][idx].qtdPacotes=qtd;
+    else planoQuadraAtual.itens[dia].push({nome:prod.nome,qtdPacotes:qtd});
+    importados++;
+  }
+  let msg='<span style="color:var(--mc-verde);">'+importados+' produto(s) importado(s)</span>';
+  if(naoEncontrados.length>0) msg+=' · <span style="color:#c62828;">Não encontrados: '+naoEncontrados.join(', ')+'</span>';
+  resultEl.innerHTML=msg;
+  renderPlanoQuadra();
+}
+
+function limparPlanoQuadra(){
+  if(!confirm('Limpar TODA a semana do plano da Quadra?\nEssa ação não pode ser desfeita.')) return;
+  planoQuadraAtual.itens={};
+  renderPlanoQuadra();
+}
+
+function removerItemPlanoQuadra(dia,idx){
+  if(!planoQuadraAtual.itens[dia])return;
+  planoQuadraAtual.itens[dia].splice(idx,1);
+  renderPlanoQuadra();
+}
+
+async function salvarPlanoQuadra(){
+  try{
+    if(planoQuadraAtual.firestoreId){
+      await updateDoc(doc(db,'planos',planoQuadraAtual.firestoreId),{itens:planoQuadraAtual.itens,setor:'quadra',editadoEm:agora()});
+    } else {
+      const ref=doc(collection(db,'planos'));
+      await setDoc(ref,{semana:planoQuadraAtual.semana,itens:planoQuadraAtual.itens,setor:'quadra',hora:agora(),timestamp:Date.now()});
+      planoQuadraAtual.firestoreId=ref.id;
+    }
+    alert('Plano da Quadra salvo!');
+  }catch(e){ console.error(e); alert('Erro: '+e.message); }
+}
+
+window.abrirPlanoQuadra=abrirPlanoQuadra;
+window.voltarPlanoQuadra=voltarPlanoQuadra;
+window.renderPlanoQuadra=renderPlanoQuadra;
+window.importarPlanoQuadraPaste=importarPlanoQuadraPaste;
+window.limparPlanoQuadra=limparPlanoQuadra;
+window.removerItemPlanoQuadra=removerItemPlanoQuadra;
+window.salvarPlanoQuadra=salvarPlanoQuadra;
+
 window.goTo=goTo; window.abrirPin=abrirPin; window.pinDigit=pinDigit; window.pinDel=pinDel;
 window.iniciarNovoReg=iniciarNovoReg; window.renderConfMassas=renderConfMassas; window.toggleManual=toggleManual;
 window.selecionarDataTipo=selecionarDataTipo; window.selecionarDataManual=selecionarDataManual;
