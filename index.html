@@ -3835,9 +3835,9 @@ async function salvarEditProd(fid){
   const mE=p.grMassa*unidades/1000, r1E=p.grRecheio*unidades/1000, r2E=p.grRecheio2*unidades/1000;
   try{
     await updateDoc(doc(db,'registros',fid),{
-      qtd, massa, r1, r2, obs,
+      qtd, qtdPacotes:qtd, qtdUnidades:unidades, massa, r1, r2, obs,
       quebra:{massaEsp:mE,massaReal:massa,difMassa:massa-mE,r1Esp:r1E,r1Real:r1,difR1:r1-r1E,r2Esp:r2E,r2Real:r2,difR2:r2-r2E},
-      'embalagem.qtdProduzida': qtd,
+      'embalagem.qtdProduzida': unidades,
       editadoEm: agora()
     });
   } catch(e){alert('Erro ao salvar.');btn.textContent='Salvar';btn.disabled=false;}
