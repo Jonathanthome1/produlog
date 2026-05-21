@@ -2684,6 +2684,14 @@
           </div>
           <span class="mc-sector-arrow">›</span>
         </button>
+        <button class="mc-sector-card" onclick="goToAdmin('s-planejamento')" style="border-left:3px solid var(--mc-dourado);background:linear-gradient(135deg, var(--bg-primary) 0%, var(--mc-dourado-claro) 100%);">
+          <div class="mc-sector-icon gold">📊</div>
+          <div class="mc-sector-info">
+            <div class="mc-sector-title">Planejamento de Produção</div>
+            <div class="mc-sector-desc">Importar vendas, ver pico por dia, montar plano</div>
+          </div>
+          <span class="mc-sector-arrow">›</span>
+        </button>
       </div>
 
     </div>
@@ -3119,7 +3127,91 @@
     <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;" id="estoque-emb-content"></div>
   </div>
 
-  <!-- ESTOQUE EMBALAGEM FORM -->
+    <!-- PLANEJAMENTO DE PRODUÇÃO - HOME -->
+  <div class="screen" id="s-planejamento">
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="goTo('s-adm-hub')">‹</button>
+      <div class="mc-brand">
+        <div class="mc-brand-logo">MC</div>
+        <div class="mc-brand-text">
+          <div class="mc-brand-name">Monte Castelo</div>
+          <div class="mc-brand-sub">Planejamento de Produção</div>
+        </div>
+      </div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info">
+        <div class="mc-page-title">📊 Planejamento</div>
+        <div class="mc-page-sub" id="planej-sub">Carregando...</div>
+      </div>
+      <div class="mc-header-actions">
+        <button class="mc-act-btn-secondary" onclick="goTo('s-planej-import-vendas')">📥 Vendas</button>
+        <button class="mc-act-btn-secondary" onclick="goTo('s-planej-import-estoque')">📦 Estoque</button>
+      </div>
+    </div>
+    <div style="flex:1;padding:14px 16px;background:var(--bg-page);overflow-y:auto;" id="planej-content"></div>
+  </div>
+
+  <!-- PLANEJAMENTO - IMPORTAR VENDAS -->
+  <div class="screen" id="s-planej-import-vendas">
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="goTo('s-planejamento')">‹</button>
+      <div class="mc-brand">
+        <div class="mc-brand-logo">MC</div>
+        <div class="mc-brand-text">
+          <div class="mc-brand-name">Monte Castelo</div>
+          <div class="mc-brand-sub">Importar Vendas</div>
+        </div>
+      </div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info">
+        <div class="mc-page-title">📥 Importar Histórico de Vendas</div>
+        <div class="mc-page-sub">Excel do PDV (4 semanas)</div>
+      </div>
+    </div>
+    <div style="flex:1;padding:14px 16px;background:var(--bg-page);overflow-y:auto;" id="planej-imp-vendas-content"></div>
+  </div>
+
+  <!-- PLANEJAMENTO - IMPORTAR ESTOQUE -->
+  <div class="screen" id="s-planej-import-estoque">
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="goTo('s-planejamento')">‹</button>
+      <div class="mc-brand">
+        <div class="mc-brand-logo">MC</div>
+        <div class="mc-brand-text">
+          <div class="mc-brand-name">Monte Castelo</div>
+          <div class="mc-brand-sub">Importar Estoque</div>
+        </div>
+      </div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info">
+        <div class="mc-page-title">📦 Importar Estoque Atual</div>
+        <div class="mc-page-sub">Cole código + quantidade</div>
+      </div>
+    </div>
+    <div style="flex:1;padding:14px 16px;background:var(--bg-page);overflow-y:auto;" id="planej-imp-estoque-content"></div>
+  </div>
+
+  <!-- PLANEJAMENTO - DETALHE PRODUTO (modal) -->
+  <div class="screen" id="s-planej-detalhe">
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="goTo('s-planejamento')">‹</button>
+      <div class="mc-brand">
+        <div class="mc-brand-logo">MC</div>
+        <div class="mc-brand-text">
+          <div class="mc-brand-name">Monte Castelo</div>
+          <div class="mc-brand-sub">Detalhe</div>
+        </div>
+      </div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info">
+        <div class="mc-page-title" id="planej-det-title">Produto</div>
+        <div class="mc-page-sub" id="planej-det-sub"></div>
+      </div>
+    </div>
+    <div style="flex:1;padding:14px 16px;background:var(--bg-page);overflow-y:auto;" id="planej-det-content"></div>
+  </div>
+
+<!-- ESTOQUE EMBALAGEM FORM -->
   <div class="screen" id="s-estoque-emb-form">
     <div class="mc-header">
       <button class="mc-header-back" onclick="goTo('s-estoque-emb')">‹</button>
@@ -3605,6 +3697,9 @@ function goTo(id){
   if((id==='s-emb-sel-data'||id==='s-emb-home')&&typeof renderBannerPresencaSetor==='function') renderBannerPresencaSetor('emb','banner-presenca-emb');
   if(id==='s-plano-quadra'&&typeof renderPlanoQuadra==='function') renderPlanoQuadra();
   if(id==='s-emb-sel-data'&&typeof atualizarBadgeProdutosEmb==='function') atualizarBadgeProdutosEmb();
+  if(id==='s-planejamento'&&typeof renderPlanejamento==='function') renderPlanejamento();
+  if(id==='s-planej-import-vendas'&&typeof renderImportVendas==='function') renderImportVendas();
+  if(id==='s-planej-import-estoque'&&typeof renderImportEstoque==='function') renderImportEstoque();
   if(id==='s-emb-sel-data'&&typeof atualizarBadgePrioridadesEmb==='function') atualizarBadgePrioridadesEmb();
   if(id==='s-emb-produtos-pendentes'&&typeof renderEmbSelData==='function') renderEmbSelData();
   if(id==='s-emb-inconformidades') renderInconformidades();
@@ -3851,13 +3946,9 @@ async function salvarEditProd(fid){
       lido:false
     };
     dadosUpdate.alertasEmbalagem=[...(reg.alertasEmbalagem||[]), novoAlerta];
-    console.log('[Alerta criado]', novoAlerta, 'no registro', fid);
   }
   try{
     await updateDoc(doc(db,'registros',fid),dadosUpdate);
-    if(houveAlteracaoQtd){
-      console.log('[Alerta salvo no Firebase]');
-    }
     // Fechar form de edição e re-renderizar
     const editEl=document.getElementById('edit-'+fid);
     if(editEl) editEl.style.display='none';
@@ -4106,12 +4197,10 @@ function renderEmbalagem(){
   // Coletar alertas não lidos dos registros do dia
   const alertasDia=[];
   regs.forEach(r=>{
-    if(r.alertasEmbalagem) console.log('[Embalagem] Reg',r.produto,'tem alertas:',r.alertasEmbalagem);
     (r.alertasEmbalagem||[]).forEach(a=>{
       if(!a.lido) alertasDia.push({...a, produto:r.produto, regId:r.firestoreId});
     });
   });
-  console.log('[Embalagem] dataSelEmb=',dataSelEmb,'regs=',regs.length,'alertasDia=',alertasDia.length);
   let alertasHTML='';
   if(alertasDia.length>0){
     alertasHTML='<div class="card" style="margin-bottom:12px;background:linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);border-left:3px solid var(--mc-laranja);">';
@@ -7531,6 +7620,37 @@ function aplicarFarinhasConfigFirebase(){
   }
 }
 
+// ===== PLANEJAMENTO DE PRODUÇÃO (Firebase) =====
+let planejProdutos=[]; // 1 doc por código: {cod, desc, setor, estoque, mediaSemanal, totalPeriodo, porDia, picoDia, picoPct, topClientes, vendasSem, semanas, atualizadoEm}
+let planejConfig={multiplicador:2}; // 1 doc 'config'
+let planejPlanos={}; // {setor_semana: {dias:{Seg:[{cod,qtd}], ...}}}
+
+onSnapshot(collection(db,'planejProdutos'), snap=>{
+  try{
+    planejProdutos=snap.docs.map(d=>({firestoreId:d.id,...d.data()}));
+    atualizarTela();
+    const ativa=document.querySelector('.screen.active');
+    if(ativa&&ativa.id==='s-planejamento'&&typeof renderPlanejamento==='function') renderPlanejamento();
+  }catch(e){ console.error('planejProdutos snap:',e); }
+});
+
+onSnapshot(doc(db,'planejConfig','config'), snap=>{
+  try{
+    if(snap.exists()) planejConfig={...planejConfig, ...snap.data()};
+    const ativa=document.querySelector('.screen.active');
+    if(ativa&&ativa.id==='s-planejamento'&&typeof renderPlanejamento==='function') renderPlanejamento();
+  }catch(e){ console.error('planejConfig snap:',e); }
+});
+
+onSnapshot(collection(db,'planejPlanos'), snap=>{
+  try{
+    planejPlanos={};
+    snap.docs.forEach(d=>{ planejPlanos[d.id]=d.data(); });
+    const ativa=document.querySelector('.screen.active');
+    if(ativa&&ativa.id==='s-planejamento'&&typeof renderPlanejamento==='function') renderPlanejamento();
+  }catch(e){ console.error('planejPlanos snap:',e); }
+});
+
 // ===== INCONFORMIDADES (Firebase) =====
 let inconformidades=[]; // Firestore 'inconformidades'
 
@@ -10835,6 +10955,617 @@ async function marcarAlertasLidos(data){
   } catch(e){ console.error('Erro marcando alertas:',e); }
 }
 window.marcarAlertasLidos=marcarAlertasLidos;
+
+
+
+// ============================================================
+// PLANEJAMENTO DE PRODUÇÃO
+// ============================================================
+const PLANEJ_DIAS = ['Seg','Ter','Qua','Qui','Sex','Sáb'];
+let planejSetorAtivo = 'quadra';
+let planejSetorOverride = {}; // {cod: 'quadra'|'conf'} - sobrescreve a classificação automática
+let planejCompensacao = {}; // {cod: qtdProduzida} - cache da compensação por intervalo
+
+function classificarSetorAuto(desc){
+  if(!desc) return 'conf';
+  const d = desc.toUpperCase();
+  const conf = ['PÃO DE QUEIJO','PAO DE QUEIJO','CROISSANT','MINI','EMPADA','EMPADINHA',
+    'COXINHA','BOLINHA','RISOLE','RISSOLE','CHURROS','BRIGADEIRO','CUCA','TORTA',
+    'BOLO','SONHO','GRISSINI','PIZZA','PASTEL','ROCAMBOLE','BANANINHA','DOCE',
+    'DELICIA','CANUDO','PALITO','BISCOITO','BOMBOM','TRUFA','MOUSSE','PUDIM','BABA'];
+  const quadra = ['PÃO','PAO','MASSA FOLHADA','MASSA DOCE','BAGUETE','ROLO MASSA',
+    'ROSCA','FOLHADO','FATIA','MASSA SOVADA','PETIT','BROA','SOVADO'];
+  for(const k of conf){ if(d.includes(k)) return 'conf'; }
+  for(const k of quadra){ if(d.includes(k)) return 'quadra'; }
+  return 'conf';
+}
+
+function getSetorPlanej(p){
+  if(planejSetorOverride[p.cod]) return planejSetorOverride[p.cod];
+  return p.setor || classificarSetorAuto(p.desc);
+}
+
+function planejMult(){ return parseFloat(planejConfig.multiplicador)||2; }
+
+function calcIdealPlanej(p){ return Math.round((p.mediaSemanal||0) * planejMult()); }
+
+function calcCompensacaoPlanej(){
+  // Calcula a quantidade produzida no app (registros + quadraRegistros) no intervalo selecionado
+  const di = document.getElementById('planej-compens-de');
+  const df = document.getElementById('planej-compens-ate');
+  planejCompensacao = {};
+  if(!di||!df) return;
+  const de = di.value, ate = df.value;
+  if(!de||!ate) return;
+  const [yd,md,dd] = de.split('-'); const [ya,ma,da] = ate.split('-');
+  const dataDe = new Date(yd+'-'+md+'-'+dd);
+  const dataAte = new Date(ya+'-'+ma+'-'+da);
+  if(isNaN(dataDe)||isNaN(dataAte)) return;
+  
+  function inRange(dataStr){
+    if(!dataStr) return false;
+    const parts = dataStr.split('/');
+    if(parts.length!==3) return false;
+    const dt = new Date(parts[2]+'-'+parts[1]+'-'+parts[0]);
+    return dt>=dataDe && dt<=dataAte;
+  }
+  
+  // Registros (Confeitaria + Quadra via quadraRegId compartilham 'registros')
+  registros.forEach(r=>{
+    if(!inRange(r.data)) return;
+    if(!r.produto) return;
+    // Match por código (procurar nos PRODUTOS e QUADRA_PRODUTOS)
+    const p1 = PRODUTOS.find(x=>x.nome===r.produto);
+    const p2 = (typeof QUADRA_PRODUTOS!=='undefined')?QUADRA_PRODUTOS.find(x=>x.nome===r.produto):null;
+    const cod = (p1&&p1.cod)?parseInt(p1.cod):((p2&&p2.cod)?parseInt(p2.cod):null);
+    if(!cod) return;
+    const qtdPct = parseInt(r.qtdPacotes||r.qtd||0);
+    if(qtdPct<=0) return;
+    planejCompensacao[cod] = (planejCompensacao[cod]||0) + qtdPct;
+  });
+}
+
+function getEstoqueRealPlanej(p){
+  return (p.estoque||0) + (planejCompensacao[p.cod]||0);
+}
+
+function calcPlanoTotalPlanej(cod, setor){
+  const key = setor+'_atual'; // plano da semana atual editável
+  const plano = (planejPlanos[key]||{}).dias||{};
+  let total = 0;
+  PLANEJ_DIAS.forEach(d=>{
+    const arr = plano[d]||[];
+    const item = arr.find(x=>x.cod===cod);
+    if(item) total += parseInt(item.qtd)||0;
+  });
+  return total;
+}
+
+function calcSaldoPlanej(p){
+  return getEstoqueRealPlanej(p) + calcPlanoTotalPlanej(p.cod, getSetorPlanej(p)) - calcIdealPlanej(p);
+}
+
+function calcCobPlanej(p){
+  const ideal = calcIdealPlanej(p);
+  if(ideal<=0) return 100;
+  return Math.round((getEstoqueRealPlanej(p) + calcPlanoTotalPlanej(p.cod, getSetorPlanej(p))) / ideal * 100);
+}
+
+function badgeCobPlanej(pct){
+  let cor='b-verde';
+  if(pct<70) cor='b-vermelho';
+  else if(pct<100) cor='b-laranja';
+  return '<span class="badge '+cor+'">'+pct+'%</span>';
+}
+
+function planejTrocarTab(s){
+  planejSetorAtivo = s;
+  renderPlanejamento();
+}
+
+function planejMoverSetor(cod, ev){
+  if(ev) ev.stopPropagation();
+  const p = planejProdutos.find(x=>x.cod===cod);
+  if(!p) return;
+  const atual = getSetorPlanej(p);
+  const novo = atual==='quadra'?'conf':'quadra';
+  planejSetorOverride[cod] = novo;
+  // Persistir no Firebase
+  updateDoc(doc(db,'planejProdutos',String(cod)),{setor:novo}).catch(e=>console.error(e));
+  renderPlanejamento();
+}
+
+async function planejAtualizarConfig(){
+  const v = parseFloat(document.getElementById('planej-mult').value)||2;
+  planejConfig.multiplicador = v;
+  try{
+    await setDoc(doc(db,'planejConfig','config'),{multiplicador:v});
+  }catch(e){ console.error(e); }
+  renderPlanejamento();
+}
+
+function planejHojeStr(){
+  const d = new Date();
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+
+function planejOntemStr(){
+  const d = new Date();
+  d.setDate(d.getDate()-1);
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+
+function renderPlanejamento(){
+  const el = document.getElementById('planej-content');
+  if(!el) return;
+  
+  // Se ainda não importou nada
+  if(planejProdutos.length===0){
+    el.innerHTML = '<div class="card" style="padding:30px;text-align:center;">'+
+      '<div style="font-size:48px;margin-bottom:12px;">📊</div>'+
+      '<div style="font-size:16px;font-weight:600;color:var(--text-primary);margin-bottom:8px;">Nenhum dado importado ainda</div>'+
+      '<div style="font-size:13px;color:var(--text-secondary);margin-bottom:20px;">Para começar a usar o planejamento, importe o histórico de vendas e o estoque atual.</div>'+
+      '<div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">'+
+        '<button class="mc-act-btn-primary" onclick="goTo(\'s-planej-import-vendas\')">📥 Importar Vendas</button>'+
+        '<button class="mc-act-btn-secondary" onclick="goTo(\'s-planej-import-estoque\')">📦 Importar Estoque</button>'+
+      '</div></div>';
+    document.getElementById('planej-sub').textContent='Aguardando primeira importação';
+    return;
+  }
+  
+  // Calcular compensação se houver datas selecionadas
+  calcCompensacaoPlanej();
+  
+  // Header info
+  const ultimaAtual = planejProdutos.reduce((max,p)=>p.atualizadoEm>max?p.atualizadoEm:max, '');
+  const n_semanas = planejProdutos[0]?.n_semanas||0;
+  const compensacaoAtiva = Object.keys(planejCompensacao).length>0;
+  document.getElementById('planej-sub').textContent = planejProdutos.length+' produtos · ultima atualização '+ultimaAtual;
+  
+  const ativos = planejProdutos.filter(p=>getSetorPlanej(p)===planejSetorAtivo && (p.totalPeriodo||0)>0);
+  const urgentes = ativos.filter(p=>calcCobPlanej(p)<70).length;
+  const atencao = ativos.filter(p=>{const c=calcCobPlanej(p);return c>=70&&c<100;}).length;
+  const ok = ativos.filter(p=>calcCobPlanej(p)>=100).length;
+  const nq = planejProdutos.filter(p=>getSetorPlanej(p)==='quadra' && (p.totalPeriodo||0)>0).length;
+  const nc = planejProdutos.filter(p=>getSetorPlanej(p)==='conf' && (p.totalPeriodo||0)>0).length;
+  
+  let html='';
+  
+  // Tabs Quadra/Confeitaria
+  html += '<div style="display:flex;gap:4px;margin-bottom:14px;border-bottom:1px solid var(--border);">';
+  html += '<button onclick="planejTrocarTab(\'quadra\')" style="padding:10px 18px;border:none;background:transparent;font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;border-bottom:3px solid '+(planejSetorAtivo==='quadra'?'var(--mc-azul)':'transparent')+';color:'+(planejSetorAtivo==='quadra'?'var(--mc-azul)':'var(--text-secondary)')+';">🍞 Quadra <span style="background:'+(planejSetorAtivo==='quadra'?'var(--mc-azul)':'var(--bg-secondary)')+';color:'+(planejSetorAtivo==='quadra'?'white':'var(--text-secondary)')+';font-size:11px;padding:2px 7px;border-radius:10px;margin-left:4px;">'+nq+'</span></button>';
+  html += '<button onclick="planejTrocarTab(\'conf\')" style="padding:10px 18px;border:none;background:transparent;font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;border-bottom:3px solid '+(planejSetorAtivo==='conf'?'var(--mc-azul)':'transparent')+';color:'+(planejSetorAtivo==='conf'?'var(--mc-azul)':'var(--text-secondary)')+';">🥐 Confeitaria <span style="background:'+(planejSetorAtivo==='conf'?'var(--mc-azul)':'var(--bg-secondary)')+';color:'+(planejSetorAtivo==='conf'?'white':'var(--text-secondary)')+';font-size:11px;padding:2px 7px;border-radius:10px;margin-left:4px;">'+nc+'</span></button>';
+  html += '</div>';
+  
+  // KPIs
+  html += '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px;">';
+  html += '<div style="background:white;border:1px solid var(--border);border-left:3px solid var(--mc-azul);border-radius:10px;padding:10px;"><div style="font-size:10px;color:var(--text-secondary);text-transform:uppercase;font-weight:600;">Analisados</div><div style="font-size:20px;font-weight:700;">'+ativos.length+'</div></div>';
+  html += '<div style="background:white;border:1px solid var(--border);border-left:3px solid var(--mc-vermelho);border-radius:10px;padding:10px;"><div style="font-size:10px;color:var(--text-secondary);text-transform:uppercase;font-weight:600;">🔴 Urgentes</div><div style="font-size:20px;font-weight:700;">'+urgentes+'</div></div>';
+  html += '<div style="background:white;border:1px solid var(--border);border-left:3px solid var(--mc-laranja);border-radius:10px;padding:10px;"><div style="font-size:10px;color:var(--text-secondary);text-transform:uppercase;font-weight:600;">🟠 Atenção</div><div style="font-size:20px;font-weight:700;">'+atencao+'</div></div>';
+  html += '<div style="background:white;border:1px solid var(--border);border-left:3px solid var(--mc-verde);border-radius:10px;padding:10px;"><div style="font-size:10px;color:var(--text-secondary);text-transform:uppercase;font-weight:600;">🟢 OK</div><div style="font-size:20px;font-weight:700;">'+ok+'</div></div>';
+  html += '</div>';
+  
+  // Controls
+  html += '<div style="background:white;border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:12px;display:flex;gap:12px;flex-wrap:wrap;align-items:center;">';
+  html += '<div style="display:flex;gap:6px;align-items:center;"><span style="font-size:12px;color:var(--text-secondary);font-weight:600;">Multiplicador:</span><input type="number" id="planej-mult" value="'+planejMult()+'" step="0.1" min="0.5" max="5" onchange="planejAtualizarConfig()" style="width:70px;padding:6px 8px;border:1px solid var(--border);border-radius:6px;font-size:13px;font-family:inherit;"></div>';
+  html += '<div style="display:flex;gap:6px;align-items:center;"><span style="font-size:12px;color:var(--text-secondary);font-weight:600;">Ordenar:</span><select id="planej-ordem" onchange="renderPlanejamento()" style="padding:6px 8px;border:1px solid var(--border);border-radius:6px;font-size:13px;font-family:inherit;background:white;"><option value="urg">Mais urgente</option><option value="vend">Mais vendido</option><option value="cod">Código</option><option value="nome">Nome A→Z</option></select></div>';
+  html += '<div style="display:flex;gap:6px;align-items:center;"><span style="font-size:12px;color:var(--text-secondary);font-weight:600;">Filtrar:</span><select id="planej-filtro" onchange="renderPlanejamento()" style="padding:6px 8px;border:1px solid var(--border);border-radius:6px;font-size:13px;font-family:inherit;background:white;"><option value="ativos">Com venda</option><option value="todos">Todos</option><option value="vermelho">🔴 Urgentes</option><option value="laranja">🟠+🔴</option></select></div>';
+  html += '<input type="text" id="planej-busca" oninput="renderPlanejamento()" placeholder="🔍 Buscar..." style="flex:1;min-width:160px;padding:7px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;font-family:inherit;">';
+  html += '</div>';
+  
+  // Compensação por intervalo de datas
+  html += '<div style="background:#fff7ed;border:1px solid #fed7aa;border-left:3px solid var(--mc-laranja);border-radius:10px;padding:12px;margin-bottom:12px;">';
+  html += '<div style="font-size:12px;font-weight:600;color:#92400e;margin-bottom:8px;">📅 Compensação de produção não-lançada no PDV</div>';
+  html += '<div style="font-size:11px;color:#78350f;margin-bottom:8px;">Se o estoque do PDV está desatualizado, selecione o intervalo de dias com produção que ainda não foi para o sistema antigo. O app vai somar essa produção ao estoque automaticamente.</div>';
+  html += '<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">';
+  html += '<div><span style="font-size:11px;color:#78350f;display:block;margin-bottom:2px;">De:</span><input type="date" id="planej-compens-de" onchange="renderPlanejamento()" style="padding:6px 8px;border:1px solid #fcd34d;border-radius:6px;font-size:13px;font-family:inherit;background:white;"></div>';
+  html += '<div><span style="font-size:11px;color:#78350f;display:block;margin-bottom:2px;">Até:</span><input type="date" id="planej-compens-ate" onchange="renderPlanejamento()" style="padding:6px 8px;border:1px solid #fcd34d;border-radius:6px;font-size:13px;font-family:inherit;background:white;"></div>';
+  if(compensacaoAtiva){
+    const total = Object.values(planejCompensacao).reduce((s,v)=>s+v, 0);
+    html += '<div style="background:var(--mc-laranja);color:white;padding:6px 10px;border-radius:6px;font-size:12px;font-weight:600;">+'+total+' pct compensados em '+Object.keys(planejCompensacao).length+' produtos</div>';
+  }
+  html += '<button onclick="document.getElementById(\'planej-compens-de\').value=\'\';document.getElementById(\'planej-compens-ate\').value=\'\';renderPlanejamento();" style="background:white;border:1px solid #fcd34d;color:#92400e;padding:6px 10px;border-radius:6px;font-size:11px;font-family:inherit;cursor:pointer;font-weight:600;">Limpar</button>';
+  html += '</div>';
+  html += '</div>';
+  
+  // Tabela
+  const busca = document.getElementById('planej-busca')?.value?.toLowerCase()?.trim()||'';
+  const ordem = document.getElementById('planej-ordem')?.value||'urg';
+  const filtro = document.getElementById('planej-filtro')?.value||'ativos';
+  let lista = planejProdutos.filter(p=>getSetorPlanej(p)===planejSetorAtivo);
+  if(filtro==='ativos') lista = lista.filter(p=>(p.totalPeriodo||0)>0);
+  if(filtro==='vermelho') lista = lista.filter(p=>(p.totalPeriodo||0)>0 && calcCobPlanej(p)<70);
+  if(filtro==='laranja') lista = lista.filter(p=>(p.totalPeriodo||0)>0 && calcCobPlanej(p)<100);
+  if(busca) lista = lista.filter(p=>String(p.cod).includes(busca) || (p.desc||'').toLowerCase().includes(busca));
+  if(ordem==='urg') lista.sort((a,b)=>calcCobPlanej(a)-calcCobPlanej(b));
+  if(ordem==='vend') lista.sort((a,b)=>(b.totalPeriodo||0)-(a.totalPeriodo||0));
+  if(ordem==='cod') lista.sort((a,b)=>a.cod-b.cod);
+  if(ordem==='nome') lista.sort((a,b)=>(a.desc||'').localeCompare(b.desc||''));
+  
+  html += '<div style="background:white;border:1px solid var(--border);border-radius:10px;overflow:hidden;">';
+  html += '<div style="overflow-x:auto;max-height:60vh;overflow-y:auto;">';
+  html += '<table style="width:100%;border-collapse:collapse;font-size:12px;">';
+  html += '<thead style="background:var(--mc-azul);color:white;position:sticky;top:0;z-index:5;"><tr>';
+  ['Cód','Produto','Estoque','+Comp','=Real','Méd/sem','Ideal','Pico','Seg','Ter','Qua','Qui','Sex','Sáb','Plano','Saldo','% cob'].forEach(h=>{
+    const numeric = ['Estoque','+Comp','=Real','Méd/sem','Ideal','Seg','Ter','Qua','Qui','Sex','Sáb','Plano','Saldo','% cob','Cód'].includes(h);
+    html += '<th style="padding:8px;text-align:'+(numeric?'right':'left')+';font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:0.3px;white-space:nowrap;">'+h+'</th>';
+  });
+  html += '</tr></thead><tbody>';
+  
+  if(lista.length===0){
+    html += '<tr><td colspan="17" style="padding:30px;text-align:center;color:var(--text-muted);font-style:italic;">Nenhum produto encontrado</td></tr>';
+  } else {
+    const planoSetor = (planejPlanos[planejSetorAtivo+'_atual']||{}).dias||{};
+    lista.forEach(p=>{
+      const ideal = calcIdealPlanej(p);
+      const comp = planejCompensacao[p.cod]||0;
+      const estReal = getEstoqueRealPlanej(p);
+      const planoTotal = calcPlanoTotalPlanej(p.cod, getSetorPlanej(p));
+      const saldo = calcSaldoPlanej(p);
+      const cob = calcCobPlanej(p);
+      const setorAtual = getSetorPlanej(p);
+      const moverTxt = setorAtual==='quadra'?'→ Conf':'→ Quadra';
+      const picoBadge = (p.picoDia&&p.picoDia!=='-')?'<span class="badge '+((p.picoPct||0)>=40?'b-laranja':'b-azul')+'">'+p.picoDia+' '+(p.picoPct||0)+'%</span>':'-';
+      
+      html += '<tr style="border-bottom:1px solid var(--border);">';
+      html += '<td style="padding:6px 8px;color:var(--mc-azul);font-weight:600;text-align:right;cursor:pointer;" onclick="planejAbrirDetalhe('+p.cod+')">'+p.cod+'</td>';
+      html += '<td style="padding:6px 8px;cursor:pointer;" onclick="planejAbrirDetalhe('+p.cod+')"><span style="font-weight:500;">'+(p.desc||'')+'</span>'+
+        '<button onclick="planejMoverSetor('+p.cod+',event)" style="font-size:10px;padding:2px 6px;border:1px solid var(--border);border-radius:4px;background:white;color:var(--text-secondary);cursor:pointer;font-family:inherit;margin-left:6px;">'+moverTxt+'</button></td>';
+      html += '<td style="padding:6px 8px;text-align:right;">'+(p.estoque||0)+'</td>';
+      html += '<td style="padding:6px 8px;text-align:right;color:'+(comp>0?'var(--mc-laranja)':'var(--text-muted)')+';font-weight:'+(comp>0?'700':'400')+';">'+(comp>0?'+'+comp:'-')+'</td>';
+      html += '<td style="padding:6px 8px;text-align:right;font-weight:600;color:'+(estReal<0?'var(--mc-vermelho)':'var(--text-primary)')+';">'+estReal+'</td>';
+      html += '<td style="padding:6px 8px;text-align:right;">'+(p.mediaSemanal||0)+'</td>';
+      html += '<td style="padding:6px 8px;text-align:right;"><strong>'+ideal+'</strong></td>';
+      html += '<td style="padding:6px 8px;">'+picoBadge+'</td>';
+      // Inputs dos dias
+      PLANEJ_DIAS.forEach(d=>{
+        const arr = planoSetor[d]||[];
+        const item = arr.find(x=>x.cod===p.cod);
+        const v = item?item.qtd:'';
+        html += '<td style="padding:4px;text-align:right;"><input type="number" class="planej-dia" data-cod="'+p.cod+'" data-dia="'+d+'" value="'+v+'" placeholder="0" style="width:56px;text-align:right;padding:4px 6px;border:1px solid var(--border);border-radius:4px;font-size:12px;font-family:inherit;background:white;"></td>';
+      });
+      html += '<td style="padding:6px 8px;text-align:right;" data-planej-tot="'+p.cod+'"><strong>'+planoTotal+'</strong></td>';
+      html += '<td style="padding:6px 8px;text-align:right;" data-planej-saldo="'+p.cod+'"><strong style="color:'+(saldo<0?'var(--mc-vermelho)':'var(--mc-verde)')+';">'+(saldo>=0?'+':'')+saldo+'</strong></td>';
+      html += '<td style="padding:6px 8px;text-align:right;" data-planej-cob="'+p.cod+'">'+badgeCobPlanej(cob)+'</td>';
+      html += '</tr>';
+    });
+  }
+  
+  html += '</tbody></table></div></div>';
+  
+  el.innerHTML = html;
+  
+  // Hook input listeners
+  document.querySelectorAll('.planej-dia').forEach(inp=>{
+    inp.addEventListener('input', async (e)=>{
+      const cod = parseInt(e.target.dataset.cod);
+      const dia = e.target.dataset.dia;
+      const v = parseInt(e.target.value)||0;
+      const setor = planejSetorAtivo;
+      const key = setor+'_atual';
+      
+      // Atualizar plano local
+      if(!planejPlanos[key]) planejPlanos[key]={dias:{}};
+      if(!planejPlanos[key].dias[dia]) planejPlanos[key].dias[dia]=[];
+      const arr = planejPlanos[key].dias[dia];
+      const idx = arr.findIndex(x=>x.cod===cod);
+      if(v>0){
+        if(idx>=0) arr[idx].qtd=v;
+        else arr.push({cod,qtd:v});
+      } else if(idx>=0){
+        arr.splice(idx,1);
+      }
+      
+      // Atualizar UI sem re-renderizar tudo
+      const p = planejProdutos.find(x=>x.cod===cod);
+      if(p){
+        const tot = calcPlanoTotalPlanej(cod, setor);
+        const saldo = calcSaldoPlanej(p);
+        const cob = calcCobPlanej(p);
+        const totEl = document.querySelector('[data-planej-tot="'+cod+'"]');
+        const saldoEl = document.querySelector('[data-planej-saldo="'+cod+'"]');
+        const cobEl = document.querySelector('[data-planej-cob="'+cod+'"]');
+        if(totEl) totEl.innerHTML='<strong>'+tot+'</strong>';
+        if(saldoEl) saldoEl.innerHTML='<strong style="color:'+(saldo<0?'var(--mc-vermelho)':'var(--mc-verde)')+';">'+(saldo>=0?'+':'')+saldo+'</strong>';
+        if(cobEl) cobEl.innerHTML=badgeCobPlanej(cob);
+      }
+      
+      // Persistir no Firebase com debounce
+      clearTimeout(window._planejSaveTimer);
+      window._planejSaveTimer = setTimeout(async ()=>{
+        try{
+          await setDoc(doc(db,'planejPlanos',key),{dias:planejPlanos[key].dias, atualizadoEm:agora()});
+        }catch(e){ console.error('planej save:',e); }
+      }, 600);
+    });
+  });
+}
+
+// ============================================================
+// IMPORTAÇÃO DE VENDAS
+// ============================================================
+function renderImportVendas(){
+  const el = document.getElementById('planej-imp-vendas-content');
+  if(!el) return;
+  
+  let html = '';
+  html += '<div class="card" style="padding:14px;margin-bottom:10px;background:#f0f9ff;border-left:3px solid var(--mc-azul);">';
+  html += '<div style="font-size:13px;font-weight:600;color:var(--mc-azul);margin-bottom:6px;">📋 Como importar</div>';
+  html += '<div style="font-size:12px;color:#1e40af;line-height:1.5;">1. Exporte o relatório do PDV em Excel ou CSV<br>2. Abra no Excel, selecione TODAS as linhas (incluindo o cabeçalho)<br>3. Copie (Ctrl+C) e cole no campo abaixo<br>4. O app lê automaticamente as colunas <strong>B (Produto), C (Descrição), M (Data), O (Quantidade) e AA (Nome destinatário)</strong></div>';
+  html += '</div>';
+  
+  html += '<div class="card" style="padding:14px;margin-bottom:10px;">';
+  html += '<div class="card-label">Cole os dados aqui</div>';
+  html += '<textarea id="planej-vendas-txt" placeholder="Cole o conteúdo do Excel..." style="width:100%;height:240px;font-size:11px;padding:8px;border-radius:8px;border:1px solid var(--border);background:white;font-family:monospace;resize:vertical;margin-top:6px;"></textarea>';
+  html += '<div style="display:flex;gap:8px;margin-top:8px;">';
+  html += '<button onclick="processarImportVendas()" style="flex:1;padding:10px;background:var(--mc-azul);color:white;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;">Processar e Salvar</button>';
+  html += '</div>';
+  html += '<div id="planej-vendas-result" style="margin-top:8px;font-size:12px;"></div>';
+  html += '</div>';
+  
+  // Se já tem dados, mostrar status
+  if(planejProdutos.length>0){
+    html += '<div class="card" style="padding:14px;background:#f0fdf4;border-left:3px solid var(--mc-verde);">';
+    html += '<div style="font-size:12px;font-weight:600;color:#065f46;">✓ '+planejProdutos.length+' produtos no banco</div>';
+    html += '<div style="font-size:11px;color:#047857;margin-top:4px;">Importar novamente vai SUBSTITUIR os dados de vendas atuais (mas mantém o estoque).</div>';
+    html += '</div>';
+  }
+  
+  el.innerHTML = html;
+}
+
+async function processarImportVendas(){
+  const txt = document.getElementById('planej-vendas-txt').value.trim();
+  const resEl = document.getElementById('planej-vendas-result');
+  if(!txt){ resEl.innerHTML='<span style="color:var(--mc-vermelho);">Cole os dados primeiro.</span>'; return; }
+  
+  resEl.innerHTML='<span style="color:var(--text-secondary);">Processando...</span>';
+  
+  const linhas = txt.split('\n').map(l=>l.trimEnd()).filter(l=>l.length>0);
+  if(linhas.length<2){ resEl.innerHTML='<span style="color:var(--mc-vermelho);">Dados insuficientes (cole também o cabeçalho).</span>'; return; }
+  
+  // Detectar separador (tab é mais comum no copy do Excel)
+  const sep = linhas[0].includes('\t')?'\t':(linhas[0].includes(';')?';':',');
+  const header = linhas[0].split(sep);
+  
+  // Identificar colunas pelo nome (mais robusto que posição)
+  function findCol(names){
+    for(const n of names){
+      const idx = header.findIndex(h=>(h||'').toLowerCase().includes(n.toLowerCase()));
+      if(idx>=0) return idx;
+    }
+    return -1;
+  }
+  const colProd = findCol(['produto']);
+  const colDesc = findCol(['descrição','descricao']);
+  const colData = findCol(['data do movimento','data movimento','data']);
+  const colQtd = findCol(['quantidade']);
+  const colCli = findCol(['nome destinatário','nome destinatario','destinatário','destinatario','cliente']);
+  
+  if(colProd<0||colDesc<0||colData<0||colQtd<0){
+    resEl.innerHTML='<span style="color:var(--mc-vermelho);">Colunas não encontradas. Esperado: Produto, Descrição, Data do movimento, Quantidade.</span>';
+    return;
+  }
+  
+  // Processar linhas
+  const vendas = [];
+  let ignoradas = 0;
+  for(let i=1;i<linhas.length;i++){
+    const cols = linhas[i].split(sep);
+    const cod = parseInt(cols[colProd]);
+    const desc = (cols[colDesc]||'').trim();
+    const data = (cols[colData]||'').trim();
+    const qtd = parseFloat((cols[colQtd]||'').replace(',','.'));
+    const cli = colCli>=0?(cols[colCli]||'').trim():'';
+    if(!cod||isNaN(qtd)||qtd<=0||!data){ ignoradas++; continue; }
+    
+    // Parsear data (pode vir como YYYY-MM-DD ou DD/MM/YYYY)
+    let dt;
+    if(data.includes('/')){
+      const [d,m,y] = data.split('/');
+      dt = new Date(y+'-'+m.padStart(2,'0')+'-'+d.padStart(2,'0'));
+    } else if(data.includes('-')){
+      dt = new Date(data.substring(0,10));
+    } else continue;
+    if(isNaN(dt)){ ignoradas++; continue; }
+    
+    vendas.push({cod, desc, dt, qtd:Math.round(qtd), cli});
+  }
+  
+  if(vendas.length===0){
+    resEl.innerHTML='<span style="color:var(--mc-vermelho);">Nenhuma venda válida encontrada. Ignoradas: '+ignoradas+'</span>';
+    return;
+  }
+  
+  // Agregar por produto
+  const DIAS = ['Seg','Ter','Qua','Qui','Sex','Sáb','Dom'];
+  const semanas = [...new Set(vendas.map(v=>{
+    const dia = new Date(v.dt);
+    dia.setDate(dia.getDate() - dia.getDay() + (dia.getDay()===0?-6:1)); // segunda dessa semana
+    return dia.toISOString().substring(0,10);
+  }))].sort();
+  const n_semanas = semanas.length;
+  
+  const agreg = {};
+  for(const v of vendas){
+    if(!agreg[v.cod]) agreg[v.cod]={cod:v.cod,desc:v.desc,total:0,porDia:{Seg:0,Ter:0,Qua:0,Qui:0,Sex:0,Sáb:0,Dom:0},porSemana:{},porCliente:{}};
+    const a = agreg[v.cod];
+    a.total += v.qtd;
+    const dow = (v.dt.getDay()+6)%7; // 0=Seg
+    a.porDia[DIAS[dow]] += v.qtd;
+    const seg = new Date(v.dt);
+    seg.setDate(seg.getDate() - seg.getDay() + (seg.getDay()===0?-6:1));
+    const semKey = seg.toISOString().substring(0,10);
+    a.porSemana[semKey] = (a.porSemana[semKey]||0) + v.qtd;
+    if(v.cli) a.porCliente[v.cli] = (a.porCliente[v.cli]||0) + v.qtd;
+  }
+  
+  // Salvar no Firebase
+  const semanasLabel = semanas.map(s=>{ const d=new Date(s); return String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0'); });
+  let salvos = 0;
+  resEl.innerHTML='<span style="color:var(--text-secondary);">Salvando '+Object.keys(agreg).length+' produtos no Firebase...</span>';
+  
+  for(const cod of Object.keys(agreg)){
+    const a = agreg[cod];
+    const media = Math.round(a.total / n_semanas);
+    // Pico
+    let picoDia = '-', picoPct = 0;
+    for(const d of ['Seg','Ter','Qua','Qui','Sex','Sáb']){
+      if(a.porDia[d]>a.porDia[picoDia]||picoDia==='-'){ picoDia=d; }
+    }
+    if(a.total>0) picoPct = Math.round(a.porDia[picoDia]/a.total*100);
+    // Top clientes
+    const topCli = Object.entries(a.porCliente).sort((x,y)=>y[1]-x[1]).slice(0,5).map(([c,q])=>[c,q]);
+    // Vendas por semana (array na ordem das semanas)
+    const vendasSem = semanas.map(s=>a.porSemana[s]||0);
+    
+    // Pegar estoque existente se houver
+    const existente = planejProdutos.find(p=>p.cod===parseInt(cod));
+    const estoque = existente?existente.estoque:0;
+    const setor = existente?.setor||classificarSetorAuto(a.desc);
+    
+    const dados = {
+      cod: parseInt(cod), desc: a.desc, setor, estoque,
+      mediaSemanal: media, totalPeriodo: a.total,
+      porDia: a.porDia, picoDia, picoPct,
+      topClientes: topCli, vendasSem,
+      semanas: semanasLabel, n_semanas,
+      atualizadoEm: agora()
+    };
+    try{
+      await setDoc(doc(db,'planejProdutos',String(cod)), dados);
+      salvos++;
+    }catch(e){ console.error('Erro salvando',cod,e); }
+  }
+  
+  resEl.innerHTML = '<span style="color:var(--mc-verde);font-weight:600;">✓ '+salvos+' produtos salvos · '+n_semanas+' semanas detectadas · '+ignoradas+' linhas ignoradas</span>';
+  setTimeout(()=>{ goTo('s-planejamento'); }, 1500);
+}
+
+// ============================================================
+// IMPORTAÇÃO DE ESTOQUE
+// ============================================================
+function renderImportEstoque(){
+  const el = document.getElementById('planej-imp-estoque-content');
+  if(!el) return;
+  
+  let html = '';
+  html += '<div class="card" style="padding:14px;margin-bottom:10px;background:#f0f9ff;border-left:3px solid var(--mc-azul);">';
+  html += '<div style="font-size:13px;font-weight:600;color:var(--mc-azul);margin-bottom:6px;">📋 Como importar</div>';
+  html += '<div style="font-size:12px;color:#1e40af;line-height:1.5;">Cole 2 colunas: <strong>código + quantidade</strong>, separadas por TAB ou espaços.<br>Pode colar direto do Excel.</div>';
+  html += '</div>';
+  
+  html += '<div class="card" style="padding:14px;margin-bottom:10px;">';
+  html += '<div class="card-label">Cole código + quantidade (uma linha por produto)</div>';
+  html += '<textarea id="planej-estoque-txt" placeholder="119\t150&#10;160\t-30&#10;101\t200" style="width:100%;height:240px;font-size:12px;padding:8px;border-radius:8px;border:1px solid var(--border);background:white;font-family:monospace;resize:vertical;margin-top:6px;"></textarea>';
+  html += '<div style="display:flex;gap:8px;margin-top:8px;">';
+  html += '<button onclick="processarImportEstoque()" style="flex:1;padding:10px;background:var(--mc-azul);color:white;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;">Processar e Salvar</button>';
+  html += '</div>';
+  html += '<div id="planej-estoque-result" style="margin-top:8px;font-size:12px;"></div>';
+  html += '</div>';
+  
+  el.innerHTML = html;
+}
+
+async function processarImportEstoque(){
+  const txt = document.getElementById('planej-estoque-txt').value.trim();
+  const resEl = document.getElementById('planej-estoque-result');
+  if(!txt){ resEl.innerHTML='<span style="color:var(--mc-vermelho);">Cole os dados primeiro.</span>'; return; }
+  
+  const linhas = txt.split('\n').map(l=>l.trim()).filter(l=>l.length>0);
+  let atualizados = 0, criados = 0, ignorados = 0;
+  
+  resEl.innerHTML='<span style="color:var(--text-secondary);">Processando...</span>';
+  
+  for(const linha of linhas){
+    const partes = linha.split(/\t+|\s{2,}|\s+/);
+    if(partes.length<2){ ignorados++; continue; }
+    const cod = parseInt(partes[0]);
+    const qtd = Math.round(parseFloat((partes[1]||'0').replace(',','.')));
+    if(!cod||isNaN(qtd)){ ignorados++; continue; }
+    
+    try{
+      const existente = planejProdutos.find(p=>p.cod===cod);
+      if(existente){
+        await updateDoc(doc(db,'planejProdutos',String(cod)),{estoque:qtd, atualizadoEm:agora()});
+        atualizados++;
+      } else {
+        // Criar registro só com estoque (sem vendas ainda)
+        await setDoc(doc(db,'planejProdutos',String(cod)),{
+          cod, desc:'COD '+cod, setor:'conf', estoque:qtd,
+          mediaSemanal:0, totalPeriodo:0,
+          porDia:{Seg:0,Ter:0,Qua:0,Qui:0,Sex:0,Sáb:0},
+          picoDia:'-', picoPct:0, topClientes:[], vendasSem:[], semanas:[], n_semanas:0,
+          atualizadoEm:agora()
+        });
+        criados++;
+      }
+    }catch(e){ console.error('Erro estoque',cod,e); ignorados++; }
+  }
+  
+  resEl.innerHTML='<span style="color:var(--mc-verde);font-weight:600;">✓ '+atualizados+' atualizados · '+criados+' criados · '+ignorados+' ignorados</span>';
+  setTimeout(()=>{ goTo('s-planejamento'); }, 1500);
+}
+
+// ============================================================
+// DETALHE DO PRODUTO
+// ============================================================
+function planejAbrirDetalhe(cod){
+  const p = planejProdutos.find(x=>x.cod===cod);
+  if(!p) return;
+  document.getElementById('planej-det-title').textContent = '['+p.cod+'] '+p.desc;
+  document.getElementById('planej-det-sub').textContent = (getSetorPlanej(p)==='quadra'?'🍞 Quadra':'🥐 Confeitaria')+' · '+(p.n_semanas||0)+' semanas';
+  
+  const ideal = calcIdealPlanej(p);
+  const dias = PLANEJ_DIAS;
+  const maxV = Math.max(1, ...dias.map(d=>p.porDia?.[d]||0));
+  let bars = '';
+  dias.forEach(d=>{
+    const v = p.porDia?.[d]||0;
+    const pct = v/maxV*100;
+    const tp = (p.totalPeriodo||0)>0?Math.round(v/p.totalPeriodo*100):0;
+    const pico = d===p.picoDia && v>0;
+    bars += '<div style="display:grid;grid-template-columns:50px 1fr 80px;gap:6px;align-items:center;margin-bottom:5px;"><div style="font-size:11px;font-weight:600;color:var(--text-secondary);">'+d+'</div><div style="background:var(--bg-secondary);border-radius:4px;height:18px;overflow:hidden;"><div style="background:'+(pico?'linear-gradient(90deg,var(--mc-laranja),var(--mc-dourado))':'linear-gradient(90deg,var(--mc-azul),#93c5fd)')+';height:100%;width:'+pct+'%;"></div></div><div style="font-size:11px;font-weight:700;text-align:right;">'+v+' <span style="font-size:10px;color:var(--text-muted);">('+tp+'%)</span></div></div>';
+  });
+  
+  let semBars = '';
+  const vs = p.vendasSem||[];
+  const sl = p.semanas||[];
+  const maxS = Math.max(1, ...vs);
+  vs.forEach((v,i)=>{
+    const pct = v/maxS*100;
+    semBars += '<div style="display:grid;grid-template-columns:50px 1fr 60px;gap:6px;align-items:center;margin-bottom:5px;"><div style="font-size:11px;font-weight:600;color:var(--text-secondary);">'+(sl[i]||'?')+'</div><div style="background:var(--bg-secondary);border-radius:4px;height:18px;overflow:hidden;"><div style="background:linear-gradient(90deg,var(--mc-azul),#93c5fd);height:100%;width:'+pct+'%;"></div></div><div style="font-size:11px;font-weight:700;text-align:right;">'+v+'</div></div>';
+  });
+  
+  const cli = (p.topClientes||[]);
+  let cliHtml = cli.length>0
+    ? cli.map(c=>'<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:12px;border-bottom:1px dashed var(--border);"><div>'+c[0]+'</div><div style="font-weight:700;color:var(--mc-azul);">'+c[1]+' pct</div></div>').join('')
+    : '<div style="font-size:12px;color:var(--text-muted);font-style:italic;">Sem clientes registrados.</div>';
+  
+  let html = '';
+  html += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px;">';
+  html += '<div style="background:white;padding:10px;border-radius:8px;border-left:3px solid var(--mc-azul);"><div style="font-size:10px;color:var(--text-secondary);text-transform:uppercase;font-weight:600;">Estoque</div><div style="font-size:18px;font-weight:700;margin-top:2px;">'+(p.estoque||0)+'</div></div>';
+  html += '<div style="background:white;padding:10px;border-radius:8px;border-left:3px solid var(--mc-azul);"><div style="font-size:10px;color:var(--text-secondary);text-transform:uppercase;font-weight:600;">Média/sem</div><div style="font-size:18px;font-weight:700;margin-top:2px;">'+(p.mediaSemanal||0)+'</div></div>';
+  html += '<div style="background:white;padding:10px;border-radius:8px;border-left:3px solid var(--mc-azul);"><div style="font-size:10px;color:var(--text-secondary);text-transform:uppercase;font-weight:600;">Ideal (×'+planejMult()+')</div><div style="font-size:18px;font-weight:700;margin-top:2px;">'+ideal+'</div></div>';
+  html += '</div>';
+  html += '<div style="background:white;padding:14px;border-radius:8px;margin-bottom:12px;"><div style="font-size:12px;text-transform:uppercase;color:var(--mc-azul);margin-bottom:10px;font-weight:600;">📅 Padrão de venda por dia</div>'+bars+'</div>';
+  html += '<div style="background:white;padding:14px;border-radius:8px;margin-bottom:12px;"><div style="font-size:12px;text-transform:uppercase;color:var(--mc-azul);margin-bottom:10px;font-weight:600;">📈 Tendência semanal</div>'+semBars+'</div>';
+  html += '<div style="background:white;padding:14px;border-radius:8px;"><div style="font-size:12px;text-transform:uppercase;color:var(--mc-azul);margin-bottom:10px;font-weight:600;">👥 Top clientes</div>'+cliHtml+'</div>';
+  
+  document.getElementById('planej-det-content').innerHTML = html;
+  goTo('s-planej-detalhe');
+}
+
+// Export
+window.planejTrocarTab=planejTrocarTab;
+window.planejMoverSetor=planejMoverSetor;
+window.planejAtualizarConfig=planejAtualizarConfig;
+window.renderPlanejamento=renderPlanejamento;
+window.renderImportVendas=renderImportVendas;
+window.processarImportVendas=processarImportVendas;
+window.renderImportEstoque=renderImportEstoque;
+window.processarImportEstoque=processarImportEstoque;
+window.planejAbrirDetalhe=planejAbrirDetalhe;
 
 window.goTo=goTo; window.abrirPin=abrirPin; window.pinDigit=pinDigit; window.pinDel=pinDel;
 window.iniciarNovoReg=iniciarNovoReg; window.renderConfMassas=renderConfMassas; window.toggleManual=toggleManual;
