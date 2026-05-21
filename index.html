@@ -3851,9 +3851,13 @@ async function salvarEditProd(fid){
       lido:false
     };
     dadosUpdate.alertasEmbalagem=[...(reg.alertasEmbalagem||[]), novoAlerta];
+    console.log('[Alerta criado]', novoAlerta, 'no registro', fid);
   }
   try{
     await updateDoc(doc(db,'registros',fid),dadosUpdate);
+    if(houveAlteracaoQtd){
+      console.log('[Alerta salvo no Firebase]');
+    }
     // Fechar form de edição e re-renderizar
     const editEl=document.getElementById('edit-'+fid);
     if(editEl) editEl.style.display='none';
@@ -4102,10 +4106,12 @@ function renderEmbalagem(){
   // Coletar alertas não lidos dos registros do dia
   const alertasDia=[];
   regs.forEach(r=>{
+    if(r.alertasEmbalagem) console.log('[Embalagem] Reg',r.produto,'tem alertas:',r.alertasEmbalagem);
     (r.alertasEmbalagem||[]).forEach(a=>{
       if(!a.lido) alertasDia.push({...a, produto:r.produto, regId:r.firestoreId});
     });
   });
+  console.log('[Embalagem] dataSelEmb=',dataSelEmb,'regs=',regs.length,'alertasDia=',alertasDia.length);
   let alertasHTML='';
   if(alertasDia.length>0){
     alertasHTML='<div class="card" style="margin-bottom:12px;background:linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);border-left:3px solid var(--mc-laranja);">';
