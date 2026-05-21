@@ -4086,7 +4086,36 @@ function renderEmbalagem(){
   const feitos=regs.filter(r=>r.embalagem&&r.embalagem.feito).length+manuais.length; // manuais são sempre feitos
   if(!total){el.innerHTML='<div class="empty">Nenhum produto neste dia.</div>';return;}
   const pct=Math.round(feitos/total*100);const barColor=pct===100?'#4caf50':'var(--mc-dourado)';
-  el.innerHTML=`
+  // Coletar alertas não lidos dos registros do dia
+  const alertasDia=[];
+  regs.forEach(r=>{
+    (r.alertasEmbalagem||[]).forEach(a=>{
+      if(!a.lido) alertasDia.push({...a, produto:r.produto, regId:r.firestoreId});
+    });
+  });
+  let alertasHTML='';
+  if(alertasDia.length>0){
+    alertasHTML='<div class="card" style="margin-bottom:12px;background:linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);border-left:3px solid var(--mc-laranja);">';
+    alertasHTML+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;gap:8px;">';
+    alertasHTML+='<div style="font-size:13px;font-weight:700;color:#92400e;">⚠️ '+alertasDia.length+' alteração(ões) recente(s)</div>';
+    alertasHTML+='<button onclick="marcarAlertasLidos(\''+dataSelEmb+'\')" style="background:white;border:1px solid var(--mc-laranja);color:#92400e;font-size:11px;padding:4px 10px;border-radius:6px;cursor:pointer;font-family:inherit;font-weight:600;">✓ Marquei como visto</button>';
+    alertasHTML+='</div>';
+    alertasDia.forEach(a=>{
+      let txt='';
+      if(a.tipo==='qtd-alterada'){
+        txt='<strong>'+a.produto+'</strong>: quantidade alterada de <strong>'+a.qtdAntiga+' pct</strong> para <strong>'+a.qtdNova+' pct</strong>';
+      } else {
+        txt='<strong>'+a.produto+'</strong>: '+(a.tipo||'alteração');
+      }
+      alertasHTML+='<div style="font-size:12px;color:#78350f;padding:6px 8px;background:rgba(255,255,255,0.5);border-radius:6px;margin-bottom:4px;">';
+      alertasHTML+=txt;
+      alertasHTML+='<div style="font-size:10px;color:#92400e;margin-top:2px;opacity:0.85;">por '+(a.setor||'-')+' · '+(a.quando||'-')+'</div>';
+      alertasHTML+='</div>';
+    });
+    alertasHTML+='</div>';
+  }
+
+  el.innerHTML=alertasHTML+`
     <div class="card" style="margin-bottom:12px;">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
         <div style="font-size:13px;font-weight:600;color:var(--mc-azul);">Progresso do dia</div>
@@ -10774,6 +10803,19 @@ window.importarPlanoQuadraPaste=importarPlanoQuadraPaste;
 window.limparPlanoQuadra=limparPlanoQuadra;
 window.removerItemPlanoQuadra=removerItemPlanoQuadra;
 window.salvarPlanoQuadra=salvarPlanoQuadra;
+
+
+async function marcarAlertasLidos(data){
+  if(!data) return;
+  try{
+    const regsDoDia=registros.filter(r=>r.data===data&&(r.alertasEmbalagem||[]).some(a=>!a.lido));
+    for(const r of regsDoDia){
+      const alertasAtualizados=(r.alertasEmbalagem||[]).map(a=>({...a,lido:true}));
+      await updateDoc(doc(db,'registros',r.firestoreId),{alertasEmbalagem:alertasAtualizados});
+    }
+  } catch(e){ console.error('Erro marcando alertas:',e); }
+}
+window.marcarAlertasLidos=marcarAlertasLidos;
 
 window.goTo=goTo; window.abrirPin=abrirPin; window.pinDigit=pinDigit; window.pinDel=pinDel;
 window.iniciarNovoReg=iniciarNovoReg; window.renderConfMassas=renderConfMassas; window.toggleManual=toggleManual;
