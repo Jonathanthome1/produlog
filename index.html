@@ -3828,19 +3828,32 @@ async function salvarEditProd(fid){
   if(!qtd||!massa){alert('Qtd e massa são obrigatórios.');return;}
   const btn=document.getElementById(`eq-btn-${fid}`);
   if(btn){btn.textContent='Salvando...';btn.disabled=true;}
+  const qtdAntiga=reg.qtdPacotes||reg.qtd||0;
+  const houveAlteracaoQtd=qtdAntiga!==qtd;
   // Recalculate quebra (qtd = pacotes, multiplicar por qtdPct para unidades)
   const p=reg.prodData||{};
   const qtdPct=p.qtdPct||1;
   const unidades=qtd*qtdPct;
   const grMassa=p.grMassa||0, grR1=p.grRecheio||0, grR2=p.grRecheio2||0;
   const mE=grMassa*unidades/1000, r1E=grR1*unidades/1000, r2E=grR2*unidades/1000;
+  const dadosUpdate={
+    qtd, qtdPacotes:qtd, qtdUnidades:unidades, massa, r1, r2, obs,
+    quebra:{massaEsp:mE,massaReal:massa,difMassa:massa-mE,r1Esp:r1E,r1Real:r1,difR1:r1-r1E,r2Esp:r2E,r2Real:r2,difR2:r2-r2E},
+    'embalagem.qtdProduzida': qtd,
+    editadoEm: agora()
+  };
+  if(houveAlteracaoQtd){
+    const setor=window.setorAtual==='confeitaria'?'Confeitaria':(window.setorAtual==='quadra'?'Quadra':(window.adminMode?'Admin':'Sistema'));
+    const novoAlerta={
+      tipo:'qtd-alterada',
+      qtdAntiga, qtdNova:qtd,
+      setor, quando:agora(),
+      lido:false
+    };
+    dadosUpdate.alertasEmbalagem=[...(reg.alertasEmbalagem||[]), novoAlerta];
+  }
   try{
-    await updateDoc(doc(db,'registros',fid),{
-      qtd, qtdPacotes:qtd, qtdUnidades:unidades, massa, r1, r2, obs,
-      quebra:{massaEsp:mE,massaReal:massa,difMassa:massa-mE,r1Esp:r1E,r1Real:r1,difR1:r1-r1E,r2Esp:r2E,r2Real:r2,difR2:r2-r2E},
-      'embalagem.qtdProduzida': qtd,
-      editadoEm: agora()
-    });
+    await updateDoc(doc(db,'registros',fid),dadosUpdate);
     // Fechar form de edição e re-renderizar
     const editEl=document.getElementById('edit-'+fid);
     if(editEl) editEl.style.display='none';
