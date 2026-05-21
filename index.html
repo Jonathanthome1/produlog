@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
+<!-- SheetJS para leitura de Excel -->
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <meta charset="UTF-8" />
   <meta name="color-scheme" content="light" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
@@ -10998,6 +11000,11 @@ function calcCompensacaoPlanej(){
   const de = di.value, ate = df.value;
   if(!de||!ate) return;
   const [yd,md,dd] = de.split('-'); const [ya,ma,da] = ate.split('-');
+  // Validar ano (4 dígitos) para evitar processar valores parciais durante digitação
+  if(!yd||yd.length!==4||!ya||ya.length!==4) return;
+  const yNum1=parseInt(yd), yNum2=parseInt(ya);
+  if(isNaN(yNum1)||yNum1<2024||yNum1>2030) return;
+  if(isNaN(yNum2)||yNum2<2024||yNum2>2030) return;
   const dataDe = new Date(yd+'-'+md+'-'+dd);
   const dataAte = new Date(ya+'-'+ma+'-'+da);
   if(isNaN(dataDe)||isNaN(dataAte)) return;
@@ -11158,13 +11165,13 @@ function renderPlanejamento(){
   html += '<div style="font-size:12px;font-weight:600;color:#92400e;margin-bottom:8px;">📅 Compensação de produção não-lançada no PDV</div>';
   html += '<div style="font-size:11px;color:#78350f;margin-bottom:8px;">Se o estoque do PDV está desatualizado, selecione o intervalo de dias com produção que ainda não foi para o sistema antigo. O app vai somar essa produção ao estoque automaticamente.</div>';
   html += '<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">';
-  html += '<div><span style="font-size:11px;color:#78350f;display:block;margin-bottom:2px;">De:</span><input type="date" id="planej-compens-de" onchange="renderPlanejamento()" style="padding:6px 8px;border:1px solid #fcd34d;border-radius:6px;font-size:13px;font-family:inherit;background:white;"></div>';
-  html += '<div><span style="font-size:11px;color:#78350f;display:block;margin-bottom:2px;">Até:</span><input type="date" id="planej-compens-ate" onchange="renderPlanejamento()" style="padding:6px 8px;border:1px solid #fcd34d;border-radius:6px;font-size:13px;font-family:inherit;background:white;"></div>';
+  html += '<div><span style="font-size:11px;color:#78350f;display:block;margin-bottom:2px;">De:</span><input type="date" id="planej-compens-de" onblur="aplicarCompensacaoPlanej()" style="padding:6px 8px;border:1px solid #fcd34d;border-radius:6px;font-size:13px;font-family:inherit;background:white;"></div>';
+  html += '<div><span style="font-size:11px;color:#78350f;display:block;margin-bottom:2px;">Até:</span><input type="date" id="planej-compens-ate" onblur="aplicarCompensacaoPlanej()" style="padding:6px 8px;border:1px solid #fcd34d;border-radius:6px;font-size:13px;font-family:inherit;background:white;"></div>';
   if(compensacaoAtiva){
     const total = Object.values(planejCompensacao).reduce((s,v)=>s+v, 0);
     html += '<div style="background:var(--mc-laranja);color:white;padding:6px 10px;border-radius:6px;font-size:12px;font-weight:600;">+'+total+' pct compensados em '+Object.keys(planejCompensacao).length+' produtos</div>';
   }
-  html += '<button onclick="document.getElementById(\'planej-compens-de\').value=\'\';document.getElementById(\'planej-compens-ate\').value=\'\';renderPlanejamento();" style="background:white;border:1px solid #fcd34d;color:#92400e;padding:6px 10px;border-radius:6px;font-size:11px;font-family:inherit;cursor:pointer;font-weight:600;">Limpar</button>';
+  html += '<button onclick="limparCompensacaoPlanej()" style="background:white;border:1px solid #fcd34d;color:#92400e;padding:6px 10px;border-radius:6px;font-size:11px;font-family:inherit;cursor:pointer;font-weight:600;">Limpar</button>';
   html += '</div>';
   html += '</div>';
   
@@ -11291,19 +11298,27 @@ function renderImportVendas(){
   let html = '';
   html += '<div class="card" style="padding:14px;margin-bottom:10px;background:#f0f9ff;border-left:3px solid var(--mc-azul);">';
   html += '<div style="font-size:13px;font-weight:600;color:var(--mc-azul);margin-bottom:6px;">📋 Como importar</div>';
-  html += '<div style="font-size:12px;color:#1e40af;line-height:1.5;">1. Exporte o relatório do PDV em Excel ou CSV<br>2. Abra no Excel, selecione TODAS as linhas (incluindo o cabeçalho)<br>3. Copie (Ctrl+C) e cole no campo abaixo<br>4. O app lê automaticamente as colunas <strong>B (Produto), C (Descrição), M (Data), O (Quantidade) e AA (Nome destinatário)</strong></div>';
+  html += '<div style="font-size:12px;color:#1e40af;line-height:1.5;">Selecione o arquivo .xlsx ou .csv exportado do PDV. O app lê automaticamente as colunas <strong>B (Produto), C (Descrição), M (Data), O (Quantidade) e AA (Nome destinatário)</strong> e ignora o resto.</div>';
   html += '</div>';
   
+  // Drop area + file picker
   html += '<div class="card" style="padding:14px;margin-bottom:10px;">';
-  html += '<div class="card-label">Cole os dados aqui</div>';
-  html += '<textarea id="planej-vendas-txt" placeholder="Cole o conteúdo do Excel..." style="width:100%;height:240px;font-size:11px;padding:8px;border-radius:8px;border:1px solid var(--border);background:white;font-family:monospace;resize:vertical;margin-top:6px;"></textarea>';
-  html += '<div style="display:flex;gap:8px;margin-top:8px;">';
-  html += '<button onclick="processarImportVendas()" style="flex:1;padding:10px;background:var(--mc-azul);color:white;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;">Processar e Salvar</button>';
+  html += '<div id="planej-vendas-drop" style="border:2px dashed var(--mc-azul);border-radius:10px;padding:30px;text-align:center;background:#f0f9ff;cursor:pointer;transition:all 0.2s;">';
+  html += '<div style="font-size:48px;margin-bottom:8px;">📁</div>';
+  html += '<div style="font-size:15px;font-weight:600;color:var(--mc-azul);margin-bottom:6px;">Clique ou arraste o arquivo aqui</div>';
+  html += '<div style="font-size:12px;color:#1e40af;">Aceita .xlsx, .xls ou .csv</div>';
+  html += '<input type="file" id="planej-vendas-file" accept=".xlsx,.xls,.csv" style="display:none;" />';
   html += '</div>';
-  html += '<div id="planej-vendas-result" style="margin-top:8px;font-size:12px;"></div>';
+  html += '<div id="planej-vendas-result" style="margin-top:10px;font-size:12px;"></div>';
   html += '</div>';
   
-  // Se já tem dados, mostrar status
+  // Opção avançada: colar texto
+  html += '<details style="margin-bottom:10px;"><summary style="font-size:12px;color:var(--text-secondary);cursor:pointer;padding:8px;">Ou cole o conteúdo manualmente (avançado)</summary>';
+  html += '<div class="card" style="padding:14px;margin-top:6px;">';
+  html += '<textarea id="planej-vendas-txt" placeholder="Cole o conteúdo do Excel..." style="width:100%;height:180px;font-size:11px;padding:8px;border-radius:8px;border:1px solid var(--border);background:white;font-family:monospace;resize:vertical;"></textarea>';
+  html += '<button onclick="processarImportVendasColado()" style="margin-top:8px;width:100%;padding:10px;background:var(--mc-azul);color:white;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">Processar texto colado</button>';
+  html += '</div></details>';
+  
   if(planejProdutos.length>0){
     html += '<div class="card" style="padding:14px;background:#f0fdf4;border-left:3px solid var(--mc-verde);">';
     html += '<div style="font-size:12px;font-weight:600;color:#065f46;">✓ '+planejProdutos.length+' produtos no banco</div>';
@@ -11312,26 +11327,79 @@ function renderImportVendas(){
   }
   
   el.innerHTML = html;
+  
+  // Wire up
+  const dropArea = document.getElementById('planej-vendas-drop');
+  const fileInput = document.getElementById('planej-vendas-file');
+  
+  dropArea.addEventListener('click', ()=>fileInput.click());
+  
+  fileInput.addEventListener('change', e=>{
+    const f = e.target.files[0];
+    if(f) processarArquivoVendas(f);
+  });
+  
+  dropArea.addEventListener('dragover', e=>{
+    e.preventDefault();
+    dropArea.style.background='#dbeafe';
+    dropArea.style.borderColor='var(--mc-laranja)';
+  });
+  dropArea.addEventListener('dragleave', e=>{
+    e.preventDefault();
+    dropArea.style.background='#f0f9ff';
+    dropArea.style.borderColor='var(--mc-azul)';
+  });
+  dropArea.addEventListener('drop', e=>{
+    e.preventDefault();
+    dropArea.style.background='#f0f9ff';
+    dropArea.style.borderColor='var(--mc-azul)';
+    const f = e.dataTransfer.files[0];
+    if(f) processarArquivoVendas(f);
+  });
 }
 
-async function processarImportVendas(){
+async function processarArquivoVendas(file){
+  const resEl = document.getElementById('planej-vendas-result');
+  if(typeof XLSX==='undefined'){
+    resEl.innerHTML='<span style="color:var(--mc-vermelho);">Biblioteca SheetJS não carregou. Tente recarregar a página.</span>';
+    return;
+  }
+  resEl.innerHTML='<span style="color:var(--text-secondary);">📖 Lendo arquivo '+file.name+'...</span>';
+  
+  try{
+    const ab = await file.arrayBuffer();
+    const wb = XLSX.read(ab, {type:'array', cellDates:true});
+    const sheet = wb.Sheets[wb.SheetNames[0]];
+    const rows = XLSX.utils.sheet_to_json(sheet, {header:1, raw:false, dateNF:'yyyy-mm-dd'});
+    
+    if(rows.length<2){ resEl.innerHTML='<span style="color:var(--mc-vermelho);">Arquivo vazio ou sem dados.</span>'; return; }
+    
+    await processarVendasParsed(rows, resEl);
+  } catch(e){
+    console.error(e);
+    resEl.innerHTML='<span style="color:var(--mc-vermelho);">Erro ao ler arquivo: '+e.message+'</span>';
+  }
+}
+
+async function processarImportVendasColado(){
   const txt = document.getElementById('planej-vendas-txt').value.trim();
   const resEl = document.getElementById('planej-vendas-result');
   if(!txt){ resEl.innerHTML='<span style="color:var(--mc-vermelho);">Cole os dados primeiro.</span>'; return; }
-  
-  resEl.innerHTML='<span style="color:var(--text-secondary);">Processando...</span>';
+  resEl.innerHTML='<span style="color:var(--text-secondary);">Processando texto...</span>';
   
   const linhas = txt.split('\n').map(l=>l.trimEnd()).filter(l=>l.length>0);
-  if(linhas.length<2){ resEl.innerHTML='<span style="color:var(--mc-vermelho);">Dados insuficientes (cole também o cabeçalho).</span>'; return; }
+  if(linhas.length<2){ resEl.innerHTML='<span style="color:var(--mc-vermelho);">Dados insuficientes.</span>'; return; }
   
-  // Detectar separador (tab é mais comum no copy do Excel)
   const sep = linhas[0].includes('\t')?'\t':(linhas[0].includes(';')?';':',');
-  const header = linhas[0].split(sep);
-  
-  // Identificar colunas pelo nome (mais robusto que posição)
+  const rows = linhas.map(l=>l.split(sep));
+  await processarVendasParsed(rows, resEl);
+}
+
+async function processarVendasParsed(rows, resEl){
+  const header = rows[0];
   function findCol(names){
     for(const n of names){
-      const idx = header.findIndex(h=>(h||'').toLowerCase().includes(n.toLowerCase()));
+      const idx = header.findIndex(h=>(String(h||'')).toLowerCase().includes(n.toLowerCase()));
       if(idx>=0) return idx;
     }
     return -1;
@@ -11347,41 +11415,45 @@ async function processarImportVendas(){
     return;
   }
   
-  // Processar linhas
   const vendas = [];
   let ignoradas = 0;
-  for(let i=1;i<linhas.length;i++){
-    const cols = linhas[i].split(sep);
+  for(let i=1;i<rows.length;i++){
+    const cols = rows[i];
     const cod = parseInt(cols[colProd]);
-    const desc = (cols[colDesc]||'').trim();
-    const data = (cols[colData]||'').trim();
-    const qtd = parseFloat((cols[colQtd]||'').replace(',','.'));
-    const cli = colCli>=0?(cols[colCli]||'').trim():'';
-    if(!cod||isNaN(qtd)||qtd<=0||!data){ ignoradas++; continue; }
+    const desc = String(cols[colDesc]||'').trim();
+    const dataRaw = cols[colData];
+    const qtd = parseFloat(String(cols[colQtd]||'').replace(',','.'));
+    const cli = colCli>=0?String(cols[colCli]||'').trim():'';
+    if(!cod||isNaN(qtd)||qtd<=0||!dataRaw){ ignoradas++; continue; }
     
-    // Parsear data (pode vir como YYYY-MM-DD ou DD/MM/YYYY)
     let dt;
-    if(data.includes('/')){
-      const [d,m,y] = data.split('/');
-      dt = new Date(y+'-'+m.padStart(2,'0')+'-'+d.padStart(2,'0'));
-    } else if(data.includes('-')){
-      dt = new Date(data.substring(0,10));
-    } else continue;
-    if(isNaN(dt)){ ignoradas++; continue; }
-    
+    if(dataRaw instanceof Date){
+      dt = dataRaw;
+    } else {
+      const s = String(dataRaw).trim();
+      if(s.includes('/')){
+        const p = s.split(' ')[0].split('/');
+        if(p.length===3) dt = new Date(p[2]+'-'+p[1].padStart(2,'0')+'-'+p[0].padStart(2,'0'));
+      } else if(s.includes('-')){
+        dt = new Date(s.substring(0,10));
+      }
+    }
+    if(!dt||isNaN(dt)){ ignoradas++; continue; }
     vendas.push({cod, desc, dt, qtd:Math.round(qtd), cli});
   }
   
   if(vendas.length===0){
-    resEl.innerHTML='<span style="color:var(--mc-vermelho);">Nenhuma venda válida encontrada. Ignoradas: '+ignoradas+'</span>';
+    resEl.innerHTML='<span style="color:var(--mc-vermelho);">Nenhuma venda válida encontrada. Linhas ignoradas: '+ignoradas+'</span>';
     return;
   }
   
-  // Agregar por produto
+  resEl.innerHTML='<span style="color:var(--text-secondary);">📊 '+vendas.length+' vendas lidas. Agregando dados...</span>';
+  
   const DIAS = ['Seg','Ter','Qua','Qui','Sex','Sáb','Dom'];
   const semanas = [...new Set(vendas.map(v=>{
     const dia = new Date(v.dt);
-    dia.setDate(dia.getDate() - dia.getDay() + (dia.getDay()===0?-6:1)); // segunda dessa semana
+    const dow = dia.getDay()===0?-6:1;
+    dia.setDate(dia.getDate() - dia.getDay() + dow);
     return dia.toISOString().substring(0,10);
   }))].sort();
   const n_semanas = semanas.length;
@@ -11391,56 +11463,58 @@ async function processarImportVendas(){
     if(!agreg[v.cod]) agreg[v.cod]={cod:v.cod,desc:v.desc,total:0,porDia:{Seg:0,Ter:0,Qua:0,Qui:0,Sex:0,Sáb:0,Dom:0},porSemana:{},porCliente:{}};
     const a = agreg[v.cod];
     a.total += v.qtd;
-    const dow = (v.dt.getDay()+6)%7; // 0=Seg
+    const dow = (v.dt.getDay()+6)%7;
     a.porDia[DIAS[dow]] += v.qtd;
     const seg = new Date(v.dt);
-    seg.setDate(seg.getDate() - seg.getDay() + (seg.getDay()===0?-6:1));
+    const dofw = seg.getDay()===0?-6:1;
+    seg.setDate(seg.getDate() - seg.getDay() + dofw);
     const semKey = seg.toISOString().substring(0,10);
     a.porSemana[semKey] = (a.porSemana[semKey]||0) + v.qtd;
     if(v.cli) a.porCliente[v.cli] = (a.porCliente[v.cli]||0) + v.qtd;
   }
   
-  // Salvar no Firebase
   const semanasLabel = semanas.map(s=>{ const d=new Date(s); return String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0'); });
   let salvos = 0;
-  resEl.innerHTML='<span style="color:var(--text-secondary);">Salvando '+Object.keys(agreg).length+' produtos no Firebase...</span>';
+  const total = Object.keys(agreg).length;
+  resEl.innerHTML='<span style="color:var(--text-secondary);">💾 Salvando '+total+' produtos no Firebase...</span>';
   
   for(const cod of Object.keys(agreg)){
     const a = agreg[cod];
     const media = Math.round(a.total / n_semanas);
-    // Pico
-    let picoDia = '-', picoPct = 0;
+    let picoDia = '-';
     for(const d of ['Seg','Ter','Qua','Qui','Sex','Sáb']){
-      if(a.porDia[d]>a.porDia[picoDia]||picoDia==='-'){ picoDia=d; }
+      if(picoDia==='-'||a.porDia[d]>a.porDia[picoDia]) picoDia = d;
     }
-    if(a.total>0) picoPct = Math.round(a.porDia[picoDia]/a.total*100);
-    // Top clientes
+    const picoPct = a.total>0?Math.round(a.porDia[picoDia]/a.total*100):0;
     const topCli = Object.entries(a.porCliente).sort((x,y)=>y[1]-x[1]).slice(0,5).map(([c,q])=>[c,q]);
-    // Vendas por semana (array na ordem das semanas)
     const vendasSem = semanas.map(s=>a.porSemana[s]||0);
     
-    // Pegar estoque existente se houver
     const existente = planejProdutos.find(p=>p.cod===parseInt(cod));
     const estoque = existente?existente.estoque:0;
     const setor = existente?.setor||classificarSetorAuto(a.desc);
     
-    const dados = {
-      cod: parseInt(cod), desc: a.desc, setor, estoque,
-      mediaSemanal: media, totalPeriodo: a.total,
-      porDia: a.porDia, picoDia, picoPct,
-      topClientes: topCli, vendasSem,
-      semanas: semanasLabel, n_semanas,
-      atualizadoEm: agora()
-    };
     try{
-      await setDoc(doc(db,'planejProdutos',String(cod)), dados);
+      await setDoc(doc(db,'planejProdutos',String(cod)),{
+        cod:parseInt(cod), desc:a.desc, setor, estoque,
+        mediaSemanal:media, totalPeriodo:a.total,
+        porDia:a.porDia, picoDia, picoPct,
+        topClientes:topCli, vendasSem,
+        semanas:semanasLabel, n_semanas,
+        atualizadoEm:agora()
+      });
       salvos++;
+      if(salvos%20===0) resEl.innerHTML='<span style="color:var(--text-secondary);">💾 Salvando... '+salvos+'/'+total+'</span>';
     }catch(e){ console.error('Erro salvando',cod,e); }
   }
   
-  resEl.innerHTML = '<span style="color:var(--mc-verde);font-weight:600;">✓ '+salvos+' produtos salvos · '+n_semanas+' semanas detectadas · '+ignoradas+' linhas ignoradas</span>';
-  setTimeout(()=>{ goTo('s-planejamento'); }, 1500);
+  resEl.innerHTML='<span style="color:var(--mc-verde);font-weight:600;">✓ '+salvos+' produtos salvos · '+n_semanas+' semana(s) detectada(s) ('+semanasLabel.join(', ')+') · '+ignoradas+' linhas ignoradas</span>';
+  setTimeout(()=>{ goTo('s-planejamento'); }, 2000);
 }
+
+window.processarArquivoVendas=processarArquivoVendas;
+window.processarImportVendasColado=processarImportVendasColado;
+window.processarVendasParsed=processarVendasParsed;
+
 
 // ============================================================
 // IMPORTAÇÃO DE ESTOQUE
@@ -11452,36 +11526,94 @@ function renderImportEstoque(){
   let html = '';
   html += '<div class="card" style="padding:14px;margin-bottom:10px;background:#f0f9ff;border-left:3px solid var(--mc-azul);">';
   html += '<div style="font-size:13px;font-weight:600;color:var(--mc-azul);margin-bottom:6px;">📋 Como importar</div>';
-  html += '<div style="font-size:12px;color:#1e40af;line-height:1.5;">Cole 2 colunas: <strong>código + quantidade</strong>, separadas por TAB ou espaços.<br>Pode colar direto do Excel.</div>';
+  html += '<div style="font-size:12px;color:#1e40af;line-height:1.5;">Selecione o arquivo .xlsx ou .csv com <strong>2 colunas: código + quantidade</strong>. A primeira linha pode ser cabeçalho — o app detecta sozinho.</div>';
   html += '</div>';
   
   html += '<div class="card" style="padding:14px;margin-bottom:10px;">';
-  html += '<div class="card-label">Cole código + quantidade (uma linha por produto)</div>';
-  html += '<textarea id="planej-estoque-txt" placeholder="119\t150&#10;160\t-30&#10;101\t200" style="width:100%;height:240px;font-size:12px;padding:8px;border-radius:8px;border:1px solid var(--border);background:white;font-family:monospace;resize:vertical;margin-top:6px;"></textarea>';
-  html += '<div style="display:flex;gap:8px;margin-top:8px;">';
-  html += '<button onclick="processarImportEstoque()" style="flex:1;padding:10px;background:var(--mc-azul);color:white;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;">Processar e Salvar</button>';
+  html += '<div id="planej-estoque-drop" style="border:2px dashed var(--mc-azul);border-radius:10px;padding:30px;text-align:center;background:#f0f9ff;cursor:pointer;transition:all 0.2s;">';
+  html += '<div style="font-size:48px;margin-bottom:8px;">📦</div>';
+  html += '<div style="font-size:15px;font-weight:600;color:var(--mc-azul);margin-bottom:6px;">Clique ou arraste o arquivo aqui</div>';
+  html += '<div style="font-size:12px;color:#1e40af;">Aceita .xlsx, .xls ou .csv</div>';
+  html += '<input type="file" id="planej-estoque-file" accept=".xlsx,.xls,.csv" style="display:none;" />';
   html += '</div>';
-  html += '<div id="planej-estoque-result" style="margin-top:8px;font-size:12px;"></div>';
+  html += '<div id="planej-estoque-result" style="margin-top:10px;font-size:12px;"></div>';
   html += '</div>';
   
+  html += '<details style="margin-bottom:10px;"><summary style="font-size:12px;color:var(--text-secondary);cursor:pointer;padding:8px;">Ou cole código + quantidade manualmente</summary>';
+  html += '<div class="card" style="padding:14px;margin-top:6px;">';
+  html += '<textarea id="planej-estoque-txt" placeholder="119\t150&#10;160\t-30&#10;101\t200" style="width:100%;height:160px;font-size:12px;padding:8px;border-radius:8px;border:1px solid var(--border);background:white;font-family:monospace;resize:vertical;"></textarea>';
+  html += '<button onclick="processarImportEstoqueColado()" style="margin-top:8px;width:100%;padding:10px;background:var(--mc-azul);color:white;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">Processar texto colado</button>';
+  html += '</div></details>';
+  
   el.innerHTML = html;
+  
+  const dropArea = document.getElementById('planej-estoque-drop');
+  const fileInput = document.getElementById('planej-estoque-file');
+  
+  dropArea.addEventListener('click', ()=>fileInput.click());
+  fileInput.addEventListener('change', e=>{
+    const f = e.target.files[0];
+    if(f) processarArquivoEstoque(f);
+  });
+  dropArea.addEventListener('dragover', e=>{
+    e.preventDefault();
+    dropArea.style.background='#dbeafe';
+    dropArea.style.borderColor='var(--mc-laranja)';
+  });
+  dropArea.addEventListener('dragleave', e=>{
+    e.preventDefault();
+    dropArea.style.background='#f0f9ff';
+    dropArea.style.borderColor='var(--mc-azul)';
+  });
+  dropArea.addEventListener('drop', e=>{
+    e.preventDefault();
+    dropArea.style.background='#f0f9ff';
+    dropArea.style.borderColor='var(--mc-azul)';
+    const f = e.dataTransfer.files[0];
+    if(f) processarArquivoEstoque(f);
+  });
 }
 
-async function processarImportEstoque(){
+async function processarArquivoEstoque(file){
+  const resEl = document.getElementById('planej-estoque-result');
+  if(typeof XLSX==='undefined'){
+    resEl.innerHTML='<span style="color:var(--mc-vermelho);">Biblioteca SheetJS não carregou. Tente recarregar.</span>';
+    return;
+  }
+  resEl.innerHTML='<span style="color:var(--text-secondary);">📖 Lendo '+file.name+'...</span>';
+  try{
+    const ab = await file.arrayBuffer();
+    const wb = XLSX.read(ab, {type:'array'});
+    const sheet = wb.Sheets[wb.SheetNames[0]];
+    const rows = XLSX.utils.sheet_to_json(sheet, {header:1, raw:false});
+    await processarEstoqueParsed(rows, resEl);
+  } catch(e){
+    console.error(e);
+    resEl.innerHTML='<span style="color:var(--mc-vermelho);">Erro: '+e.message+'</span>';
+  }
+}
+
+async function processarImportEstoqueColado(){
   const txt = document.getElementById('planej-estoque-txt').value.trim();
   const resEl = document.getElementById('planej-estoque-result');
   if(!txt){ resEl.innerHTML='<span style="color:var(--mc-vermelho);">Cole os dados primeiro.</span>'; return; }
-  
-  const linhas = txt.split('\n').map(l=>l.trim()).filter(l=>l.length>0);
+  const linhas = txt.split('\n').map(l=>l.trim()).filter(Boolean);
+  const rows = linhas.map(l=>l.split(/\t+|\s{2,}|\s+/));
+  await processarEstoqueParsed(rows, resEl);
+}
+
+async function processarEstoqueParsed(rows, resEl){
   let atualizados = 0, criados = 0, ignorados = 0;
+  resEl.innerHTML='<span style="color:var(--text-secondary);">Processando '+rows.length+' linhas...</span>';
   
-  resEl.innerHTML='<span style="color:var(--text-secondary);">Processando...</span>';
+  // Detectar se a primeira linha é cabeçalho (não numérica)
+  const startIdx = (rows[0] && isNaN(parseInt(rows[0][0]))) ? 1 : 0;
   
-  for(const linha of linhas){
-    const partes = linha.split(/\t+|\s{2,}|\s+/);
-    if(partes.length<2){ ignorados++; continue; }
-    const cod = parseInt(partes[0]);
-    const qtd = Math.round(parseFloat((partes[1]||'0').replace(',','.')));
+  for(let i=startIdx;i<rows.length;i++){
+    const r = rows[i];
+    if(!r || r.length<2){ ignorados++; continue; }
+    const cod = parseInt(r[0]);
+    const qtd = Math.round(parseFloat(String(r[1]||'0').replace(',','.')));
     if(!cod||isNaN(qtd)){ ignorados++; continue; }
     
     try{
@@ -11490,7 +11622,6 @@ async function processarImportEstoque(){
         await updateDoc(doc(db,'planejProdutos',String(cod)),{estoque:qtd, atualizadoEm:agora()});
         atualizados++;
       } else {
-        // Criar registro só com estoque (sem vendas ainda)
         await setDoc(doc(db,'planejProdutos',String(cod)),{
           cod, desc:'COD '+cod, setor:'conf', estoque:qtd,
           mediaSemanal:0, totalPeriodo:0,
@@ -11506,6 +11637,10 @@ async function processarImportEstoque(){
   resEl.innerHTML='<span style="color:var(--mc-verde);font-weight:600;">✓ '+atualizados+' atualizados · '+criados+' criados · '+ignorados+' ignorados</span>';
   setTimeout(()=>{ goTo('s-planejamento'); }, 1500);
 }
+
+window.processarArquivoEstoque=processarArquivoEstoque;
+window.processarImportEstoqueColado=processarImportEstoqueColado;
+window.processarEstoqueParsed=processarEstoqueParsed;
 
 // ============================================================
 // DETALHE DO PRODUTO
@@ -11566,6 +11701,66 @@ window.processarImportVendas=processarImportVendas;
 window.renderImportEstoque=renderImportEstoque;
 window.processarImportEstoque=processarImportEstoque;
 window.planejAbrirDetalhe=planejAbrirDetalhe;
+
+
+
+// Aplica a compensação de produção atualizando só as células relevantes (sem destruir os inputs de data)
+function aplicarCompensacaoPlanej(){
+  // Recalcular compensação
+  calcCompensacaoPlanej();
+  
+  // Atualizar cada linha da tabela: coluna +Comp, =Real, Saldo, % cob
+  const tbody = document.querySelector('#s-planejamento tbody');
+  if(!tbody) return;
+  
+  planejProdutos.forEach(p=>{
+    const comp = planejCompensacao[p.cod]||0;
+    const estReal = getEstoqueRealPlanej(p);
+    const saldo = calcSaldoPlanej(p);
+    const cob = calcCobPlanej(p);
+    
+    const totEl = document.querySelector('[data-planej-tot="'+p.cod+'"]');
+    const saldoEl = document.querySelector('[data-planej-saldo="'+p.cod+'"]');
+    const cobEl = document.querySelector('[data-planej-cob="'+p.cod+'"]');
+    if(saldoEl) saldoEl.innerHTML='<strong style="color:'+(saldo<0?'var(--mc-vermelho)':'var(--mc-verde)')+';">'+(saldo>=0?'+':'')+saldo+'</strong>';
+    if(cobEl) cobEl.innerHTML=badgeCobPlanej(cob);
+    
+    // Atualizar células de Estoque + Comp + Real
+    // Procurar pelas células na linha do produto
+    const row = tbody.querySelector('tr[data-prod-cod="'+p.cod+'"]');
+    // Caso não tenha data-attr, vamos só re-renderizar a tabela inteira por enquanto
+  });
+  
+  // Atualizar o resumo "X pct compensados" no banner
+  const banner = document.querySelector('#planej-content > div[style*="fff7ed"]');
+  if(banner){
+    let resumo = banner.querySelector('.compens-resumo');
+    if(!resumo){
+      // Encontrar o local certo via remover/recriar
+    }
+  }
+  
+  // Como precisa também atualizar Estoque/+Comp/Real cells, vou re-renderizar mas preservando o foco dos inputs de data
+  // Solução mais simples e segura: re-renderiza e foca de volta no input ativo
+  const activeId = document.activeElement?.id;
+  renderPlanejamento();
+  if(activeId){
+    const restored = document.getElementById(activeId);
+    if(restored) restored.focus();
+  }
+}
+
+function limparCompensacaoPlanej(){
+  const di = document.getElementById('planej-compens-de');
+  const df = document.getElementById('planej-compens-ate');
+  if(di) di.value='';
+  if(df) df.value='';
+  planejCompensacao = {};
+  renderPlanejamento();
+}
+
+window.aplicarCompensacaoPlanej=aplicarCompensacaoPlanej;
+window.limparCompensacaoPlanej=limparCompensacaoPlanej;
 
 window.goTo=goTo; window.abrirPin=abrirPin; window.pinDigit=pinDigit; window.pinDel=pinDel;
 window.iniciarNovoReg=iniciarNovoReg; window.renderConfMassas=renderConfMassas; window.toggleManual=toggleManual;
