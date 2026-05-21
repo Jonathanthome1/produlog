@@ -3827,20 +3827,31 @@ async function salvarEditProd(fid){
   const obs=document.getElementById(`eq-obs-${fid}`).value;
   if(!qtd||!massa){alert('Qtd e massa são obrigatórios.');return;}
   const btn=document.getElementById(`eq-btn-${fid}`);
-  btn.textContent='Salvando...';btn.disabled=true;
+  if(btn){btn.textContent='Salvando...';btn.disabled=true;}
   // Recalculate quebra (qtd = pacotes, multiplicar por qtdPct para unidades)
-  const p=reg.prodData;
+  const p=reg.prodData||{};
   const qtdPct=p.qtdPct||1;
   const unidades=qtd*qtdPct;
-  const mE=p.grMassa*unidades/1000, r1E=p.grRecheio*unidades/1000, r2E=p.grRecheio2*unidades/1000;
+  const grMassa=p.grMassa||0, grR1=p.grRecheio||0, grR2=p.grRecheio2||0;
+  const mE=grMassa*unidades/1000, r1E=grR1*unidades/1000, r2E=grR2*unidades/1000;
   try{
     await updateDoc(doc(db,'registros',fid),{
       qtd, qtdPacotes:qtd, qtdUnidades:unidades, massa, r1, r2, obs,
       quebra:{massaEsp:mE,massaReal:massa,difMassa:massa-mE,r1Esp:r1E,r1Real:r1,difR1:r1-r1E,r2Esp:r2E,r2Real:r2,difR2:r2-r2E},
-      'embalagem.qtdProduzida': unidades,
+      'embalagem.qtdProduzida': qtd,
       editadoEm: agora()
     });
-  } catch(e){alert('Erro ao salvar.');btn.textContent='Salvar';btn.disabled=false;}
+    // Fechar form de edição e re-renderizar
+    const editEl=document.getElementById('edit-'+fid);
+    if(editEl) editEl.style.display='none';
+    // Forçar re-render imediato (não esperar pelo snapshot)
+    if(typeof renderMeusReg==='function') renderMeusReg();
+    if(btn){btn.textContent='Salvar';btn.disabled=false;}
+  } catch(e){
+    console.error('Erro salvar edit:',e);
+    alert('Erro ao salvar: '+e.message);
+    if(btn){btn.textContent='Salvar';btn.disabled=false;}
+  }
 }
 
 // ===== MASSAS =====
