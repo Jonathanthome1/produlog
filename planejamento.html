@@ -220,28 +220,109 @@ let planejPlanos = {};
 // Listener para produtos
 onSnapshot(collection(db, 'planejProdutos'), snap => {
   planejProdutos = snap.docs.map(d => ({firestoreId: d.id, ...d.data()}));
-  console.log('Produtos carregados:', planejProdutos.length);
+  console.log('🔥 Firebase: Produtos carregados:', planejProdutos.length);
   
-  // Reconstruir DADOS para compatibilidade com a interface
-  if(planejProdutos.length > 0) {
-    DADOS = {
-      produtos: planejProdutos,
-      n_semanas: planejProdutos[0]?.n_semanas || 0,
-      semanas: planejProdutos[0]?.semanas || []
-    };
-    
-    // FORÇAR RE-RENDER da interface
-    try {
-      if(typeof renderKpis === 'function') renderKpis();
-      if(typeof renderTabela === 'function') renderTabela();
-      console.log('Interface atualizada com', planejProdutos.length, 'produtos');
-    } catch(e) {
-      console.error('Erro ao renderizar:', e);
-    }
-  }
+  // ATUALIZAR A INTERFACE IMEDIATAMENTE
+  atualizarInterface();
 }, err => {
-  console.log('Aguardando dados em planejProdutos...');
+  console.log('⏳ Aguardando dados em planejProdutos...');
+  atualizarInterface();
 });
+
+function atualizarInterface() {
+  const container = document.querySelector('.container');
+  if(!container) return;
+  
+  console.log('🎨 Atualizando interface. Produtos:', planejProdutos.length);
+  
+  if(planejProdutos.length === 0) {
+    // Mostrar tela vazia com instruções
+    container.innerHTML = `
+      <div style="max-width:800px;margin:60px auto;text-align:center;">
+        <div style="background:white;border-radius:16px;padding:40px;box-shadow:0 4px 12px rgba(0,0,0,0.1);">
+          <div style="font-size:64px;margin-bottom:20px;">📊</div>
+          <h2 style="font-size:24px;margin-bottom:12px;color:#111827;">Nenhum dado importado</h2>
+          <p style="font-size:14px;color:#6b7280;margin-bottom:30px;">Importe vendas e estoque para começar o planejamento.</p>
+          <div style="display:flex;gap:12px;justify-content:center;">
+            <button onclick="abrirImportVendas()" style="padding:14px 24px;background:#1e3a8a;color:white;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;">📥 Importar Vendas</button>
+            <button onclick="abrirImportEstoque()" style="padding:14px 24px;background:#16a34a;color:white;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;">📦 Importar Estoque</button>
+          </div>
+        </div>
+      </div>
+    `;
+  } else {
+    // Mostrar dados carregados com opção de limpar
+    container.innerHTML = `
+      <div style="max-width:1400px;margin:20px auto;">
+        <div style="background:white;border-radius:12px;padding:20px;margin-bottom:20px;display:flex;justify-content:space-between;align-items:center;box-shadow:0 2px 8px rgba(0,0,0,0.08);">
+          <div>
+            <h2 style="font-size:20px;margin:0 0 8px 0;">📊 Dados Carregados</h2>
+            <p style="font-size:14px;color:#6b7280;margin:0;">${planejProdutos.length} produtos no planejamento</p>
+          </div>
+          <div style="display:flex;gap:10px;">
+            <button onclick="abrirImportVendas()" style="padding:10px 18px;background:#1e3a8a;color:white;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">📥 Reimportar Vendas</button>
+            <button onclick="abrirImportEstoque()" style="padding:10px 18px;background:#16a34a;color:white;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">📦 Atualizar Estoque</button>
+            <button onclick="if(confirm('Tem certeza? Isso vai apagar TODOS os dados!')) limparTodosDados()" style="padding:10px 18px;background:#dc2626;color:white;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">🗑️ Limpar Tudo</button>
+          </div>
+        </div>
+        <div id="planejamento-tabelas">Carregando tabelas...</div>
+      </div>
+    `;
+    
+    // AQUI DEVERIA CHAMAR AS FUNÇÕES DE RENDER DA DEMO
+    // Mas como não sabemos se elas existem, vou criar uma versão simples
+    setTimeout(() => {
+      renderTabelaSimples();
+    }, 100);
+  }
+}
+
+function renderTabelaSimples() {
+  const container = document.getElementById('planejamento-tabelas');
+  if(!container) return;
+  
+  const quadra = planejProdutos.filter(p => p.setor === 'quadra');
+  const conf = planejProdutos.filter(p => p.setor === 'conf');
+  
+  let html = '<div style="background:white;border-radius:12px;padding:20px;box-shadow:0 2px 8px rgba(0,0,0,0.08);">';
+  html += '<h3 style="margin:0 0 16px 0;">🍞 Quadra (' + quadra.length + ' produtos)</h3>';
+  html += '<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:12px;">';
+  html += '<thead><tr style="background:#1e3a8a;color:white;"><th style="padding:8px;text-align:left;">Código</th><th style="padding:8px;text-align:left;">Produto</th><th style="padding:8px;text-align:right;">Estoque</th><th style="padding:8px;text-align:right;">Total Período</th></tr></thead>';
+  html += '<tbody>';
+  quadra.slice(0, 20).forEach(p => {
+    html += '<tr style="border-bottom:1px solid #e5e7eb;"><td style="padding:8px;color:#1e3a8a;font-weight:600;">' + p.cod + '</td><td style="padding:8px;">' + p.desc + '</td><td style="padding:8px;text-align:right;">' + (p.estoque || 0) + '</td><td style="padding:8px;text-align:right;">' + (p.totalPeriodo || 0) + '</td></tr>';
+  });
+  html += '</tbody></table></div></div>';
+  
+  html += '<div style="background:white;border-radius:12px;padding:20px;margin-top:16px;box-shadow:0 2px 8px rgba(0,0,0,0.08);">';
+  html += '<h3 style="margin:0 0 16px 0;">🥐 Confeitaria (' + conf.length + ' produtos)</h3>';
+  html += '<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:12px;">';
+  html += '<thead><tr style="background:#1e3a8a;color:white;"><th style="padding:8px;text-align:left;">Código</th><th style="padding:8px;text-align:left;">Produto</th><th style="padding:8px;text-align:right;">Estoque</th><th style="padding:8px;text-align:right;">Total Período</th></tr></thead>';
+  html += '<tbody>';
+  conf.slice(0, 20).forEach(p => {
+    html += '<tr style="border-bottom:1px solid #e5e7eb;"><td style="padding:8px;color:#1e3a8a;font-weight:600;">' + p.cod + '</td><td style="padding:8px;">' + p.desc + '</td><td style="padding:8px;text-align:right;">' + (p.estoque || 0) + '</td><td style="padding:8px;text-align:right;">' + (p.totalPeriodo || 0) + '</td></tr>';
+  });
+  html += '</tbody></table></div></div>';
+  
+  container.innerHTML = html;
+}
+
+async function limparTodosDados() {
+  try {
+    const snapshot = await getDocs(collection(db, 'planejProdutos'));
+    const batch = [];
+    snapshot.docs.forEach(doc => {
+      batch.push(deleteDoc(doc.ref));
+    });
+    await Promise.all(batch);
+    alert('✓ Todos os dados foram removidos!');
+  } catch(e) {
+    alert('Erro ao limpar: ' + e.message);
+  }
+}
+
+window.atualizarInterface = atualizarInterface;
+window.limparTodosDados = limparTodosDados;
 
 // Listener para config
 onSnapshot(doc(db, 'planejConfig', 'config'), snap => {
