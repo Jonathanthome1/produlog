@@ -409,9 +409,21 @@ window.processarVendas = async () => {
   const linhas = texto.trim().split('\n');
   const porCodigo = {};
   
-  linhas.forEach(linha => {
+  console.log('📊 Total de linhas:', linhas.length);
+  
+  linhas.forEach((linha, idx) => {
     const cols = linha.split('\t');
-    if(cols.length < 27) return;
+    
+    // Debug das primeiras 3 linhas
+    if(idx < 3){
+      console.log('Linha', idx, '- Colunas:', cols.length);
+      console.log('  Col[1]:', cols[1], '| Col[2]:', cols[2], '| Col[12]:', cols[12], '| Col[14]:', cols[14]);
+    }
+    
+    if(cols.length < 15) {
+      if(idx < 3) console.log('  ❌ Menos de 15 colunas, pulando...');
+      return;
+    }
     
     const cod = String(cols[1]).trim();
     const desc = String(cols[2]).trim();
@@ -420,6 +432,8 @@ window.processarVendas = async () => {
     // CORRIGIDO: normalizar nome do dia
     let diaRaw = String(cols[12]).trim();
     let dia = '';
+    
+    if(idx < 3) console.log('  Dia raw:', diaRaw, '| Código:', cod, '| Desc:', desc, '| Qtd:', qtd);
     
     // Detectar dia da semana (aceita vários formatos)
     if(/^seg/i.test(diaRaw)) dia = 'Seg';
@@ -430,7 +444,16 @@ window.processarVendas = async () => {
     else if(/^s[áa]b/i.test(diaRaw)) dia = 'Sáb';
     else if(/^dom/i.test(diaRaw)) dia = 'Dom';
     
-    if(!cod || isNaN(parseInt(cod)) || !dia) return;
+    if(idx < 3) console.log('  Dia detectado:', dia);
+    
+    if(!cod || isNaN(parseInt(cod))) {
+      if(idx < 3) console.log('  ❌ Código inválido');
+      return;
+    }
+    if(!dia) {
+      if(idx < 3) console.log('  ❌ Dia não detectado');
+      return;
+    }
     
     if(!porCodigo[cod]){
       porCodigo[cod] = {
@@ -443,6 +466,9 @@ window.processarVendas = async () => {
     porCodigo[cod].totalPeriodo += qtd;
     if(porCodigo[cod].porDia[dia] !== undefined) porCodigo[cod].porDia[dia] += qtd;
   });
+  
+  console.log('✅ Produtos processados:', Object.keys(porCodigo).length);
+  console.log('Exemplo:', Object.values(porCodigo)[0]);
   
   const batch = [];
   Object.values(porCodigo).forEach(p => {
