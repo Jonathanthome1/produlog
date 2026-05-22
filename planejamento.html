@@ -368,13 +368,20 @@ window.abrirDetalhe = (cod) => {
   const porDia = p.porDia || {};
   const topClientes = p.topClientes || [];
   
+  // Calcular número de semanas (assumir 4 por padrão)
+  const numSemanas = 4;
+  
   // Calcular max para os gráficos
   const dias = ['Seg','Ter','Qua','Qui','Sex'];
   const valores = dias.map(d => porDia[d] || 0);
   const maxVenda = Math.max(...valores, 1);
   
-  // Montar barras de dias
-  const barsDias = dias.map(d => {
+  // NOVO: Calcular médias por dia
+  const medias = dias.map(d => Math.round((porDia[d] || 0) / numSemanas));
+  const maxMedia = Math.max(...medias, 1);
+  
+  // Montar barras de TOTAL por dia
+  const barsTotalDias = dias.map(d => {
     const qtd = porDia[d] || 0;
     const pct = (qtd / maxVenda) * 100;
     const pctTotal = (p.totalPeriodo||0) > 0 ? Math.round((qtd / (p.totalPeriodo||1)) * 100) : 0;
@@ -386,9 +393,21 @@ window.abrirDetalhe = (cod) => {
     '</div>';
   }).join('');
   
+  // NOVO: Montar barras de MÉDIA por dia
+  const barsMediaDias = dias.map((d, idx) => {
+    const media = medias[idx];
+    const pct = (media / maxMedia) * 100;
+    const isPico = media === maxMedia && media > 0;
+    return '<div class="bar-row">'+
+      '<div class="bar-label">'+d+'</div>'+
+      '<div class="bar-track"><div class="bar-fill '+(isPico?'peak':'')+'" style="width:'+pct+'%"></div></div>'+
+      '<div class="bar-value">'+media+'</div>'+
+    '</div>';
+  }).join('');
+  
   // Montar lista de clientes
   const clientesHtml = topClientes.length > 0
-    ? topClientes.map(c => '<div class="cliente-row"><div>'+c.nome+'</div><div style="font-weight:700;color:var(--mc-azul)">'+c.qtd+'</div></div>').join('')
+    ? topClientes.map(c => '<div class="cliente-row"><div>'+c.nome+'</div><div style="font-weight:700;color:var(--mc-azul)">'+Math.round(c.qtd)+'</div></div>').join('')
     : '<div style="color:var(--text-sec);font-style:italic;padding:8px">Sem dados de clientes</div>';
   
   document.getElementById('modal-detalhe-title').textContent = '['+p.cod+'] '+p.desc;
@@ -398,7 +417,8 @@ window.abrirDetalhe = (cod) => {
       '<div class="stat-card"><div class="stat-label">Média semanal</div><div class="stat-value">'+Math.round((p.totalPeriodo||0)/4)+'</div></div>'+
       '<div class="stat-card"><div class="stat-label">Ideal (×'+mult()+')</div><div class="stat-value">'+ideal+'</div></div>'+
     '</div>'+
-    '<div class="modal-section"><h3>📅 Padrão de venda por dia da semana</h3>'+barsDias+'</div>'+
+    '<div class="modal-section"><h3>📊 Total acumulado por dia da semana ('+numSemanas+' semanas)</h3>'+barsTotalDias+'</div>'+
+    '<div class="modal-section"><h3>📈 Média por dia da semana</h3>'+barsMediaDias+'</div>'+
     '<div class="modal-section"><h3>👥 Top clientes do produto</h3><div class="cliente-list">'+clientesHtml+'</div></div>';
   
   document.getElementById('modal-detalhe').classList.add('show');
@@ -437,6 +457,7 @@ window.processarVendas = async () => {
     const qtd = parseFloat(String(cols[14]).replace(',','.')) || 0;
     const dataStr = String(cols[12]).trim(); // Ex: "20/04/2026"
     const dia = getWeekDay(dataStr); // Converte para "Seg", "Ter", etc
+    const cliente = String(cols[26] || '').trim(); // NOVO: Coluna AA (índice 26)
     
     // CORRIGIDO: padronizar código (3 → 03, 12 → 12)
     if(cod && !isNaN(parseInt(cod))){
@@ -445,7 +466,7 @@ window.processarVendas = async () => {
     
     // Debug das primeiras 3 linhas VÁLIDAS
     if(idx < 5 && cod && dia){
-      console.log('✅ Linha', idx, '- Código:', cod, '| Desc:', desc.substring(0,20), '| Data:', dataStr, '→ Dia:', dia, '| Qtd:', qtd);
+      console.log('✅ Linha', idx, '- Código:', cod, '| Cliente:', cliente.substring(0,15), '| Dia:', dia, '| Qtd:', qtd);
     }
     
     if(!cod || isNaN(parseInt(cod)) || !dia || qtd <= 0) return;
@@ -455,11 +476,26 @@ window.processarVendas = async () => {
         cod, desc,
         setor: parseInt(cod) < 200 ? 'quadra' : 'conf',
         totalPeriodo: 0,
-        porDia: {Seg:0, Ter:0, Qua:0, Qui:0, Sex:0, Sáb:0}
+        porDia: {Seg:0, Ter:0, Qua:0, Qui:0, Sex:0, Sáb:0},
+        clientesMap: {} // NOVO: para agregar por cliente
       };
     }
     porCodigo[cod].totalPeriodo += qtd;
     if(porCodigo[cod].porDia[dia] !== undefined) porCodigo[cod].porDia[dia] += qtd;
+    
+    // NOVO: agregar por cliente
+    if(cliente){
+      if(!porCodigo[cod].clientesMap[cliente]) porCodigo[cod].clientesMap[cliente] = 0;
+      porCodigo[cod].clientesMap[cliente] += qtd;
+    }
+  });
+  
+  // NOVO: converter clientesMap em topClientes (top 5)
+  Object.values(porCodigo).forEach(p => {
+    const clientesArray = Object.entries(p.clientesMap).map(([nome, qtd]) => ({nome, qtd}));
+    clientesArray.sort((a, b) => b.qtd - a.qtd);
+    p.topClientes = clientesArray.slice(0, 5);
+    delete p.clientesMap; // remover mapa temporário
   });
   
   console.log('✅ Produtos processados:', Object.keys(porCodigo).length);
