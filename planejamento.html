@@ -245,7 +245,11 @@ function atualizarInterface() {
   console.log('🎨 === atualizarInterface EXECUTANDO ===');
   console.log('  planejProdutos.length:', planejProdutos.length);
   const container = document.querySelector('.container');
-  if(!container) return;
+  console.log('  container encontrado?', !!container);
+  if(!container) {
+    console.error('❌ Container .container não encontrado no DOM!');
+    return;
+  }
   
   console.log('🎨 Atualizando interface. Produtos:', planejProdutos.length);
   
@@ -283,15 +287,22 @@ function atualizarInterface() {
       </div>
     `;
     
-    // AQUI DEVERIA CHAMAR AS FUNÇÕES DE RENDER DA DEMO
-    // Mas como não sabemos se elas existem, vou criar uma versão simples
+    // Renderizar tabela
+    console.log('🔄 Agendando renderTabelaSimples()...');
     setTimeout(() => {
-      renderTabelaSimples();
+      console.log('📊 Executando renderTabelaSimples()...');
+      try {
+        renderTabelaSimples();
+        console.log('✅ Tabela renderizada!');
+      } catch(e) {
+        console.error('❌ Erro em renderTabelaSimples():', e);
+      }
     }, 100);
   }
 }
 
 function renderTabelaSimples() {
+  console.log('📊 === renderTabelaSimples EXECUTANDO ===');
   const container = document.getElementById('planejamento-tabelas');
   if(!container) return;
   
