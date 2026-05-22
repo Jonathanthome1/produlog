@@ -3375,6 +3375,69 @@
 
 </div>
 
+
+  <!-- PLANEJAMENTO DE PRODUÇÃO -->
+  <div class="screen" id="s-planejamento">
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="goTo(\'s-adm-hub\')">‹</button>
+      <div class="mc-brand">
+        <div class="mc-brand-logo">MC</div>
+        <div class="mc-brand-text">
+          <div class="mc-brand-name">Monte Castelo</div>
+          <div class="mc-brand-sub">Planejamento de Produção</div>
+        </div>
+      </div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info">
+        <div class="mc-page-title">📊 Planejamento</div>
+        <div class="mc-page-sub" id="planej-sub">Carregando...</div>
+      </div>
+    </div>
+    <div style="flex:1;padding:14px 16px;background:var(--bg-page);overflow-y:auto;" id="planej-content">
+      <div style="padding:40px;text-align:center;color:var(--text-secondary);">Carregando planejamento...</div>
+    </div>
+  </div>
+
+  <!-- PLANEJAMENTO - IMPORTAR VENDAS -->
+  <div class="screen" id="s-planej-import-vendas">
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="goTo(\'s-planejamento\')">‹</button>
+      <div class="mc-brand">
+        <div class="mc-brand-logo">MC</div>
+        <div class="mc-brand-text">
+          <div class="mc-brand-name">Monte Castelo</div>
+          <div class="mc-brand-sub">Importar Vendas</div>
+        </div>
+      </div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info">
+        <div class="mc-page-title">📥 Importar Vendas</div>
+        <div class="mc-page-sub">Cole dados do Excel</div>
+      </div>
+    </div>
+    <div style="flex:1;padding:14px 16px;background:var(--bg-page);overflow-y:auto;" id="planej-imp-vendas-content"></div>
+  </div>
+
+  <!-- PLANEJAMENTO - IMPORTAR ESTOQUE -->
+  <div class="screen" id="s-planej-import-estoque">
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="goTo(\'s-planejamento\')">‹</button>
+      <div class="mc-brand">
+        <div class="mc-brand-logo">MC</div>
+        <div class="mc-brand-text">
+          <div class="mc-brand-name">Monte Castelo</div>
+          <div class="mc-brand-sub">Importar Estoque</div>
+        </div>
+      </div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info">
+        <div class="mc-page-title">📦 Importar Estoque</div>
+        <div class="mc-page-sub">Cole código + quantidade</div>
+      </div>
+    </div>
+    <div style="flex:1;padding:14px 16px;background:var(--bg-page);overflow-y:auto;" id="planej-imp-estoque-content"></div>
+  </div>
+
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getFirestore, collection, addDoc, deleteDoc, setDoc, onSnapshot, doc, updateDoc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
