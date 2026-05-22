@@ -11,6 +11,7 @@
   --mc-laranja:#f59e0b; --mc-laranja-claro:#fef3c7;
   --mc-vermelho:#dc2626; --mc-vermelho-claro:#fee2e2;
   --mc-dourado:#fbbf24;
+  --mc-roxo:#7c3aed;
   --bg-page:#f9fafb; --bg-card:#ffffff; --border:#e5e7eb;
   --text:#111827; --text-sec:#6b7280; --text-mut:#9ca3af;
 }
@@ -129,6 +130,9 @@ textarea{width:100%;height:300px;padding:12px;border:1px solid var(--border);bor
   <input type="text" id="busca" class="search-box" placeholder="🔍 Buscar...">
   <button class="btn btn-primary" onclick="abrirModalVendas()">📥 Importar Vendas</button>
   <button class="btn btn-success" onclick="abrirModalEstoque()">📦 Importar Estoque</button>
+  <button class="btn btn-primary" onclick="gerarRelatorio()" style="background:var(--mc-roxo)">📄 Gerar Plano de Produção</button>
+  <button class="btn btn-success" onclick="salvarPlano()">💾 Salvar Plano</button>
+  <button class="btn btn-primary" onclick="abrirHistorico()">📚 Histórico</button>
   <button class="btn btn-danger" onclick="limparTudo()">🗑️ Limpar Tudo</button>
 </div>
 
@@ -148,6 +152,7 @@ textarea{width:100%;height:300px;padding:12px;border:1px solid var(--border);bor
           <th class="num">Qua</th>
           <th class="num">Qui</th>
           <th class="num">Sex</th>
+          <th class="num">Sáb</th>
           <th class="num">Total</th>
           <th class="num">Saldo</th>
           <th class="num">% cob</th>
@@ -199,6 +204,16 @@ textarea{width:100%;height:300px;padding:12px;border:1px solid var(--border);bor
   </div>
 </div>
 
+<div id="modal-historico" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <div class="modal-title">📚 Histórico de Planos</div>
+      <button class="modal-close" onclick="fecharModal()">✕</button>
+    </div>
+    <div class="modal-body" id="historico-body" style="max-height:60vh;overflow-y:auto"></div>
+  </div>
+</div>
+
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
 import { getFirestore, collection, doc, setDoc, onSnapshot, getDocs, deleteDoc } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
@@ -217,7 +232,7 @@ let produtos = [];
 let setorAtivo = 'quadra';
 const plano = {};
 
-const DIAS = ['Seg','Ter','Qua','Qui','Sex'];
+const DIAS = ['Seg','Ter','Qua','Qui','Sex','Sáb'];
 function mult(){ return parseFloat(document.getElementById('mult').value)||2; }
 function calcIdeal(p){ return Math.round((p.totalPeriodo||0)/4 * mult()); }
 function calcPlanoTotal(cod){ const pl=plano[cod]||{}; return DIAS.reduce((s,d)=>s+(parseInt(pl[d])||0),0); }
@@ -358,6 +373,161 @@ window.fecharModal = () => {
   document.getElementById('modal-vendas').classList.remove('show');
   document.getElementById('modal-estoque').classList.remove('show');
   document.getElementById('modal-detalhe').classList.remove('show');
+  document.getElementById('modal-historico').classList.remove('show');
+};
+
+window.gerarRelatorio = () => {
+  // Filtrar produtos com planejamento
+  const produtosComPlano = produtos.filter(p => {
+    const pl = plano[p.cod];
+    if(!pl) return false;
+    return DIAS.some(d => (pl[d] || 0) > 0);
+  });
+  
+  if(produtosComPlano.length === 0){
+    alert('Nenhum produto planejado! Preencha os dias da semana primeiro.');
+    return;
+  }
+  
+  const hoje = new Date();
+  const dataStr = hoje.toLocaleDateString('pt-BR');
+  
+  // Separar por setor
+  const quadra = produtosComPlano.filter(p => p.setor === 'quadra');
+  const conf = produtosComPlano.filter(p => p.setor === 'conf');
+  
+  // Gerar HTML do relatório
+  let html = `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Plano de Produção - ${dataStr}</title>
+<style>
+body{font-family:Arial,sans-serif;margin:20px;font-size:12px}
+h1{text-align:center;color:#1e3a8a;margin-bottom:5px}
+h2{background:#1e3a8a;color:white;padding:8px;margin-top:20px;font-size:14px}
+h3{background:#f59e0b;color:white;padding:6px;margin-top:15px;font-size:13px}
+table{width:100%;border-collapse:collapse;margin-bottom:15px}
+th{background:#e5e7eb;padding:6px;text-align:left;font-size:11px;border:1px solid #ccc}
+td{padding:5px;border:1px solid #ddd;font-size:11px}
+td.num{text-align:center}
+.total{font-weight:700;background:#fef3c7}
+@media print{
+  body{margin:10px}
+  h2{page-break-before:always}
+  h2:first-of-type{page-break-before:avoid}
+}
+</style>
+</head>
+<body>
+<h1>📊 PLANO DE PRODUÇÃO - MONTE CASTELO</h1>
+<p style="text-align:center;color:#666">Gerado em: ${dataStr}</p>`;
+  
+  // Função para gerar tabela de um setor
+  const gerarSetor = (titulo, lista) => {
+    if(lista.length === 0) return '';
+    
+    let out = `<h2>${titulo}</h2>`;
+    
+    DIAS.forEach(dia => {
+      const produtosDia = lista.filter(p => (plano[p.cod] || {})[dia] > 0);
+      if(produtosDia.length === 0) return;
+      
+      out += `<h3>${dia}</h3><table><tr><th>Código</th><th>Produto</th><th class="num">Quantidade</th></tr>`;
+      
+      let totalDia = 0;
+      produtosDia.forEach(p => {
+        const qtd = plano[p.cod][dia];
+        totalDia += qtd;
+        out += `<tr><td>${p.cod}</td><td>${p.desc}</td><td class="num">${qtd}</td></tr>`;
+      });
+      
+      out += `<tr class="total"><td colspan="2">TOTAL ${dia}</td><td class="num">${totalDia}</td></tr></table>`;
+    });
+    
+    return out;
+  };
+  
+  html += gerarSetor('🍞 QUADRA', quadra);
+  html += gerarSetor('🥐 CONFEITARIA', conf);
+  
+  html += '</body></html>';
+  
+  // Abrir em nova janela
+  const win = window.open('', '_blank');
+  win.document.write(html);
+  win.document.close();
+  win.print();
+};
+
+window.salvarPlano = async () => {
+  // Verificar se tem algum planejamento
+  const temPlano = Object.keys(plano).some(cod => {
+    const pl = plano[cod];
+    return DIAS.some(d => (pl[d] || 0) > 0);
+  });
+  
+  if(!temPlano){
+    alert('Nenhum plano para salvar! Preencha os dias da semana primeiro.');
+    return;
+  }
+  
+  const agora = new Date();
+  const id = agora.toISOString().replace(/[:.]/g,'-').slice(0,19);
+  const dataHora = agora.toLocaleString('pt-BR');
+  
+  const planoData = {
+    id,
+    dataHora,
+    timestamp: agora.getTime(),
+    planos: {...plano}
+  };
+  
+  await setDoc(doc(db, 'planosHistorico', id), planoData);
+  alert('✓ Plano salvo com sucesso!\\n' + dataHora);
+};
+
+window.abrirHistorico = async () => {
+  const snapshot = await getDocs(collection(db, 'planosHistorico'));
+  const historico = snapshot.docs.map(d => ({id: d.id, ...d.data()}));
+  historico.sort((a,b) => b.timestamp - a.timestamp);
+  
+  if(historico.length === 0){
+    document.getElementById('historico-body').innerHTML = '<p style="color:#666;text-align:center;padding:20px">Nenhum plano salvo ainda</p>';
+  } else {
+    document.getElementById('historico-body').innerHTML = historico.map(h => 
+      '<div style="border:1px solid #ddd;padding:12px;margin-bottom:8px;border-radius:8px;display:flex;justify-content:space-between;align-items:center">'+
+        '<div><strong>'+h.dataHora+'</strong><br><span style="font-size:11px;color:#666">'+Object.keys(h.planos).length+' produtos planejados</span></div>'+
+        '<div><button class="btn btn-primary" style="padding:6px 12px;font-size:11px" onclick="carregarPlano(\''+h.id+'\')">Carregar</button>'+
+        '<button class="btn btn-danger" style="padding:6px 12px;font-size:11px;margin-left:5px" onclick="excluirPlano(\''+h.id+'\')">Excluir</button></div>'+
+      '</div>'
+    ).join('');
+  }
+  
+  document.getElementById('modal-historico').classList.add('show');
+};
+
+window.carregarPlano = async (id) => {
+  const docSnap = await getDocs(collection(db, 'planosHistorico'));
+  const planoSalvo = docSnap.docs.find(d => d.id === id);
+  
+  if(!planoSalvo){
+    alert('Plano não encontrado!');
+    return;
+  }
+  
+  const data = planoSalvo.data();
+  Object.assign(plano, data.planos);
+  
+  fecharModal();
+  render();
+  alert('✓ Plano carregado!\\n' + data.dataHora);
+};
+
+window.excluirPlano = async (id) => {
+  if(!confirm('Excluir este plano?')) return;
+  await deleteDoc(doc(db, 'planosHistorico', id));
+  abrirHistorico();
 };
 
 window.abrirDetalhe = (cod) => {
