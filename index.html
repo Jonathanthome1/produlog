@@ -3466,8 +3466,6 @@
 
 </div>
 
-<!-- SheetJS (carrega async, não bloqueia) -->
-<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js" async></script>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getFirestore, collection, addDoc, deleteDoc, setDoc, onSnapshot, doc, updateDoc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
@@ -11360,7 +11358,7 @@ function renderImportVendas(){
 
 async function processarArquivoVendas(file){
   const resEl = document.getElementById('planej-vendas-result');
-  if(typeof XLSX==='undefined'){
+  if(true){ // SheetJS temporariamente desabilitado
     resEl.innerHTML='<span style="color:var(--mc-vermelho);">Biblioteca SheetJS não carregou. Tente recarregar a página.</span>';
     return;
   }
@@ -11576,7 +11574,7 @@ function renderImportEstoque(){
 
 async function processarArquivoEstoque(file){
   const resEl = document.getElementById('planej-estoque-result');
-  if(typeof XLSX==='undefined'){
+  if(true){ // SheetJS temporariamente desabilitado
     resEl.innerHTML='<span style="color:var(--mc-vermelho);">Biblioteca SheetJS não carregou. Tente recarregar.</span>';
     return;
   }
