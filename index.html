@@ -7529,6 +7529,49 @@ function aplicarFarinhasConfigFirebase(){
 
 
 
+
+// ===== PLANEJAMENTO DE PRODUÇÃO (Firebase) =====
+let planejProdutos = [];
+let planejConfig = {multiplicador: 2};
+let planejPlanos = {};
+
+// Inicializar listeners apenas quando Firebase estiver pronto e telas carregadas
+function inicializarPlanejamentoListeners() {
+  if(typeof db === 'undefined' || !db) {
+    console.log('DB não pronto, tentando novamente em 2s...');
+    setTimeout(inicializarPlanejamentoListeners, 2000);
+    return;
+  }
+  
+  try {
+    console.log('Inicializando listeners de planejamento...');
+    
+    onSnapshot(collection(db, 'planejProdutos'), snap => {
+      planejProdutos = snap.docs.map(d => ({firestoreId: d.id, ...d.data()}));
+      const ativa = document.querySelector('.screen.active');
+      if(ativa?.id === 's-planejamento' && typeof renderPlanejamento === 'function') {
+        renderPlanejamento();
+      }
+    }, err => console.log('planejProdutos listener (coleção pode não existir ainda):', err.message));
+    
+    onSnapshot(doc(db, 'planejConfig', 'config'), snap => {
+      if(snap.exists()) planejConfig = {...planejConfig, ...snap.data()};
+    }, err => console.log('planejConfig listener:', err.message));
+    
+    onSnapshot(collection(db, 'planejPlanos'), snap => {
+      planejPlanos = {};
+      snap.docs.forEach(d => { planejPlanos[d.id] = d.data(); });
+    }, err => console.log('planejPlanos listener:', err.message));
+    
+    console.log('Listeners de planejamento inicializados');
+  } catch(e) {
+    console.error('Erro ao inicializar listeners de planejamento:', e);
+  }
+}
+
+// Chamar após 3 segundos (tempo para Firebase e app inicializarem)
+setTimeout(inicializarPlanejamentoListeners, 3000);
+
 // ===== INCONFORMIDADES (Firebase) =====
 let inconformidades=[]; // Firestore 'inconformidades'
 
