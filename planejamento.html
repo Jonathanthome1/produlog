@@ -473,18 +473,26 @@ window.salvarPlano = async () => {
   }
   
   const agora = new Date();
-  const id = agora.toISOString().replace(/[:.]/g,'-').slice(0,19);
   const dataHora = agora.toLocaleString('pt-BR');
+  
+  // NOVO: Pedir nome do plano
+  const nomeDefault = 'Plano ' + dataHora;
+  const nome = prompt('Nome do plano:', nomeDefault);
+  
+  if(!nome) return; // Cancelou
+  
+  const id = agora.toISOString().replace(/[:.]/g,'-').slice(0,19);
   
   const planoData = {
     id,
+    nome: nome.trim(),
     dataHora,
     timestamp: agora.getTime(),
     planos: {...plano}
   };
   
   await setDoc(doc(db, 'planosHistorico', id), planoData);
-  alert('✓ Plano salvo com sucesso!\\n' + dataHora);
+  alert('✓ Plano salvo com sucesso!\n' + nome);
 };
 
 window.abrirHistorico = async () => {
@@ -496,10 +504,18 @@ window.abrirHistorico = async () => {
     document.getElementById('historico-body').innerHTML = '<p style="color:#666;text-align:center;padding:20px">Nenhum plano salvo ainda</p>';
   } else {
     document.getElementById('historico-body').innerHTML = historico.map(h => 
-      '<div style="border:1px solid #ddd;padding:12px;margin-bottom:8px;border-radius:8px;display:flex;justify-content:space-between;align-items:center">'+
-        '<div><strong>'+h.dataHora+'</strong><br><span style="font-size:11px;color:#666">'+Object.keys(h.planos).length+' produtos planejados</span></div>'+
-        '<div><button class="btn btn-primary" style="padding:6px 12px;font-size:11px" onclick="carregarPlano(\''+h.id+'\')">Carregar</button>'+
-        '<button class="btn btn-danger" style="padding:6px 12px;font-size:11px;margin-left:5px" onclick="excluirPlano(\''+h.id+'\')">Excluir</button></div>'+
+      '<div style="border:1px solid #ddd;padding:12px;margin-bottom:8px;border-radius:8px">'+
+        '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">'+
+          '<div style="flex:1">'+
+            '<div style="font-size:15px;font-weight:700;color:#1e3a8a;margin-bottom:4px">'+h.nome+'</div>'+
+            '<div style="font-size:11px;color:#666">'+h.dataHora+' • '+Object.keys(h.planos).length+' produtos</div>'+
+          '</div>'+
+          '<button class="btn btn-primary" style="padding:4px 8px;font-size:10px;background:#f59e0b" onclick="editarNomePlano(\''+h.id+'\',\''+h.nome.replace(/'/g,"\\'")+'\')" title="Editar nome">✏️</button>'+
+        '</div>'+
+        '<div style="display:flex;gap:5px">'+
+          '<button class="btn btn-primary" style="padding:6px 12px;font-size:11px;flex:1" onclick="carregarPlano(\''+h.id+'\')">Carregar</button>'+
+          '<button class="btn btn-danger" style="padding:6px 12px;font-size:11px" onclick="excluirPlano(\''+h.id+'\')">Excluir</button>'+
+        '</div>'+
       '</div>'
     ).join('');
   }
@@ -544,6 +560,15 @@ window.excluirPlano = async (id) => {
   if(!confirm('Excluir este plano?')) return;
   await deleteDoc(doc(db, 'planosHistorico', id));
   abrirHistorico();
+};
+
+window.editarNomePlano = async (id, nomeAtual) => {
+  const novoNome = prompt('Novo nome do plano:', nomeAtual);
+  
+  if(!novoNome || novoNome.trim() === nomeAtual) return;
+  
+  await setDoc(doc(db, 'planosHistorico', id), {nome: novoNome.trim()}, {merge: true});
+  abrirHistorico(); // Recarregar lista
 };
 
 window.abrirDetalhe = (cod) => {
