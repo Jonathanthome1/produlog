@@ -531,8 +531,26 @@ async function processarImportVendas() {
     }
     
     await Promise.all(batch);
-    alert(`✓ ${Object.keys(porCodigo).length} produtos importados!`);
+    
+    // Feedback visual melhorado
+    const preview = document.getElementById('vendas-preview');
+    if(preview) {
+      preview.innerHTML = `
+        <div style="background:var(--mc-verde);color:white;padding:14px;border-radius:8px;text-align:center;">
+          <div style="font-size:20px;margin-bottom:6px;">✓</div>
+          <div style="font-size:14px;font-weight:600;margin-bottom:4px;">Importação concluída!</div>
+          <div style="font-size:12px;opacity:0.9;">${Object.keys(porCodigo).length} produtos salvos no Firebase</div>
+        </div>
+      `;
+    }
+    
     textarea.value = '';
+    
+    // Fechar modal após 2 segundos
+    setTimeout(() => {
+      fecharImportModal();
+      // Interface será atualizada automaticamente pelos listeners Firebase
+    }, 2000);
     
   } catch(e) {
     alert('Erro ao processar: ' + e.message);
@@ -588,8 +606,26 @@ async function processarImportEstoque() {
     }
     
     await Promise.all(batch);
-    alert(`✓ ${count} estoques atualizados!`);
+    
+    // Feedback visual melhorado
+    const preview = document.getElementById('estoque-preview');
+    if(preview) {
+      preview.innerHTML = `
+        <div style="background:var(--mc-verde);color:white;padding:14px;border-radius:8px;text-align:center;">
+          <div style="font-size:20px;margin-bottom:6px;">✓</div>
+          <div style="font-size:14px;font-weight:600;margin-bottom:4px;">Estoque atualizado!</div>
+          <div style="font-size:12px;opacity:0.9;">${count} produtos atualizados no Firebase</div>
+        </div>
+      `;
+    }
+    
     textarea.value = '';
+    
+    // Fechar modal após 2 segundos
+    setTimeout(() => {
+      fecharImportModal();
+      // Interface será atualizada automaticamente pelos listeners Firebase
+    }, 2000);
     
   } catch(e) {
     alert('Erro ao processar: ' + e.message);
@@ -606,12 +642,16 @@ function abrirImportVendas() {
   document.getElementById('import-modal-content').innerHTML = `
     <div style="margin-bottom:14px;">
       <div style="font-size:13px;color:var(--text-secondary);margin-bottom:8px;">Cole os dados do Excel (incluindo cabeçalho):</div>
-      <textarea id="import-vendas-area" style="width:100%;height:300px;padding:10px;border:1px solid var(--border);border-radius:8px;font-family:monospace;font-size:11px;resize:vertical;" placeholder="Cole aqui as linhas do Excel..."></textarea>
+      <textarea id="import-vendas-area" oninput="previewVendas()" style="width:100%;height:240px;padding:10px;border:1px solid var(--border);border-radius:8px;font-family:monospace;font-size:11px;resize:vertical;" placeholder="Cole aqui as linhas do Excel..."></textarea>
     </div>
+    <div id="vendas-preview" style="margin-bottom:14px;padding:10px;border-radius:6px;display:none;"></div>
     <div style="font-size:12px;color:var(--text-secondary);margin-bottom:14px;padding:10px;background:var(--mc-azul-claro);border-radius:6px;">
       <strong>Formato esperado:</strong> Excel com 27 colunas. Coluna B=Produto, C=Descrição, M=Data do movimento, O=Quantidade, AA=Nome destinatário
     </div>
-    <button onclick="processarImportVendas()" style="width:100%;padding:12px;background:var(--mc-azul);color:white;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;">Processar Vendas</button>
+    <div style="display:flex;gap:8px;">
+      <button onclick="limparVendas()" style="flex:1;padding:12px;background:white;border:1px solid var(--border);color:var(--text);border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;">🗑️ Limpar</button>
+      <button onclick="processarImportVendas()" style="flex:2;padding:12px;background:var(--mc-azul);color:white;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;">✓ Processar Vendas</button>
+    </div>
   `;
   document.getElementById('import-modal').style.display = 'block';
 }
@@ -621,12 +661,16 @@ function abrirImportEstoque() {
   document.getElementById('import-modal-content').innerHTML = `
     <div style="margin-bottom:14px;">
       <div style="font-size:13px;color:var(--text-secondary);margin-bottom:8px;">Cole código + quantidade (separados por TAB):</div>
-      <textarea id="import-estoque-area" style="width:100%;height:300px;padding:10px;border:1px solid var(--border);border-radius:8px;font-family:monospace;font-size:12px;resize:vertical;" placeholder="119\t150\n160\t-30\n..."></textarea>
+      <textarea id="import-estoque-area" oninput="previewEstoque()" style="width:100%;height:240px;padding:10px;border:1px solid var(--border);border-radius:8px;font-family:monospace;font-size:12px;resize:vertical;" placeholder="119\t150\n160\t-30\n..."></textarea>
     </div>
+    <div id="estoque-preview" style="margin-bottom:14px;padding:10px;border-radius:6px;display:none;"></div>
     <div style="font-size:12px;color:var(--text-secondary);margin-bottom:14px;padding:10px;background:var(--mc-verde-claro);border-radius:6px;">
       <strong>Formato:</strong> Uma linha por produto. Código [TAB] Quantidade
     </div>
-    <button onclick="processarImportEstoque()" style="width:100%;padding:12px;background:var(--mc-verde);color:white;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;">Processar Estoque</button>
+    <div style="display:flex;gap:8px;">
+      <button onclick="limparEstoque()" style="flex:1;padding:12px;background:white;border:1px solid var(--border);color:var(--text);border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;">🗑️ Limpar</button>
+      <button onclick="processarImportEstoque()" style="flex:2;padding:12px;background:var(--mc-verde);color:white;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;">✓ Processar Estoque</button>
+    </div>
   `;
   document.getElementById('import-modal').style.display = 'block';
 }
@@ -634,6 +678,107 @@ function abrirImportEstoque() {
 function fecharImportModal() {
   document.getElementById('import-modal').style.display = 'none';
 }
+
+
+// ===== FUNÇÕES DE PREVIEW E FEEDBACK =====
+
+function previewVendas() {
+  const textarea = document.querySelector('#import-vendas-area');
+  const preview = document.getElementById('vendas-preview');
+  if(!textarea || !preview) return;
+  
+  const txt = textarea.value.trim();
+  if(!txt) {
+    preview.style.display = 'none';
+    return;
+  }
+  
+  const linhas = txt.split('\n').filter(l => l.trim());
+  if(linhas.length < 2) {
+    preview.innerHTML = '<div style="background:var(--mc-laranja-claro);color:#92400e;padding:8px;border-radius:6px;font-size:12px;">⚠️ Aguardando mais dados...</div>';
+    preview.style.display = 'block';
+    return;
+  }
+  
+  // Contar produtos únicos
+  const codigos = new Set();
+  let vendasValidas = 0;
+  
+  for(let i = 1; i < linhas.length; i++) {
+    const cols = linhas[i].split('\t');
+    if(cols.length >= 27) {
+      const cod = cols[1]?.trim();
+      const qtd = parseFloat(cols[14]) || 0;
+      if(cod && qtd > 0) {
+        codigos.add(cod);
+        vendasValidas++;
+      }
+    }
+  }
+  
+  preview.innerHTML = `
+    <div style="background:var(--mc-verde-claro);color:#065f46;padding:10px;border-radius:6px;">
+      <div style="font-size:13px;font-weight:600;margin-bottom:4px;">✓ Dados detectados:</div>
+      <div style="font-size:12px;">📋 ${linhas.length - 1} linhas de vendas</div>
+      <div style="font-size:12px;">📦 ${codigos.size} produtos únicos</div>
+      <div style="font-size:12px;">✓ ${vendasValidas} vendas válidas</div>
+    </div>
+  `;
+  preview.style.display = 'block';
+}
+
+function previewEstoque() {
+  const textarea = document.querySelector('#import-estoque-area');
+  const preview = document.getElementById('estoque-preview');
+  if(!textarea || !preview) return;
+  
+  const txt = textarea.value.trim();
+  if(!txt) {
+    preview.style.display = 'none';
+    return;
+  }
+  
+  const linhas = txt.split('\n').filter(l => l.trim());
+  let skipFirst = linhas[0] && (linhas[0].toLowerCase().includes('produto') || linhas[0].toLowerCase().includes('estoque'));
+  let validos = 0;
+  
+  for(let i = skipFirst ? 1 : 0; i < linhas.length; i++) {
+    const partes = linhas[i].split('\t');
+    if(partes.length >= 2) {
+      const cod = partes[0].trim();
+      if(cod && !isNaN(parseInt(cod))) validos++;
+    }
+  }
+  
+  preview.innerHTML = `
+    <div style="background:var(--mc-verde-claro);color:#065f46;padding:10px;border-radius:6px;">
+      <div style="font-size:13px;font-weight:600;margin-bottom:4px;">✓ Dados detectados:</div>
+      <div style="font-size:12px;">📦 ${validos} produtos com estoque</div>
+      ${skipFirst ? '<div style="font-size:11px;opacity:0.8;">ℹ️ Cabeçalho detectado e será ignorado</div>' : ''}
+    </div>
+  `;
+  preview.style.display = 'block';
+}
+
+function limparVendas() {
+  const textarea = document.querySelector('#import-vendas-area');
+  const preview = document.getElementById('vendas-preview');
+  if(textarea) textarea.value = '';
+  if(preview) preview.style.display = 'none';
+}
+
+function limparEstoque() {
+  const textarea = document.querySelector('#import-estoque-area');
+  const preview = document.getElementById('estoque-preview');
+  if(textarea) textarea.value = '';
+  if(preview) preview.style.display = 'none';
+}
+
+window.previewVendas = previewVendas;
+window.previewEstoque = previewEstoque;
+window.limparVendas = limparVendas;
+window.limparEstoque = limparEstoque;
+
 
 window.abrirImportVendas = abrirImportVendas;
 window.abrirImportEstoque = abrirImportEstoque;
