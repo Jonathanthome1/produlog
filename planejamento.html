@@ -210,6 +210,8 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
+console.log('✅ Firebase inicializado');
+console.log('📍 Projeto:', firebaseConfig.projectId);
 
 
 // ===== FIREBASE LISTENERS =====
@@ -219,6 +221,7 @@ let planejPlanos = {};
 
 // Listener para produtos
 onSnapshot(collection(db, 'planejProdutos'), snap => {
+  console.log('🔔 Listener disparou! Docs recebidos:', snap.docs.length);
   planejProdutos = snap.docs.map(d => ({firestoreId: d.id, ...d.data()}));
   console.log('🔥 Firebase: Produtos carregados:', planejProdutos.length);
   
@@ -618,26 +621,28 @@ async function processarImportVendas() {
       batch.push(setDoc(doc(db, 'planejProdutos', p.cod), docData, {merge: true}));
     }
     
+    console.log('💾 Salvando', batch.length, 'produtos no Firebase...');
     await Promise.all(batch);
+    console.log('✅ Produtos salvos com sucesso!');
     
-    // Feedback visual melhorado
+    // Feedback visual
     const preview = document.getElementById('vendas-preview');
     if(preview) {
       preview.innerHTML = `
         <div style="background:var(--mc-verde);color:white;padding:14px;border-radius:8px;text-align:center;">
           <div style="font-size:20px;margin-bottom:6px;">✓</div>
-          <div style="font-size:14px;font-weight:600;margin-bottom:4px;">Importação concluída!</div>
-          <div style="font-size:12px;opacity:0.9;">${Object.keys(porCodigo).length} produtos salvos no Firebase</div>
+          <div style="font-size:14px;font-weight:600;margin-bottom:4px;">Dados salvos no Firebase!</div>
+          <div style="font-size:12px;opacity:0.9;">${Object.keys(porCodigo).length} produtos • Aguarde atualização...</div>
         </div>
       `;
     }
     
     textarea.value = '';
     
-    // Fechar modal após 2 segundos
+    // Fechar e forçar atualização
     setTimeout(() => {
+      console.log('🔄 Fechando modal e aguardando listener...');
       fecharImportModal();
-      // Interface será atualizada automaticamente pelos listeners Firebase
     }, 2000);
     
   } catch(e) {
@@ -897,7 +902,30 @@ window.addEventListener('DOMContentLoaded', () => {
   }, 1000);
 });
 
+
+// TESTE DE CONEXÃO
+window.addEventListener('load', () => {
+  console.log('🌐 Página carregada');
+  console.log('📊 Status inicial:');
+  console.log('  - Firebase:', typeof db !== 'undefined' ? 'Conectado' : 'Erro');
+  console.log('  - planejProdutos:', planejProdutos ? planejProdutos.length + ' produtos' : 'undefined');
+  
+  // Testar leitura do Firebase
+  setTimeout(async () => {
+    try {
+      const snapshot = await getDocs(collection(db, 'planejProdutos'));
+      console.log('🔍 Teste de leitura Firebase:', snapshot.docs.length, 'documentos encontrados');
+      if(snapshot.docs.length > 0) {
+        console.log('📦 Exemplo de documento:', snapshot.docs[0].data());
+      }
+    } catch(e) {
+      console.error('❌ Erro ao ler Firebase:', e);
+    }
+  }, 1000);
+});
+
 console.log('Planejamento inicializado - aguardando Firebase');
+
 
 </script>
 
