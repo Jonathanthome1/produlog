@@ -2,112 +2,32 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Monte Castelo - Planejamento de Produção</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Planejamento de Produção - Monte Castelo</title>
 <style>
-:root{
-  --mc-azul:#1e3a8a; --mc-azul-claro:#dbeafe;
-  --mc-verde:#16a34a; --mc-verde-claro:#dcfce7;
-  --mc-laranja:#f59e0b; --mc-laranja-claro:#fef3c7;
-  --mc-vermelho:#dc2626; --mc-vermelho-claro:#fee2e2;
-  --mc-dourado:#fbbf24;
-  --mc-roxo:#7c3aed;
-  --bg-page:#f9fafb; --bg-card:#ffffff; --border:#e5e7eb;
-  --text:#111827; --text-sec:#6b7280; --text-mut:#9ca3af;
-}
-*{box-sizing:border-box;margin:0;padding:0}
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg-page);color:var(--text);font-size:14px;line-height:1.4}
-.header{background:white;border-bottom:1px solid var(--border);padding:12px 16px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:10}
-.logo{width:36px;height:36px;background:var(--mc-azul);color:white;border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:700}
-.brand{flex:1}
-.brand-name{font-weight:700;font-size:15px}
-.brand-sub{font-size:11px;color:var(--text-sec)}
-.title-bar{padding:16px;background:white;border-bottom:1px solid var(--border)}
-.page-title{font-size:20px;font-weight:700;color:var(--mc-azul)}
-.page-sub{font-size:13px;color:var(--text-sec);margin-top:2px}
-
-.tabs{display:flex;background:white;border-bottom:1px solid var(--border);padding:0 16px;gap:4px}
-.tab{padding:12px 22px;border:none;background:transparent;font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;color:var(--text-sec);border-bottom:3px solid transparent;transition:all 0.15s}
-.tab:hover{color:var(--text)}
-.tab.active{color:var(--mc-azul);border-bottom-color:var(--mc-azul)}
-.tab .badge-tab{display:inline-block;margin-left:6px;background:var(--bg-page);color:var(--text-sec);font-size:11px;padding:2px 7px;border-radius:10px;font-weight:700}
-.tab.active .badge-tab{background:var(--mc-azul);color:white}
-
-.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:14px 16px}
-.kpi{background:white;border:1px solid var(--border);border-radius:10px;padding:12px;border-left:3px solid}
-.kpi.azul{border-left-color:var(--mc-azul)}
-.kpi.verde{border-left-color:var(--mc-verde)}
-.kpi.laranja{border-left-color:var(--mc-laranja)}
-.kpi.vermelho{border-left-color:var(--mc-vermelho)}
-.kpi-label{font-size:11px;color:var(--text-sec);text-transform:uppercase;letter-spacing:0.5px;font-weight:600}
-.kpi-value{font-size:22px;font-weight:700;margin-top:2px}
-.kpi-detail{font-size:11px;color:var(--text-mut);margin-top:2px}
-
-.controls{background:white;border:1px solid var(--border);border-radius:10px;margin:0 16px 14px;padding:12px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
-.control-grp{display:flex;align-items:center;gap:8px}
-.control-label{font-size:12px;color:var(--text-sec);font-weight:600}
-.control-input{padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;font-family:inherit;background:white}
-.control-input.small{width:80px}
-.search-box{flex:1;min-width:200px;padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit}
-
-.table-wrap{background:white;margin:0 16px;border:1px solid var(--border);border-radius:10px;overflow:hidden}
-.table-scroll{overflow-x:auto;max-height:62vh;overflow-y:auto}
-table{width:100%;border-collapse:collapse;font-size:12px}
-thead{background:var(--mc-azul);color:white;position:sticky;top:0;z-index:5}
-th{padding:9px 8px;text-align:left;font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:0.3px;white-space:nowrap}
-th.num{text-align:right}
-td{padding:8px;border-bottom:1px solid var(--border);white-space:nowrap}
-td.num{text-align:right;font-variant-numeric:tabular-nums}
-tbody tr{transition:background 0.1s}
-tbody tr:hover{background:#f9fafb}
-.cod{color:var(--mc-azul);font-weight:600;font-size:11px;cursor:pointer}
-.prod-name{font-weight:500;cursor:pointer}
-.prod-name:hover{color:var(--mc-azul);text-decoration:underline}
-.badge{display:inline-block;padding:2px 7px;border-radius:10px;font-size:10px;font-weight:700}
-.b-verde{background:var(--mc-verde-claro);color:#065f46}
-.b-laranja{background:var(--mc-laranja-claro);color:#92400e}
-.b-vermelho{background:var(--mc-vermelho-claro);color:#991b1b}
-.b-azul{background:var(--mc-azul-claro);color:#1e40af}
-.pico-cell{font-size:11px}
-.day-input{width:54px;text-align:right;padding:4px 6px;border:1px solid var(--border);border-radius:4px;font-size:12px;font-family:inherit;background:white}
-.day-input:focus{outline:none;border-color:var(--mc-azul);background:var(--mc-azul-claro);box-shadow:0 0 0 2px rgba(30,58,138,0.2)}
-.btn-setor{font-size:10px;padding:3px 7px;border:1px solid var(--border);border-radius:5px;background:white;color:var(--text-sec);cursor:pointer;font-family:inherit;margin-left:4px}
-.btn-setor:hover{background:var(--mc-azul);color:white;border-color:var(--mc-azul)}
-
-.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,0.5);display:none;align-items:center;justify-content:center;z-index:100;padding:16px}
-.modal-bg.show{display:flex}
-.modal{background:white;border-radius:12px;max-width:680px;width:100%;max-height:88vh;overflow-y:auto}
-.modal-head{padding:16px;background:var(--mc-azul);color:white;border-radius:12px 12px 0 0;display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
-.modal-head h2{font-size:16px}
-.modal-head-sub{font-size:12px;opacity:0.9;margin-top:2px}
-.modal-close{background:white;color:var(--mc-azul);border:none;width:28px;height:28px;border-radius:6px;cursor:pointer;font-weight:700;font-size:14px}
-.modal-body{padding:16px}
-.mb-section{margin-bottom:18px}
-.mb-section h3{font-size:12px;text-transform:uppercase;color:var(--mc-azul);margin-bottom:8px;letter-spacing:0.5px}
-.mb-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
-.mb-stat{background:var(--bg-page);padding:10px;border-radius:8px;border-left:3px solid var(--mc-azul)}
-.mb-stat-label{font-size:10px;color:var(--text-sec);text-transform:uppercase}
-.mb-stat-value{font-size:18px;font-weight:700;margin-top:2px}
-.bars{display:grid;grid-template-columns:50px 1fr 80px;gap:6px;align-items:center;margin-bottom:4px}
-.bar-label{font-size:11px;font-weight:600;color:var(--text-sec)}
-.bar-track{background:var(--bg-page);border-radius:4px;height:18px;overflow:hidden;position:relative}
-.bar-fill{background:linear-gradient(90deg,var(--mc-azul),var(--mc-azul-claro));height:100%;transition:width 0.3s}
-.bar-fill.pico{background:linear-gradient(90deg,var(--mc-laranja),var(--mc-dourado))}
-.bar-value{font-size:11px;font-weight:700;text-align:right}
-.bar-pct{font-size:10px;color:var(--text-sec)}
-.cli-list{background:var(--bg-page);border-radius:8px;padding:10px}
-.cli-row{display:flex;justify-content:space-between;padding:4px 0;font-size:12px;border-bottom:1px dashed var(--border)}
-.cli-row:last-child{border-bottom:none}
-.cli-nome{flex:1;color:var(--text)}
-.cli-qtd{font-weight:700;color:var(--mc-azul);margin-left:8px}
-
-.help-banner{background:linear-gradient(135deg,#fef3c7,#fde68a);border:1px solid #fcd34d;border-left:3px solid var(--mc-laranja);margin:0 16px 14px;padding:12px 16px;border-radius:8px;font-size:13px;color:#78350f}
-.help-banner strong{color:#92400e}
-
-@media (max-width:820px){
-  .kpis{grid-template-columns:repeat(2,1fr)}
-  .mb-grid{grid-template-columns:1fr 1fr}
-}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f3f4f6; }
+.header { background: #1e3a8a; color: white; padding: 16px 24px; display: flex; align-items: center; gap: 16px; }
+.logo { width: 40px; height: 40px; background: white; color: #1e3a8a; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 18px; }
+.brand-name { font-size: 20px; font-weight: 600; }
+.brand-sub { font-size: 12px; opacity: 0.9; }
+.container { max-width: 1400px; margin: 20px auto; padding: 0 20px; }
+.card { background: white; border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+.status-header { display: flex; justify-content: space-between; align-items: center; }
+.btn { padding: 10px 18px; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; }
+.btn-primary { background: #1e3a8a; color: white; }
+.btn-success { background: #16a34a; color: white; }
+.btn-danger { background: #dc2626; color: white; }
+table { width: 100%; border-collapse: collapse; font-size: 12px; }
+thead { background: #1e3a8a; color: white; }
+th, td { padding: 8px; text-align: left; }
+tbody tr { border-bottom: 1px solid #e5e7eb; }
+tbody tr:hover { background: #f9fafb; }
+.modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; }
+.modal-content { background: white; max-width: 600px; margin: 50px auto; border-radius: 12px; padding: 24px; max-height: 80vh; overflow-y: auto; }
+.modal-header { font-size: 18px; font-weight: 600; margin-bottom: 16px; }
+textarea { width: 100%; height: 300px; padding: 12px; border: 1px solid #d1d5db; border-radius: 8px; font-family: monospace; font-size: 11px; }
+.modal-actions { display: flex; gap: 10px; margin-top: 16px; justify-content: flex-end; }
 </style>
 </head>
 <body>
@@ -118,856 +38,204 @@ tbody tr:hover{background:#f9fafb}
     <div class="brand-name">Monte Castelo</div>
     <div class="brand-sub">Planejamento de Produção</div>
   </div>
-  <button style="padding:8px 16px;border:1px solid var(--border);border-radius:6px;background:white;color:var(--text);font-size:13px;font-weight:600;cursor:pointer;font-family:inherit" onclick="window.close()">← Voltar</button>
 </div>
 
-<div class="title-bar">
-  <div class="page-title">📊 Planejamento de Produção</div>
-  <div class="page-sub" id="page-sub">Carregando...</div>
-</div>
+<div id="app"></div>
 
-<div class="tabs">
-  <button class="tab active" data-setor="quadra" onclick="trocarTab('quadra')">🍞 Quadra (Pães) <span class="badge-tab" id="badge-quadra">0</span></button>
-  <button class="tab" data-setor="conf" onclick="trocarTab('conf')">🥐 Confeitaria <span class="badge-tab" id="badge-conf">0</span></button>
-</div>
-
-<div class="help-banner">
-  💡 A classificação Quadra/Confeitaria foi feita automaticamente.
-  <strong>Se algum produto estiver no setor errado</strong>, clique no botão "→" ao lado do nome para mover.
-</div>
-
-<div class="kpis" id="kpis"></div>
-
-<div class="controls">
-  <div class="control-grp">
-    <span class="control-label">Multiplicador do Ideal:</span>
-    <input type="number" id="mult" class="control-input small" value="2" step="0.1" min="0.5" max="5">
-    <span style="font-size:11px;color:var(--text-sec)">× média semanal</span>
-  </div>
-  <div class="control-grp">
-    <span class="control-label">Ordenar:</span>
-    <select id="order" class="control-input">
-      <option value="urg">Mais urgente</option>
-      <option value="vend">Mais vendido</option>
-      <option value="cod">Código</option>
-      <option value="nome">Nome A→Z</option>
-    </select>
-  </div>
-  <div class="control-grp">
-    <span class="control-label">Filtrar:</span>
-    <select id="filtro" class="control-input">
-      <option value="ativos">Só com venda no período</option>
-      <option value="todos">Todos</option>
-      <option value="vermelho">Só urgentes 🔴</option>
-      <option value="laranja">Atenção 🟠+🔴</option>
-    </select>
-  </div>
-  <input type="text" id="busca" class="search-box" placeholder="🔍 Buscar por código ou nome">
-</div>
-
-<div class="table-wrap">
-  <div class="table-scroll">
-    <table id="tabela">
-      <thead>
-        <tr>
-          <th class="num">Cód</th>
-          <th>Produto</th>
-          <th class="num">Estoque</th>
-          <th class="num">Méd/sem</th>
-          <th class="num">Ideal</th>
-          <th>Pico</th>
-          <th class="num">Seg</th>
-          <th class="num">Ter</th>
-          <th class="num">Qua</th>
-          <th class="num">Qui</th>
-          <th class="num">Sex</th>
-          <th class="num">Total sem</th>
-          <th class="num">Saldo</th>
-          <th class="num">% cob</th>
-        </tr>
-      </thead>
-      <tbody id="tbody"></tbody>
-    </table>
+<!-- Modal Importar Vendas -->
+<div id="modal-vendas" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">📥 Importar Vendas</div>
+    <div style="margin-bottom:12px;font-size:12px;color:#6b7280;">Cole os dados do Excel (27 colunas)</div>
+    <textarea id="vendas-textarea" placeholder="Cole aqui..."></textarea>
+    <div id="vendas-preview" style="margin-top:12px;"></div>
+    <div class="modal-actions">
+      <button class="btn" onclick="fecharModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="processarVendas()">Processar</button>
+    </div>
   </div>
 </div>
 
-<div class="modal-bg" id="modal" onclick="if(event.target.id==='modal')fecharModal()">
-  <div class="modal" id="modal-content"></div>
+<!-- Modal Importar Estoque -->
+<div id="modal-estoque" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">📦 Importar Estoque</div>
+    <div style="margin-bottom:12px;font-size:12px;color:#6b7280;">Cole: Código [TAB] Quantidade</div>
+    <textarea id="estoque-textarea" placeholder="119	2150\n160	208\n..."></textarea>
+    <div id="estoque-preview" style="margin-top:12px;"></div>
+    <div class="modal-actions">
+      <button class="btn" onclick="fecharModal()">Cancelar</button>
+      <button class="btn btn-success" onclick="processarEstoque()">Processar</button>
+    </div>
+  </div>
 </div>
 
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, collection, addDoc, deleteDoc, setDoc, onSnapshot, doc, updateDoc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
+import { getFirestore, collection, doc, setDoc, onSnapshot, getDocs, deleteDoc } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
 
 const firebaseConfig = {
-  apiKey: "AIzaSyDY5ma_NbCmZ2dyXUjKm6GZQ3ibhwgcdmI",
+  apiKey: "AIzaSyDfFT80SMTsSMml0BpWYLDBrxrFGJk78",
   authDomain: "montecastelo-a0764.firebaseapp.com",
   projectId: "montecastelo-a0764",
   storageBucket: "montecastelo-a0764.firebasestorage.app",
-  messagingSenderId: "158891969912",
-  appId: "1:158891969912:web:0541e828e0e0743cef0c8d"
+  messagingSenderId: "590787056451",
+  appId: "1:590787056451:web:f0a0cf2db9e5b51e2bb45f"
 };
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
-console.log('✅ Firebase inicializado');
-console.log('📍 Projeto:', firebaseConfig.projectId);
+let produtos = [];
 
+console.log('✅ Firebase conectado');
 
-// ===== FIREBASE LISTENERS =====
-let planejProdutos = [];
-let planejConfig = {multiplicador: 2};
-let planejPlanos = {};
-
-// Listener para produtos
+// Listener
 onSnapshot(collection(db, 'planejProdutos'), snap => {
-  console.log('🔔 Listener disparou! Docs recebidos:', snap.docs.length);
-  planejProdutos = snap.docs.map(d => ({firestoreId: d.id, ...d.data()}));
-  console.log('🔥 Firebase: Produtos carregados:', planejProdutos.length);
-  
-  // ATUALIZAR A INTERFACE
-  try {
-    console.log('🎨 Chamando atualizarInterface()...');
-    if(typeof atualizarInterface === 'function') {
-      atualizarInterface();
-      console.log('✅ Interface atualizada!');
-    } else {
-      console.error('❌ atualizarInterface não está definida!');
-    }
-  } catch(e) {
-    console.error('❌ Erro ao atualizar interface:', e);
-  }
-}, err => {
-  console.log('⏳ Erro no listener:', err);
+  produtos = snap.docs.map(d => ({id: d.id, ...d.data()}));
+  console.log('🔥 Carregados:', produtos.length, 'produtos');
+  renderizar();
 });
 
-function atualizarInterface() {
-  console.log('🎨 === atualizarInterface EXECUTANDO ===');
-  console.log('  planejProdutos.length:', planejProdutos.length);
-  const container = document.querySelector('.container');
-  console.log('  container encontrado?', !!container);
-  if(!container) {
-    console.error('❌ Container .container não encontrado no DOM!');
-    return;
-  }
+function renderizar() {
+  const app = document.getElementById('app');
   
-  console.log('🎨 Atualizando interface. Produtos:', planejProdutos.length);
-  
-  if(planejProdutos.length === 0) {
-    // Mostrar tela vazia com instruções
-    container.innerHTML = `
-      <div style="max-width:800px;margin:60px auto;text-align:center;">
-        <div style="background:white;border-radius:16px;padding:40px;box-shadow:0 4px 12px rgba(0,0,0,0.1);">
+  if(produtos.length === 0) {
+    app.innerHTML = `
+      <div class="container">
+        <div class="card" style="text-align:center;padding:60px;">
           <div style="font-size:64px;margin-bottom:20px;">📊</div>
-          <h2 style="font-size:24px;margin-bottom:12px;color:#111827;">Nenhum dado importado</h2>
-          <p style="font-size:14px;color:#6b7280;margin-bottom:30px;">Importe vendas e estoque para começar o planejamento.</p>
-          <div style="display:flex;gap:12px;justify-content:center;">
-            <button onclick="abrirImportVendas()" style="padding:14px 24px;background:#1e3a8a;color:white;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;">📥 Importar Vendas</button>
-            <button onclick="abrirImportEstoque()" style="padding:14px 24px;background:#16a34a;color:white;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;">📦 Importar Estoque</button>
-          </div>
+          <h2>Nenhum dado importado</h2>
+          <p style="color:#6b7280;margin:12px 0 30px;">Importe vendas e estoque para começar</p>
+          <button class="btn btn-primary" onclick="abrirModalVendas()">📥 Importar Vendas</button>
+          <button class="btn btn-success" onclick="abrirModalEstoque()" style="margin-left:12px;">📦 Importar Estoque</button>
         </div>
       </div>
     `;
   } else {
-    // Mostrar dados carregados com opção de limpar
-    container.innerHTML = `
-      <div style="max-width:1400px;margin:20px auto;">
-        <div style="background:white;border-radius:12px;padding:20px;margin-bottom:20px;display:flex;justify-content:space-between;align-items:center;box-shadow:0 2px 8px rgba(0,0,0,0.08);">
-          <div>
-            <h2 style="font-size:20px;margin:0 0 8px 0;">📊 Dados Carregados</h2>
-            <p style="font-size:14px;color:#6b7280;margin:0;">${planejProdutos.length} produtos no planejamento</p>
-          </div>
-          <div style="display:flex;gap:10px;">
-            <button onclick="abrirImportVendas()" style="padding:10px 18px;background:#1e3a8a;color:white;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">📥 Reimportar Vendas</button>
-            <button onclick="abrirImportEstoque()" style="padding:10px 18px;background:#16a34a;color:white;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">📦 Atualizar Estoque</button>
-            <button onclick="if(confirm('Tem certeza? Isso vai apagar TODOS os dados!')) limparTodosDados()" style="padding:10px 18px;background:#dc2626;color:white;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">🗑️ Limpar Tudo</button>
+    const quadra = produtos.filter(p => p.setor === 'quadra');
+    const conf = produtos.filter(p => p.setor === 'conf');
+    
+    app.innerHTML = `
+      <div class="container">
+        <div class="card">
+          <div class="status-header">
+            <div>
+              <h2>📊 Dados Carregados</h2>
+              <p style="color:#6b7280;font-size:14px;">${produtos.length} produtos</p>
+            </div>
+            <div style="display:flex;gap:10px;">
+              <button class="btn btn-primary" onclick="abrirModalVendas()">📥 Reimportar</button>
+              <button class="btn btn-success" onclick="abrirModalEstoque()">📦 Atualizar</button>
+              <button class="btn btn-danger" onclick="limparTudo()">🗑️ Limpar</button>
+            </div>
           </div>
         </div>
-        <div id="planejamento-tabelas">Carregando tabelas...</div>
+        
+        <div class="card">
+          <h3 style="margin-bottom:16px;">🍞 Quadra (${quadra.length})</h3>
+          <table>
+            <thead><tr><th>Código</th><th>Produto</th><th>Estoque</th><th>Total</th></tr></thead>
+            <tbody>${quadra.slice(0,20).map(p => `
+              <tr>
+                <td style="color:#1e3a8a;font-weight:600;">${p.cod}</td>
+                <td>${p.desc}</td>
+                <td style="text-align:right;">${p.estoque || 0}</td>
+                <td style="text-align:right;">${p.totalPeriodo || 0}</td>
+              </tr>
+            `).join('')}</tbody>
+          </table>
+        </div>
+        
+        <div class="card">
+          <h3 style="margin-bottom:16px;">🥐 Confeitaria (${conf.length})</h3>
+          <table>
+            <thead><tr><th>Código</th><th>Produto</th><th>Estoque</th><th>Total</th></tr></thead>
+            <tbody>${conf.slice(0,20).map(p => `
+              <tr>
+                <td style="color:#1e3a8a;font-weight:600;">${p.cod}</td>
+                <td>${p.desc}</td>
+                <td style="text-align:right;">${p.estoque || 0}</td>
+                <td style="text-align:right;">${p.totalPeriodo || 0}</td>
+              </tr>
+            `).join('')}</tbody>
+          </table>
+        </div>
       </div>
     `;
-    
-    // Renderizar tabela
-    console.log('🔄 Agendando renderTabelaSimples()...');
-    setTimeout(() => {
-      console.log('📊 Executando renderTabelaSimples()...');
-      try {
-        renderTabelaSimples();
-        console.log('✅ Tabela renderizada!');
-      } catch(e) {
-        console.error('❌ Erro em renderTabelaSimples():', e);
-      }
-    }, 100);
   }
 }
 
-function renderTabelaSimples() {
-  console.log('📊 === renderTabelaSimples EXECUTANDO ===');
-  const container = document.getElementById('planejamento-tabelas');
-  if(!container) return;
+window.abrirModalVendas = () => document.getElementById('modal-vendas').style.display = 'block';
+window.abrirModalEstoque = () => document.getElementById('modal-estoque').style.display = 'block';
+window.fecharModal = () => {
+  document.getElementById('modal-vendas').style.display = 'none';
+  document.getElementById('modal-estoque').style.display = 'none';
+};
+
+window.processarVendas = async () => {
+  const texto = document.getElementById('vendas-textarea').value;
+  const linhas = texto.trim().split('\n').filter(l => l.trim());
+  const porCodigo = {};
   
-  const quadra = planejProdutos.filter(p => p.setor === 'quadra');
-  const conf = planejProdutos.filter(p => p.setor === 'conf');
-  
-  let html = '<div style="background:white;border-radius:12px;padding:20px;box-shadow:0 2px 8px rgba(0,0,0,0.08);">';
-  html += '<h3 style="margin:0 0 16px 0;">🍞 Quadra (' + quadra.length + ' produtos)</h3>';
-  html += '<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:12px;">';
-  html += '<thead><tr style="background:#1e3a8a;color:white;"><th style="padding:8px;text-align:left;">Código</th><th style="padding:8px;text-align:left;">Produto</th><th style="padding:8px;text-align:right;">Estoque</th><th style="padding:8px;text-align:right;">Total Período</th></tr></thead>';
-  html += '<tbody>';
-  quadra.slice(0, 20).forEach(p => {
-    html += '<tr style="border-bottom:1px solid #e5e7eb;"><td style="padding:8px;color:#1e3a8a;font-weight:600;">' + p.cod + '</td><td style="padding:8px;">' + p.desc + '</td><td style="padding:8px;text-align:right;">' + (p.estoque || 0) + '</td><td style="padding:8px;text-align:right;">' + (p.totalPeriodo || 0) + '</td></tr>';
+  linhas.forEach(linha => {
+    const colunas = linha.split('\t');
+    if(colunas.length < 27) return;
+    
+    const cod = String(colunas[1]).trim();
+    const desc = String(colunas[2]).trim();
+    const qtd = parseFloat(String(colunas[14]).replace(',', '.')) || 0;
+    
+    if(!cod || isNaN(parseInt(cod))) return;
+    
+    if(!porCodigo[cod]) {
+      porCodigo[cod] = { cod, desc, totalPeriodo: 0, setor: parseInt(cod) < 200 ? 'quadra' : 'conf' };
+    }
+    porCodigo[cod].totalPeriodo += qtd;
   });
-  html += '</tbody></table></div></div>';
   
-  html += '<div style="background:white;border-radius:12px;padding:20px;margin-top:16px;box-shadow:0 2px 8px rgba(0,0,0,0.08);">';
-  html += '<h3 style="margin:0 0 16px 0;">🥐 Confeitaria (' + conf.length + ' produtos)</h3>';
-  html += '<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:12px;">';
-  html += '<thead><tr style="background:#1e3a8a;color:white;"><th style="padding:8px;text-align:left;">Código</th><th style="padding:8px;text-align:left;">Produto</th><th style="padding:8px;text-align:right;">Estoque</th><th style="padding:8px;text-align:right;">Total Período</th></tr></thead>';
-  html += '<tbody>';
-  conf.slice(0, 20).forEach(p => {
-    html += '<tr style="border-bottom:1px solid #e5e7eb;"><td style="padding:8px;color:#1e3a8a;font-weight:600;">' + p.cod + '</td><td style="padding:8px;">' + p.desc + '</td><td style="padding:8px;text-align:right;">' + (p.estoque || 0) + '</td><td style="padding:8px;text-align:right;">' + (p.totalPeriodo || 0) + '</td></tr>';
+  const batch = [];
+  Object.values(porCodigo).forEach(p => {
+    batch.push(setDoc(doc(db, 'planejProdutos', p.cod), p, {merge: true}));
   });
-  html += '</tbody></table></div></div>';
   
-  container.innerHTML = html;
-}
+  await Promise.all(batch);
+  alert(`✓ ${Object.keys(porCodigo).length} produtos salvos!`);
+  fecharModal();
+};
 
-async function limparTodosDados() {
-  try {
-    const snapshot = await getDocs(collection(db, 'planejProdutos'));
-    const batch = [];
-    snapshot.docs.forEach(doc => {
-      batch.push(deleteDoc(doc.ref));
-    });
-    await Promise.all(batch);
-    alert('✓ Todos os dados foram removidos!');
-  } catch(e) {
-    alert('Erro ao limpar: ' + e.message);
-  }
-}
-
-window.atualizarInterface = atualizarInterface;
-window.limparTodosDados = limparTodosDados;
-
-// Listener para config
-onSnapshot(doc(db, 'planejConfig', 'config'), snap => {
-  if(snap.exists()) {
-    planejConfig = {...planejConfig, ...snap.data()};
-    console.log('Config carregada:', planejConfig);
-  }
-}, err => {
-  console.log('Config não existe ainda');
-});
-
-// Listener para planos
-onSnapshot(collection(db, 'planejPlanos'), snap => {
-  planejPlanos = {};
-  snap.docs.forEach(d => {
-    planejPlanos[d.id] = d.data();
+window.processarEstoque = async () => {
+  const texto = document.getElementById('estoque-textarea').value;
+  const linhas = texto.trim().split('\n').filter(l => l.trim());
+  const batch = [];
+  
+  linhas.forEach(linha => {
+    const partes = linha.split('\t');
+    if(partes.length < 2) return;
+    
+    const cod = String(partes[0]).trim();
+    const estoque = parseFloat(String(partes[1]).replace(',', '.')) || 0;
+    
+    if(!cod || isNaN(parseInt(cod))) return;
+    
+    batch.push(setDoc(doc(db, 'planejProdutos', cod), {estoque}, {merge: true}));
   });
-  console.log('Planos carregados:', Object.keys(planejPlanos).length);
-}, err => {
-  console.log('Aguardando planos...');
-});
-
-
-function agora() {
-  const d = new Date();
-  const dd = String(d.getDate()).padStart(2,'0');
-  const mm = String(d.getMonth()+1).padStart(2,'0');
-  const yyyy = d.getFullYear();
-  const hh = String(d.getHours()).padStart(2,'0');
-  const min = String(d.getMinutes()).padStart(2,'0');
-  return dd+'/'+mm+'/'+yyyy+' '+hh+':'+min;
-}
-
-
-
-
-let DADOS = {produtos: [], n_semanas: 0, semanas: []};  // Será carregado do Firebase
-const DIAS = ['Seg','Ter','Qua','Qui','Sex'];
-let setorAtivo = 'quadra';
-const plano = {};
-const setorOverride = {}; // {cod: 'quadra'|'conf'}
-
-function getSetor(p){ return setorOverride[p.cod] || p.setor; }
-function mult(){ return parseFloat(document.getElementById('mult').value)||2; }
-function calcIdeal(p){ return Math.round(p.media_sem * mult()); }
-function calcPlanoTotal(cod){
-  const pl = plano[cod] || {};
-  return DIAS.reduce((s,d)=>s+(parseInt(pl[d])||0),0);
-}
-function calcSaldo(p){ return p.estoque + calcPlanoTotal(p.cod) - calcIdeal(p); }
-function calcCobertura(p){
-  const ideal = calcIdeal(p);
-  if(ideal<=0) return 100;
-  return Math.round((p.estoque + calcPlanoTotal(p.cod)) / ideal * 100);
-}
-function badgeCob(pct){
-  if(pct>=100) return '<span class="badge b-verde">'+pct+'%</span>';
-  if(pct>=70) return '<span class="badge b-laranja">'+pct+'%</span>';
-  return '<span class="badge b-vermelho">'+pct+'%</span>';
-}
-
-function trocarTab(s){
-  setorAtivo = s;
-  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active', t.dataset.setor===s));
-  renderTabela(); renderKpis(); atualizarBadgesTab();
-}
-
-function moverSetor(cod, ev){
-  ev.stopPropagation();
-  const atual = getSetor(DADOS.produtos.find(p=>p.cod===cod));
-  const novo = atual==='quadra' ? 'conf' : 'quadra';
-  setorOverride[cod] = novo;
-  renderTabela(); renderKpis(); atualizarBadgesTab();
-}
-
-function atualizarBadgesTab(){
-  const filtro = document.getElementById('filtro').value;
-  let lista = DADOS.produtos;
-  if(filtro==='ativos'||filtro==='vermelho'||filtro==='laranja') lista = lista.filter(p=>p.total_periodo>0);
-  document.getElementById('badge-quadra').textContent = lista.filter(p=>getSetor(p)==='quadra').length;
-  document.getElementById('badge-conf').textContent = lista.filter(p=>getSetor(p)==='conf').length;
-}
-
-function renderKpis(){
-  const ativos = DADOS.produtos.filter(p=>getSetor(p)===setorAtivo && p.total_periodo>0);
-  const urgentes = ativos.filter(p=>calcCobertura(p)<70).length;
-  const atencao = ativos.filter(p=>{const c=calcCobertura(p);return c>=70 && c<100;}).length;
-  const ok = ativos.filter(p=>calcCobertura(p)>=100).length;
-  document.getElementById('page-sub').textContent =
-    DADOS.n_semanas + ' semanas analisadas ('+DADOS.semanas[0]+' a '+DADOS.semanas[DADOS.semanas.length-1]+')';
-  document.getElementById('kpis').innerHTML =
-    '<div class="kpi azul"><div class="kpi-label">Produtos analisados</div><div class="kpi-value">'+ativos.length+'</div><div class="kpi-detail">com venda no '+(setorAtivo==='quadra'?'Quadra':'Confeitaria')+'</div></div>'+
-    '<div class="kpi vermelho"><div class="kpi-label">🔴 Urgentes (&lt;70%)</div><div class="kpi-value">'+urgentes+'</div><div class="kpi-detail">precisam produção agora</div></div>'+
-    '<div class="kpi laranja"><div class="kpi-label">🟠 Atenção</div><div class="kpi-value">'+atencao+'</div><div class="kpi-detail">entre 70 e 100%</div></div>'+
-    '<div class="kpi verde"><div class="kpi-label">🟢 OK</div><div class="kpi-value">'+ok+'</div><div class="kpi-detail">100%+ do ideal</div></div>';
-}
-
-function montarLinha(p){
-  const ideal = calcIdeal(p);
-  const planoTotal = calcPlanoTotal(p.cod);
-  const saldo = calcSaldo(p);
-  const cob = calcCobertura(p);
-  const pl = plano[p.cod] || {};
-  const picoColor = p.pico_pct>=40 ? 'b-laranja' : 'b-azul';
-  const setorAtual = getSetor(p);
-  const moverLabel = setorAtual==='quadra' ? '→ Conf' : '→ Quadra';
-  const dias = DIAS.map(d=>'<td class="num"><input type="number" class="day-input" data-cod="'+p.cod+'" data-dia="'+d+'" value="'+(pl[d]||'')+'" placeholder="0"></td>').join('');
-  return '<tr data-cod="'+p.cod+'">'+
-    '<td class="cod" onclick="abrirModal('+p.cod+')">'+p.cod+'</td>'+
-    '<td><span class="prod-name" onclick="abrirModal('+p.cod+')">'+p.desc+'</span><button class="btn-setor" onclick="moverSetor('+p.cod+',event)" title="Mover para outro setor">'+moverLabel+'</button></td>'+
-    '<td class="num">'+p.estoque+'</td>'+
-    '<td class="num">'+p.media_sem+'</td>'+
-    '<td class="num"><strong>'+ideal+'</strong></td>'+
-    '<td class="pico-cell">'+(p.pico_dia!=='-'?'<span class="badge '+picoColor+'">'+p.pico_dia+' '+p.pico_pct+'%</span>':'-')+'</td>'+
-    dias+
-    '<td class="num" data-tot="'+p.cod+'"><strong>'+planoTotal+'</strong></td>'+
-    '<td class="num" data-saldo="'+p.cod+'"><strong style="color:'+(saldo<0?'var(--mc-vermelho)':'var(--mc-verde)')+';">'+(saldo>=0?'+':'')+saldo+'</strong></td>'+
-    '<td class="num" data-cob="'+p.cod+'">'+badgeCob(cob)+'</td>'+
-  '</tr>';
-}
-
-function renderTabela(){
-  const busca = document.getElementById('busca').value.toLowerCase().trim();
-  const ordem = document.getElementById('order').value;
-  const filtro = document.getElementById('filtro').value;
-  let lista = DADOS.produtos.filter(p=>getSetor(p)===setorAtivo);
-  if(filtro==='ativos') lista = lista.filter(p=>p.total_periodo>0);
-  if(filtro==='vermelho') lista = lista.filter(p=>p.total_periodo>0 && calcCobertura(p)<70);
-  if(filtro==='laranja') lista = lista.filter(p=>p.total_periodo>0 && calcCobertura(p)<100);
-  if(busca) lista = lista.filter(p=>String(p.cod).includes(busca) || p.desc.toLowerCase().includes(busca));
-  if(ordem==='urg') lista.sort((a,b)=>calcCobertura(a)-calcCobertura(b));
-  if(ordem==='vend') lista.sort((a,b)=>b.total_periodo-a.total_periodo);
-  if(ordem==='cod') lista.sort((a,b)=>a.cod-b.cod);
-  if(ordem==='nome') lista.sort((a,b)=>a.desc.localeCompare(b.desc));
-
-  const tbody = document.getElementById('tbody');
-  if(lista.length===0){ tbody.innerHTML='<tr><td colspan="14" style="padding:30px;text-align:center;color:var(--text-mut)">Nenhum produto encontrado</td></tr>'; return; }
-  tbody.innerHTML = lista.map(montarLinha).join('');
-
-  // Hook inputs — atualizar APENAS os totais da linha, sem re-renderizar
-  document.querySelectorAll('.day-input').forEach(inp=>{
-    inp.addEventListener('input', e=>{
-      const cod = parseInt(e.target.dataset.cod);
-      const dia = e.target.dataset.dia;
-      if(!plano[cod]) plano[cod] = {};
-      plano[cod][dia] = parseInt(e.target.value)||0;
-      // Atualizar apenas a linha, sem destruir o input
-      const p = DADOS.produtos.find(x=>x.cod===cod);
-      const tot = calcPlanoTotal(cod);
-      const saldo = calcSaldo(p);
-      const cob = calcCobertura(p);
-      document.querySelector('[data-tot="'+cod+'"]').innerHTML = '<strong>'+tot+'</strong>';
-      document.querySelector('[data-saldo="'+cod+'"]').innerHTML = '<strong style="color:'+(saldo<0?'var(--mc-vermelho)':'var(--mc-verde)')+';">'+(saldo>=0?'+':'')+saldo+'</strong>';
-      document.querySelector('[data-cob="'+cod+'"]').innerHTML = badgeCob(cob);
-      // Atualizar KPIs
-      renderKpis();
-    });
-  });
-}
-
-function abrirModal(cod){
-  const p = DADOS.produtos.find(x=>x.cod===cod);
-  if(!p) return;
-  const ideal = calcIdeal(p);
-  const dias = ['Seg','Ter','Qua','Qui','Sex'];
-  const maxVend = Math.max(1, ...dias.map(d=>p.por_dia[d]||0));
-  const bars = dias.map(d=>{
-    const v = p.por_dia[d]||0;
-    const pct = v/maxVend*100;
-    const totalPct = p.total_periodo>0 ? Math.round(v/p.total_periodo*100) : 0;
-    const isPico = d===p.pico_dia && v>0;
-    return '<div class="bars"><div class="bar-label">'+d+'</div><div class="bar-track"><div class="bar-fill '+(isPico?'pico':'')+'" style="width:'+pct+'%"></div></div><div class="bar-value">'+v+' <span class="bar-pct">('+totalPct+'%)</span></div></div>';
-  }).join('');
-
-  const semanasBars = p.vendas_sem.map((v,i)=>{
-    const maxSem = Math.max(1, ...p.vendas_sem);
-    const pct = maxSem>0 ? v/maxSem*100 : 0;
-    return '<div class="bars"><div class="bar-label">'+DADOS.semanas[i]+'</div><div class="bar-track"><div class="bar-fill" style="width:'+pct+'%"></div></div><div class="bar-value">'+v+'</div></div>';
-  }).join('');
-
-  const cli = p.top_clientes.length>0
-    ? p.top_clientes.map(c=>'<div class="cli-row"><div class="cli-nome">'+c[0]+'</div><div class="cli-qtd">'+c[1]+' pct</div></div>').join('')
-    : '<div class="cli-row"><div class="cli-nome" style="color:var(--text-mut);font-style:italic">Sem vendas no período</div></div>';
-
-  document.getElementById('modal-content').innerHTML =
-    '<div class="modal-head">'+
-      '<div><h2>['+p.cod+'] '+p.desc+'</h2><div class="modal-head-sub">Setor: '+(getSetor(p)==='quadra'?'🍞 Quadra':'🥐 Confeitaria')+' · '+DADOS.n_semanas+' semanas analisadas</div></div>'+
-      '<button class="modal-close" onclick="fecharModal()">✕</button>'+
-    '</div>'+
-    '<div class="modal-body">'+
-      '<div class="mb-grid">'+
-        '<div class="mb-stat"><div class="mb-stat-label">Estoque atual</div><div class="mb-stat-value">'+p.estoque+'</div></div>'+
-        '<div class="mb-stat"><div class="mb-stat-label">Média semanal</div><div class="mb-stat-value">'+p.media_sem+'</div></div>'+
-        '<div class="mb-stat"><div class="mb-stat-label">Ideal (×'+mult()+')</div><div class="mb-stat-value">'+ideal+'</div></div>'+
-      '</div>'+
-      '<div class="mb-section" style="margin-top:16px"><h3>📅 Padrão de venda por dia da semana</h3>'+bars+'</div>'+
-      '<div class="mb-section"><h3>📈 Tendência semanal</h3>'+semanasBars+'</div>'+
-      '<div class="mb-section"><h3>👥 Top clientes do produto</h3><div class="cli-list">'+cli+'</div></div>'+
-    '</div>';
-  document.getElementById('modal').classList.add('show');
-}
-function fecharModal(){ document.getElementById('modal').classList.remove('show'); }
-
-['mult','order','filtro'].forEach(id=>{document.getElementById(id).addEventListener('change', ()=>{renderTabela();renderKpis();atualizarBadgesTab();});});
-document.getElementById('busca').addEventListener('input', renderTabela);
-
-renderKpis(); renderTabela(); atualizarBadgesTab();
-
-// ===== FUNÇÕES DE IMPORTAÇÃO =====
-
-async function processarImportVendas() {
-  const textarea = document.querySelector('#import-vendas-area');
-  if(!textarea) return;
   
-  const txt = textarea.value.trim();
-  if(!txt) {
-    alert('Cole os dados do Excel primeiro!');
-    return;
-  }
-  
-  try {
-    const linhas = txt.split('\n').filter(l => l.trim());
-    if(linhas.length < 2) {
-      alert('Dados insuficientes. Cole as linhas do Excel com cabeçalho.');
-      return;
-    }
-    
-    // Primeira linha é cabeçalho, ignorar
-    const vendas = [];
-    for(let i = 1; i < linhas.length; i++) {
-      const cols = linhas[i].split('\t');
-      if(cols.length < 27) continue; // Excel tem 27 colunas
-      
-      const cod = cols[1]?.trim(); // Coluna B = Produto
-      const desc = cols[2]?.trim(); // Coluna C = Descrição
-      const data = cols[12]?.trim(); // Coluna M = Data
-      const qtd = parseFloat(cols[14]) || 0; // Coluna O = Quantidade
-      const cliente = cols[26]?.trim() || ''; // Coluna AA = Cliente
-      
-      if(cod && qtd > 0) {
-        vendas.push({cod, desc, data, qtd, cliente});
-      }
-    }
-    
-    if(vendas.length === 0) {
-      alert('Nenhuma venda válida encontrada. Verifique o formato.');
-      return;
-    }
-    
-    // Agregar por código
-    const porCodigo = {};
-    vendas.forEach(v => {
-      if(!porCodigo[v.cod]) {
-        porCodigo[v.cod] = {
-          cod: v.cod,
-          desc: v.desc,
-          totalPeriodo: 0,
-          porDia: {Seg:0, Ter:0, Qua:0, Qui:0, Sex:0, Sáb:0},
-          topClientes: {},
-          vendasDetalhes: []
-        };
-      }
-      porCodigo[v.cod].totalPeriodo += v.qtd;
-      porCodigo[v.cod].vendasDetalhes.push(v);
-      
-      // Agregar clientes
-      if(v.cliente) {
-        porCodigo[v.cod].topClientes[v.cliente] = (porCodigo[v.cod].topClientes[v.cliente] || 0) + v.qtd;
-      }
-    });
-    
-    // Salvar no Firebase
-    const batch = [];
-    for(const cod in porCodigo) {
-      const p = porCodigo[cod];
-      
-      // Top 5 clientes (converter para array de objetos)
-      const topCli = Object.entries(p.topClientes)
-        .sort((a,b) => b[1] - a[1])
-        .slice(0, 5)
-        .map(([nome, qtd]) => ({nome, qtd}));
-      
-      const docData = {
-        cod: p.cod,
-        desc: p.desc,
-        totalPeriodo: p.totalPeriodo,
-        porDia: p.porDia, // TODO: calcular por dia da semana
-        topClientes: topCli,
-        estoque: 0, // Será preenchido na importação de estoque
-        atualizadoEm: agora()
-      };
-      
-      batch.push(setDoc(doc(db, 'planejProdutos', p.cod), docData, {merge: true}));
-    }
-    
-    console.log('💾 Salvando', batch.length, 'produtos no Firebase...');
-    await Promise.all(batch);
-    console.log('✅ Produtos salvos com sucesso!');
-    
-    // Feedback visual
-    const preview = document.getElementById('vendas-preview');
-    if(preview) {
-      preview.innerHTML = `
-        <div style="background:var(--mc-verde);color:white;padding:14px;border-radius:8px;text-align:center;">
-          <div style="font-size:20px;margin-bottom:6px;">✓</div>
-          <div style="font-size:14px;font-weight:600;margin-bottom:4px;">Dados salvos no Firebase!</div>
-          <div style="font-size:12px;opacity:0.9;">${Object.keys(porCodigo).length} produtos • Aguarde atualização...</div>
-        </div>
-      `;
-    }
-    
-    textarea.value = '';
-    
-    // Fechar e forçar atualização
-    setTimeout(() => {
-      console.log('🔄 Fechando modal e aguardando listener...');
-      fecharImportModal();
-    }, 2000);
-    
-  } catch(e) {
-    alert('Erro ao processar: ' + e.message);
-    console.error(e);
-  }
-}
+  await Promise.all(batch);
+  alert(`✓ ${batch.length} estoques atualizados!`);
+  fecharModal();
+};
 
-async function processarImportEstoque() {
-  const textarea = document.querySelector('#import-estoque-area');
-  if(!textarea) return;
-  
-  const txt = textarea.value.trim();
-  if(!txt) {
-    alert('Cole os dados (código TAB quantidade) primeiro!');
-    return;
-  }
-  
-  try {
-    const linhas = txt.split('\n').filter(l => l.trim());
-    const batch = [];
-    let count = 0;
-    let skipFirst = false;
-    
-    // Detectar cabeçalho
-    if(linhas[0] && (linhas[0].toLowerCase().includes('produto') || linhas[0].toLowerCase().includes('estoque'))) {
-      skipFirst = true;
-    }
-    
-    for(let i = skipFirst ? 1 : 0; i < linhas.length; i++) {
-      const linha = linhas[i];
-      const partes = linha.split('\t');
-      if(partes.length < 2) continue;
-      
-      const cod = partes[0].trim();
-      
-      // Limpar quantidade: remover vírgulas no final, trocar vírgula por ponto
-      let qtdStr = partes[1].trim().replace(/,$/g, '').replace(',', '.');
-      const qtd = parseFloat(qtdStr) || 0;
-      
-      // Validar código (deve ser numérico)
-      if(cod && !isNaN(parseInt(cod))) {
-        batch.push(setDoc(doc(db, 'planejProdutos', cod), {
-          estoque: qtd,
-          atualizadoEm: agora()
-        }, {merge: true}));
-        count++;
-      }
-    }
-    
-    if(count === 0) {
-      alert('Nenhum estoque válido encontrado. Use formato: código TAB quantidade');
-      return;
-    }
-    
-    await Promise.all(batch);
-    
-    // Feedback visual melhorado
-    const preview = document.getElementById('estoque-preview');
-    if(preview) {
-      preview.innerHTML = `
-        <div style="background:var(--mc-verde);color:white;padding:14px;border-radius:8px;text-align:center;">
-          <div style="font-size:20px;margin-bottom:6px;">✓</div>
-          <div style="font-size:14px;font-weight:600;margin-bottom:4px;">Estoque atualizado!</div>
-          <div style="font-size:12px;opacity:0.9;">${count} produtos atualizados no Firebase</div>
-        </div>
-      `;
-    }
-    
-    textarea.value = '';
-    
-    // Fechar modal após 2 segundos
-    setTimeout(() => {
-      fecharImportModal();
-      // Interface será atualizada automaticamente pelos listeners Firebase
-    }, 2000);
-    
-  } catch(e) {
-    alert('Erro ao processar: ' + e.message);
-    console.error(e);
-  }
-}
+window.limparTudo = async () => {
+  if(!confirm('Apagar TODOS os dados?')) return;
+  const snapshot = await getDocs(collection(db, 'planejProdutos'));
+  const batch = [];
+  snapshot.docs.forEach(d => batch.push(deleteDoc(d.ref)));
+  await Promise.all(batch);
+  alert('✓ Dados removidos!');
+};
 
-window.processarImportVendas = processarImportVendas;
-window.processarImportEstoque = processarImportEstoque;
-
-
-function abrirImportVendas() {
-  document.getElementById('import-modal-title').textContent = 'Importar Vendas';
-  document.getElementById('import-modal-content').innerHTML = `
-    <div style="margin-bottom:14px;">
-      <div style="font-size:13px;color:var(--text-secondary);margin-bottom:8px;">Cole os dados do Excel (incluindo cabeçalho):</div>
-      <textarea id="import-vendas-area" oninput="previewVendas()" style="width:100%;height:240px;padding:10px;border:1px solid var(--border);border-radius:8px;font-family:monospace;font-size:11px;resize:vertical;" placeholder="Cole aqui as linhas do Excel..."></textarea>
-    </div>
-    <div id="vendas-preview" style="margin-bottom:14px;padding:10px;border-radius:6px;display:none;"></div>
-    <div style="font-size:12px;color:var(--text-secondary);margin-bottom:14px;padding:10px;background:var(--mc-azul-claro);border-radius:6px;">
-      <strong>Formato esperado:</strong> Excel com 27 colunas. Coluna B=Produto, C=Descrição, M=Data do movimento, O=Quantidade, AA=Nome destinatário
-    </div>
-    <div style="display:flex;gap:8px;">
-      <button onclick="limparVendas()" style="flex:1;padding:12px;background:white;border:1px solid var(--border);color:var(--text);border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;">🗑️ Limpar</button>
-      <button onclick="processarImportVendas()" style="flex:2;padding:12px;background:var(--mc-azul);color:white;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;">✓ Processar Vendas</button>
-    </div>
-  `;
-  document.getElementById('import-modal').style.display = 'block';
-}
-
-function abrirImportEstoque() {
-  document.getElementById('import-modal-title').textContent = 'Importar Estoque';
-  document.getElementById('import-modal-content').innerHTML = `
-    <div style="margin-bottom:14px;">
-      <div style="font-size:13px;color:var(--text-secondary);margin-bottom:8px;">Cole código + quantidade (separados por TAB):</div>
-      <textarea id="import-estoque-area" oninput="previewEstoque()" style="width:100%;height:240px;padding:10px;border:1px solid var(--border);border-radius:8px;font-family:monospace;font-size:12px;resize:vertical;" placeholder="119\t150\n160\t-30\n..."></textarea>
-    </div>
-    <div id="estoque-preview" style="margin-bottom:14px;padding:10px;border-radius:6px;display:none;"></div>
-    <div style="font-size:12px;color:var(--text-secondary);margin-bottom:14px;padding:10px;background:var(--mc-verde-claro);border-radius:6px;">
-      <strong>Formato:</strong> Uma linha por produto. Código [TAB] Quantidade
-    </div>
-    <div style="display:flex;gap:8px;">
-      <button onclick="limparEstoque()" style="flex:1;padding:12px;background:white;border:1px solid var(--border);color:var(--text);border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;">🗑️ Limpar</button>
-      <button onclick="processarImportEstoque()" style="flex:2;padding:12px;background:var(--mc-verde);color:white;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;">✓ Processar Estoque</button>
-    </div>
-  `;
-  document.getElementById('import-modal').style.display = 'block';
-}
-
-function fecharImportModal() {
-  document.getElementById('import-modal').style.display = 'none';
-}
-
-
-// ===== FUNÇÕES DE PREVIEW E FEEDBACK =====
-
-function previewVendas() {
-  const textarea = document.querySelector('#import-vendas-area');
-  const preview = document.getElementById('vendas-preview');
-  if(!textarea || !preview) return;
-  
-  const txt = textarea.value.trim();
-  if(!txt) {
-    preview.style.display = 'none';
-    return;
-  }
-  
-  const linhas = txt.split('\n').filter(l => l.trim());
-  if(linhas.length < 2) {
-    preview.innerHTML = '<div style="background:var(--mc-laranja-claro);color:#92400e;padding:8px;border-radius:6px;font-size:12px;">⚠️ Aguardando mais dados...</div>';
-    preview.style.display = 'block';
-    return;
-  }
-  
-  // Contar produtos únicos
-  const codigos = new Set();
-  let vendasValidas = 0;
-  
-  for(let i = 1; i < linhas.length; i++) {
-    const cols = linhas[i].split('\t');
-    if(cols.length >= 27) {
-      const cod = cols[1]?.trim();
-      const qtd = parseFloat(cols[14]) || 0;
-      if(cod && qtd > 0) {
-        codigos.add(cod);
-        vendasValidas++;
-      }
-    }
-  }
-  
-  preview.innerHTML = `
-    <div style="background:var(--mc-verde-claro);color:#065f46;padding:10px;border-radius:6px;">
-      <div style="font-size:13px;font-weight:600;margin-bottom:4px;">✓ Dados detectados:</div>
-      <div style="font-size:12px;">📋 ${linhas.length - 1} linhas de vendas</div>
-      <div style="font-size:12px;">📦 ${codigos.size} produtos únicos</div>
-      <div style="font-size:12px;">✓ ${vendasValidas} vendas válidas</div>
-    </div>
-  `;
-  preview.style.display = 'block';
-}
-
-function previewEstoque() {
-  const textarea = document.querySelector('#import-estoque-area');
-  const preview = document.getElementById('estoque-preview');
-  if(!textarea || !preview) return;
-  
-  const txt = textarea.value.trim();
-  if(!txt) {
-    preview.style.display = 'none';
-    return;
-  }
-  
-  const linhas = txt.split('\n').filter(l => l.trim());
-  let skipFirst = linhas[0] && (linhas[0].toLowerCase().includes('produto') || linhas[0].toLowerCase().includes('estoque'));
-  let validos = 0;
-  
-  for(let i = skipFirst ? 1 : 0; i < linhas.length; i++) {
-    const partes = linhas[i].split('\t');
-    if(partes.length >= 2) {
-      const cod = partes[0].trim();
-      if(cod && !isNaN(parseInt(cod))) validos++;
-    }
-  }
-  
-  preview.innerHTML = `
-    <div style="background:var(--mc-verde-claro);color:#065f46;padding:10px;border-radius:6px;">
-      <div style="font-size:13px;font-weight:600;margin-bottom:4px;">✓ Dados detectados:</div>
-      <div style="font-size:12px;">📦 ${validos} produtos com estoque</div>
-      ${skipFirst ? '<div style="font-size:11px;opacity:0.8;">ℹ️ Cabeçalho detectado e será ignorado</div>' : ''}
-    </div>
-  `;
-  preview.style.display = 'block';
-}
-
-function limparVendas() {
-  const textarea = document.querySelector('#import-vendas-area');
-  const preview = document.getElementById('vendas-preview');
-  if(textarea) textarea.value = '';
-  if(preview) preview.style.display = 'none';
-}
-
-function limparEstoque() {
-  const textarea = document.querySelector('#import-estoque-area');
-  const preview = document.getElementById('estoque-preview');
-  if(textarea) textarea.value = '';
-  if(preview) preview.style.display = 'none';
-}
-
-window.previewVendas = previewVendas;
-window.previewEstoque = previewEstoque;
-window.limparVendas = limparVendas;
-window.limparEstoque = limparEstoque;
-
-
-window.abrirImportVendas = abrirImportVendas;
-window.abrirImportEstoque = abrirImportEstoque;
-window.fecharImportModal = fecharImportModal;
-
-
-
-
-
-// ===== INICIALIZAÇÃO =====
-// Garantir que a interface seja renderizada na carga inicial
-window.addEventListener('DOMContentLoaded', () => {
-  console.log('DOM carregado, aguardando dados Firebase...');
-  
-  // Renderizar interface vazia primeiro
-  setTimeout(() => {
-    if(DADOS && DADOS.produtos && DADOS.produtos.length > 0) {
-      console.log('Dados iniciais encontrados, renderizando...');
-      try {
-        renderKpis();
-        renderTabela();
-      } catch(e) {
-        console.error('Erro na renderização inicial:', e);
-      }
-    } else {
-      console.log('Aguardando dados do Firebase...');
-    }
-  }, 1000);
-});
-
-
-// TESTE DE CONEXÃO
-window.addEventListener('load', () => {
-  console.log('🌐 Página carregada');
-  console.log('📊 Status inicial:');
-  console.log('  - Firebase:', typeof db !== 'undefined' ? 'Conectado' : 'Erro');
-  console.log('  - planejProdutos:', planejProdutos ? planejProdutos.length + ' produtos' : 'undefined');
-  
-  // Testar leitura do Firebase
-  setTimeout(async () => {
-    try {
-      const snapshot = await getDocs(collection(db, 'planejProdutos'));
-      console.log('🔍 Teste de leitura Firebase:', snapshot.docs.length, 'documentos encontrados');
-      if(snapshot.docs.length > 0) {
-        console.log('📦 Exemplo de documento:', snapshot.docs[0].data());
-      }
-    } catch(e) {
-      console.error('❌ Erro ao ler Firebase:', e);
-    }
-  }, 1000);
-});
-
-console.log('Planejamento inicializado - aguardando Firebase');
-
-
+renderizar();
 </script>
-
-<!-- MODAL DE IMPORTAÇÃO -->
-<div id="import-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;padding:20px;overflow-y:auto;">
-  <div style="max-width:800px;margin:40px auto;background:white;border-radius:12px;overflow:hidden;">
-    <div style="background:var(--mc-azul);color:white;padding:16px;display:flex;justify-content:space-between;align-items:center;">
-      <h2 style="font-size:18px;margin:0;" id="import-modal-title">Importar Dados</h2>
-      <button onclick="fecharImportModal()" style="background:white;color:var(--mc-azul);border:none;width:32px;height:32px;border-radius:6px;cursor:pointer;font-weight:700;">✕</button>
-    </div>
-    <div style="padding:20px;" id="import-modal-content"></div>
-  </div>
-</div>
-
-
-<!-- BOTÕES FLUTUANTES -->
-<div style="position:fixed;bottom:20px;right:20px;display:flex;flex-direction:column;gap:10px;z-index:100;">
-  <button onclick="abrirImportVendas()" style="width:56px;height:56px;border-radius:50%;background:var(--mc-azul);color:white;border:none;font-size:20px;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,0.15);display:flex;align-items:center;justify-content:center;" title="Importar Vendas">📥</button>
-  <button onclick="abrirImportEstoque()" style="width:56px;height:56px;border-radius:50%;background:var(--mc-verde);color:white;border:none;font-size:20px;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,0.15);display:flex;align-items:center;justify-content:center;" title="Importar Estoque">📦</button>
-</div>
 
 </body>
 </html>
