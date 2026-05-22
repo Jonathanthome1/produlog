@@ -7620,36 +7620,47 @@ function aplicarFarinhasConfigFirebase(){
   }
 }
 
-// ===== PLANEJAMENTO DE PRODUÇÃO (Firebase) =====
+/*
+// ===== PLANEJAMENTO DE PRODUÇÃO (Firebase) ===== [TEMPORARIAMENTE DESABILITADO PARA DEBUG]
 let planejProdutos=[]; // 1 doc por código: {cod, desc, setor, estoque, mediaSemanal, totalPeriodo, porDia, picoDia, picoPct, topClientes, vendasSem, semanas, atualizadoEm}
 let planejConfig={multiplicador:2}; // 1 doc 'config'
 let planejPlanos={}; // {setor_semana: {dias:{Seg:[{cod,qtd}], ...}}}
 
-onSnapshot(collection(db,'planejProdutos'), snap=>{
+// Wrap listeners em setTimeout para não bloquear inicialização
+setTimeout(()=>{
   try{
-    planejProdutos=snap.docs.map(d=>({firestoreId:d.id,...d.data()}));
-    atualizarTela();
-    const ativa=document.querySelector('.screen.active');
-    if(ativa&&ativa.id==='s-planejamento'&&typeof renderPlanejamento==='function') renderPlanejamento();
-  }catch(e){ console.error('planejProdutos snap:',e); }
-});
+    onSnapshot(collection(db,'planejProdutos'), snap=>{
+      try{
+        planejProdutos=snap.docs.map(d=>({firestoreId:d.id,...d.data()}));
+        atualizarTela();
+        const ativa=document.querySelector('.screen.active');
+        if(ativa&&ativa.id==='s-planejamento'&&typeof renderPlanejamento==='function') renderPlanejamento();
+      }catch(e){ console.error('planejProdutos snap:',e); }
+    });
+  }catch(e){ console.error('planejProdutos listener setup:',e); }
 
-onSnapshot(doc(db,'planejConfig','config'), snap=>{
   try{
-    if(snap.exists()) planejConfig={...planejConfig, ...snap.data()};
-    const ativa=document.querySelector('.screen.active');
-    if(ativa&&ativa.id==='s-planejamento'&&typeof renderPlanejamento==='function') renderPlanejamento();
-  }catch(e){ console.error('planejConfig snap:',e); }
-});
+    onSnapshot(doc(db,'planejConfig','config'), snap=>{
+      try{
+        if(snap.exists()) planejConfig={...planejConfig, ...snap.data()};
+        const ativa=document.querySelector('.screen.active');
+        if(ativa&&ativa.id==='s-planejamento'&&typeof renderPlanejamento==='function') renderPlanejamento();
+      }catch(e){ console.error('planejConfig snap:',e); }
+    });
+  }catch(e){ console.error('planejConfig listener setup:',e); }
 
-onSnapshot(collection(db,'planejPlanos'), snap=>{
   try{
-    planejPlanos={};
-    snap.docs.forEach(d=>{ planejPlanos[d.id]=d.data(); });
-    const ativa=document.querySelector('.screen.active');
-    if(ativa&&ativa.id==='s-planejamento'&&typeof renderPlanejamento==='function') renderPlanejamento();
-  }catch(e){ console.error('planejPlanos snap:',e); }
-});
+    onSnapshot(collection(db,'planejPlanos'), snap=>{
+      try{
+        planejPlanos={};
+        snap.docs.forEach(d=>{ planejPlanos[d.id]=d.data(); });
+        const ativa=document.querySelector('.screen.active');
+        if(ativa&&ativa.id==='s-planejamento'&&typeof renderPlanejamento==='function') renderPlanejamento();
+      }catch(e){ console.error('planejPlanos snap:',e); }
+    });
+  }catch(e){ console.error('planejPlanos listener setup:',e); }
+}, 1000);
+*/
 
 // ===== INCONFORMIDADES (Firebase) =====
 let inconformidades=[]; // Firestore 'inconformidades'
