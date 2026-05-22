@@ -432,11 +432,16 @@ window.processarVendas = async () => {
     
     if(cols.length < 15) return;
     
-    const cod = String(cols[1]).trim();
+    let cod = String(cols[1]).trim();
     const desc = String(cols[2]).trim();
     const qtd = parseFloat(String(cols[14]).replace(',','.')) || 0;
     const dataStr = String(cols[12]).trim(); // Ex: "20/04/2026"
     const dia = getWeekDay(dataStr); // Converte para "Seg", "Ter", etc
+    
+    // CORRIGIDO: padronizar código (3 → 03, 12 → 12)
+    if(cod && !isNaN(parseInt(cod))){
+      cod = cod.padStart(2, '0');
+    }
     
     // Debug das primeiras 3 linhas VÁLIDAS
     if(idx < 5 && cod && dia){
@@ -476,28 +481,57 @@ window.processarEstoque = async () => {
   const texto = document.getElementById('estoque-textarea').value;
   const linhas = texto.trim().split('\n');
   const batch = [];
+  let processados = 0;
+  let ignorados = 0;
   
-  linhas.forEach(linha => {
+  linhas.forEach((linha, idx) => {
+    // Pular cabeçalho
+    if(idx === 0 && linha.includes('Produto')) return;
+    
     const partes = linha.split('\t');
     if(partes.length < 2) return;
     
-    const cod = String(partes[0]).trim();
+    let cod = String(partes[0]).trim();
     let estoqueStr = String(partes[1]).trim();
     
-    // CORRIGIDO: formato brasileiro
-    // Remove vírgula final: "48," → "48"
-    // Remove pontos (milhar): "1.476,47" → "1476,47"
-    // Troca vírgula por ponto (decimal): "1476,47" → "1476.47"
-    estoqueStr = estoqueStr.replace(/,$/,'').replace(/\./g,'').replace(',','.');
+    // CORRIGIDO: padronizar código com zeros (3 → 03, 7 → 07)
+    if(cod && !isNaN(parseInt(cod))){
+      cod = cod.padStart(2, '0');
+    }
+    
+    // CORRIGIDO: formato brasileiro + valores inválidos
+    // Só vírgula: "," → "0"
+    // Começa com vírgula: ",122" → "0,122" → "0.122"
+    // Termina com vírgula: "48," → "48"
+    // Milhar + decimal: "1.476,47" → "1476,47" → "1476.47"
+    if(estoqueStr === ',') {
+      estoqueStr = '0';
+    } else {
+      // Se começa com vírgula, adiciona zero: ",122" → "0,122"
+      if(estoqueStr.startsWith(',')) {
+        estoqueStr = '0' + estoqueStr;
+      }
+      // Remove vírgula final: "48," → "48"
+      estoqueStr = estoqueStr.replace(/,$/,'');
+      // Remove pontos (milhar): "1.476,47" → "1476,47"
+      estoqueStr = estoqueStr.replace(/\./g,'');
+      // Troca vírgula por ponto (decimal): "1476,47" → "1476.47"
+      estoqueStr = estoqueStr.replace(',','.');
+    }
     const estoque = parseFloat(estoqueStr) || 0;
     
-    if(!cod || isNaN(parseInt(cod)) || isNaN(estoque)) return;
+    if(!cod || isNaN(parseInt(cod))){
+      ignorados++;
+      return;
+    }
     
     batch.push(setDoc(doc(db, 'planejProdutos', cod), {estoque}, {merge: true}));
+    processados++;
   });
   
   await Promise.all(batch);
-  alert('✓ '+batch.length+' estoques atualizados!');
+  console.log('✅ Processados:', processados, '| Ignorados:', ignorados);
+  alert('✓ '+processados+' estoques atualizados!');
   fecharModal();
 };
 
