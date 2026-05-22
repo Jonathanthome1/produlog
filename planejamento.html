@@ -461,11 +461,15 @@ td.num{text-align:center}
 };
 
 window.salvarPlano = async () => {
+  console.log('🔵 salvarPlano() chamada');
+  
   // Verificar se tem algum planejamento
   const temPlano = Object.keys(plano).some(cod => {
     const pl = plano[cod];
     return DIAS.some(d => (pl[d] || 0) > 0);
   });
+  
+  console.log('Tem plano?', temPlano, '| Produtos planejados:', Object.keys(plano).length);
   
   if(!temPlano){
     alert('Nenhum plano para salvar! Preencha os dias da semana primeiro.');
@@ -475,11 +479,20 @@ window.salvarPlano = async () => {
   const agora = new Date();
   const dataHora = agora.toLocaleString('pt-BR');
   
+  console.log('📝 Pedindo nome do plano...');
+  
   // NOVO: Pedir nome do plano
   const nomeDefault = 'Plano ' + dataHora;
   const nome = prompt('Nome do plano:', nomeDefault);
   
-  if(!nome) return; // Cancelou
+  console.log('Nome digitado:', nome);
+  
+  if(!nome) {
+    console.log('❌ Usuário cancelou');
+    return;
+  }
+  
+  console.log('💾 Salvando plano...');
   
   const id = agora.toISOString().replace(/[:.]/g,'-').slice(0,19);
   
@@ -494,19 +507,29 @@ window.salvarPlano = async () => {
     topClientes: p.topClientes
   }));
   
+  console.log('Snapshot:', produtosSnapshot.length, 'produtos');
+  
   const planoData = {
     id,
     nome: nome.trim(),
     setor: setorAtivo,
     dataHora,
     timestamp: agora.getTime(),
-    multiplicador: mult(), // NOVO: salvar multiplicador também
+    multiplicador: mult(),
     planos: {...plano},
-    produtos: produtosSnapshot // NOVO: snapshot completo
+    produtos: produtosSnapshot
   };
   
-  await setDoc(doc(db, 'planosHistorico', id), planoData);
-  alert('✓ Plano salvo com sucesso!\n' + nome + '\n' + produtosSnapshot.length + ' produtos salvos');
+  console.log('Dados a salvar:', planoData);
+  
+  try {
+    await setDoc(doc(db, 'planosHistorico', id), planoData);
+    console.log('✅ Salvo com sucesso!');
+    alert('✓ Plano salvo com sucesso!\n' + nome + '\n' + produtosSnapshot.length + ' produtos salvos');
+  } catch(err) {
+    console.error('❌ Erro ao salvar:', err);
+    alert('Erro ao salvar: ' + err.message);
+  }
 };
 
 window.abrirHistorico = async () => {
