@@ -3377,68 +3377,11 @@
 
 
   <!-- PLANEJAMENTO DE PRODUÇÃO -->
-  <div class="screen" id="s-planejamento">
-    <div class="mc-header">
-      <button class="mc-header-back" onclick="goTo(\'s-adm-hub\')">‹</button>
-      <div class="mc-brand">
-        <div class="mc-brand-logo">MC</div>
-        <div class="mc-brand-text">
-          <div class="mc-brand-name">Monte Castelo</div>
-          <div class="mc-brand-sub">Planejamento de Produção</div>
-        </div>
-      </div>
-      <div class="mc-divider-v"></div>
-      <div class="mc-page-info">
-        <div class="mc-page-title">📊 Planejamento</div>
-        <div class="mc-page-sub" id="planej-sub">Carregando...</div>
-      </div>
-    </div>
-    <div style="flex:1;padding:14px 16px;background:var(--bg-page);overflow-y:auto;" id="planej-content">
-      <div style="padding:40px;text-align:center;color:var(--text-secondary);">Carregando planejamento...</div>
-    </div>
-  </div>
-
+  
   <!-- PLANEJAMENTO - IMPORTAR VENDAS -->
-  <div class="screen" id="s-planej-import-vendas">
-    <div class="mc-header">
-      <button class="mc-header-back" onclick="goTo(\'s-planejamento\')">‹</button>
-      <div class="mc-brand">
-        <div class="mc-brand-logo">MC</div>
-        <div class="mc-brand-text">
-          <div class="mc-brand-name">Monte Castelo</div>
-          <div class="mc-brand-sub">Importar Vendas</div>
-        </div>
-      </div>
-      <div class="mc-divider-v"></div>
-      <div class="mc-page-info">
-        <div class="mc-page-title">📥 Importar Vendas</div>
-        <div class="mc-page-sub">Cole dados do Excel</div>
-      </div>
-    </div>
-    <div style="flex:1;padding:14px 16px;background:var(--bg-page);overflow-y:auto;" id="planej-imp-vendas-content"></div>
-  </div>
-
+  
   <!-- PLANEJAMENTO - IMPORTAR ESTOQUE -->
-  <div class="screen" id="s-planej-import-estoque">
-    <div class="mc-header">
-      <button class="mc-header-back" onclick="goTo(\'s-planejamento\')">‹</button>
-      <div class="mc-brand">
-        <div class="mc-brand-logo">MC</div>
-        <div class="mc-brand-text">
-          <div class="mc-brand-name">Monte Castelo</div>
-          <div class="mc-brand-sub">Importar Estoque</div>
-        </div>
-      </div>
-      <div class="mc-divider-v"></div>
-      <div class="mc-page-info">
-        <div class="mc-page-title">📦 Importar Estoque</div>
-        <div class="mc-page-sub">Cole código + quantidade</div>
-      </div>
-    </div>
-    <div style="flex:1;padding:14px 16px;background:var(--bg-page);overflow-y:auto;" id="planej-imp-estoque-content"></div>
-  </div>
-
-<script type="module">
+  <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getFirestore, collection, addDoc, deleteDoc, setDoc, onSnapshot, doc, updateDoc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
@@ -3604,9 +3547,7 @@ function goTo(id){
   if(id==='s-massa-lanc') renderMassaList();
   if(id==='s-recheio-lanc') renderRecheioList();
   if(id==='s-emb-sel-data') renderSelDataEmb();
-  if(id==='s-planejamento'&&typeof renderPlanejamento==='function') renderPlanejamento();
-  if(id==='s-planej-import-vendas'&&typeof renderImportVendas==='function') renderImportVendas();
-  if(id==='s-planej-import-estoque'&&typeof renderImportEstoque==='function') renderImportEstoque();
+
   if(id==='s-exp-sel-data') renderSelDataExp();
   if(id==='s-meus-reg') renderMeusReg();
   if(id==='s-conf-massas') renderConfMassas();
@@ -7597,47 +7538,7 @@ function aplicarFarinhasConfigFirebase(){
 
 
 
-// ===== PLANEJAMENTO DE PRODUÇÃO (Firebase) =====
-let planejProdutos = [];
-let planejConfig = {multiplicador: 2};
-let planejPlanos = {};
 
-// Inicializar listeners apenas quando Firebase estiver pronto e telas carregadas
-function inicializarPlanejamentoListeners() {
-  if(typeof db === 'undefined' || !db) {
-    console.log('DB não pronto, tentando novamente em 2s...');
-    setTimeout(inicializarPlanejamentoListeners, 2000);
-    return;
-  }
-  
-  try {
-    console.log('Inicializando listeners de planejamento...');
-    
-    onSnapshot(collection(db, 'planejProdutos'), snap => {
-      planejProdutos = snap.docs.map(d => ({firestoreId: d.id, ...d.data()}));
-      const ativa = document.querySelector('.screen.active');
-      if(ativa?.id === 's-planejamento' && typeof renderPlanejamento === 'function') {
-        renderPlanejamento();
-      }
-    }, err => console.log('planejProdutos listener (coleção pode não existir ainda):', err.message));
-    
-    onSnapshot(doc(db, 'planejConfig', 'config'), snap => {
-      if(snap.exists()) planejConfig = {...planejConfig, ...snap.data()};
-    }, err => console.log('planejConfig listener:', err.message));
-    
-    onSnapshot(collection(db, 'planejPlanos'), snap => {
-      planejPlanos = {};
-      snap.docs.forEach(d => { planejPlanos[d.id] = d.data(); });
-    }, err => console.log('planejPlanos listener:', err.message));
-    
-    console.log('Listeners de planejamento inicializados');
-  } catch(e) {
-    console.error('Erro ao inicializar listeners de planejamento:', e);
-  }
-}
-
-// Chamar após 3 segundos (tempo para Firebase e app inicializarem)
-setTimeout(inicializarPlanejamentoListeners, 3000);
 
 // ===== INCONFORMIDADES (Firebase) =====
 let inconformidades=[]; // Firestore 'inconformidades'
@@ -11750,25 +11651,7 @@ function limparCompensacaoPlanej(){
 
 
 
-// Planejamento - Stubs vazios para teste
-function renderPlanejamento(){
-  const el=document.getElementById('planej-content');
-  if(el) el.textContent='Teste: renderPlanejamento funcionando';
-}
 
-function renderImportVendas(){
-  const el=document.getElementById('planej-imp-vendas-content');
-  if(el) el.textContent='Teste: renderImportVendas funcionando';
-}
-
-function renderImportEstoque(){
-  const el=document.getElementById('planej-imp-estoque-content');
-  if(el) el.textContent='Teste: renderImportEstoque funcionando';
-}
-
-window.renderPlanejamento=renderPlanejamento;
-window.renderImportVendas=renderImportVendas;
-window.renderImportEstoque=renderImportEstoque;
 
 window.goTo=goTo; window.abrirPin=abrirPin; window.pinDigit=pinDigit; window.pinDel=pinDel;
 window.iniciarNovoReg=iniciarNovoReg; window.renderConfMassas=renderConfMassas; window.toggleManual=toggleManual;
