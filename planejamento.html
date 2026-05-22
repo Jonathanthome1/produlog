@@ -207,7 +207,7 @@ textarea{width:100%;height:300px;padding:12px;border:1px solid var(--border);bor
 <div id="modal-historico" class="modal">
   <div class="modal-content">
     <div class="modal-header">
-      <div class="modal-title">📚 Histórico de Planos</div>
+      <div class="modal-title" id="historico-titulo">📚 Histórico de Planos</div>
       <button class="modal-close" onclick="fecharModal()">✕</button>
     </div>
     <div class="modal-body" id="historico-body" style="max-height:60vh;overflow-y:auto"></div>
@@ -486,6 +486,7 @@ window.salvarPlano = async () => {
   const planoData = {
     id,
     nome: nome.trim(),
+    setor: setorAtivo, // NOVO: salvar setor (quadra ou conf)
     dataHora,
     timestamp: agora.getTime(),
     planos: {...plano}
@@ -503,11 +504,19 @@ window.abrirHistorico = async () => {
 window.abrirHistorico = async () => {
   try {
     const snapshot = await getDocs(collection(db, 'planosHistorico'));
-    const historico = snapshot.docs.map(d => ({id: d.id, ...d.data()}));
+    let historico = snapshot.docs.map(d => ({id: d.id, ...d.data()}));
+    
+    // NOVO: Filtrar por setor ativo
+    historico = historico.filter(h => h.setor === setorAtivo || !h.setor); // !h.setor = planos antigos
+    
     historico.sort((a,b) => b.timestamp - a.timestamp);
     
+    const setorNome = setorAtivo === 'quadra' ? '🍞 Quadra' : '🥐 Confeitaria';
+    
+    document.getElementById('historico-titulo').textContent = '📚 Histórico - ' + setorNome;
+    
     if(historico.length === 0){
-      document.getElementById('historico-body').innerHTML = '<p style="color:#666;text-align:center;padding:20px">Nenhum plano salvo ainda</p>';
+      document.getElementById('historico-body').innerHTML = '<p style="color:#666;text-align:center;padding:20px">Nenhum plano salvo para '+setorNome+'</p>';
     } else {
       document.getElementById('historico-body').innerHTML = historico.map(h => {
         // CORRIGIDO: fallback para planos antigos sem nome
