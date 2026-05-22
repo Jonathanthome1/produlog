@@ -554,19 +554,30 @@ async function processarImportEstoque() {
     const linhas = txt.split('\n').filter(l => l.trim());
     const batch = [];
     let count = 0;
+    let skipFirst = false;
     
-    for(const linha of linhas) {
+    // Detectar cabeçalho
+    if(linhas[0] && (linhas[0].toLowerCase().includes('produto') || linhas[0].toLowerCase().includes('estoque'))) {
+      skipFirst = true;
+    }
+    
+    for(let i = skipFirst ? 1 : 0; i < linhas.length; i++) {
+      const linha = linhas[i];
       const partes = linha.split('\t');
       if(partes.length < 2) continue;
       
       const cod = partes[0].trim();
-      const qtd = parseInt(partes[1]) || 0;
       
-      if(cod) {
-        batch.push(updateDoc(doc(db, 'planejProdutos', cod), {
+      // Limpar quantidade: remover vírgulas no final, trocar vírgula por ponto
+      let qtdStr = partes[1].trim().replace(/,$/g, '').replace(',', '.');
+      const qtd = parseFloat(qtdStr) || 0;
+      
+      // Validar código (deve ser numérico)
+      if(cod && !isNaN(parseInt(cod))) {
+        batch.push(setDoc(doc(db, 'planejProdutos', cod), {
           estoque: qtd,
           atualizadoEm: agora()
-        }));
+        }, {merge: true}));
         count++;
       }
     }
