@@ -448,7 +448,11 @@ window.processarVendas = async () => {
     const cols = linha.split('\t');
     
     // Pular cabeçalho
-    if(idx === 0 && cols[1] === 'Produto') return;
+    if(idx === 0 && cols[1] === 'Produto') {
+      console.log('📋 Cabeçalho detectado - Total de colunas:', cols.length);
+      console.log('   Coluna 26 (AA?):', cols[26]);
+      return;
+    }
     
     if(cols.length < 15) return;
     
@@ -466,7 +470,8 @@ window.processarVendas = async () => {
     
     // Debug das primeiras 3 linhas VÁLIDAS
     if(idx < 5 && cod && dia){
-      console.log('✅ Linha', idx, '- Código:', cod, '| Cliente:', cliente.substring(0,15), '| Dia:', dia, '| Qtd:', qtd);
+      console.log('✅ Linha', idx, '- Código:', cod, '| Cliente:', cliente || '(vazio)', '| Dia:', dia, '| Qtd:', qtd);
+      console.log('   Total colunas:', cols.length, '| Col[26]:', cols[26] || '(undefined)');
     }
     
     if(!cod || isNaN(parseInt(cod)) || !dia || qtd <= 0) return;
