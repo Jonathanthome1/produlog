@@ -225,14 +225,25 @@ onSnapshot(collection(db, 'planejProdutos'), snap => {
   planejProdutos = snap.docs.map(d => ({firestoreId: d.id, ...d.data()}));
   console.log('🔥 Firebase: Produtos carregados:', planejProdutos.length);
   
-  // ATUALIZAR A INTERFACE IMEDIATAMENTE
-  atualizarInterface();
+  // ATUALIZAR A INTERFACE
+  try {
+    console.log('🎨 Chamando atualizarInterface()...');
+    if(typeof atualizarInterface === 'function') {
+      atualizarInterface();
+      console.log('✅ Interface atualizada!');
+    } else {
+      console.error('❌ atualizarInterface não está definida!');
+    }
+  } catch(e) {
+    console.error('❌ Erro ao atualizar interface:', e);
+  }
 }, err => {
-  console.log('⏳ Aguardando dados em planejProdutos...');
-  atualizarInterface();
+  console.log('⏳ Erro no listener:', err);
 });
 
 function atualizarInterface() {
+  console.log('🎨 === atualizarInterface EXECUTANDO ===');
+  console.log('  planejProdutos.length:', planejProdutos.length);
   const container = document.querySelector('.container');
   if(!container) return;
   
