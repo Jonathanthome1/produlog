@@ -216,7 +216,7 @@ textarea{width:100%;height:300px;padding:12px;border:1px solid var(--border);bor
 
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
-import { getFirestore, collection, doc, setDoc, onSnapshot, getDocs, deleteDoc } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
+import { getFirestore, collection, doc, setDoc, onSnapshot, getDocs, getDoc, deleteDoc } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
 
 const app = initializeApp({
   apiKey: "AIzaSyDfFT80SMTsSMml0BpWYLDBrxrFGFG5Jk78",
@@ -508,20 +508,36 @@ window.abrirHistorico = async () => {
 };
 
 window.carregarPlano = async (id) => {
-  const docSnap = await getDocs(collection(db, 'planosHistorico'));
-  const planoSalvo = docSnap.docs.find(d => d.id === id);
-  
-  if(!planoSalvo){
-    alert('Plano não encontrado!');
-    return;
+  try {
+    const docRef = doc(db, 'planosHistorico', id);
+    const docSnap = await getDoc(docRef);
+    
+    if(!docSnap.exists()){
+      alert('Plano não encontrado!');
+      return;
+    }
+    
+    const data = docSnap.data();
+    console.log('📥 Carregando plano:', data.dataHora);
+    console.log('Planos salvos:', data.planos);
+    console.log('Exemplo:', Object.entries(data.planos).slice(0, 3));
+    
+    // Limpar plano atual
+    Object.keys(plano).forEach(k => delete plano[k]);
+    
+    // Copiar plano salvo
+    Object.assign(plano, data.planos);
+    
+    console.log('✅ Plano atual após carregar:', plano);
+    console.log('Total de produtos planejados:', Object.keys(plano).length);
+    
+    fecharModal();
+    render();
+    alert('✓ Plano carregado!\\n' + data.dataHora + '\\n' + Object.keys(plano).length + ' produtos');
+  } catch(err) {
+    console.error('Erro ao carregar plano:', err);
+    alert('Erro ao carregar plano: ' + err.message);
   }
-  
-  const data = planoSalvo.data();
-  Object.assign(plano, data.planos);
-  
-  fecharModal();
-  render();
-  alert('✓ Plano carregado!\\n' + data.dataHora);
 };
 
 window.excluirPlano = async (id) => {
