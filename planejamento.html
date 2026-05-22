@@ -483,17 +483,30 @@ window.salvarPlano = async () => {
   
   const id = agora.toISOString().replace(/[:.]/g,'-').slice(0,19);
   
+  // NOVO: Salvar snapshot completo dos produtos
+  const produtosSnapshot = produtos.map(p => ({
+    cod: p.cod,
+    desc: p.desc,
+    setor: p.setor,
+    estoque: p.estoque,
+    totalPeriodo: p.totalPeriodo,
+    porDia: p.porDia,
+    topClientes: p.topClientes
+  }));
+  
   const planoData = {
     id,
     nome: nome.trim(),
-    setor: setorAtivo, // NOVO: salvar setor (quadra ou conf)
+    setor: setorAtivo,
     dataHora,
     timestamp: agora.getTime(),
-    planos: {...plano}
+    multiplicador: mult(), // NOVO: salvar multiplicador também
+    planos: {...plano},
+    produtos: produtosSnapshot // NOVO: snapshot completo
   };
   
   await setDoc(doc(db, 'planosHistorico', id), planoData);
-  alert('✓ Plano salvo com sucesso!\n' + nome);
+  alert('✓ Plano salvo com sucesso!\n' + nome + '\n' + produtosSnapshot.length + ' produtos salvos');
 };
 
 window.abrirHistorico = async () => {
@@ -557,21 +570,31 @@ window.carregarPlano = async (id) => {
     
     const data = docSnap.data();
     console.log('📥 Carregando plano:', data.dataHora);
-    console.log('Planos salvos:', data.planos);
-    console.log('Exemplo:', Object.entries(data.planos).slice(0, 3));
+    console.log('Produtos salvos:', data.produtos?.length || 0);
+    console.log('Planos:', Object.keys(data.planos).length);
     
     // Limpar plano atual
     Object.keys(plano).forEach(k => delete plano[k]);
     
-    // Copiar plano salvo
+    // Copiar planejamento
     Object.assign(plano, data.planos);
     
-    console.log('✅ Plano atual após carregar:', plano);
-    console.log('Total de produtos planejados:', Object.keys(plano).length);
+    // NOVO: Restaurar produtos (snapshot completo)
+    if(data.produtos && data.produtos.length > 0){
+      produtos = [...data.produtos];
+      console.log('✅ Produtos restaurados do snapshot:', produtos.length);
+    }
+    
+    // NOVO: Restaurar multiplicador se existir
+    if(data.multiplicador){
+      document.getElementById('mult').value = data.multiplicador;
+    }
+    
+    console.log('✅ Plano carregado completamente');
     
     fecharModal();
     render();
-    alert('✓ Plano carregado!\\n' + data.dataHora + '\\n' + Object.keys(plano).length + ' produtos');
+    alert('✓ Plano carregado!\n' + data.dataHora + '\n' + Object.keys(plano).length + ' produtos planejados\n' + produtos.length + ' produtos no snapshot');
   } catch(err) {
     console.error('Erro ao carregar plano:', err);
     alert('Erro ao carregar plano: ' + err.message);
