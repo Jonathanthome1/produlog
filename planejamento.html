@@ -500,27 +500,40 @@ window.abrirHistorico = async () => {
   const historico = snapshot.docs.map(d => ({id: d.id, ...d.data()}));
   historico.sort((a,b) => b.timestamp - a.timestamp);
   
-  if(historico.length === 0){
-    document.getElementById('historico-body').innerHTML = '<p style="color:#666;text-align:center;padding:20px">Nenhum plano salvo ainda</p>';
-  } else {
-    document.getElementById('historico-body').innerHTML = historico.map(h => 
-      '<div style="border:1px solid #ddd;padding:12px;margin-bottom:8px;border-radius:8px">'+
-        '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">'+
-          '<div style="flex:1">'+
-            '<div style="font-size:15px;font-weight:700;color:#1e3a8a;margin-bottom:4px">'+h.nome+'</div>'+
-            '<div style="font-size:11px;color:#666">'+h.dataHora+' • '+Object.keys(h.planos).length+' produtos</div>'+
+window.abrirHistorico = async () => {
+  try {
+    const snapshot = await getDocs(collection(db, 'planosHistorico'));
+    const historico = snapshot.docs.map(d => ({id: d.id, ...d.data()}));
+    historico.sort((a,b) => b.timestamp - a.timestamp);
+    
+    if(historico.length === 0){
+      document.getElementById('historico-body').innerHTML = '<p style="color:#666;text-align:center;padding:20px">Nenhum plano salvo ainda</p>';
+    } else {
+      document.getElementById('historico-body').innerHTML = historico.map(h => {
+        // CORRIGIDO: fallback para planos antigos sem nome
+        const nome = h.nome || 'Plano ' + h.dataHora;
+        return '<div style="border:1px solid #ddd;padding:12px;margin-bottom:8px;border-radius:8px">'+
+          '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">'+
+            '<div style="flex:1">'+
+              '<div style="font-size:15px;font-weight:700;color:#1e3a8a;margin-bottom:4px">'+nome+'</div>'+
+              '<div style="font-size:11px;color:#666">'+h.dataHora+' • '+Object.keys(h.planos).length+' produtos</div>'+
+            '</div>'+
+            '<button class="btn btn-primary" style="padding:4px 8px;font-size:10px;background:#f59e0b" onclick="editarNomePlano(\''+h.id+'\',\''+nome.replace(/'/g,"\\'")+'\')" title="Editar nome">✏️</button>'+
           '</div>'+
-          '<button class="btn btn-primary" style="padding:4px 8px;font-size:10px;background:#f59e0b" onclick="editarNomePlano(\''+h.id+'\',\''+h.nome.replace(/'/g,"\\'")+'\')" title="Editar nome">✏️</button>'+
-        '</div>'+
-        '<div style="display:flex;gap:5px">'+
-          '<button class="btn btn-primary" style="padding:6px 12px;font-size:11px;flex:1" onclick="carregarPlano(\''+h.id+'\')">Carregar</button>'+
-          '<button class="btn btn-danger" style="padding:6px 12px;font-size:11px" onclick="excluirPlano(\''+h.id+'\')">Excluir</button>'+
-        '</div>'+
-      '</div>'
-    ).join('');
+          '<div style="display:flex;gap:5px">'+
+            '<button class="btn btn-primary" style="padding:6px 12px;font-size:11px;flex:1" onclick="carregarPlano(\''+h.id+'\')">Carregar</button>'+
+            '<button class="btn btn-danger" style="padding:6px 12px;font-size:11px" onclick="excluirPlano(\''+h.id+'\')">Excluir</button>'+
+          '</div>'+
+        '</div>';
+      }).join('');
+    }
+    
+    document.getElementById('modal-historico').classList.add('show');
+  } catch(err) {
+    console.error('Erro ao abrir histórico:', err);
+    alert('Erro ao abrir histórico: ' + err.message);
   }
-  
-  document.getElementById('modal-historico').classList.add('show');
+};
 };
 
 window.carregarPlano = async (id) => {
