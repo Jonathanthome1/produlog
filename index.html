@@ -2684,14 +2684,7 @@
           </div>
           <span class="mc-sector-arrow">›</span>
         </button>
-        <button class="mc-sector-card" onclick="goToAdmin('s-planejamento')" style="border-left:3px solid var(--mc-dourado);background:linear-gradient(135deg, var(--bg-primary) 0%, var(--mc-dourado-claro) 100%);">
-          <div class="mc-sector-icon gold">📊</div>
-          <div class="mc-sector-info">
-            <div class="mc-sector-title">Planejamento de Produção</div>
-            <div class="mc-sector-desc">Importar vendas, ver pico por dia, montar plano</div>
-          </div>
-          <span class="mc-sector-arrow">›</span>
-        </button>
+        
       </div>
 
     </div>
@@ -3128,90 +3121,6 @@
   </div>
 
     <!-- PLANEJAMENTO DE PRODUÇÃO - HOME -->
-  <div class="screen" id="s-planejamento">
-    <div class="mc-header">
-      <button class="mc-header-back" onclick="goTo('s-adm-hub')">‹</button>
-      <div class="mc-brand">
-        <div class="mc-brand-logo">MC</div>
-        <div class="mc-brand-text">
-          <div class="mc-brand-name">Monte Castelo</div>
-          <div class="mc-brand-sub">Planejamento de Produção</div>
-        </div>
-      </div>
-      <div class="mc-divider-v"></div>
-      <div class="mc-page-info">
-        <div class="mc-page-title">📊 Planejamento</div>
-        <div class="mc-page-sub" id="planej-sub">Carregando...</div>
-      </div>
-      <div class="mc-header-actions">
-        <button class="mc-act-btn-secondary" onclick="goTo('s-planej-import-vendas')">📥 Vendas</button>
-        <button class="mc-act-btn-secondary" onclick="goTo('s-planej-import-estoque')">📦 Estoque</button>
-      </div>
-    </div>
-    <div style="flex:1;padding:14px 16px;background:var(--bg-page);overflow-y:auto;" id="planej-content"></div>
-  </div>
-
-  <!-- PLANEJAMENTO - IMPORTAR VENDAS -->
-  <div class="screen" id="s-planej-import-vendas">
-    <div class="mc-header">
-      <button class="mc-header-back" onclick="goTo('s-planejamento')">‹</button>
-      <div class="mc-brand">
-        <div class="mc-brand-logo">MC</div>
-        <div class="mc-brand-text">
-          <div class="mc-brand-name">Monte Castelo</div>
-          <div class="mc-brand-sub">Importar Vendas</div>
-        </div>
-      </div>
-      <div class="mc-divider-v"></div>
-      <div class="mc-page-info">
-        <div class="mc-page-title">📥 Importar Histórico de Vendas</div>
-        <div class="mc-page-sub">Excel do PDV (4 semanas)</div>
-      </div>
-    </div>
-    <div style="flex:1;padding:14px 16px;background:var(--bg-page);overflow-y:auto;" id="planej-imp-vendas-content"></div>
-  </div>
-
-  <!-- PLANEJAMENTO - IMPORTAR ESTOQUE -->
-  <div class="screen" id="s-planej-import-estoque">
-    <div class="mc-header">
-      <button class="mc-header-back" onclick="goTo('s-planejamento')">‹</button>
-      <div class="mc-brand">
-        <div class="mc-brand-logo">MC</div>
-        <div class="mc-brand-text">
-          <div class="mc-brand-name">Monte Castelo</div>
-          <div class="mc-brand-sub">Importar Estoque</div>
-        </div>
-      </div>
-      <div class="mc-divider-v"></div>
-      <div class="mc-page-info">
-        <div class="mc-page-title">📦 Importar Estoque Atual</div>
-        <div class="mc-page-sub">Cole código + quantidade</div>
-      </div>
-    </div>
-    <div style="flex:1;padding:14px 16px;background:var(--bg-page);overflow-y:auto;" id="planej-imp-estoque-content"></div>
-  </div>
-
-  <!-- PLANEJAMENTO - DETALHE PRODUTO (modal) -->
-  <div class="screen" id="s-planej-detalhe">
-    <div class="mc-header">
-      <button class="mc-header-back" onclick="goTo('s-planejamento')">‹</button>
-      <div class="mc-brand">
-        <div class="mc-brand-logo">MC</div>
-        <div class="mc-brand-text">
-          <div class="mc-brand-name">Monte Castelo</div>
-          <div class="mc-brand-sub">Detalhe</div>
-        </div>
-      </div>
-      <div class="mc-divider-v"></div>
-      <div class="mc-page-info">
-        <div class="mc-page-title" id="planej-det-title">Produto</div>
-        <div class="mc-page-sub" id="planej-det-sub"></div>
-      </div>
-    </div>
-    <div style="flex:1;padding:14px 16px;background:var(--bg-page);overflow-y:auto;" id="planej-det-content"></div>
-  </div>
-
-<!-- ESTOQUE EMBALAGEM FORM -->
   <div class="screen" id="s-estoque-emb-form">
     <div class="mc-header">
       <button class="mc-header-back" onclick="goTo('s-estoque-emb')">‹</button>
@@ -3697,9 +3606,7 @@ function goTo(id){
   if((id==='s-emb-sel-data'||id==='s-emb-home')&&typeof renderBannerPresencaSetor==='function') renderBannerPresencaSetor('emb','banner-presenca-emb');
   if(id==='s-plano-quadra'&&typeof renderPlanoQuadra==='function') renderPlanoQuadra();
   if(id==='s-emb-sel-data'&&typeof atualizarBadgeProdutosEmb==='function') atualizarBadgeProdutosEmb();
-  if(id==='s-planejamento'&&typeof renderPlanejamento==='function') renderPlanejamento();
-  if(id==='s-planej-import-vendas'&&typeof renderImportVendas==='function') renderImportVendas();
-  if(id==='s-planej-import-estoque'&&typeof renderImportEstoque==='function') renderImportEstoque();
+  
   if(id==='s-emb-sel-data'&&typeof atualizarBadgePrioridadesEmb==='function') atualizarBadgePrioridadesEmb();
   if(id==='s-emb-produtos-pendentes'&&typeof renderEmbSelData==='function') renderEmbSelData();
   if(id==='s-emb-inconformidades') renderInconformidades();
@@ -7620,47 +7527,7 @@ function aplicarFarinhasConfigFirebase(){
   }
 }
 
-/*
-// ===== PLANEJAMENTO DE PRODUÇÃO (Firebase) ===== [TEMPORARIAMENTE DESABILITADO PARA DEBUG]
-let planejProdutos=[]; // 1 doc por código: {cod, desc, setor, estoque, mediaSemanal, totalPeriodo, porDia, picoDia, picoPct, topClientes, vendasSem, semanas, atualizadoEm}
-let planejConfig={multiplicador:2}; // 1 doc 'config'
-let planejPlanos={}; // {setor_semana: {dias:{Seg:[{cod,qtd}], ...}}}
 
-// Wrap listeners em setTimeout para não bloquear inicialização
-setTimeout(()=>{
-  try{
-    onSnapshot(collection(db,'planejProdutos'), snap=>{
-      try{
-        planejProdutos=snap.docs.map(d=>({firestoreId:d.id,...d.data()}));
-        atualizarTela();
-        const ativa=document.querySelector('.screen.active');
-        if(ativa&&ativa.id==='s-planejamento'&&typeof renderPlanejamento==='function') renderPlanejamento();
-      }catch(e){ console.error('planejProdutos snap:',e); }
-    });
-  }catch(e){ console.error('planejProdutos listener setup:',e); }
-
-  try{
-    onSnapshot(doc(db,'planejConfig','config'), snap=>{
-      try{
-        if(snap.exists()) planejConfig={...planejConfig, ...snap.data()};
-        const ativa=document.querySelector('.screen.active');
-        if(ativa&&ativa.id==='s-planejamento'&&typeof renderPlanejamento==='function') renderPlanejamento();
-      }catch(e){ console.error('planejConfig snap:',e); }
-    });
-  }catch(e){ console.error('planejConfig listener setup:',e); }
-
-  try{
-    onSnapshot(collection(db,'planejPlanos'), snap=>{
-      try{
-        planejPlanos={};
-        snap.docs.forEach(d=>{ planejPlanos[d.id]=d.data(); });
-        const ativa=document.querySelector('.screen.active');
-        if(ativa&&ativa.id==='s-planejamento'&&typeof renderPlanejamento==='function') renderPlanejamento();
-      }catch(e){ console.error('planejPlanos snap:',e); }
-    });
-  }catch(e){ console.error('planejPlanos listener setup:',e); }
-}, 1000);
-*/
 
 // ===== INCONFORMIDADES (Firebase) =====
 let inconformidades=[]; // Firestore 'inconformidades'
@@ -10970,8 +10837,6 @@ window.marcarAlertasLidos=marcarAlertasLidos;
 
 
 // ============================================================
-// PLANEJAMENTO DE PRODUÇÃO
-// ============================================================
 const PLANEJ_DIAS = ['Seg','Ter','Qua','Qui','Sex','Sáb'];
 let planejSetorAtivo = 'quadra';
 let planejSetorOverride = {}; // {cod: 'quadra'|'conf'} - sobrescreve a classificação automática
@@ -11520,9 +11385,9 @@ async function processarVendasParsed(rows, resEl){
   setTimeout(()=>{ goTo('s-planejamento'); }, 2000);
 }
 
-window.processarArquivoVendas=processarArquivoVendas;
-window.processarImportVendasColado=processarImportVendasColado;
-window.processarVendasParsed=processarVendasParsed;
+// window.processarArquivoVendas=processarArquivoVendas;
+// window.processarImportVendasColado=processarImportVendasColado;
+// window.processarVendasParsed=processarVendasParsed;
 
 
 // ============================================================
@@ -11647,9 +11512,9 @@ async function processarEstoqueParsed(rows, resEl){
   setTimeout(()=>{ goTo('s-planejamento'); }, 1500);
 }
 
-window.processarArquivoEstoque=processarArquivoEstoque;
-window.processarImportEstoqueColado=processarImportEstoqueColado;
-window.processarEstoqueParsed=processarEstoqueParsed;
+// window.processarArquivoEstoque=processarArquivoEstoque;
+// window.processarImportEstoqueColado=processarImportEstoqueColado;
+// window.processarEstoqueParsed=processarEstoqueParsed;
 
 // ============================================================
 // DETALHE DO PRODUTO
@@ -11701,15 +11566,15 @@ function planejAbrirDetalhe(cod){
 }
 
 // Export
-window.planejTrocarTab=planejTrocarTab;
-window.planejMoverSetor=planejMoverSetor;
-window.planejAtualizarConfig=planejAtualizarConfig;
-window.renderPlanejamento=renderPlanejamento;
-window.renderImportVendas=renderImportVendas;
-window.processarImportVendas=processarImportVendas;
-window.renderImportEstoque=renderImportEstoque;
-window.processarImportEstoque=processarImportEstoque;
-window.planejAbrirDetalhe=planejAbrirDetalhe;
+// window.planejTrocarTab=planejTrocarTab;
+// window.planejMoverSetor=planejMoverSetor;
+// window.planejAtualizarConfig=planejAtualizarConfig;
+// window.renderPlanejamento=renderPlanejamento;
+// window.renderImportVendas=renderImportVendas;
+// window.processarImportVendas=processarImportVendas;
+// window.renderImportEstoque=renderImportEstoque;
+// window.processarImportEstoque=processarImportEstoque;
+// window.planejAbrirDetalhe=planejAbrirDetalhe;
 
 
 
@@ -11768,8 +11633,8 @@ function limparCompensacaoPlanej(){
   renderPlanejamento();
 }
 
-window.aplicarCompensacaoPlanej=aplicarCompensacaoPlanej;
-window.limparCompensacaoPlanej=limparCompensacaoPlanej;
+// window.aplicarCompensacaoPlanej=aplicarCompensacaoPlanej;
+// window.limparCompensacaoPlanej=limparCompensacaoPlanej;
 
 window.goTo=goTo; window.abrirPin=abrirPin; window.pinDigit=pinDigit; window.pinDel=pinDel;
 window.iniciarNovoReg=iniciarNovoReg; window.renderConfMassas=renderConfMassas; window.toggleManual=toggleManual;
