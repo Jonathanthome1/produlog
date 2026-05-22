@@ -409,51 +409,41 @@ window.processarVendas = async () => {
   const linhas = texto.trim().split('\n');
   const porCodigo = {};
   
+  // Função para converter data em dia da semana
+  function getWeekDay(dateStr) {
+    const parts = dateStr.split('/');
+    if(parts.length !== 3) return '';
+    const day = parseInt(parts[0]);
+    const month = parseInt(parts[1]) - 1;
+    const year = parseInt(parts[2]);
+    if(isNaN(day) || isNaN(month) || isNaN(year)) return '';
+    const date = new Date(year, month, day);
+    const dias = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+    return dias[date.getDay()];
+  }
+  
   console.log('📊 Total de linhas:', linhas.length);
   
   linhas.forEach((linha, idx) => {
     const cols = linha.split('\t');
     
-    // Debug das primeiras 3 linhas
-    if(idx < 3){
-      console.log('Linha', idx, '- Colunas:', cols.length);
-      console.log('  Col[1]:', cols[1], '| Col[2]:', cols[2], '| Col[12]:', cols[12], '| Col[14]:', cols[14]);
-    }
+    // Pular cabeçalho
+    if(idx === 0 && cols[1] === 'Produto') return;
     
-    if(cols.length < 15) {
-      if(idx < 3) console.log('  ❌ Menos de 15 colunas, pulando...');
-      return;
-    }
+    if(cols.length < 15) return;
     
     const cod = String(cols[1]).trim();
     const desc = String(cols[2]).trim();
     const qtd = parseFloat(String(cols[14]).replace(',','.')) || 0;
+    const dataStr = String(cols[12]).trim(); // Ex: "20/04/2026"
+    const dia = getWeekDay(dataStr); // Converte para "Seg", "Ter", etc
     
-    // CORRIGIDO: normalizar nome do dia
-    let diaRaw = String(cols[12]).trim();
-    let dia = '';
-    
-    if(idx < 3) console.log('  Dia raw:', diaRaw, '| Código:', cod, '| Desc:', desc, '| Qtd:', qtd);
-    
-    // Detectar dia da semana (aceita vários formatos)
-    if(/^seg/i.test(diaRaw)) dia = 'Seg';
-    else if(/^ter/i.test(diaRaw)) dia = 'Ter';
-    else if(/^qua/i.test(diaRaw)) dia = 'Qua';
-    else if(/^qui/i.test(diaRaw)) dia = 'Qui';
-    else if(/^sex/i.test(diaRaw)) dia = 'Sex';
-    else if(/^s[áa]b/i.test(diaRaw)) dia = 'Sáb';
-    else if(/^dom/i.test(diaRaw)) dia = 'Dom';
-    
-    if(idx < 3) console.log('  Dia detectado:', dia);
-    
-    if(!cod || isNaN(parseInt(cod))) {
-      if(idx < 3) console.log('  ❌ Código inválido');
-      return;
+    // Debug das primeiras 3 linhas VÁLIDAS
+    if(idx < 5 && cod && dia){
+      console.log('✅ Linha', idx, '- Código:', cod, '| Desc:', desc.substring(0,20), '| Data:', dataStr, '→ Dia:', dia, '| Qtd:', qtd);
     }
-    if(!dia) {
-      if(idx < 3) console.log('  ❌ Dia não detectado');
-      return;
-    }
+    
+    if(!cod || isNaN(parseInt(cod)) || !dia || qtd <= 0) return;
     
     if(!porCodigo[cod]){
       porCodigo[cod] = {
@@ -468,7 +458,9 @@ window.processarVendas = async () => {
   });
   
   console.log('✅ Produtos processados:', Object.keys(porCodigo).length);
-  console.log('Exemplo:', Object.values(porCodigo)[0]);
+  if(Object.keys(porCodigo).length > 0){
+    console.log('Exemplo produto:', Object.values(porCodigo)[0]);
+  }
   
   const batch = [];
   Object.values(porCodigo).forEach(p => {
