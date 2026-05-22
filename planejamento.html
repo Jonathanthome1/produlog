@@ -511,10 +511,11 @@ async function processarImportVendas() {
     for(const cod in porCodigo) {
       const p = porCodigo[cod];
       
-      // Top 5 clientes
+      // Top 5 clientes (converter para array de objetos)
       const topCli = Object.entries(p.topClientes)
         .sort((a,b) => b[1] - a[1])
-        .slice(0, 5);
+        .slice(0, 5)
+        .map(([nome, qtd]) => ({nome, qtd}));
       
       const docData = {
         cod: p.cod,
