@@ -2,68 +2,157 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Planejamento de Produção - Monte Castelo</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Monte Castelo - Planejamento de Produção</title>
 <style>
-* { margin: 0; padding: 0; box-sizing: border-box; }
-body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f3f4f6; }
-.header { background: #1e3a8a; color: white; padding: 16px 24px; display: flex; align-items: center; gap: 16px; }
-.logo { width: 40px; height: 40px; background: white; color: #1e3a8a; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 18px; }
-.brand-name { font-size: 20px; font-weight: 600; }
-.brand-sub { font-size: 12px; opacity: 0.9; }
-.container { max-width: 1400px; margin: 20px auto; padding: 0 20px; }
-.card { background: white; border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
-.status-header { display: flex; justify-content: space-between; align-items: center; }
-.btn { padding: 10px 18px; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; }
-.btn-primary { background: #1e3a8a; color: white; }
-.btn-success { background: #16a34a; color: white; }
-.btn-danger { background: #dc2626; color: white; }
-table { width: 100%; border-collapse: collapse; font-size: 12px; }
-thead { background: #1e3a8a; color: white; }
-th, td { padding: 8px; text-align: left; }
-tbody tr { border-bottom: 1px solid #e5e7eb; }
-tbody tr:hover { background: #f9fafb; }
-.modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; }
-.modal-content { background: white; max-width: 600px; margin: 50px auto; border-radius: 12px; padding: 24px; max-height: 80vh; overflow-y: auto; }
-.modal-header { font-size: 18px; font-weight: 600; margin-bottom: 16px; }
-textarea { width: 100%; height: 300px; padding: 12px; border: 1px solid #d1d5db; border-radius: 8px; font-family: monospace; font-size: 11px; }
-.modal-actions { display: flex; gap: 10px; margin-top: 16px; justify-content: flex-end; }
+:root{
+  --mc-azul:#1e3a8a; --mc-azul-claro:#dbeafe;
+  --mc-verde:#16a34a; --mc-verde-claro:#dcfce7;
+  --mc-laranja:#f59e0b; --mc-laranja-claro:#fef3c7;
+  --mc-vermelho:#dc2626; --mc-vermelho-claro:#fee2e2;
+  --mc-dourado:#fbbf24;
+  --bg-page:#f9fafb; --bg-card:#ffffff; --border:#e5e7eb;
+  --text:#111827; --text-sec:#6b7280; --text-mut:#9ca3af;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg-page);color:var(--text);font-size:14px}
+.header{background:white;border-bottom:1px solid var(--border);padding:12px 16px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:10}
+.logo{width:36px;height:36px;background:var(--mc-azul);color:white;border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:700}
+.brand-name{font-weight:700;font-size:15px}
+.brand-sub{font-size:11px;color:var(--text-sec)}
+.title-bar{padding:16px;background:white;border-bottom:1px solid var(--border)}
+.page-title{font-size:20px;font-weight:700;color:var(--mc-azul)}
+
+.tabs{display:flex;background:white;border-bottom:1px solid var(--border);padding:0 16px;gap:4px}
+.tab{padding:12px 22px;border:none;background:transparent;font-size:14px;font-weight:600;cursor:pointer;color:var(--text-sec);border-bottom:3px solid transparent}
+.tab.active{color:var(--mc-azul);border-bottom-color:var(--mc-azul)}
+
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:14px 16px}
+.kpi{background:white;border:1px solid var(--border);border-radius:10px;padding:12px;border-left:3px solid}
+.kpi.azul{border-left-color:var(--mc-azul)}
+.kpi.verde{border-left-color:var(--mc-verde)}
+.kpi.laranja{border-left-color:var(--mc-laranja)}
+.kpi.vermelho{border-left-color:var(--mc-vermelho)}
+.kpi-label{font-size:11px;color:var(--text-sec);text-transform:uppercase;font-weight:600}
+.kpi-value{font-size:22px;font-weight:700;margin-top:2px}
+
+.controls{background:white;border:1px solid var(--border);border-radius:10px;margin:0 16px 14px;padding:12px;display:flex;gap:12px;flex-wrap:wrap}
+.control-input{padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px}
+.control-input.small{width:80px}
+.search-box{flex:1;min-width:200px;padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px}
+.btn{padding:7px 14px;border:none;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer}
+.btn-primary{background:var(--mc-azul);color:white}
+.btn-success{background:var(--mc-verde);color:white}
+.btn-danger{background:var(--mc-vermelho);color:white}
+
+.table-wrap{background:white;margin:0 16px;border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.table-scroll{overflow-x:auto;max-height:60vh;overflow-y:auto}
+table{width:100%;border-collapse:collapse;font-size:12px}
+thead{background:var(--mc-azul);color:white;position:sticky;top:0;z-index:5}
+th{padding:9px 8px;text-align:left;font-weight:600;font-size:11px;text-transform:uppercase;white-space:nowrap}
+th.num{text-align:right}
+td{padding:8px;border-bottom:1px solid var(--border);white-space:nowrap}
+td.num{text-align:right}
+tbody tr:hover{background:#f9fafb}
+.cod{color:var(--mc-azul);font-weight:600}
+.badge{display:inline-block;padding:2px 7px;border-radius:10px;font-size:10px;font-weight:700}
+.b-verde{background:var(--mc-verde-claro);color:#065f46}
+.b-laranja{background:var(--mc-laranja-claro);color:#92400e}
+.b-vermelho{background:var(--mc-vermelho-claro);color:#991b1b}
+.b-azul{background:var(--mc-azul-claro);color:#1e40af}
+.day-input{width:54px;text-align:right;padding:4px 6px;border:1px solid var(--border);border-radius:4px;font-size:12px}
+.day-input:focus{outline:none;border-color:var(--mc-azul);background:var(--mc-azul-claro)}
+
+.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:100}
+.modal.show{display:flex;align-items:center;justify-content:center;padding:16px}
+.modal-content{background:white;border-radius:12px;max-width:600px;width:100%;padding:24px}
+.modal-header{font-size:18px;font-weight:600;margin-bottom:16px}
+textarea{width:100%;height:300px;padding:12px;border:1px solid var(--border);border-radius:8px;font-family:monospace;font-size:11px}
 </style>
 </head>
 <body>
 
 <div class="header">
   <div class="logo">MC</div>
-  <div class="brand">
+  <div>
     <div class="brand-name">Monte Castelo</div>
     <div class="brand-sub">Planejamento de Produção</div>
   </div>
 </div>
 
-<div id="app"></div>
+<div class="title-bar">
+  <div class="page-title">📊 Planejamento de Produção</div>
+  <div id="status" style="font-size:13px;color:var(--text-sec);margin-top:4px;">Carregando...</div>
+</div>
 
-<!-- Modal Importar Vendas -->
+<div class="tabs">
+  <button class="tab active" data-setor="quadra" onclick="trocarTab('quadra')">🍞 Quadra <span id="badge-quadra">0</span></button>
+  <button class="tab" data-setor="conf" onclick="trocarTab('conf')">🥐 Confeitaria <span id="badge-conf">0</span></button>
+</div>
+
+<div class="kpis" id="kpis"></div>
+
+<div class="controls">
+  <span style="font-size:12px;font-weight:600">Multiplicador:</span>
+  <input type="number" id="mult" class="control-input small" value="2" step="0.1" min="0.5" max="5">
+  <select id="order" class="control-input">
+    <option value="urg">Mais urgente</option>
+    <option value="vend">Mais vendido</option>
+    <option value="cod">Código</option>
+  </select>
+  <select id="filtro" class="control-input">
+    <option value="ativos">Só com venda</option>
+    <option value="todos">Todos</option>
+  </select>
+  <input type="text" id="busca" class="search-box" placeholder="🔍 Buscar...">
+  <button class="btn btn-primary" onclick="abrirModalVendas()">📥 Importar Vendas</button>
+  <button class="btn btn-success" onclick="abrirModalEstoque()">📦 Importar Estoque</button>
+  <button class="btn btn-danger" onclick="limparTudo()">🗑️ Limpar Tudo</button>
+</div>
+
+<div class="table-wrap">
+  <div class="table-scroll">
+    <table>
+      <thead>
+        <tr>
+          <th class="num">Cód</th>
+          <th>Produto</th>
+          <th class="num">Estoque</th>
+          <th class="num">Méd/sem</th>
+          <th class="num">Ideal</th>
+          <th>Pico</th>
+          <th class="num">Seg</th>
+          <th class="num">Ter</th>
+          <th class="num">Qua</th>
+          <th class="num">Qui</th>
+          <th class="num">Sex</th>
+          <th class="num">Total</th>
+          <th class="num">Saldo</th>
+          <th class="num">% cob</th>
+        </tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Modais -->
 <div id="modal-vendas" class="modal">
   <div class="modal-content">
     <div class="modal-header">📥 Importar Vendas</div>
-    <div style="margin-bottom:12px;font-size:12px;color:#6b7280;">Cole os dados do Excel (27 colunas)</div>
-    <textarea id="vendas-textarea" placeholder="Cole aqui..."></textarea>
-    <div id="vendas-preview" style="margin-top:12px;"></div>
-    <div class="modal-actions">
+    <textarea id="vendas-textarea"></textarea>
+    <div style="display:flex;gap:10px;margin-top:16px;justify-content:flex-end;">
       <button class="btn" onclick="fecharModal()">Cancelar</button>
       <button class="btn btn-primary" onclick="processarVendas()">Processar</button>
     </div>
   </div>
 </div>
 
-<!-- Modal Importar Estoque -->
 <div id="modal-estoque" class="modal">
   <div class="modal-content">
     <div class="modal-header">📦 Importar Estoque</div>
-    <div style="margin-bottom:12px;font-size:12px;color:#6b7280;">Cole: Código [TAB] Quantidade</div>
-    <textarea id="estoque-textarea" placeholder="119	2150\n160	208\n..."></textarea>
-    <div id="estoque-preview" style="margin-top:12px;"></div>
-    <div class="modal-actions">
+    <textarea id="estoque-textarea"></textarea>
+    <div style="display:flex;gap:10px;margin-top:16px;justify-content:flex-end;">
       <button class="btn" onclick="fecharModal()">Cancelar</button>
       <button class="btn btn-success" onclick="processarEstoque()">Processar</button>
     </div>
@@ -74,123 +163,162 @@ textarea { width: 100%; height: 300px; padding: 12px; border: 1px solid #d1d5db;
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
 import { getFirestore, collection, doc, setDoc, onSnapshot, getDocs, deleteDoc } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
 
-const firebaseConfig = {
-  apiKey: "AIzaSyDfFT80SMTsSMml0BpWYLDBrxrFGJk78",
+const app = initializeApp({
+  apiKey: "AIzaSyDfFT80SMTsSMml0BpWYLDBrxrFGFG5Jk78",
   authDomain: "montecastelo-a0764.firebaseapp.com",
   projectId: "montecastelo-a0764",
   storageBucket: "montecastelo-a0764.firebasestorage.app",
   messagingSenderId: "590787056451",
   appId: "1:590787056451:web:f0a0cf2db9e5b51e2bb45f"
-};
-
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-let produtos = [];
-
-console.log('✅ Firebase conectado');
-
-// Listener
-onSnapshot(collection(db, 'planejProdutos'), snap => {
-  produtos = snap.docs.map(d => ({id: d.id, ...d.data()}));
-  console.log('🔥 Carregados:', produtos.length, 'produtos');
-  renderizar();
 });
 
-function renderizar() {
-  const app = document.getElementById('app');
-  
-  if(produtos.length === 0) {
-    app.innerHTML = `
-      <div class="container">
-        <div class="card" style="text-align:center;padding:60px;">
-          <div style="font-size:64px;margin-bottom:20px;">📊</div>
-          <h2>Nenhum dado importado</h2>
-          <p style="color:#6b7280;margin:12px 0 30px;">Importe vendas e estoque para começar</p>
-          <button class="btn btn-primary" onclick="abrirModalVendas()">📥 Importar Vendas</button>
-          <button class="btn btn-success" onclick="abrirModalEstoque()" style="margin-left:12px;">📦 Importar Estoque</button>
-        </div>
-      </div>
-    `;
-  } else {
-    const quadra = produtos.filter(p => p.setor === 'quadra');
-    const conf = produtos.filter(p => p.setor === 'conf');
-    
-    app.innerHTML = `
-      <div class="container">
-        <div class="card">
-          <div class="status-header">
-            <div>
-              <h2>📊 Dados Carregados</h2>
-              <p style="color:#6b7280;font-size:14px;">${produtos.length} produtos</p>
-            </div>
-            <div style="display:flex;gap:10px;">
-              <button class="btn btn-primary" onclick="abrirModalVendas()">📥 Reimportar</button>
-              <button class="btn btn-success" onclick="abrirModalEstoque()">📦 Atualizar</button>
-              <button class="btn btn-danger" onclick="limparTudo()">🗑️ Limpar</button>
-            </div>
-          </div>
-        </div>
-        
-        <div class="card">
-          <h3 style="margin-bottom:16px;">🍞 Quadra (${quadra.length})</h3>
-          <table>
-            <thead><tr><th>Código</th><th>Produto</th><th>Estoque</th><th>Total</th></tr></thead>
-            <tbody>${quadra.slice(0,20).map(p => `
-              <tr>
-                <td style="color:#1e3a8a;font-weight:600;">${p.cod}</td>
-                <td>${p.desc}</td>
-                <td style="text-align:right;">${p.estoque || 0}</td>
-                <td style="text-align:right;">${p.totalPeriodo || 0}</td>
-              </tr>
-            `).join('')}</tbody>
-          </table>
-        </div>
-        
-        <div class="card">
-          <h3 style="margin-bottom:16px;">🥐 Confeitaria (${conf.length})</h3>
-          <table>
-            <thead><tr><th>Código</th><th>Produto</th><th>Estoque</th><th>Total</th></tr></thead>
-            <tbody>${conf.slice(0,20).map(p => `
-              <tr>
-                <td style="color:#1e3a8a;font-weight:600;">${p.cod}</td>
-                <td>${p.desc}</td>
-                <td style="text-align:right;">${p.estoque || 0}</td>
-                <td style="text-align:right;">${p.totalPeriodo || 0}</td>
-              </tr>
-            `).join('')}</tbody>
-          </table>
-        </div>
-      </div>
-    `;
-  }
+const db = getFirestore(app);
+let produtos = [];
+let setorAtivo = 'quadra';
+const plano = {};
+
+const DIAS = ['Seg','Ter','Qua','Qui','Sex'];
+function mult(){ return parseFloat(document.getElementById('mult').value)||2; }
+function calcIdeal(p){ return Math.round((p.totalPeriodo||0)/4 * mult()); }
+function calcPlanoTotal(cod){ const pl=plano[cod]||{}; return DIAS.reduce((s,d)=>s+(parseInt(pl[d])||0),0); }
+function calcSaldo(p){ return p.estoque + calcPlanoTotal(p.cod) - calcIdeal(p); }
+function calcCob(p){ const i=calcIdeal(p); return i<=0?100:Math.round((p.estoque+calcPlanoTotal(p.cod))/i*100); }
+function badgeCob(pct){
+  if(pct>=100) return '<span class="badge b-verde">'+pct+'%</span>';
+  if(pct>=70) return '<span class="badge b-laranja">'+pct+'%</span>';
+  return '<span class="badge b-vermelho">'+pct+'%</span>';
 }
 
-window.abrirModalVendas = () => document.getElementById('modal-vendas').style.display = 'block';
-window.abrirModalEstoque = () => document.getElementById('modal-estoque').style.display = 'block';
+// Listener Firebase
+onSnapshot(collection(db, 'planejProdutos'), snap => {
+  produtos = snap.docs.map(d => ({id: d.id, ...d.data()}));
+  console.log('📊 Produtos carregados:', produtos.length);
+  render();
+});
+
+window.trocarTab = (s) => {
+  setorAtivo = s;
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.setor===s));
+  render();
+};
+
+function render(){
+  const filtro = document.getElementById('filtro')?.value || 'ativos';
+  const busca = document.getElementById('busca')?.value.toLowerCase() || '';
+  const ordem = document.getElementById('order')?.value || 'urg';
+  
+  let lista = produtos.filter(p => p.setor === setorAtivo);
+  if(filtro==='ativos') lista = lista.filter(p => (p.totalPeriodo||0) > 0);
+  if(busca) lista = lista.filter(p => String(p.cod).includes(busca) || (p.desc||'').toLowerCase().includes(busca));
+  
+  if(ordem==='urg') lista.sort((a,b) => calcCob(a) - calcCob(b));
+  if(ordem==='vend') lista.sort((a,b) => (b.totalPeriodo||0) - (a.totalPeriodo||0));
+  if(ordem==='cod') lista.sort((a,b) => parseInt(a.cod) - parseInt(b.cod));
+  
+  // KPIs
+  const ativos = lista.filter(p => (p.totalPeriodo||0) > 0);
+  const urgentes = ativos.filter(p => calcCob(p) < 70).length;
+  const atencao = ativos.filter(p => { const c=calcCob(p); return c>=70 && c<100; }).length;
+  const ok = ativos.filter(p => calcCob(p) >= 100).length;
+  
+  document.getElementById('kpis').innerHTML =
+    '<div class="kpi azul"><div class="kpi-label">Produtos</div><div class="kpi-value">'+ativos.length+'</div></div>'+
+    '<div class="kpi vermelho"><div class="kpi-label">🔴 Urgentes</div><div class="kpi-value">'+urgentes+'</div></div>'+
+    '<div class="kpi laranja"><div class="kpi-label">🟠 Atenção</div><div class="kpi-value">'+atencao+'</div></div>'+
+    '<div class="kpi verde"><div class="kpi-label">🟢 OK</div><div class="kpi-value">'+ok+'</div></div>';
+  
+  document.getElementById('badge-quadra').textContent = produtos.filter(p => p.setor==='quadra').length;
+  document.getElementById('badge-conf').textContent = produtos.filter(p => p.setor==='conf').length;
+  document.getElementById('status').textContent = produtos.length + ' produtos carregados';
+  
+  // Tabela
+  const tbody = document.getElementById('tbody');
+  if(lista.length === 0){
+    tbody.innerHTML = '<tr><td colspan="14" style="padding:30px;text-align:center;">Nenhum produto</td></tr>';
+    return;
+  }
+  
+  tbody.innerHTML = lista.map(p => {
+    const ideal = calcIdeal(p);
+    const tot = calcPlanoTotal(p.cod);
+    const saldo = calcSaldo(p);
+    const cob = calcCob(p);
+    const pl = plano[p.cod] || {};
+    const porDia = p.porDia || {};
+    const maxDia = Math.max(porDia.Seg||0, porDia.Ter||0, porDia.Qua||0, porDia.Qui||0, porDia.Sex||0);
+    const picoDia = Object.keys(porDia).find(d => porDia[d] === maxDia) || '-';
+    const picoPct = maxDia>0 && (p.totalPeriodo||0)>0 ? Math.round(maxDia/(p.totalPeriodo||1)*100) : 0;
+    
+    const dias = DIAS.map(d => '<td class="num"><input type="number" class="day-input" data-cod="'+p.cod+'" data-dia="'+d+'" value="'+(pl[d]||'')+'" placeholder="0"></td>').join('');
+    
+    return '<tr>'+
+      '<td class="cod">'+p.cod+'</td>'+
+      '<td>'+p.desc+'</td>'+
+      '<td class="num">'+p.estoque+'</td>'+
+      '<td class="num">'+Math.round((p.totalPeriodo||0)/4)+'</td>'+
+      '<td class="num"><strong>'+ideal+'</strong></td>'+
+      '<td>'+(picoDia!=='-'?'<span class="badge b-azul">'+picoDia+' '+picoPct+'%</span>':'-')+'</td>'+
+      dias+
+      '<td class="num" data-tot="'+p.cod+'"><strong>'+tot+'</strong></td>'+
+      '<td class="num" data-saldo="'+p.cod+'"><strong style="color:'+(saldo<0?'var(--mc-vermelho)':'var(--mc-verde)')+'">'+(saldo>=0?'+':'')+saldo+'</strong></td>'+
+      '<td class="num">'+badgeCob(cob)+'</td>'+
+    '</tr>';
+  }).join('');
+  
+  // Hooks inputs
+  document.querySelectorAll('.day-input').forEach(inp => {
+    inp.addEventListener('input', e => {
+      const cod = e.target.dataset.cod;
+      const dia = e.target.dataset.dia;
+      if(!plano[cod]) plano[cod] = {};
+      plano[cod][dia] = parseInt(e.target.value)||0;
+      
+      const p = produtos.find(x => x.cod === cod);
+      const tot = calcPlanoTotal(cod);
+      const saldo = calcSaldo(p);
+      const cob = calcCob(p);
+      
+      document.querySelector('[data-tot="'+cod+'"]').innerHTML = '<strong>'+tot+'</strong>';
+      document.querySelector('[data-saldo="'+cod+'"]').innerHTML = '<strong style="color:'+(saldo<0?'var(--mc-vermelho)':'var(--mc-verde)')+'">'+(saldo>=0?'+':'')+saldo+'</strong>';
+      
+      render(); // Re-render KPIs
+    });
+  });
+}
+
+window.abrirModalVendas = () => document.getElementById('modal-vendas').classList.add('show');
+window.abrirModalEstoque = () => document.getElementById('modal-estoque').classList.add('show');
 window.fecharModal = () => {
-  document.getElementById('modal-vendas').style.display = 'none';
-  document.getElementById('modal-estoque').style.display = 'none';
+  document.getElementById('modal-vendas').classList.remove('show');
+  document.getElementById('modal-estoque').classList.remove('show');
 };
 
 window.processarVendas = async () => {
   const texto = document.getElementById('vendas-textarea').value;
-  const linhas = texto.trim().split('\n').filter(l => l.trim());
+  const linhas = texto.trim().split('\n');
   const porCodigo = {};
   
   linhas.forEach(linha => {
-    const colunas = linha.split('\t');
-    if(colunas.length < 27) return;
+    const cols = linha.split('\t');
+    if(cols.length < 27) return;
     
-    const cod = String(colunas[1]).trim();
-    const desc = String(colunas[2]).trim();
-    const qtd = parseFloat(String(colunas[14]).replace(',', '.')) || 0;
+    const cod = String(cols[1]).trim();
+    const desc = String(cols[2]).trim();
+    const qtd = parseFloat(String(cols[14]).replace(',','.')) || 0;
+    const dia = String(cols[12]).trim().slice(0,3); // Seg/Ter/Qua/Qui/Sex
     
     if(!cod || isNaN(parseInt(cod))) return;
     
-    if(!porCodigo[cod]) {
-      porCodigo[cod] = { cod, desc, totalPeriodo: 0, setor: parseInt(cod) < 200 ? 'quadra' : 'conf' };
+    if(!porCodigo[cod]){
+      porCodigo[cod] = {
+        cod, desc,
+        setor: parseInt(cod) < 200 ? 'quadra' : 'conf',
+        totalPeriodo: 0,
+        porDia: {Seg:0, Ter:0, Qua:0, Qui:0, Sex:0, Sáb:0}
+      };
     }
     porCodigo[cod].totalPeriodo += qtd;
+    if(porCodigo[cod].porDia[dia] !== undefined) porCodigo[cod].porDia[dia] += qtd;
   });
   
   const batch = [];
@@ -199,13 +327,13 @@ window.processarVendas = async () => {
   });
   
   await Promise.all(batch);
-  alert(`✓ ${Object.keys(porCodigo).length} produtos salvos!`);
+  alert('✓ '+Object.keys(porCodigo).length+' produtos salvos!');
   fecharModal();
 };
 
 window.processarEstoque = async () => {
   const texto = document.getElementById('estoque-textarea').value;
-  const linhas = texto.trim().split('\n').filter(l => l.trim());
+  const linhas = texto.trim().split('\n');
   const batch = [];
   
   linhas.forEach(linha => {
@@ -213,7 +341,7 @@ window.processarEstoque = async () => {
     if(partes.length < 2) return;
     
     const cod = String(partes[0]).trim();
-    const estoque = parseFloat(String(partes[1]).replace(',', '.')) || 0;
+    const estoque = parseFloat(String(partes[1]).replace(',','.')) || 0;
     
     if(!cod || isNaN(parseInt(cod))) return;
     
@@ -221,7 +349,7 @@ window.processarEstoque = async () => {
   });
   
   await Promise.all(batch);
-  alert(`✓ ${batch.length} estoques atualizados!`);
+  alert('✓ '+batch.length+' estoques atualizados!');
   fecharModal();
 };
 
@@ -234,7 +362,12 @@ window.limparTudo = async () => {
   alert('✓ Dados removidos!');
 };
 
-renderizar();
+['mult','order','filtro','busca'].forEach(id => {
+  document.getElementById(id)?.addEventListener('change', render);
+  document.getElementById(id)?.addEventListener('input', render);
+});
+
+render();
 </script>
 
 </body>
