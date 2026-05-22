@@ -416,9 +416,21 @@ window.processarVendas = async () => {
     const cod = String(cols[1]).trim();
     const desc = String(cols[2]).trim();
     const qtd = parseFloat(String(cols[14]).replace(',','.')) || 0;
-    const dia = String(cols[12]).trim().slice(0,3); // Seg/Ter/Qua/Qui/Sex
     
-    if(!cod || isNaN(parseInt(cod))) return;
+    // CORRIGIDO: normalizar nome do dia
+    let diaRaw = String(cols[12]).trim();
+    let dia = '';
+    
+    // Detectar dia da semana (aceita vários formatos)
+    if(/^seg/i.test(diaRaw)) dia = 'Seg';
+    else if(/^ter/i.test(diaRaw)) dia = 'Ter';
+    else if(/^qua/i.test(diaRaw)) dia = 'Qua';
+    else if(/^qui/i.test(diaRaw)) dia = 'Qui';
+    else if(/^sex/i.test(diaRaw)) dia = 'Sex';
+    else if(/^s[áa]b/i.test(diaRaw)) dia = 'Sáb';
+    else if(/^dom/i.test(diaRaw)) dia = 'Dom';
+    
+    if(!cod || isNaN(parseInt(cod)) || !dia) return;
     
     if(!porCodigo[cod]){
       porCodigo[cod] = {
@@ -452,9 +464,16 @@ window.processarEstoque = async () => {
     if(partes.length < 2) return;
     
     const cod = String(partes[0]).trim();
-    const estoque = parseFloat(String(partes[1]).replace(',','.')) || 0;
+    let estoqueStr = String(partes[1]).trim();
     
-    if(!cod || isNaN(parseInt(cod))) return;
+    // CORRIGIDO: formato brasileiro
+    // Remove vírgula final: "48," → "48"
+    // Remove pontos (milhar): "1.476,47" → "1476,47"
+    // Troca vírgula por ponto (decimal): "1476,47" → "1476.47"
+    estoqueStr = estoqueStr.replace(/,$/,'').replace(/\./g,'').replace(',','.');
+    const estoque = parseFloat(estoqueStr) || 0;
+    
+    if(!cod || isNaN(parseInt(cod)) || isNaN(estoque)) return;
     
     batch.push(setDoc(doc(db, 'planejProdutos', cod), {estoque}, {merge: true}));
   });
