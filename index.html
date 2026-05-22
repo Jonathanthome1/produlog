@@ -3669,9 +3669,7 @@ function goTo(id){
   if((id==='s-emb-sel-data'||id==='s-emb-home')&&typeof renderBannerPresencaSetor==='function') renderBannerPresencaSetor('emb','banner-presenca-emb');
   if(id==='s-plano-quadra'&&typeof renderPlanoQuadra==='function') renderPlanoQuadra();
   if(id==='s-emb-sel-data'&&typeof atualizarBadgeProdutosEmb==='function') atualizarBadgeProdutosEmb();
-  if(id==='s-planejamento'&&typeof renderPlanejamento==='function') renderPlanejamento();
-  if(id==='s-planej-import-vendas'&&typeof renderImportVendas==='function') renderImportVendas();
-  if(id==='s-planej-import-estoque'&&typeof renderImportEstoque==='function') renderImportEstoque();
+  
   
   if(id==='s-emb-sel-data'&&typeof atualizarBadgePrioridadesEmb==='function') atualizarBadgePrioridadesEmb();
   if(id==='s-emb-produtos-pendentes'&&typeof renderEmbSelData==='function') renderEmbSelData();
@@ -11678,11 +11676,11 @@ function planejAbrirDetalhe(cod){
 // window.planejTrocarTab=planejTrocarTab;
 // window.planejMoverSetor=planejMoverSetor;
 // window.planejAtualizarConfig=planejAtualizarConfig;
-// window.renderPlanejamento=renderPlanejamento;
-// window.renderImportVendas=renderImportVendas;
-// window.processarImportVendas=processarImportVendas;
-// window.renderImportEstoque=renderImportEstoque;
-// window.processarImportEstoque=processarImportEstoque;
+// 
+// 
+// 
+// 
+// 
 // window.planejAbrirDetalhe=planejAbrirDetalhe;
 
 
@@ -11746,101 +11744,7 @@ function limparCompensacaoPlanej(){
 // window.limparCompensacaoPlanej=limparCompensacaoPlanej;
 
 
-// ============================================================
-// PLANEJAMENTO DE PRODUÇÃO - FUNÇÕES
-// ============================================================
-const PLANEJ_DIAS = ['Seg','Ter','Qua','Qui','Sex','Sáb'];
 
-function renderPlanejamento() {
-  const el = document.getElementById('planej-content');
-  if(!el) return;
-  
-  if(planejProdutos.length === 0) {
-    el.innerHTML = '<div class="card" style="padding:30px;text-align:center;">'+
-      '<div style="font-size:48px;margin-bottom:12px;">📊</div>'+
-      '<div style="font-size:16px;font-weight:600;margin-bottom:8px;">Nenhum dado importado</div>'+
-      '<div style="font-size:13px;color:var(--text-secondary);margin-bottom:20px;">Importe vendas e estoque para começar.</div>'+
-      '<div style="display:flex;gap:10px;justify-content:center;">'+
-        '<button class="mc-act-btn-primary" onclick="goTo(\'s-planej-import-vendas\')">📥 Importar Vendas</button>'+
-        '<button class="mc-act-btn-secondary" onclick="goTo(\'s-planej-import-estoque\')">📦 Importar Estoque</button>'+
-      '</div></div>';
-    return;
-  }
-  
-  el.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text-secondary);">'+
-    '<p>Planejamento funcionando! '+planejProdutos.length+' produtos carregados.</p>'+
-    '<button class="mc-act-btn-secondary" onclick="goTo(\'s-planej-import-vendas\')">📥 Vendas</button> '+
-    '<button class="mc-act-btn-secondary" onclick="goTo(\'s-planej-import-estoque\')">📦 Estoque</button>'+
-  '</div>';
-}
-
-function renderImportVendas() {
-  const el = document.getElementById('planej-imp-vendas-content');
-  if(!el) return;
-  
-  let html = '<div class="card" style="padding:14px;margin-bottom:10px;">';
-  html += '<div class="card-label">Cole os dados do Excel (com cabeçalho)</div>';
-  html += '<textarea id="planej-vendas-txt" placeholder="Cole aqui..." style="width:100%;height:240px;font-size:11px;padding:8px;border:1px solid var(--border);border-radius:8px;font-family:monospace;resize:vertical;"></textarea>';
-  html += '<button onclick="processarImportVendas()" style="width:100%;margin-top:8px;padding:10px;background:var(--mc-azul);color:white;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;">Processar</button>';
-  html += '<div id="planej-vendas-result" style="margin-top:8px;font-size:12px;"></div>';
-  html += '</div>';
-  
-  el.innerHTML = html;
-}
-
-function renderImportEstoque() {
-  const el = document.getElementById('planej-imp-estoque-content');
-  if(!el) return;
-  
-  let html = '<div class="card" style="padding:14px;margin-bottom:10px;">';
-  html += '<div class="card-label">Cole código + quantidade (linha por produto)</div>';
-  html += '<textarea id="planej-estoque-txt" placeholder="119\t150\n160\t-30" style="width:100%;height:240px;font-size:12px;padding:8px;border:1px solid var(--border);border-radius:8px;font-family:monospace;resize:vertical;"></textarea>';
-  html += '<button onclick="processarImportEstoque()" style="width:100%;margin-top:8px;padding:10px;background:var(--mc-azul);color:white;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;">Processar</button>';
-  html += '<div id="planej-estoque-result" style="margin-top:8px;font-size:12px;"></div>';
-  html += '</div>';
-  
-  el.innerHTML = html;
-}
-
-async function processarImportVendas() {
-  const txt = document.getElementById('planej-vendas-txt')?.value?.trim();
-  const resEl = document.getElementById('planej-vendas-result');
-  if(!resEl) return;
-  if(!txt) { resEl.innerHTML = '<span style="color:var(--mc-vermelho);">Cole os dados primeiro</span>'; return; }
-  
-  resEl.innerHTML = '<span style="color:var(--text-secondary);">Processando...</span>';
-  
-  try {
-    const linhas = txt.split('\n').filter(l => l.trim());
-    resEl.innerHTML = '<span style="color:var(--mc-verde);">✓ '+linhas.length+' linhas lidas. Funcionalidade completa em breve!</span>';
-    // TODO: processar e salvar no Firebase
-  } catch(e) {
-    resEl.innerHTML = '<span style="color:var(--mc-vermelho);">Erro: '+e.message+'</span>';
-  }
-}
-
-async function processarImportEstoque() {
-  const txt = document.getElementById('planej-estoque-txt')?.value?.trim();
-  const resEl = document.getElementById('planej-estoque-result');
-  if(!resEl) return;
-  if(!txt) { resEl.innerHTML = '<span style="color:var(--mc-vermelho);">Cole os dados primeiro</span>'; return; }
-  
-  resEl.innerHTML = '<span style="color:var(--text-secondary);">Processando...</span>';
-  
-  try {
-    const linhas = txt.split('\n').filter(l => l.trim());
-    resEl.innerHTML = '<span style="color:var(--mc-verde);">✓ '+linhas.length+' linhas lidas. Funcionalidade completa em breve!</span>';
-    // TODO: processar e salvar no Firebase
-  } catch(e) {
-    resEl.innerHTML = '<span style="color:var(--mc-vermelho);">Erro: '+e.message+'</span>';
-  }
-}
-
-window.renderPlanejamento = renderPlanejamento;
-window.renderImportVendas = renderImportVendas;
-window.renderImportEstoque = renderImportEstoque;
-window.processarImportVendas = processarImportVendas;
-window.processarImportEstoque = processarImportEstoque;
 
 
 window.goTo=goTo; window.abrirPin=abrirPin; window.pinDigit=pinDigit; window.pinDel=pinDel;
