@@ -496,15 +496,15 @@ window.salvarPlano = async () => {
   
   const id = agora.toISOString().replace(/[:.]/g,'-').slice(0,19);
   
-  // NOVO: Salvar snapshot completo dos produtos
+  // NOVO: Salvar snapshot completo dos produtos (sem undefined)
   const produtosSnapshot = produtos.map(p => ({
-    cod: p.cod,
-    desc: p.desc,
-    setor: p.setor,
-    estoque: p.estoque,
-    totalPeriodo: p.totalPeriodo,
-    porDia: p.porDia,
-    topClientes: p.topClientes
+    cod: p.cod || '',
+    desc: p.desc || '',
+    setor: p.setor || 'quadra',
+    estoque: p.estoque || 0,
+    totalPeriodo: p.totalPeriodo || 0,
+    porDia: p.porDia || {Seg:0, Ter:0, Qua:0, Qui:0, Sex:0, Sáb:0},
+    topClientes: p.topClientes || []
   }));
   
   console.log('Snapshot:', produtosSnapshot.length, 'produtos');
