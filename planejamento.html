@@ -466,7 +466,7 @@ async function processarImportVendas() {
     const vendas = [];
     for(let i = 1; i < linhas.length; i++) {
       const cols = linhas[i].split('\t');
-      if(cols.length < 26) continue; // Excel tem 26 colunas mínimo
+      if(cols.length < 27) continue; // Excel tem 27 colunas
       
       const cod = cols[1]?.trim(); // Coluna B = Produto
       const desc = cols[2]?.trim(); // Coluna C = Descrição
@@ -597,7 +597,7 @@ function abrirImportVendas() {
       <textarea id="import-vendas-area" style="width:100%;height:300px;padding:10px;border:1px solid var(--border);border-radius:8px;font-family:monospace;font-size:11px;resize:vertical;" placeholder="Cole aqui as linhas do Excel..."></textarea>
     </div>
     <div style="font-size:12px;color:var(--text-secondary);margin-bottom:14px;padding:10px;background:var(--mc-azul-claro);border-radius:6px;">
-      <strong>Formato esperado:</strong> Excel com 26+ colunas. Coluna B=Produto, C=Descrição, M=Data, O=Quantidade, AA=Cliente
+      <strong>Formato esperado:</strong> Excel com 27 colunas. Coluna B=Produto, C=Descrição, M=Data do movimento, O=Quantidade, AA=Nome destinatário
     </div>
     <button onclick="processarImportVendas()" style="width:100%;padding:12px;background:var(--mc-azul);color:white;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;">Processar Vendas</button>
   `;
