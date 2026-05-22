@@ -63,10 +63,32 @@ tbody tr:hover{background:#f9fafb}
 .day-input{width:54px;text-align:right;padding:4px 6px;border:1px solid var(--border);border-radius:4px;font-size:12px}
 .day-input:focus{outline:none;border-color:var(--mc-azul);background:var(--mc-azul-claro)}
 
+.prod-name{cursor:pointer;color:var(--text)}
+.prod-name:hover{color:var(--mc-azul);text-decoration:underline}
+
 .modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:100}
 .modal.show{display:flex;align-items:center;justify-content:center;padding:16px}
-.modal-content{background:white;border-radius:12px;max-width:600px;width:100%;padding:24px}
-.modal-header{font-size:18px;font-weight:600;margin-bottom:16px}
+.modal-content{background:white;border-radius:12px;max-width:700px;width:100%;max-height:90vh;overflow-y:auto}
+.modal-header{padding:16px;background:var(--mc-azul);color:white;border-radius:12px 12px 0 0;display:flex;justify-content:space-between;align-items:center}
+.modal-title{font-size:16px;font-weight:600}
+.modal-close{background:white;color:var(--mc-azul);border:none;width:28px;height:28px;border-radius:6px;cursor:pointer;font-weight:700}
+.modal-body{padding:16px}
+.modal-section{margin-bottom:18px}
+.modal-section h3{font-size:12px;text-transform:uppercase;color:var(--mc-azul);margin-bottom:8px}
+.stat-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:16px}
+.stat-card{background:var(--bg-page);padding:10px;border-radius:8px;border-left:3px solid var(--mc-azul)}
+.stat-label{font-size:10px;color:var(--text-sec);text-transform:uppercase}
+.stat-value{font-size:18px;font-weight:700;margin-top:2px}
+.bar-chart{margin-bottom:4px}
+.bar-row{display:grid;grid-template-columns:50px 1fr 80px;gap:6px;align-items:center;margin-bottom:4px}
+.bar-label{font-size:11px;font-weight:600;color:var(--text-sec)}
+.bar-track{background:var(--bg-page);border-radius:4px;height:18px;overflow:hidden}
+.bar-fill{background:linear-gradient(90deg,var(--mc-azul),var(--mc-azul-claro));height:100%;transition:width 0.3s}
+.bar-fill.peak{background:linear-gradient(90deg,var(--mc-laranja),var(--mc-dourado))}
+.bar-value{font-size:11px;font-weight:700;text-align:right}
+.cliente-list{background:var(--bg-page);border-radius:8px;padding:10px}
+.cliente-row{display:flex;justify-content:space-between;padding:4px 0;font-size:12px;border-bottom:1px dashed var(--border)}
+.cliente-row:last-child{border-bottom:none}
 textarea{width:100%;height:300px;padding:12px;border:1px solid var(--border);border-radius:8px;font-family:monospace;font-size:11px}
 </style>
 </head>
@@ -139,23 +161,41 @@ textarea{width:100%;height:300px;padding:12px;border:1px solid var(--border);bor
 <!-- Modais -->
 <div id="modal-vendas" class="modal">
   <div class="modal-content">
-    <div class="modal-header">📥 Importar Vendas</div>
-    <textarea id="vendas-textarea"></textarea>
-    <div style="display:flex;gap:10px;margin-top:16px;justify-content:flex-end;">
-      <button class="btn" onclick="fecharModal()">Cancelar</button>
-      <button class="btn btn-primary" onclick="processarVendas()">Processar</button>
+    <div class="modal-header">
+      <div class="modal-title">📥 Importar Vendas</div>
+    </div>
+    <div class="modal-body">
+      <textarea id="vendas-textarea"></textarea>
+      <div style="display:flex;gap:10px;margin-top:16px;justify-content:flex-end;">
+        <button class="btn" onclick="fecharModal()">Cancelar</button>
+        <button class="btn btn-primary" onclick="processarVendas()">Processar</button>
+      </div>
     </div>
   </div>
 </div>
 
 <div id="modal-estoque" class="modal">
   <div class="modal-content">
-    <div class="modal-header">📦 Importar Estoque</div>
-    <textarea id="estoque-textarea"></textarea>
-    <div style="display:flex;gap:10px;margin-top:16px;justify-content:flex-end;">
-      <button class="btn" onclick="fecharModal()">Cancelar</button>
-      <button class="btn btn-success" onclick="processarEstoque()">Processar</button>
+    <div class="modal-header">
+      <div class="modal-title">📦 Importar Estoque</div>
     </div>
+    <div class="modal-body">
+      <textarea id="estoque-textarea"></textarea>
+      <div style="display:flex;gap:10px;margin-top:16px;justify-content:flex-end;">
+        <button class="btn" onclick="fecharModal()">Cancelar</button>
+        <button class="btn btn-success" onclick="processarEstoque()">Processar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="modal-detalhe" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-detalhe-title">Detalhes do Produto</div>
+      <button class="modal-close" onclick="fecharModal()">✕</button>
+    </div>
+    <div class="modal-body" id="modal-detalhe-body"></div>
   </div>
 </div>
 
@@ -215,21 +255,13 @@ function render(){
   if(ordem==='vend') lista.sort((a,b) => (b.totalPeriodo||0) - (a.totalPeriodo||0));
   if(ordem==='cod') lista.sort((a,b) => parseInt(a.cod) - parseInt(b.cod));
   
-  // KPIs
-  const ativos = lista.filter(p => (p.totalPeriodo||0) > 0);
-  const urgentes = ativos.filter(p => calcCob(p) < 70).length;
-  const atencao = ativos.filter(p => { const c=calcCob(p); return c>=70 && c<100; }).length;
-  const ok = ativos.filter(p => calcCob(p) >= 100).length;
-  
-  document.getElementById('kpis').innerHTML =
-    '<div class="kpi azul"><div class="kpi-label">Produtos</div><div class="kpi-value">'+ativos.length+'</div></div>'+
-    '<div class="kpi vermelho"><div class="kpi-label">🔴 Urgentes</div><div class="kpi-value">'+urgentes+'</div></div>'+
-    '<div class="kpi laranja"><div class="kpi-label">🟠 Atenção</div><div class="kpi-value">'+atencao+'</div></div>'+
-    '<div class="kpi verde"><div class="kpi-label">🟢 OK</div><div class="kpi-value">'+ok+'</div></div>';
-  
+  // Atualizar badges e status
   document.getElementById('badge-quadra').textContent = produtos.filter(p => p.setor==='quadra').length;
   document.getElementById('badge-conf').textContent = produtos.filter(p => p.setor==='conf').length;
   document.getElementById('status').textContent = produtos.length + ' produtos carregados';
+  
+  // Renderizar KPIs
+  renderKPIs();
   
   // Tabela
   const tbody = document.getElementById('tbody');
@@ -245,27 +277,37 @@ function render(){
     const cob = calcCob(p);
     const pl = plano[p.cod] || {};
     const porDia = p.porDia || {};
-    const maxDia = Math.max(porDia.Seg||0, porDia.Ter||0, porDia.Qua||0, porDia.Qui||0, porDia.Sex||0);
-    const picoDia = Object.keys(porDia).find(d => porDia[d] === maxDia) || '-';
-    const picoPct = maxDia>0 && (p.totalPeriodo||0)>0 ? Math.round(maxDia/(p.totalPeriodo||1)*100) : 0;
     
-    const dias = DIAS.map(d => '<td class="num"><input type="number" class="day-input" data-cod="'+p.cod+'" data-dia="'+d+'" value="'+(pl[d]||'')+'" placeholder="0"></td>').join('');
+    // Calcular qual dia tem maior venda
+    const dias = ['Seg','Ter','Qua','Qui','Sex'];
+    let maxDia = '';
+    let maxQtd = 0;
+    dias.forEach(d => {
+      const qtd = porDia[d] || 0;
+      if(qtd > maxQtd){
+        maxQtd = qtd;
+        maxDia = d;
+      }
+    });
+    const picoPct = (p.totalPeriodo||0) > 0 ? Math.round((maxQtd / (p.totalPeriodo||1)) * 100) : 0;
+    
+    const diasInputs = DIAS.map(d => '<td class="num"><input type="number" class="day-input" data-cod="'+p.cod+'" data-dia="'+d+'" value="'+(pl[d]||'')+'" placeholder="0"></td>').join('');
     
     return '<tr>'+
       '<td class="cod">'+p.cod+'</td>'+
-      '<td>'+p.desc+'</td>'+
+      '<td><span class="prod-name" onclick="abrirDetalhe(\''+p.cod+'\')">'+p.desc+'</span></td>'+
       '<td class="num">'+p.estoque+'</td>'+
       '<td class="num">'+Math.round((p.totalPeriodo||0)/4)+'</td>'+
       '<td class="num"><strong>'+ideal+'</strong></td>'+
-      '<td>'+(picoDia!=='-'?'<span class="badge b-azul">'+picoDia+' '+picoPct+'%</span>':'-')+'</td>'+
-      dias+
+      '<td>'+(maxDia?'<span class="badge '+(picoPct>=40?'b-laranja':'b-azul')+'">'+maxDia+' '+picoPct+'%</span>':'-')+'</td>'+
+      diasInputs+
       '<td class="num" data-tot="'+p.cod+'"><strong>'+tot+'</strong></td>'+
       '<td class="num" data-saldo="'+p.cod+'"><strong style="color:'+(saldo<0?'var(--mc-vermelho)':'var(--mc-verde)')+'">'+(saldo>=0?'+':'')+saldo+'</strong></td>'+
-      '<td class="num">'+badgeCob(cob)+'</td>'+
+      '<td class="num" data-cob="'+p.cod+'">'+badgeCob(cob)+'</td>'+
     '</tr>';
   }).join('');
   
-  // Hooks inputs
+  // Hooks inputs - CORRIGIDO: não re-renderizar tudo, só atualizar células
   document.querySelectorAll('.day-input').forEach(inp => {
     inp.addEventListener('input', e => {
       const cod = e.target.dataset.cod;
@@ -278,12 +320,36 @@ function render(){
       const saldo = calcSaldo(p);
       const cob = calcCob(p);
       
-      document.querySelector('[data-tot="'+cod+'"]').innerHTML = '<strong>'+tot+'</strong>';
-      document.querySelector('[data-saldo="'+cod+'"]').innerHTML = '<strong style="color:'+(saldo<0?'var(--mc-vermelho)':'var(--mc-verde)')+'">'+(saldo>=0?'+':'')+saldo+'</strong>';
+      // Atualizar apenas as células de total, saldo e cobertura
+      const totCell = document.querySelector('[data-tot="'+cod+'"]');
+      const saldoCell = document.querySelector('[data-saldo="'+cod+'"]');
+      const cobCell = document.querySelector('[data-cob="'+cod+'"]');
       
-      render(); // Re-render KPIs
+      if(totCell) totCell.innerHTML = '<strong>'+tot+'</strong>';
+      if(saldoCell) saldoCell.innerHTML = '<strong style="color:'+(saldo<0?'var(--mc-vermelho)':'var(--mc-verde)')+'">'+(saldo>=0?'+':'')+saldo+'</strong>';
+      if(cobCell) cobCell.innerHTML = badgeCob(cob);
+      
+      // Atualizar KPIs
+      renderKPIs();
     });
   });
+}
+
+function renderKPIs(){
+  const filtro = document.getElementById('filtro')?.value || 'ativos';
+  let lista = produtos.filter(p => p.setor === setorAtivo);
+  if(filtro==='ativos') lista = lista.filter(p => (p.totalPeriodo||0) > 0);
+  
+  const ativos = lista.filter(p => (p.totalPeriodo||0) > 0);
+  const urgentes = ativos.filter(p => calcCob(p) < 70).length;
+  const atencao = ativos.filter(p => { const c=calcCob(p); return c>=70 && c<100; }).length;
+  const ok = ativos.filter(p => calcCob(p) >= 100).length;
+  
+  document.getElementById('kpis').innerHTML =
+    '<div class="kpi azul"><div class="kpi-label">Produtos</div><div class="kpi-value">'+ativos.length+'</div></div>'+
+    '<div class="kpi vermelho"><div class="kpi-label">🔴 Urgentes</div><div class="kpi-value">'+urgentes+'</div></div>'+
+    '<div class="kpi laranja"><div class="kpi-label">🟠 Atenção</div><div class="kpi-value">'+atencao+'</div></div>'+
+    '<div class="kpi verde"><div class="kpi-label">🟢 OK</div><div class="kpi-value">'+ok+'</div></div>';
 }
 
 window.abrirModalVendas = () => document.getElementById('modal-vendas').classList.add('show');
@@ -291,6 +357,51 @@ window.abrirModalEstoque = () => document.getElementById('modal-estoque').classL
 window.fecharModal = () => {
   document.getElementById('modal-vendas').classList.remove('show');
   document.getElementById('modal-estoque').classList.remove('show');
+  document.getElementById('modal-detalhe').classList.remove('show');
+};
+
+window.abrirDetalhe = (cod) => {
+  const p = produtos.find(x => x.cod === cod);
+  if(!p) return;
+  
+  const ideal = calcIdeal(p);
+  const porDia = p.porDia || {};
+  const topClientes = p.topClientes || [];
+  
+  // Calcular max para os gráficos
+  const dias = ['Seg','Ter','Qua','Qui','Sex'];
+  const valores = dias.map(d => porDia[d] || 0);
+  const maxVenda = Math.max(...valores, 1);
+  
+  // Montar barras de dias
+  const barsDias = dias.map(d => {
+    const qtd = porDia[d] || 0;
+    const pct = (qtd / maxVenda) * 100;
+    const pctTotal = (p.totalPeriodo||0) > 0 ? Math.round((qtd / (p.totalPeriodo||1)) * 100) : 0;
+    const isPico = qtd === maxVenda && qtd > 0;
+    return '<div class="bar-row">'+
+      '<div class="bar-label">'+d+'</div>'+
+      '<div class="bar-track"><div class="bar-fill '+(isPico?'peak':'')+'" style="width:'+pct+'%"></div></div>'+
+      '<div class="bar-value">'+qtd+' <span style="color:var(--text-sec);font-size:10px">('+pctTotal+'%)</span></div>'+
+    '</div>';
+  }).join('');
+  
+  // Montar lista de clientes
+  const clientesHtml = topClientes.length > 0
+    ? topClientes.map(c => '<div class="cliente-row"><div>'+c.nome+'</div><div style="font-weight:700;color:var(--mc-azul)">'+c.qtd+'</div></div>').join('')
+    : '<div style="color:var(--text-sec);font-style:italic;padding:8px">Sem dados de clientes</div>';
+  
+  document.getElementById('modal-detalhe-title').textContent = '['+p.cod+'] '+p.desc;
+  document.getElementById('modal-detalhe-body').innerHTML =
+    '<div class="stat-grid">'+
+      '<div class="stat-card"><div class="stat-label">Estoque atual</div><div class="stat-value">'+p.estoque+'</div></div>'+
+      '<div class="stat-card"><div class="stat-label">Média semanal</div><div class="stat-value">'+Math.round((p.totalPeriodo||0)/4)+'</div></div>'+
+      '<div class="stat-card"><div class="stat-label">Ideal (×'+mult()+')</div><div class="stat-value">'+ideal+'</div></div>'+
+    '</div>'+
+    '<div class="modal-section"><h3>📅 Padrão de venda por dia da semana</h3>'+barsDias+'</div>'+
+    '<div class="modal-section"><h3>👥 Top clientes do produto</h3><div class="cliente-list">'+clientesHtml+'</div></div>';
+  
+  document.getElementById('modal-detalhe').classList.add('show');
 };
 
 window.processarVendas = async () => {
