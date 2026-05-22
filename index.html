@@ -11750,27 +11750,20 @@ function limparCompensacaoPlanej(){
 
 
 
-// Planejamento - Funções básicas
+// Planejamento - Stubs vazios para teste
 function renderPlanejamento(){
   const el=document.getElementById('planej-content');
-  if(!el)return;
-  if(planejProdutos.length===0){
-    el.innerHTML='<div class="card" style="padding:30px;text-align:center;"><div style="font-size:48px;margin-bottom:12px;">📊</div><div style="font-size:16px;font-weight:600;margin-bottom:8px;">Nenhum dado importado</div><div style="font-size:13px;color:var(--text-secondary);margin-bottom:20px;">Importe vendas e estoque para começar.</div><button class="mc-act-btn-primary" onclick="goTo(\'s-planej-import-vendas\')">📥 Importar Vendas</button></div>';
-    return;
-  }
-  el.innerHTML='<div style="padding:20px;text-align:center;"><p>'+planejProdutos.length+' produtos carregados</p><button class="mc-act-btn-secondary" onclick="goTo(\'s-planej-import-vendas\')">📥 Vendas</button></div>';
+  if(el) el.textContent='Teste: renderPlanejamento funcionando';
 }
 
 function renderImportVendas(){
   const el=document.getElementById('planej-imp-vendas-content');
-  if(!el)return;
-  el.innerHTML='<div class="card" style="padding:14px;"><div class="card-label">Cole dados do Excel</div><textarea id="planej-vendas-txt" style="width:100%;height:200px;font-size:11px;padding:8px;border:1px solid var(--border);border-radius:8px;font-family:monospace;"></textarea><button onclick="alert(\'Função em construção\')" style="width:100%;margin-top:8px;padding:10px;background:var(--mc-azul);color:white;border:none;border-radius:8px;font-weight:600;cursor:pointer;">Processar</button></div>';
+  if(el) el.textContent='Teste: renderImportVendas funcionando';
 }
 
 function renderImportEstoque(){
   const el=document.getElementById('planej-imp-estoque-content');
-  if(!el)return;
-  el.innerHTML='<div class="card" style="padding:14px;"><div class="card-label">Cole código + quantidade</div><textarea id="planej-estoque-txt" style="width:100%;height:200px;font-size:12px;padding:8px;border:1px solid var(--border);border-radius:8px;font-family:monospace;"></textarea><button onclick="alert(\'Função em construção\')" style="width:100%;margin-top:8px;padding:10px;background:var(--mc-azul);color:white;border:none;border-radius:8px;font-weight:600;cursor:pointer;">Processar</button></div>';
+  if(el) el.textContent='Teste: renderImportEstoque funcionando';
 }
 
 window.renderPlanejamento=renderPlanejamento;
