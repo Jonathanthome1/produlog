@@ -5652,6 +5652,33 @@ async function gerarExcel(){
     });
     XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(contRows),'Contagem');
 
+    // NOVA ABA: PRODUÇÃO DETALHADA (formato simplificado)
+    const detRows=[['Data','Produto','Massa','Kg Massa','Recheio 1','Kg Rec1','Recheio 2','Kg Rec2','Produzido','Embalado']];
+    prod.forEach(r=>{
+      const pd=r.prodData||{};
+      const emb=r.embalagem||{};
+      detRows.push([
+        r.data||'',
+        r.produto||'',
+        pd.tipoMassa||'-',
+        r.massa||0,
+        pd.tipoRecheio||'-',
+        r.r1||0,
+        pd.tipoRecheio2||'-',
+        r.r2||0,
+        r.qtd||0,
+        emb.qtdEmbalada||0
+      ]);
+    });
+    const detSheet=XLSX.utils.aoa_to_sheet(detRows);
+    // Estilizar cabeçalho
+    const refDet=XLSX.utils.decode_range(detSheet['!ref']);
+    for(let C=refDet.s.c;C<=refDet.e.c;C++){
+      const cell=detSheet[XLSX.utils.encode_cell({r:0,c:C})];
+      if(cell) cell.s={fill:{fgColor:{rgb:'4472C4'},patternType:'solid'},font:{bold:true,color:{rgb:'FFFFFF'}}};
+    }
+    XLSX.utils.book_append_sheet(wb,detSheet,'Produção Detalhada');
+
     // Download
     const fileName=`MonteCastelo_${inicioVal}_${fimVal}.xlsx`;
     XLSX.writeFile(wb,fileName);
