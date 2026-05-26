@@ -265,9 +265,10 @@ function simularEstoque(cod){
   
   DIAS.forEach((dia, idx) => {
     const producao = (plano[cod] || {})[dia] || 0;
-    const venda = porDia[dia] || 0;
+    // CORRIGIDO: usar MÉDIA (total ÷ 4) ao invés de total acumulado
+    const vendaMedia = (porDia[dia] || 0) / 4;
     const saldoAntigo = estoqueAtual;
-    estoqueAtual = estoqueAtual + producao - venda;
+    estoqueAtual = estoqueAtual + producao - vendaMedia;
     
     const temFalta = estoqueAtual < 0;
     
@@ -275,8 +276,9 @@ function simularEstoque(cod){
       dia,
       estoqueInicio: saldoAntigo,
       producao,
-      venda,
-      saldo: estoqueAtual,
+      venda: Math.round(vendaMedia), // arredondar para exibição
+      vendaExata: vendaMedia,
+      saldo: Math.round(estoqueAtual),
       temFalta,
       status: temFalta ? '❌ FALTA' : '✅ OK'
     });
@@ -355,7 +357,7 @@ function render(){
     const diasInputs = DIAS.map(d => '<td class="num"><input type="number" class="day-input" data-cod="'+p.cod+'" data-dia="'+d+'" value="'+(pl[d]||'')+'" placeholder="0"></td>').join('');
     
     return '<tr>'+
-      '<td class="cod" data-cod="'+p.cod+'">'+p.cod+' '+(temFaltaEstoque(p.cod)?'<span style="color:var(--mc-vermelho);cursor:pointer;font-weight:700" title="Clique para ver simulação" onclick="abrirSimulacao(\''+p.cod+'\')">🔴</span>':'')+' </td>'+
+      '<td class="cod" data-cod="'+p.cod+'">'+p.cod+' '+(temFaltaEstoque(p.cod)?'<span style="color:var(--mc-vermelho);cursor:pointer;font-weight:700" title="Clique para ver simulação" onclick="abrirSimulacao(\''+p.cod+'\')">🔴</span>':'<span style="color:var(--mc-verde);font-weight:700">🟢</span>')+' </td>'+
       '<td><span class="prod-name" onclick="abrirDetalhe(\''+p.cod+'\')">'+p.desc+'</span></td>'+
       '<td class="num">'+p.estoque+'</td>'+
       '<td class="num">'+Math.round((p.totalPeriodo||0)/4)+'</td>'+
@@ -394,13 +396,17 @@ function render(){
       const temFalta = temFaltaEstoque(cod);
       const codCell = document.querySelector('[data-cod="'+cod+'"]');
       if(codCell){
-        const iconSpan = codCell.querySelector('span[style*="color:var(--mc-vermelho)"]');
-        if(temFalta && !iconSpan){
-          // Não tem ícone mas deveria ter - adiciona
-          codCell.innerHTML = cod + ' <span style="color:var(--mc-vermelho);cursor:pointer;font-weight:700" title="Clique para ver simulação" onclick="abrirSimulacao(\''+cod+'\')">🔴</span> ';
-        } else if(!temFalta && iconSpan){
-          // Tem ícone mas não deveria - remove
-          codCell.innerHTML = cod + ' ';
+        const iconSpan = codCell.querySelector('span');
+        if(temFalta){
+          // Mostrar 🔴 vermelho (clicável)
+          if(!iconSpan || iconSpan.textContent !== '🔴'){
+            codCell.innerHTML = cod + ' <span style="color:var(--mc-vermelho);cursor:pointer;font-weight:700" title="Clique para ver simulação" onclick="abrirSimulacao(\''+cod+'\')">🔴</span> ';
+          }
+        } else {
+          // Mostrar 🟢 verde (sem clique)
+          if(!iconSpan || iconSpan.textContent !== '🟢'){
+            codCell.innerHTML = cod + ' <span style="color:var(--mc-verde);font-weight:700">🟢</span> ';
+          }
         }
       }
       
