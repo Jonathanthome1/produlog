@@ -355,7 +355,7 @@ function render(){
     const diasInputs = DIAS.map(d => '<td class="num"><input type="number" class="day-input" data-cod="'+p.cod+'" data-dia="'+d+'" value="'+(pl[d]||'')+'" placeholder="0"></td>').join('');
     
     return '<tr>'+
-      '<td class="cod">'+p.cod+' '+(temFaltaEstoque(p.cod)?'<span style="color:var(--mc-vermelho);cursor:pointer;font-weight:700" title="Clique para ver simulação" onclick="abrirSimulacao(\''+p.cod+'\')">🔴</span>':'')+' </td>'+
+      '<td class="cod" data-cod="'+p.cod+'">'+p.cod+' '+(temFaltaEstoque(p.cod)?'<span style="color:var(--mc-vermelho);cursor:pointer;font-weight:700" title="Clique para ver simulação" onclick="abrirSimulacao(\''+p.cod+'\')">🔴</span>':'')+' </td>'+
       '<td><span class="prod-name" onclick="abrirDetalhe(\''+p.cod+'\')">'+p.desc+'</span></td>'+
       '<td class="num">'+p.estoque+'</td>'+
       '<td class="num">'+Math.round((p.totalPeriodo||0)/4)+'</td>'+
@@ -389,6 +389,20 @@ function render(){
       if(totCell) totCell.innerHTML = '<strong>'+tot+'</strong>';
       if(saldoCell) saldoCell.innerHTML = '<strong style="color:'+(saldo<0?'var(--mc-vermelho)':'var(--mc-verde)')+'">'+(saldo>=0?'+':'')+saldo+'</strong>';
       if(cobCell) cobCell.innerHTML = badgeCob(cob);
+      
+      // NOVO: Atualizar ícone de aviso
+      const temFalta = temFaltaEstoque(cod);
+      const codCell = document.querySelector('[data-cod="'+cod+'"]');
+      if(codCell){
+        const iconSpan = codCell.querySelector('span[style*="color:var(--mc-vermelho)"]');
+        if(temFalta && !iconSpan){
+          // Não tem ícone mas deveria ter - adiciona
+          codCell.innerHTML = cod + ' <span style="color:var(--mc-vermelho);cursor:pointer;font-weight:700" title="Clique para ver simulação" onclick="abrirSimulacao(\''+cod+'\')">🔴</span> ';
+        } else if(!temFalta && iconSpan){
+          // Tem ícone mas não deveria - remove
+          codCell.innerHTML = cod + ' ';
+        }
+      }
       
       // Atualizar KPIs
       renderKPIs();
