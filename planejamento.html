@@ -357,7 +357,7 @@ function render(){
     const diasInputs = DIAS.map(d => '<td class="num"><input type="number" class="day-input" data-cod="'+p.cod+'" data-dia="'+d+'" value="'+(pl[d]||'')+'" placeholder="0"></td>').join('');
     
     return '<tr>'+
-      '<td class="cod" data-cod="'+p.cod+'">'+p.cod+' '+(temFaltaEstoque(p.cod)?'<span style="color:var(--mc-vermelho);cursor:pointer;font-weight:700" title="Clique para ver simulação" onclick="abrirSimulacao(\''+p.cod+'\')">🔴</span>':'<span style="color:var(--mc-verde);font-weight:700">🟢</span>')+' </td>'+
+      '<td class="cod" data-cod="'+p.cod+'">'+p.cod+' '+(temFaltaEstoque(p.cod)?'<span style="color:var(--mc-vermelho);cursor:pointer;font-weight:700" title="Clique para ver simulação" onclick="abrirSimulacao(\''+p.cod+'\')">🔴</span>':'<span style="color:var(--mc-verde);cursor:pointer;font-weight:700" title="Clique para ver simulação" onclick="abrirSimulacao(\''+p.cod+'\')">🟢</span>')+' </td>'+
       '<td><span class="prod-name" onclick="abrirDetalhe(\''+p.cod+'\')">'+p.desc+'</span></td>'+
       '<td class="num">'+p.estoque+'</td>'+
       '<td class="num">'+Math.round((p.totalPeriodo||0)/4)+'</td>'+
@@ -403,9 +403,9 @@ function render(){
             codCell.innerHTML = cod + ' <span style="color:var(--mc-vermelho);cursor:pointer;font-weight:700" title="Clique para ver simulação" onclick="abrirSimulacao(\''+cod+'\')">🔴</span> ';
           }
         } else {
-          // Mostrar 🟢 verde (sem clique)
+          // Mostrar 🟢 verde (clicável também)
           if(!iconSpan || iconSpan.textContent !== '🟢'){
-            codCell.innerHTML = cod + ' <span style="color:var(--mc-verde);font-weight:700">🟢</span> ';
+            codCell.innerHTML = cod + ' <span style="color:var(--mc-verde);cursor:pointer;font-weight:700" title="Clique para ver simulação" onclick="abrirSimulacao(\''+cod+'\')">🟢</span> ';
           }
         }
       }
