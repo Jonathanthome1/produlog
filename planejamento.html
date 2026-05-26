@@ -214,6 +214,16 @@ textarea{width:100%;height:300px;padding:12px;border:1px solid var(--border);bor
   </div>
 </div>
 
+<div id="modal-simulacao" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <div class="modal-title" id="simulacao-titulo">Simulação de Estoque</div>
+      <button class="modal-close" onclick="fecharModal()">✕</button>
+    </div>
+    <div class="modal-body" id="simulacao-body" style="max-height:60vh;overflow-y:auto"></div>
+  </div>
+</div>
+
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
 import { getFirestore, collection, doc, setDoc, onSnapshot, getDocs, getDoc, deleteDoc } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
@@ -242,6 +252,42 @@ function badgeCob(pct){
   if(pct>=100) return '<span class="badge b-verde">'+pct+'%</span>';
   if(pct>=70) return '<span class="badge b-laranja">'+pct+'%</span>';
   return '<span class="badge b-vermelho">'+pct+'%</span>';
+}
+
+// NOVO: Simular estoque dia a dia
+function simularEstoque(cod){
+  const p = produtos.find(x => x.cod === cod);
+  if(!p) return [];
+  
+  const porDia = p.porDia || {};
+  const simulacao = [];
+  let estoqueAtual = p.estoque;
+  
+  DIAS.forEach((dia, idx) => {
+    const producao = (plano[cod] || {})[dia] || 0;
+    const venda = porDia[dia] || 0;
+    const saldoAntigo = estoqueAtual;
+    estoqueAtual = estoqueAtual + producao - venda;
+    
+    const temFalta = estoqueAtual < 0;
+    
+    simulacao.push({
+      dia,
+      estoqueInicio: saldoAntigo,
+      producao,
+      venda,
+      saldo: estoqueAtual,
+      temFalta,
+      status: temFalta ? '❌ FALTA' : '✅ OK'
+    });
+  });
+  
+  return simulacao;
+}
+
+function temFaltaEstoque(cod){
+  const sim = simularEstoque(cod);
+  return sim.some(s => s.temFalta);
 }
 
 // Listener Firebase
@@ -309,7 +355,7 @@ function render(){
     const diasInputs = DIAS.map(d => '<td class="num"><input type="number" class="day-input" data-cod="'+p.cod+'" data-dia="'+d+'" value="'+(pl[d]||'')+'" placeholder="0"></td>').join('');
     
     return '<tr>'+
-      '<td class="cod">'+p.cod+'</td>'+
+      '<td class="cod">'+p.cod+' '+(temFaltaEstoque(p.cod)?'<span style="color:var(--mc-vermelho);cursor:pointer;font-weight:700" title="Clique para ver simulação" onclick="abrirSimulacao(\''+p.cod+'\')">🔴</span>':'')+' </td>'+
       '<td><span class="prod-name" onclick="abrirDetalhe(\''+p.cod+'\')">'+p.desc+'</span></td>'+
       '<td class="num">'+p.estoque+'</td>'+
       '<td class="num">'+Math.round((p.totalPeriodo||0)/4)+'</td>'+
@@ -374,13 +420,65 @@ window.fecharModal = () => {
   document.getElementById('modal-estoque').classList.remove('show');
   document.getElementById('modal-detalhe').classList.remove('show');
   document.getElementById('modal-historico').classList.remove('show');
+  document.getElementById('modal-simulacao').classList.remove('show');
 };
 
-window.gerarRelatorio = () => {
+window.abrirSimulacao = (cod) => {
+  const p = produtos.find(x => x.cod === cod);
+  if(!p) return;
+  
+  const sim = simularEstoque(cod);
+  
+  document.getElementById('simulacao-titulo').textContent = '📊 Simulação de Estoque - ['+p.cod+'] '+p.desc;
+  
+  let html = '<table style="width:100%;border-collapse:collapse;"><tr style="background:#1e3a8a;color:white;">';
+  html += '<th style="padding:8px;border:1px solid #ddd;text-align:left">Dia</th>';
+  html += '<th style="padding:8px;border:1px solid #ddd;text-align:center">Est. Início</th>';
+  html += '<th style="padding:8px;border:1px solid #ddd;text-align:center">Produção</th>';
+  html += '<th style="padding:8px;border:1px solid #ddd;text-align:center">Venda Média</th>';
+  html += '<th style="padding:8px;border:1px solid #ddd;text-align:center">Saldo</th>';
+  html += '<th style="padding:8px;border:1px solid #ddd;text-align:left">Status</th></tr>';
+  
+  sim.forEach(s => {
+    const bgColor = s.temFalta ? '#fee2e2' : '#dcfce7';
+    const textColor = s.temFalta ? '#991b1b' : '#065f46';
+    html += '<tr style="background:'+bgColor+';color:'+textColor+'">';
+    html += '<td style="padding:8px;border:1px solid #ddd;font-weight:600">'+s.dia+'</td>';
+    html += '<td style="padding:8px;border:1px solid #ddd;text-align:center">'+s.estoqueInicio+'</td>';
+    html += '<td style="padding:8px;border:1px solid #ddd;text-align:center;background:#e0f2fe">'+s.producao+'</td>';
+    html += '<td style="padding:8px;border:1px solid #ddd;text-align:center">'+s.venda+'</td>';
+    html += '<td style="padding:8px;border:1px solid #ddd;text-align:center;font-weight:700;font-size:14px">'+s.saldo+'</td>';
+    html += '<td style="padding:8px;border:1px solid #ddd">'+s.status+'</td></tr>';
+  });
+  
+  html += '</table>';
+  
+  // Resumo
+  const temFalta = sim.some(s => s.temFalta);
+  if(temFalta){
+    const primeiraFalta = sim.find(s => s.temFalta);
+    const quantidadeFalta = Math.abs(primeiraFalta.saldo);
+    html += '<div style="margin-top:16px;padding:12px;background:#fee2e2;border-left:4px solid #dc2626;border-radius:4px;">';
+    html += '<strong style="color:#991b1b">⚠️ ALERTA: Falta de estoque!</strong><br>';
+    html += 'Primeira falta: <strong>'+primeiraFalta.dia+'</strong><br>';
+    html += 'Quantidade faltante: <strong>'+quantidadeFalta+' pcts</strong>';
+    html += '</div>';
+  } else {
+    html += '<div style="margin-top:16px;padding:12px;background:#dcfce7;border-left:4px solid #16a34a;border-radius:4px;">';
+    html += '<strong style="color:#065f46">✅ Sem problemas!</strong><br>';
+    html += 'Estoque suficiente para toda a semana.';
+    html += '</div>';
+  }
+  
+  document.getElementById('simulacao-body').innerHTML = html;
+  document.getElementById('modal-simulacao').classList.add('show');
+};
+
+window.gerarRelatorio = async () => {
   // Filtrar produtos com planejamento
   const produtosComPlano = produtos.filter(p => {
     const pl = plano[p.cod];
-    if(!pl) return false;
+    if(!pl) return;
     return DIAS.some(d => (pl[d] || 0) > 0);
   });
   
@@ -395,6 +493,17 @@ window.gerarRelatorio = () => {
   // Separar por setor
   const quadra = produtosComPlano.filter(p => p.setor === 'quadra');
   const conf = produtosComPlano.filter(p => p.setor === 'conf');
+  
+  // NOVO: Buscar registros de produção real
+  console.log('📥 Buscando registros de produção...');
+  let registrosProducao = [];
+  try {
+    const snapshot = await getDocs(collection(db, 'registros'));
+    registrosProducao = snapshot.docs.map(d => ({id: d.id, ...d.data()}));
+    console.log('✅ Registros encontrados:', registrosProducao.length);
+  } catch(err) {
+    console.error('Erro ao buscar registros:', err);
+  }
   
   // Gerar HTML do relatório
   let html = `<!DOCTYPE html>
@@ -450,6 +559,40 @@ td.num{text-align:center}
   
   html += gerarSetor('🍞 QUADRA', quadra);
   html += gerarSetor('🥐 CONFEITARIA', conf);
+  
+  // NOVO: Adicionar aba de Produção Real
+  if(registrosProducao.length > 0){
+    html += '<h2 style="background:#16a34a">📊 PRODUÇÃO REAL (ProduLog)</h2>';
+    html += '<table><tr>';
+    html += '<th>Data</th><th>Produto</th>';
+    html += '<th>Massa</th><th>Kg Massa</th>';
+    html += '<th>Recheio 1</th><th>Kg Rec1</th>';
+    html += '<th>Recheio 2</th><th>Kg Rec2</th>';
+    html += '<th>Produzido</th><th>Embalado</th>';
+    html += '</tr>';
+    
+    // Ordenar por data (mais recente primeiro)
+    const regs = registrosProducao.sort((a,b) => b.timestamp - a.timestamp);
+    
+    regs.forEach(r => {
+      const pd = r.prodData || {};
+      const emb = r.embalagem || {};
+      html += '<tr>';
+      html += '<td>'+(r.data||'')+'</td>';
+      html += '<td>'+(r.produto||'')+'</td>';
+      html += '<td>'+(pd.tipoMassa||'-')+'</td>';
+      html += '<td class="num">'+(r.massa||0)+'</td>';
+      html += '<td>'+(pd.tipoRecheio||'-')+'</td>';
+      html += '<td class="num">'+(r.r1||0)+'</td>';
+      html += '<td>'+(pd.tipoRecheio2||'-')+'</td>';
+      html += '<td class="num">'+(r.r2||0)+'</td>';
+      html += '<td class="num">'+(r.qtd||0)+'</td>';
+      html += '<td class="num">'+(emb.qtdEmbalada||0)+'</td>';
+      html += '</tr>';
+    });
+    
+    html += '</table>';
+  }
   
   html += '</body></html>';
   
