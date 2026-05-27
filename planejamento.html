@@ -409,19 +409,39 @@ async function render(){
     const datasSelecionadas = Object.keys(producoesAnteriores);
     console.log('📅 Datas selecionadas:', datasSelecionadas);
     
-    lista.forEach(p => {
+    lista.forEach((p, idx) => {
       let prodAnterior = 0;
-      // CORRIGIDO: Matching por NOME do produto (desc), não por cod
-      const registrosProduto = todosRegistros.filter(r => 
-        String(r.Produto || '').trim().toUpperCase() === String(p.desc).trim().toUpperCase()
-      );
       
-      console.log('Produto '+p.cod+' ('+p.desc+'): '+registrosProduto.length+' registros encontrados');
+      // Debug: mostrar nome do produto planejamento
+      console.log('---');
+      console.log('PRODUTO PLANEJAMENTO #'+idx);
+      console.log('  cod:', p.cod);
+      console.log('  desc:', p.desc);
+      console.log('  desc.UPPER:', p.desc.trim().toUpperCase());
+      
+      // Buscar registros por nome
+      const registrosProduto = todosRegistros.filter(r => {
+        const nomeProduLog = String(r.Produto || '').trim().toUpperCase();
+        const nomeplanejamento = String(p.desc).trim().toUpperCase();
+        const match = nomeProduLog === nomeplanejamento;
+        
+        // Debug dos primeiros 3
+        if(idx < 3){
+          console.log('    Comparando:');
+          console.log('      ProduLog:', nomeProduLog);
+          console.log('      Planejamento:', nomeplanejamento);
+          console.log('      Match:', match);
+        }
+        
+        return match;
+      });
+      
+      console.log('  ✅ '+registrosProduto.length+' registros encontrados');
       
       datasSelecionadas.forEach(data => {
         const regsData = registrosProduto.filter(r => r.data === data);
         regsData.forEach(r => {
-          console.log('  '+data+': +'+r.qtd);
+          console.log('    '+data+': +'+r.qtd);
           prodAnterior += r.qtd || 0;
         });
       });
@@ -431,9 +451,6 @@ async function render(){
         const datasLabel = datasSelecionadas.length > 0 ? ' ('+datasSelecionadas.join(', ')+')' : '';
         cell.innerHTML = prodAnterior > 0 ? prodAnterior : '-';
         cell.title = 'Produções anteriores'+datasLabel;
-        console.log('✅ Célula '+p.cod+' atualizada:', prodAnterior);
-      } else {
-        console.log('❌ Célula '+p.cod+' NÃO ENCONTRADA no DOM');
       }
     });
   } catch(err) {
