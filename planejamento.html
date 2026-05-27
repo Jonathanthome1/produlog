@@ -392,6 +392,8 @@ async function render(){
     const snapshot = await getDocs(collection(db, 'registros'));
     const todosRegistros = snapshot.docs.map(d => ({id: d.id, ...d.data()}));
     console.log('📊 Total de registros encontrados:', todosRegistros.length);
+    console.log('🔎 Primeiro registro completo:');
+    console.log(todosRegistros[0]);
     
     const datasSelecionadas = Object.keys(producoesAnteriores);
     console.log('📅 Datas selecionadas:', datasSelecionadas);
