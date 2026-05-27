@@ -395,8 +395,8 @@ async function render(){
     console.log('🔎 Primeiro registro - CAMPOS:');
     if(todosRegistros.length > 0){
       const r = todosRegistros[0];
-      console.log('  cod:', r.cod);
       console.log('  produto:', r.produto);
+      console.log('  prodData.nome:', r.prodData?.nome);
       console.log('  data:', r.data);
       console.log('  qtd:', r.qtd);
       console.log('  prodData:', r.prodData);
@@ -421,7 +421,9 @@ async function render(){
       
       // Buscar registros por nome
       const registrosProduto = todosRegistros.filter(r => {
-        const nomeProduLog = String(r.Produto || '').trim().toUpperCase();
+        // CORRIGIDO: campo é 'produto' (minúsculo), não 'Produto' (maiúsculo)
+        // Também tentar prodData.nome como fallback
+        const nomeProduLog = String(r.produto || r.prodData?.nome || '').trim().toUpperCase();
         const nomeplanejamento = String(p.desc).trim().toUpperCase();
         const match = nomeProduLog === nomeplanejamento;
         
