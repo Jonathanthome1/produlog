@@ -395,8 +395,8 @@ async function render(){
     console.log('🔎 Primeiro registro - CAMPOS:');
     if(todosRegistros.length > 0){
       const r = todosRegistros[0];
+      console.log('  cod:', r.cod);
       console.log('  produto:', r.produto);
-      console.log('  prodData.nome:', r.prodData?.nome);
       console.log('  data:', r.data);
       console.log('  qtd:', r.qtd);
       console.log('  prodData:', r.prodData);
@@ -419,19 +419,17 @@ async function render(){
       console.log('  desc:', p.desc);
       console.log('  desc.UPPER:', p.desc.trim().toUpperCase());
       
-      // Buscar registros por nome
+      // Buscar registros por CÓDIGO (muito mais confiável que nome!)
       const registrosProduto = todosRegistros.filter(r => {
-        // CORRIGIDO: campo é 'produto' (minúsculo), não 'Produto' (maiúsculo)
-        // Também tentar prodData.nome como fallback
-        const nomeProduLog = String(r.produto || r.prodData?.nome || '').trim().toUpperCase();
-        const nomeplanejamento = String(p.desc).trim().toUpperCase();
-        const match = nomeProduLog === nomeplanejamento;
+        const codProduLog = String(r.cod || '').trim();
+        const codPlanejamento = String(p.cod).trim();
+        const match = codProduLog === codPlanejamento;
         
         // Debug dos primeiros 3
         if(idx < 3){
-          console.log('    Comparando:');
-          console.log('      ProduLog:', nomeProduLog);
-          console.log('      Planejamento:', nomeplanejamento);
+          console.log('    Comparando por CÓDIGO:');
+          console.log('      ProduLog:', codProduLog);
+          console.log('      Planejamento:', codPlanejamento);
           console.log('      Match:', match);
         }
         
@@ -443,10 +441,20 @@ async function render(){
       datasSelecionadas.forEach(data => {
         const regsData = registrosProduto.filter(r => r.data === data);
         regsData.forEach(r => {
-          console.log('    '+data+': +'+r.qtd);
+          console.log('    '+data+': +'+r.qtd + ' ('+r.produto+')');
           prodAnterior += r.qtd || 0;
         });
       });
+      
+      // NOVO: DEBUG - mostrar produtos da data selecionada que NÃO tiveram match
+      if(prodAnterior === 0 && datasSelecionadas.length > 0){
+        console.log('  ⚠️ Nenhuma produção encontrada para este produto na data selecionada');
+        // Mostrar todos os produtos produzidos nas datas selecionadas para comparação
+        datasSelecionadas.forEach(data => {
+          const regsDataGeral = todosRegistros.filter(r => r.data === data);
+          console.log('    Produtos em '+data+': ', regsDataGeral.slice(0,5).map(r => r.produto || r.prodData?.nome).join(' | '));
+        });
+      }
       
       const cell = document.getElementById('prodant-'+p.cod);
       if(cell){
