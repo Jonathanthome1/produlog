@@ -3752,6 +3752,7 @@ async function salvar(){
   const mE=prodSel.grMassa*unidades/1000,r1E=prodSel.grRecheio*unidades/1000,r2E=prodSel.grRecheio2*unidades/1000;
   try {
     await addDoc(collection(db,'registros'),{
+      cod:prodSel.cod,
       produto:prodSel.nome,prodData:prodSel,qtd,qtdPacotes:qtd,qtdUnidades:unidades,massa,r1,r2,obs,
       hora:agora(),data:dataSel,confirmado:false,timestamp:Date.now(),
       quebra:{massaEsp:mE,massaReal:massa,difMassa:massa-mE,r1Esp:r1E,r1Real:r1,difR1:r1-r1E,r2Esp:r2E,r2Real:r2,difR2:r2-r2E},
@@ -7083,6 +7084,7 @@ async function salvarQuadra(){
     // Also push each produto to 'registros' collection so embalagem sees it
     for(const p of produtosArr){
       await addDoc(collection(db,'registros'),{
+        cod:p.cod,
         produto:p.nome,
         prodData:{nome:p.nome, kgPacote:p.kgPacote, tipoMassa:quadraKitSel, grMassa:0, tipoRecheio:'', grRecheio:0, tipoRecheio2:'', grRecheio2:0},
         qtd:p.qtdPacotes, qtdPacotes:p.qtdPacotes, qtdUnidades:p.qtdPacotes,
