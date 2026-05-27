@@ -583,7 +583,11 @@ window.abrirProducoesAnteriores = async () => {
 
 // NOVO: Processar seleção de data
 window.selecionarDataProducao = async (data) => {
+  console.log('🔵 selecionarDataProducao() chamada com:', data);
+  console.log('   producoesAnteriores ANTES:', producoesAnteriores);
+  
   const checkbox = document.getElementById('data-'+data);
+  console.log('   checkbox encontrado?', !!checkbox, '| checked?', checkbox?.checked);
   
   if(checkbox.checked){
     producoesAnteriores[data] = true;
@@ -593,6 +597,7 @@ window.selecionarDataProducao = async (data) => {
     console.log('❌ Data removida:', data);
   }
   
+  console.log('   producoesAnteriores DEPOIS:', producoesAnteriores);
   console.log('📅 Datas selecionadas agora:', Object.keys(producoesAnteriores));
   
   // Atualizar datas selecionadas
@@ -603,6 +608,7 @@ window.selecionarDataProducao = async (data) => {
   // Re-renderizar tabela
   await render();
   console.log('✅ Render concluído');
+  console.log('   producoesAnteriores FINAL:', producoesAnteriores);
 };
 
 window.abrirSimulacao = (cod) => {
