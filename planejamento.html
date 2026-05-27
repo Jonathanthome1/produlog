@@ -395,7 +395,13 @@ async function render(){
     console.log('🔎 Primeiro registro - CAMPOS:');
     if(todosRegistros.length > 0){
       const r = todosRegistros[0];
+      console.log('  ⚠️ TODOS OS CAMPOS DO REGISTRO:');
+      console.log(r);
       console.log('  cod:', r.cod);
+      console.log('  codigo:', r.codigo);
+      console.log('  codigoProduto:', r.codigoProduto);
+      console.log('  prodData.cod:', r.prodData?.cod);
+      console.log('  prodData.codigo:', r.prodData?.codigo);
       console.log('  produto:', r.produto);
       console.log('  data:', r.data);
       console.log('  qtd:', r.qtd);
