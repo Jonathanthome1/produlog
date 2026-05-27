@@ -392,19 +392,31 @@ async function render(){
     const snapshot = await getDocs(collection(db, 'registros'));
     const todosRegistros = snapshot.docs.map(d => ({id: d.id, ...d.data()}));
     console.log('📊 Total de registros encontrados:', todosRegistros.length);
-    console.log('🔎 Primeiro registro completo:');
-    console.log(todosRegistros[0]);
+    console.log('🔎 Primeiro registro - CAMPOS:');
+    if(todosRegistros.length > 0){
+      const r = todosRegistros[0];
+      console.log('  cod:', r.cod);
+      console.log('  produto:', r.produto);
+      console.log('  data:', r.data);
+      console.log('  qtd:', r.qtd);
+      console.log('  prodData:', r.prodData);
+      if(r.prodData){
+        console.log('    prodData.cod:', r.prodData.cod);
+        console.log('    prodData.nome:', r.prodData.nome);
+      }
+    }
     
     const datasSelecionadas = Object.keys(producoesAnteriores);
     console.log('📅 Datas selecionadas:', datasSelecionadas);
     
     lista.forEach(p => {
       let prodAnterior = 0;
+      // CORRIGIDO: Matching por NOME do produto (desc), não por cod
       const registrosProduto = todosRegistros.filter(r => 
-        String(r.cod||'').trim() === String(p.cod).trim()
+        String(r.Produto || '').trim().toUpperCase() === String(p.desc).trim().toUpperCase()
       );
       
-      console.log('Produto '+p.cod+':', registrosProduto.length, 'registros encontrados');
+      console.log('Produto '+p.cod+' ('+p.desc+'): '+registrosProduto.length+' registros encontrados');
       
       datasSelecionadas.forEach(data => {
         const regsData = registrosProduto.filter(r => r.data === data);
