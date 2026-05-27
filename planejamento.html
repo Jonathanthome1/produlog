@@ -388,9 +388,13 @@ async function render(){
   
   // NOVO: Buscar e atualizar produções anteriores
   try {
+    console.log('🔍 Buscando registros do ProduLog...');
     const snapshot = await getDocs(collection(db, 'registros'));
     const todosRegistros = snapshot.docs.map(d => ({id: d.id, ...d.data()}));
+    console.log('📊 Total de registros encontrados:', todosRegistros.length);
+    
     const datasSelecionadas = Object.keys(producoesAnteriores);
+    console.log('📅 Datas selecionadas:', datasSelecionadas);
     
     lista.forEach(p => {
       let prodAnterior = 0;
@@ -398,9 +402,12 @@ async function render(){
         String(r.cod||'').trim() === String(p.cod).trim()
       );
       
+      console.log('Produto '+p.cod+':', registrosProduto.length, 'registros encontrados');
+      
       datasSelecionadas.forEach(data => {
         const regsData = registrosProduto.filter(r => r.data === data);
         regsData.forEach(r => {
+          console.log('  '+data+': +'+r.qtd);
           prodAnterior += r.qtd || 0;
         });
       });
@@ -410,10 +417,13 @@ async function render(){
         const datasLabel = datasSelecionadas.length > 0 ? ' ('+datasSelecionadas.join(', ')+')' : '';
         cell.innerHTML = prodAnterior > 0 ? prodAnterior : '-';
         cell.title = 'Produções anteriores'+datasLabel;
+        console.log('✅ Célula '+p.cod+' atualizada:', prodAnterior);
+      } else {
+        console.log('❌ Célula '+p.cod+' NÃO ENCONTRADA no DOM');
       }
     });
   } catch(err) {
-    console.error('Erro ao atualizar produções anteriores:', err);
+    console.error('❌ Erro ao atualizar produções anteriores:', err);
   }
   
   // Hooks inputs - CORRIGIDO: não re-renderizar tudo, só atualizar células
@@ -546,16 +556,22 @@ window.selecionarDataProducao = async (data) => {
   
   if(checkbox.checked){
     producoesAnteriores[data] = true;
+    console.log('✅ Data selecionada:', data);
   } else {
     delete producoesAnteriores[data];
+    console.log('❌ Data removida:', data);
   }
+  
+  console.log('📅 Datas selecionadas agora:', Object.keys(producoesAnteriores));
   
   // Atualizar datas selecionadas
   const datasLista = Object.keys(producoesAnteriores);
   document.getElementById('datas-selecionadas').textContent = datasLista.length > 0 ? datasLista.join(', ') : 'Nenhuma selecionada';
   
+  console.log('🔄 Chamando render()...');
   // Re-renderizar tabela
-  render();
+  await render();
+  console.log('✅ Render concluído');
 };
 
 window.abrirSimulacao = (cod) => {
