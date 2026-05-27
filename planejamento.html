@@ -128,6 +128,7 @@ textarea{width:100%;height:300px;padding:12px;border:1px solid var(--border);bor
     <option value="todos">Todos</option>
   </select>
   <input type="text" id="busca" class="search-box" placeholder="🔍 Buscar...">
+  <button class="btn btn-primary" onclick="abrirProducoesAnteriores()" style="background:#9333ea">📅 Produções Anteriores</button>
   <button class="btn btn-primary" onclick="abrirModalVendas()">📥 Importar Vendas</button>
   <button class="btn btn-success" onclick="abrirModalEstoque()">📦 Importar Estoque</button>
   <button class="btn btn-primary" onclick="gerarRelatorio()" style="background:var(--mc-roxo)">📄 Gerar Plano de Produção</button>
@@ -147,6 +148,7 @@ textarea{width:100%;height:300px;padding:12px;border:1px solid var(--border);bor
           <th class="num">Méd/sem</th>
           <th class="num">Ideal</th>
           <th>Pico</th>
+          <th class="num">Prod. Ant.</th>
           <th class="num">Seg</th>
           <th class="num">Ter</th>
           <th class="num">Qua</th>
@@ -224,6 +226,18 @@ textarea{width:100%;height:300px;padding:12px;border:1px solid var(--border);bor
   </div>
 </div>
 
+<div id="modal-producoes" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <div class="modal-title">📅 Selecionador de Produções Anteriores</div>
+      <button class="modal-close" onclick="fecharModal()">✕</button>
+    </div>
+    <div class="modal-body" id="producoes-body" style="max-height:60vh;overflow-y:auto">
+      <p style="color:#666;text-align:center;padding:20px">Carregando datas disponíveis...</p>
+    </div>
+  </div>
+</div>
+
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
 import { getFirestore, collection, doc, setDoc, onSnapshot, getDocs, getDoc, deleteDoc } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
@@ -241,6 +255,7 @@ const db = getFirestore(app);
 let produtos = [];
 let setorAtivo = 'quadra';
 const plano = {};
+const producoesAnteriores = {}; // NOVO: armazenar datas selecionadas por produto
 
 const DIAS = ['Seg','Ter','Qua','Qui','Sex','Sáb'];
 function mult(){ return parseFloat(document.getElementById('mult').value)||2; }
@@ -305,7 +320,7 @@ window.trocarTab = (s) => {
   render();
 };
 
-function render(){
+async function render(){
   const filtro = document.getElementById('filtro')?.value || 'ativos';
   const busca = document.getElementById('busca')?.value.toLowerCase() || '';
   const ordem = document.getElementById('order')?.value || 'urg';
@@ -363,12 +378,43 @@ function render(){
       '<td class="num">'+Math.round((p.totalPeriodo||0)/4)+'</td>'+
       '<td class="num"><strong>'+ideal+'</strong></td>'+
       '<td>'+(maxDia?'<span class="badge '+(picoPct>=40?'b-laranja':'b-azul')+'">'+maxDia+' '+picoPct+'%</span>':'-')+'</td>'+
+      '<td class="num" id="prodant-'+p.cod+'" style="background:#e0f2fe;font-weight:700;color:var(--mc-azul)">-</td>'+
       diasInputs+
       '<td class="num" data-tot="'+p.cod+'"><strong>'+tot+'</strong></td>'+
       '<td class="num" data-saldo="'+p.cod+'"><strong style="color:'+(saldo<0?'var(--mc-vermelho)':'var(--mc-verde)')+'">'+(saldo>=0?'+':'')+saldo+'</strong></td>'+
       '<td class="num" data-cob="'+p.cod+'">'+badgeCob(cob)+'</td>'+
     '</tr>';
   }).join('');
+  
+  // NOVO: Buscar e atualizar produções anteriores
+  try {
+    const snapshot = await getDocs(collection(db, 'registros'));
+    const todosRegistros = snapshot.docs.map(d => ({id: d.id, ...d.data()}));
+    const datasSelecionadas = Object.keys(producoesAnteriores);
+    
+    lista.forEach(p => {
+      let prodAnterior = 0;
+      const registrosProduto = todosRegistros.filter(r => 
+        String(r.cod||'').trim() === String(p.cod).trim()
+      );
+      
+      datasSelecionadas.forEach(data => {
+        const regsData = registrosProduto.filter(r => r.data === data);
+        regsData.forEach(r => {
+          prodAnterior += r.qtd || 0;
+        });
+      });
+      
+      const cell = document.getElementById('prodant-'+p.cod);
+      if(cell){
+        const datasLabel = datasSelecionadas.length > 0 ? ' ('+datasSelecionadas.join(', ')+')' : '';
+        cell.innerHTML = prodAnterior > 0 ? prodAnterior : '-';
+        cell.title = 'Produções anteriores'+datasLabel;
+      }
+    });
+  } catch(err) {
+    console.error('Erro ao atualizar produções anteriores:', err);
+  }
   
   // Hooks inputs - CORRIGIDO: não re-renderizar tudo, só atualizar células
   document.querySelectorAll('.day-input').forEach(inp => {
@@ -441,6 +487,75 @@ window.fecharModal = () => {
   document.getElementById('modal-detalhe').classList.remove('show');
   document.getElementById('modal-historico').classList.remove('show');
   document.getElementById('modal-simulacao').classList.remove('show');
+  document.getElementById('modal-producoes').classList.remove('show');
+};
+
+// NOVO: Abrir modal de produções anteriores
+window.abrirProducoesAnteriores = async () => {
+  console.log('📅 Carregando datas do ProduLog...');
+  
+  try {
+    const snapshot = await getDocs(collection(db, 'registros'));
+    const registros = snapshot.docs.map(d => ({id: d.id, ...d.data()}));
+    
+    // Agrupar datas únicas
+    const datasUnicas = [...new Set(registros.map(r => r.data))].sort().reverse();
+    
+    console.log('Datas encontradas:', datasUnicas);
+    
+    if(datasUnicas.length === 0){
+      document.getElementById('producoes-body').innerHTML = '<p style="color:#666;text-align:center;padding:20px">Nenhuma produção registrada no ProduLog</p>';
+      document.getElementById('modal-producoes').classList.add('show');
+      return;
+    }
+    
+    // Montar checkboxes
+    let html = '<div style="padding:12px;border-bottom:1px solid #ddd;margin-bottom:12px;">';
+    html += '<strong>Selecione as datas com produções que faltam considerar:</strong>';
+    html += '</div>';
+    
+    html += '<div style="display:flex;flex-direction:column;gap:8px;">';
+    datasUnicas.forEach(data => {
+      const qtdRegistros = registros.filter(r => r.data === data).length;
+      const isSelected = producoesAnteriores[data];
+      html += '<label style="display:flex;align-items:center;padding:8px;border:1px solid #ddd;border-radius:6px;cursor:pointer;background:'+(isSelected?'#dbeafe':'#f9fafb')+'">';
+      html += '<input type="checkbox" id="data-'+data+'" '+( isSelected ? 'checked' : '')+' onchange="selecionarDataProducao(\''+data+'\')" style="margin-right:8px;width:18px;height:18px;cursor:pointer">';
+      html += '<div style="flex:1"><strong>'+data+'</strong> <span style="color:#666;font-size:12px">('+qtdRegistros+' registros)</span></div>';
+      html += '</label>';
+    });
+    html += '</div>';
+    
+    html += '<div style="margin-top:16px;padding:12px;background:#dcfce7;border-radius:6px;">';
+    html += '<strong style="color:#065f46">ℹ️ Datas selecionadas:</strong><br>';
+    html += '<div id="datas-selecionadas" style="margin-top:6px;font-size:13px;">'+
+            (Object.keys(producoesAnteriores).length > 0 ? Object.keys(producoesAnteriores).join(', ') : 'Nenhuma selecionada')+
+            '</div>';
+    html += '</div>';
+    
+    document.getElementById('producoes-body').innerHTML = html;
+    document.getElementById('modal-producoes').classList.add('show');
+  } catch(err) {
+    console.error('Erro:', err);
+    alert('Erro ao carregar produções: ' + err.message);
+  }
+};
+
+// NOVO: Processar seleção de data
+window.selecionarDataProducao = async (data) => {
+  const checkbox = document.getElementById('data-'+data);
+  
+  if(checkbox.checked){
+    producoesAnteriores[data] = true;
+  } else {
+    delete producoesAnteriores[data];
+  }
+  
+  // Atualizar datas selecionadas
+  const datasLista = Object.keys(producoesAnteriores);
+  document.getElementById('datas-selecionadas').textContent = datasLista.length > 0 ? datasLista.join(', ') : 'Nenhuma selecionada';
+  
+  // Re-renderizar tabela
+  render();
 };
 
 window.abrirSimulacao = (cod) => {
