@@ -287,8 +287,8 @@ function simularEstoque(cod){
   
   // NOVO: Considerar produções anteriores no estoque inicial
   const prodAntAuto = 0; // será calculado depois
-  const prodAntManual = parseInt(prodAntManual[cod]) || 0;
-  let estoqueAtual = p.estoque + prodAntAuto + prodAntManual;
+  const prodAntManualVal = parseInt(prodAntManual[cod]) || 0;
+  let estoqueAtual = p.estoque + prodAntAuto + prodAntManualVal;
   
   DIAS.forEach((dia, idx) => {
     const producao = (plano[cod] || {})[dia] || 0;
