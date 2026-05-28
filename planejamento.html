@@ -92,6 +92,7 @@ tbody tr:hover{background:#f9fafb}
 .cliente-row:last-child{border-bottom:none}
 textarea{width:100%;height:300px;padding:12px;border:1px solid var(--border);border-radius:8px;font-family:monospace;font-size:11px}
 </style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.min.js"></script>
 </head>
 <body>
 
@@ -133,6 +134,7 @@ textarea{width:100%;height:300px;padding:12px;border:1px solid var(--border);bor
   <button class="btn btn-success" onclick="abrirModalEstoque()">📦 Importar Estoque</button>
   <button class="btn btn-primary" onclick="gerarRelatorio()" style="background:var(--mc-roxo)">📄 Gerar Plano de Produção</button>
   <button class="btn btn-success" onclick="salvarPlano()">💾 Salvar Plano</button>
+  <button class="btn btn-warning" onclick="exportarParaExcel()" title="Exportar planejamento atual para Excel">📥 Exportar Excel</button>
   <button class="btn btn-primary" onclick="abrirHistorico()">📚 Histórico</button>
   <button class="btn btn-danger" onclick="limparTudo()">🗑️ Limpar Tudo</button>
 </div>
@@ -874,7 +876,98 @@ td.num{text-align:center}
   win.print();
 };
 
-window.salvarPlano = async () => {
+window.exportarParaExcel = () => {
+  try {
+    // Coletar dados da tabela
+    const dados = [];
+    
+    // CABEÇALHO
+    dados.push([
+      'COD', 'PRODUTO', 'ESTOQUE', 'MÉD/SEM', 'IDEAL', 'PICO',
+      'PROD. ANT. (AUTO)', 'PROD. ANT. (MANUAL)', 'TOTAL PROD. ANT.',
+      'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SÁB', 'TOTAL', 'SALDO', '% COB'
+    ]);
+    
+    // DADOS DOS PRODUTOS
+    produtos.forEach(p => {
+      const pl = plano[p.cod] || {};
+      const seg = parseInt(pl['Seg']) || 0;
+      const ter = parseInt(pl['Ter']) || 0;
+      const qua = parseInt(pl['Qua']) || 0;
+      const qui = parseInt(pl['Qui']) || 0;
+      const sex = parseInt(pl['Sex']) || 0;
+      const sab = parseInt(pl['Sáb']) || 0;
+      
+      const prodAntAuto = 0; // Seria necessário buscar do histórico de seleção de datas
+      const prodAntManual = parseInt(prodAntManual[p.cod]) || 0;
+      const totalProdAnt = prodAntAuto + prodAntManual;
+      
+      const total = seg + ter + qua + qui + sex + sab + totalProdAnt;
+      const saldo = p.estoque + total - (p.totalPeriodo || 0);
+      const cob = p.totalPeriodo > 0 ? Math.round((p.estoque + total) / p.totalPeriodo * 100) : 0;
+      
+      dados.push([
+        p.cod,
+        p.desc,
+        p.estoque,
+        Math.round(p.totalPeriodo / 4),
+        p.totalPeriodo,
+        Math.max(...Object.keys(p.porDia || {}).map(d => p.porDia[d] || 0)),
+        prodAntAuto,
+        prodAntManual,
+        totalProdAnt,
+        seg,
+        ter,
+        qua,
+        qui,
+        sex,
+        sab,
+        total,
+        saldo,
+        cob + '%'
+      ]);
+    });
+    
+    // Criar workbook
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.aoa_to_sheet(dados);
+    
+    // Formatar colunas
+    ws['!cols'] = [
+      {wch: 8},   // COD
+      {wch: 35},  // PRODUTO
+      {wch: 10},  // ESTOQUE
+      {wch: 10},  // MÉD/SEM
+      {wch: 8},   // IDEAL
+      {wch: 8},   // PICO
+      {wch: 15},  // PROD. ANT. (AUTO)
+      {wch: 15},  // PROD. ANT. (MANUAL)
+      {wch: 15},  // TOTAL PROD. ANT.
+      {wch: 8},   // SEG
+      {wch: 8},   // TER
+      {wch: 8},   // QUA
+      {wch: 8},   // QUI
+      {wch: 8},   // SEX
+      {wch: 8},   // SÁB
+      {wch: 8},   // TOTAL
+      {wch: 8},   // SALDO
+      {wch: 8}    // % COB
+    ];
+    
+    XLSX.utils.book_append_sheet(wb, ws, 'Planejamento');
+    
+    // Salvar arquivo
+    const dataStr = new Date().toISOString().split('T')[0];
+    const nomeArquivo = `Planejamento-${dataStr}.xlsx`;
+    XLSX.writeFile(wb, nomeArquivo);
+    
+    console.log('✅ Arquivo Excel salvo:', nomeArquivo);
+    alert('✓ Planejamento exportado para Excel!\n' + nomeArquivo);
+  } catch(err) {
+    console.error('❌ Erro ao exportar:', err);
+    alert('Erro ao exportar: ' + err.message);
+  }
+};
   console.log('🔵 salvarPlano() chamada');
   
   // Verificar se tem algum planejamento
