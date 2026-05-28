@@ -876,8 +876,21 @@ td.num{text-align:center}
   win.print();
 };
 
-window.exportarParaExcel = () => {
+window.exportarParaExcel = async () => {
   try {
+    // Verificar se XLSX está carregado, se não, carregar
+    if(typeof XLSX === 'undefined'){
+      console.log('⏳ Carregando SheetJS...');
+      await new Promise((resolve, reject) => {
+        const script = document.createElement('script');
+        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.min.js';
+        script.onload = resolve;
+        script.onerror = reject;
+        document.head.appendChild(script);
+      });
+      console.log('✅ SheetJS carregado!');
+    }
+    
     // Coletar dados da tabela
     const dados = [];
     
