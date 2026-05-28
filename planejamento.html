@@ -931,6 +931,7 @@ window.salvarPlano = async () => {
     timestamp: agora.getTime(),
     multiplicador: mult(),
     planos: {...plano},
+    prodAntManual: {...prodAntManual},
     produtos: produtosSnapshot
   };
   
@@ -1015,6 +1016,12 @@ window.carregarPlano = async (id) => {
     
     // Copiar planejamento
     Object.assign(plano, data.planos);
+    
+    // NOVO: Restaurar produções anteriores manuais
+    Object.keys(prodAntManual).forEach(k => delete prodAntManual[k]);
+    if(data.prodAntManual){
+      Object.assign(prodAntManual, data.prodAntManual);
+    }
     
     // NOVO: Restaurar produtos (snapshot completo)
     if(data.produtos && data.produtos.length > 0){
