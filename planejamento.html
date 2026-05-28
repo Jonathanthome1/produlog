@@ -284,11 +284,14 @@ function simularEstoque(cod){
   
   const porDia = p.porDia || {};
   const simulacao = [];
-  let estoqueAtual = p.estoque;
+  
+  // NOVO: Considerar produções anteriores no estoque inicial
+  const prodAntAuto = 0; // será calculado depois
+  const prodAntManual = parseInt(prodAntManual[cod]) || 0;
+  let estoqueAtual = p.estoque + prodAntAuto + prodAntManual;
   
   DIAS.forEach((dia, idx) => {
     const producao = (plano[cod] || {})[dia] || 0;
-    // CORRIGIDO: usar MÉDIA (total ÷ 4) ao invés de total acumulado
     const vendaMedia = (porDia[dia] || 0) / 4;
     const saldoAntigo = estoqueAtual;
     estoqueAtual = estoqueAtual + producao - vendaMedia;
@@ -299,7 +302,7 @@ function simularEstoque(cod){
       dia,
       estoqueInicio: saldoAntigo,
       producao,
-      venda: Math.round(vendaMedia), // arredondar para exibição
+      venda: Math.round(vendaMedia),
       vendaExata: vendaMedia,
       saldo: Math.round(estoqueAtual),
       temFalta,
