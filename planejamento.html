@@ -899,8 +899,8 @@ window.exportarParaExcel = () => {
       const sab = parseInt(pl['Sáb']) || 0;
       
       const prodAntAuto = 0; // Seria necessário buscar do histórico de seleção de datas
-      const prodAntManual = parseInt(prodAntManual[p.cod]) || 0;
-      const totalProdAnt = prodAntAuto + prodAntManual;
+      const prodAntManualVal = parseInt(prodAntManual[p.cod]) || 0;
+      const totalProdAnt = prodAntAuto + prodAntManualVal;
       
       const total = seg + ter + qua + qui + sex + sab + totalProdAnt;
       const saldo = p.estoque + total - (p.totalPeriodo || 0);
@@ -914,7 +914,7 @@ window.exportarParaExcel = () => {
         p.totalPeriodo,
         Math.max(...Object.keys(p.porDia || {}).map(d => p.porDia[d] || 0)),
         prodAntAuto,
-        prodAntManual,
+        prodAntManualVal,
         totalProdAnt,
         seg,
         ter,
