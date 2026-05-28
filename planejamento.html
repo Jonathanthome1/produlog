@@ -148,7 +148,9 @@ textarea{width:100%;height:300px;padding:12px;border:1px solid var(--border);bor
           <th class="num">Méd/sem</th>
           <th class="num">Ideal</th>
           <th>Pico</th>
-          <th class="num">Prod. Ant.</th>
+          <th class="num">Prod. Ant. (Auto)</th>
+          <th class="num">Prod. Ant. (Manual)</th>
+          <th class="num">Total Prod. Ant.</th>
           <th class="num">Seg</th>
           <th class="num">Ter</th>
           <th class="num">Qua</th>
@@ -255,12 +257,18 @@ const db = getFirestore(app);
 let produtos = [];
 let setorAtivo = 'quadra';
 const plano = {};
-const producoesAnteriores = {}; // NOVO: armazenar datas selecionadas por produto
+const producoesAnteriores = {}; // Datas selecionadas do ProduLog
+const prodAntManual = {}; // NOVO: Produções anteriores MANUAIS por produto
 
 const DIAS = ['Seg','Ter','Qua','Qui','Sex','Sáb'];
 function mult(){ return parseFloat(document.getElementById('mult').value)||2; }
 function calcIdeal(p){ return Math.round((p.totalPeriodo||0)/4 * mult()); }
-function calcPlanoTotal(cod){ const pl=plano[cod]||{}; return DIAS.reduce((s,d)=>s+(parseInt(pl[d])||0),0); }
+function calcPlanoTotal(cod){ 
+  const pl = plano[cod] || {}; 
+  const diasTotal = DIAS.reduce((s,d) => s + (parseInt(pl[d]) || 0), 0);
+  const prodAntTotal = (parseInt(prodAntManual[cod]) || 0); // NOVO: incluir manual
+  return diasTotal + prodAntTotal;
+}
 function calcSaldo(p){ return Math.round(p.estoque + calcPlanoTotal(p.cod) - calcIdeal(p)); }
 function calcCob(p){ const i=calcIdeal(p); return i<=0?100:Math.round((p.estoque+calcPlanoTotal(p.cod))/i*100); }
 function badgeCob(pct){
@@ -378,7 +386,9 @@ async function render(){
       '<td class="num">'+Math.round((p.totalPeriodo||0)/4)+'</td>'+
       '<td class="num"><strong>'+ideal+'</strong></td>'+
       '<td>'+(maxDia?'<span class="badge '+(picoPct>=40?'b-laranja':'b-azul')+'">'+maxDia+' '+picoPct+'%</span>':'-')+'</td>'+
-      '<td class="num" id="prodant-'+p.cod+'" style="background:#e0f2fe;font-weight:700;color:var(--mc-azul)">-</td>'+
+      '<td class="num" id="prodant-auto-'+p.cod+'" style="background:#e0f2fe;font-weight:700;color:var(--mc-azul)">-</td>'+
+      '<td class="num"><input type="number" id="prodant-manual-'+p.cod+'" class="day-input prodant-manual-input" data-cod="'+p.cod+'" value="'+(prodAntManual[p.cod]||'')+'" placeholder="0" style="width:60px;"></td>'+
+      '<td class="num" id="prodant-total-'+p.cod+'" style="background:#f0f9ff;font-weight:700;color:var(--mc-azul)">-</td>'+
       diasInputs+
       '<td class="num" data-tot="'+p.cod+'"><strong>'+tot+'</strong></td>'+
       '<td class="num" data-saldo="'+p.cod+'"><strong style="color:'+(saldo<0?'var(--mc-vermelho)':'var(--mc-verde)')+'">'+(saldo>=0?'+':'')+saldo+'</strong></td>'+
@@ -462,18 +472,25 @@ async function render(){
         });
       }
       
-      const cell = document.getElementById('prodant-'+p.cod);
+      const cell = document.getElementById('prodant-auto-'+p.cod);
       if(cell){
         const datasLabel = datasSelecionadas.length > 0 ? ' ('+datasSelecionadas.join(', ')+')' : '';
         cell.innerHTML = prodAnterior > 0 ? prodAnterior : '-';
-        cell.title = 'Produções anteriores'+datasLabel;
+        cell.title = 'Produções anteriores (automático)'+datasLabel;
+      }
+      
+      // NOVO: Atualizar total de prod. ant. (auto + manual)
+      const manualVal = parseInt(prodAntManual[p.cod]||0);
+      const totalCell = document.getElementById('prodant-total-'+p.cod);
+      if(totalCell){
+        totalCell.innerHTML = '<strong>'+(prodAnterior + manualVal)+'</strong>';
       }
     });
   } catch(err) {
     console.error('❌ Erro ao atualizar produções anteriores:', err);
   }
   
-  // Hooks inputs - CORRIGIDO: não re-renderizar tudo, só atualizar células
+  // Hooks inputs - atualizar células quando mudar
   document.querySelectorAll('.day-input').forEach(inp => {
     inp.addEventListener('input', e => {
       const cod = e.target.dataset.cod;
@@ -495,25 +512,72 @@ async function render(){
       if(saldoCell) saldoCell.innerHTML = '<strong style="color:'+(saldo<0?'var(--mc-vermelho)':'var(--mc-verde)')+'">'+(saldo>=0?'+':'')+saldo+'</strong>';
       if(cobCell) cobCell.innerHTML = badgeCob(cob);
       
-      // NOVO: Atualizar ícone de aviso
+      // Atualizar ícone de aviso
       const temFalta = temFaltaEstoque(cod);
       const codCell = document.querySelector('[data-cod="'+cod+'"]');
       if(codCell){
         const iconSpan = codCell.querySelector('span');
         if(temFalta){
-          // Mostrar 🔴 vermelho (clicável)
           if(!iconSpan || iconSpan.textContent !== '🔴'){
             codCell.innerHTML = cod + ' <span style="color:var(--mc-vermelho);cursor:pointer;font-weight:700" title="Clique para ver simulação" onclick="abrirSimulacao(\''+cod+'\')">🔴</span> ';
           }
         } else {
-          // Mostrar 🟢 verde (clicável também)
           if(!iconSpan || iconSpan.textContent !== '🟢'){
             codCell.innerHTML = cod + ' <span style="color:var(--mc-verde);cursor:pointer;font-weight:700" title="Clique para ver simulação" onclick="abrirSimulacao(\''+cod+'\')">🟢</span> ';
           }
         }
       }
       
-      // Atualizar KPIs
+      renderKPIs();
+    });
+  });
+  
+  // NOVO: Hooks para inputs manuais de Prod. Ant.
+  document.querySelectorAll('.prodant-manual-input').forEach(inp => {
+    inp.addEventListener('input', e => {
+      const cod = e.target.dataset.cod;
+      prodAntManual[cod] = parseInt(e.target.value)||0;
+      
+      const p = produtos.find(x => x.cod === cod);
+      const tot = calcPlanoTotal(cod);
+      const saldo = calcSaldo(p);
+      const cob = calcCob(p);
+      
+      // Atualizar total de prod. ant.
+      const totalCell = document.getElementById('prodant-total-'+cod);
+      if(totalCell){
+        let auto = 0;
+        const autoCell = document.getElementById('prodant-auto-'+cod);
+        if(autoCell && autoCell.textContent !== '-') auto = parseInt(autoCell.textContent)||0;
+        const manual = parseInt(e.target.value)||0;
+        totalCell.innerHTML = '<strong>'+(auto+manual)+'</strong>';
+      }
+      
+      // Atualizar total, saldo e cobertura
+      const totCell = document.querySelector('[data-tot="'+cod+'"]');
+      const saldoCell = document.querySelector('[data-saldo="'+cod+'"]');
+      const cobCell = document.querySelector('[data-cob="'+cod+'"]');
+      
+      if(totCell) totCell.innerHTML = '<strong>'+tot+'</strong>';
+      if(saldoCell) saldoCell.innerHTML = '<strong style="color:'+(saldo<0?'var(--mc-vermelho)':'var(--mc-verde)')+'">'+(saldo>=0?'+':'')+saldo+'</strong>';
+      if(cobCell) cobCell.innerHTML = badgeCob(cob);
+      
+      // Atualizar ícone
+      const temFalta = temFaltaEstoque(cod);
+      const codCell = document.querySelector('[data-cod="'+cod+'"]');
+      if(codCell){
+        const iconSpan = codCell.querySelector('span');
+        if(temFalta){
+          if(!iconSpan || iconSpan.textContent !== '🔴'){
+            codCell.innerHTML = cod + ' <span style="color:var(--mc-vermelho);cursor:pointer;font-weight:700" title="Clique para ver simulação" onclick="abrirSimulacao(\''+cod+'\')">🔴</span> ';
+          }
+        } else {
+          if(!iconSpan || iconSpan.textContent !== '🟢'){
+            codCell.innerHTML = cod + ' <span style="color:var(--mc-verde);cursor:pointer;font-weight:700" title="Clique para ver simulação" onclick="abrirSimulacao(\''+cod+'\')">🟢</span> ';
+          }
+        }
+      }
+      
       renderKPIs();
     });
   });
