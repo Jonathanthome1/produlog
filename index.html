@@ -904,6 +904,14 @@
           </div>
           <span class="mc-sector-arrow">›</span>
         </button>
+        <button class="mc-sector-card" onclick="abrirDescartesMassa()" style="border-left:3px solid #ef4444;background:linear-gradient(135deg, var(--bg-primary) 0%, rgba(239, 68, 68, 0.1) 100%);">
+          <div class="mc-sector-icon red">🗑️</div>
+          <div class="mc-sector-info">
+            <div class="mc-sector-title" style="color:#ef4444;">Descartes de Massa</div>
+            <div class="mc-sector-desc">Registrar descartes</div>
+          </div>
+          <span class="mc-sector-arrow" style="color:#ef4444;">›</span>
+        </button>
         <button class="mc-sector-card" onclick="abrirExpView('conf')">
           <div class="mc-sector-icon red">🚚</div>
           <div class="mc-sector-info">
@@ -1235,6 +1243,14 @@
             <div class="mc-sector-desc">Histórico de recheios</div>
           </div>
           <span class="mc-sector-arrow">›</span>
+        </button>
+        <button class="mc-sector-card" onclick="abrirDescartesRecheio()" style="border-left:3px solid #ef4444;background:linear-gradient(135deg, var(--bg-primary) 0%, rgba(239, 68, 68, 0.1) 100%);">
+          <div class="mc-sector-icon red">🗑️</div>
+          <div class="mc-sector-info">
+            <div class="mc-sector-title" style="color:#ef4444;">Descartes de Recheio</div>
+            <div class="mc-sector-desc">Registrar descartes</div>
+          </div>
+          <span class="mc-sector-arrow" style="color:#ef4444;">›</span>
         </button>
         <button class="mc-sector-card" onclick="abrirPlano()">
           <div class="mc-sector-icon purple">📅</div>
@@ -2593,6 +2609,22 @@
         </div>
         <span class="mc-sector-arrow" style="color:#92400e;">›</span>
       </button>
+      <button class="mc-sector-card" style="border-left:3px solid #dc2626;margin-bottom:16px;background:linear-gradient(135deg, var(--bg-primary) 0%, rgba(220, 38, 38, 0.1) 100%);" onclick="renderSenhasList()">
+        <div class="mc-sector-icon red">🔐</div>
+        <div class="mc-sector-info">
+          <div class="mc-sector-title" style="color:#dc2626;">Gerenciar Senhas</div>
+          <div class="mc-sector-desc">Alterar senhas de acesso dos setores</div>
+        </div>
+        <span class="mc-sector-arrow" style="color:#dc2626;">›</span>
+      </button>
+      <button class="mc-sector-card" style="border-left:3px solid #8b5cf6;margin-bottom:16px;background:linear-gradient(135deg, var(--bg-primary) 0%, rgba(139, 92, 246, 0.1) 100%);" onclick="renderControleEstoques()">
+        <div class="mc-sector-icon purple">📦</div>
+        <div class="mc-sector-info">
+          <div class="mc-sector-title" style="color:#8b5cf6;">Controle de Estoques</div>
+          <div class="mc-sector-desc">Massas e recheios - Entradas e consumos</div>
+        </div>
+        <span class="mc-sector-arrow" style="color:#8b5cf6;">›</span>
+      </button>
 
       <div class="mc-section-header">Setores de produção</div>
       <div class="mc-sector-grid">
@@ -2913,7 +2945,181 @@
     <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;" id="adm-mr-content"></div>
   </div>
 
-  <!-- ADMIN CONTAGEM ITENS -->
+  <!-- ADMIN GERENCIAR SENHAS -->
+  <div class="screen" id="s-adm-senhas">
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="goTo('s-adm-hub')">‹</button>
+      <div class="mc-brand">
+        <div class="mc-brand-logo">MC</div>
+        <div class="mc-brand-text">
+          <div class="mc-brand-name">Monte Castelo</div>
+          <div class="mc-brand-sub">Segurança</div>
+        </div>
+      </div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info">
+        <div class="mc-page-title">🔐 Gerenciar Senhas</div>
+        <div class="mc-page-sub">Alterar senhas de acesso dos setores</div>
+      </div>
+    </div>
+    <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;">
+      <div id="senhas-list" style="display:grid;gap:12px;"></div>
+    </div>
+  </div>
+
+  <div class="screen" id="s-adm-editar-senha">
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="goTo('s-adm-senhas')">‹</button>
+      <div class="mc-brand">
+        <div class="mc-brand-logo">MC</div>
+        <div class="mc-brand-text">
+          <div class="mc-brand-name">Monte Castelo</div>
+          <div class="mc-brand-sub">Segurança</div>
+        </div>
+      </div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info">
+        <div class="mc-page-title" id="editar-senha-titulo">🔐 Editar Senha</div>
+        <div class="mc-page-sub">Defina uma nova senha</div>
+      </div>
+    </div>
+    <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;">
+      <div style="max-width:500px;margin:0 auto;">
+        <label style="display:block;margin-bottom:12px;">
+          <strong>Setor:</strong>
+          <div id="editar-senha-setor" style="padding:10px;background:var(--bg-primary);border-radius:6px;margin-top:6px;border:1px solid var(--border);"></div>
+        </label>
+        
+        <label style="display:block;margin-bottom:12px;">
+          <strong>Nova Senha:</strong>
+          <input type="text" id="editar-senha-input" placeholder="Digite a nova senha" style="width:100%;padding:10px;border:1px solid var(--border);border-radius:6px;margin-top:6px;font-size:16px;background:var(--bg-primary);color:var(--text-primary);" />
+        </label>
+        
+        <button onclick="salvarNovaSenha()" style="width:100%;padding:12px;background:#22c55e;color:white;border:0;border-radius:6px;font-weight:600;cursor:pointer;font-size:16px;">💾 Salvar Senha</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- CONTROLE DE ESTOQUES - MASSAS E RECHEIOS -->
+  <div class="screen" id="s-controle-estoques">
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="goTo('s-adm-hub')">‹</button>
+      <div class="mc-brand">
+        <div class="mc-brand-logo">MC</div>
+        <div class="mc-brand-text">
+          <div class="mc-brand-name">Monte Castelo</div>
+          <div class="mc-brand-sub">Estoques</div>
+        </div>
+      </div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info">
+        <div class="mc-page-title">📦 Controle de Estoques</div>
+        <div class="mc-page-sub">Massas e Recheios</div>
+      </div>
+    </div>
+    <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;" id="controle-estoques-content"></div>
+  </div>
+
+  <!-- HISTÓRICO DE MOVIMENTAÇÕES -->
+  <div class="screen" id="s-historico-estoque">
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="renderControleEstoques()">‹</button>
+      <div class="mc-brand">
+        <div class="mc-brand-logo">MC</div>
+        <div class="mc-brand-text">
+          <div class="mc-brand-name">Monte Castelo</div>
+          <div class="mc-brand-sub">Estoques</div>
+        </div>
+      </div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info">
+        <div class="mc-page-title">📋 Histórico</div>
+        <div class="mc-page-sub">Movimentações de entrada e consumo</div>
+      </div>
+    </div>
+    <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;" id="historico-estoque-content"></div>
+  </div>
+
+  <!-- DESCARTES DE MASSA (CONFEITARIA) -->
+  <div class="screen" id="s-descartes-massa">
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="goTo('s-conf-home')">‹</button>
+      <div class="mc-brand">
+        <div class="mc-brand-logo">MC</div>
+        <div class="mc-brand-text">
+          <div class="mc-brand-name">Monte Castelo</div>
+          <div class="mc-brand-sub">Confeitaria</div>
+        </div>
+      </div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info">
+        <div class="mc-page-title">🗑️ Descartes de Massa</div>
+        <div class="mc-page-sub">Registrar descartes de massas</div>
+      </div>
+    </div>
+    <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;" id="descartes-massa-content"></div>
+  </div>
+
+  <!-- FORMULÁRIO DE DESCARTE DE MASSA -->
+  <div class="screen" id="s-form-descarte-massa">
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="abrirDescartesMassa()">‹</button>
+      <div class="mc-brand">
+        <div class="mc-brand-logo">MC</div>
+        <div class="mc-brand-text">
+          <div class="mc-brand-name">Monte Castelo</div>
+          <div class="mc-brand-sub">Confeitaria</div>
+        </div>
+      </div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info">
+        <div class="mc-page-title">🗑️ Registrar Descarte</div>
+        <div class="mc-page-sub">Massa</div>
+      </div>
+    </div>
+    <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;" id="form-descarte-massa-content"></div>
+  </div>
+
+  <!-- DESCARTES DE RECHEIO (COZINHA) -->
+  <div class="screen" id="s-descartes-recheio">
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="goTo('s-coz-home')">‹</button>
+      <div class="mc-brand">
+        <div class="mc-brand-logo">MC</div>
+        <div class="mc-brand-text">
+          <div class="mc-brand-name">Monte Castelo</div>
+          <div class="mc-brand-sub">Cozinha</div>
+        </div>
+      </div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info">
+        <div class="mc-page-title">🗑️ Descartes de Recheio</div>
+        <div class="mc-page-sub">Registrar descartes de recheios</div>
+      </div>
+    </div>
+    <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;" id="descartes-recheio-content"></div>
+  </div>
+
+  <!-- FORMULÁRIO DE DESCARTE DE RECHEIO -->
+  <div class="screen" id="s-form-descarte-recheio">
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="abrirDescartesRecheio()">‹</button>
+      <div class="mc-brand">
+        <div class="mc-brand-logo">MC</div>
+        <div class="mc-brand-text">
+          <div class="mc-brand-name">Monte Castelo</div>
+          <div class="mc-brand-sub">Cozinha</div>
+        </div>
+      </div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info">
+        <div class="mc-page-title">🗑️ Registrar Descarte</div>
+        <div class="mc-page-sub">Recheio</div>
+      </div>
+    </div>
+    <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;" id="form-descarte-recheio-content"></div>
+  </div>
+
   <div class="screen" id="s-adm-contagem-itens">
     <div class="mc-header">
       <button class="mc-header-back" onclick="goTo('s-adm-hub')">‹</button>
@@ -3391,7 +3597,7 @@
   <!-- PLANEJAMENTO - IMPORTAR ESTOQUE -->
   <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, collection, addDoc, deleteDoc, setDoc, onSnapshot, doc, updateDoc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getFirestore, collection, addDoc, deleteDoc, setDoc, getDoc, onSnapshot, doc, updateDoc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDY5ma_NbCmZ2dyXUjKm6GZQ3ibhwgcdmI",
@@ -3405,6 +3611,60 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
+// NOVO: Carregar senhas dos setores do Firebase
+async function carregarSetoresDoFirebase(){
+  try {
+    const snap = await getDoc(doc(db, 'configuracoes', 'setores'));
+    if(snap.exists()){
+      const dados = snap.data();
+      if(dados.pins){
+        PINS = {...PINS, ...dados.pins}; // Mesclar com padrão
+        console.log('✅ Senhas carregadas do Firebase');
+      }
+    } else {
+      console.log('⚠️ Documento de setores não existe, criando...');
+      await inicializarSetoresNoFirebase();
+    }
+  } catch(e) {
+    console.warn('⚠️ Erro ao carregar setores:', e.message);
+  }
+}
+
+// NOVO: Criar documento padrão de setores no Firebase
+async function inicializarSetoresNoFirebase(){
+  try {
+    await setDoc(doc(db, 'configuracoes', 'setores'), {
+      pins: PINS,
+      criado: new Date().toISOString(),
+      atualizado: new Date().toISOString()
+    });
+    console.log('✅ Setores inicializados no Firebase');
+  } catch(e) {
+    console.error('❌ Erro ao inicializar setores:', e);
+  }
+}
+
+// NOVO: Atualizar senha de um setor
+async function atualizarSenhaSetor(setor, novaSenha){
+  try {
+    const docRef = doc(db, 'configuracoes', 'setores');
+    const snap = await getDoc(docRef);
+    const dados = snap.data() || {pins:{}};
+    dados.pins[setor] = novaSenha;
+    dados.atualizado = new Date().toISOString();
+    await setDoc(docRef, dados);
+    PINS[setor] = novaSenha;
+    console.log('✅ Senha do setor', setor, 'atualizada');
+    return true;
+  } catch(e) {
+    console.error('❌ Erro ao atualizar senha:', e);
+    return false;
+  }
+}
+
+// Carregar setores quando a página abre
+setTimeout(() => carregarSetoresDoFirebase(), 1000);
+
 // PINs por setor
 let CONTAGEM_ITENS = {};
 
@@ -3414,7 +3674,7 @@ let QUADRA_PRODUTOS = [];
 let QUADRA_KITS_RECEITAS = {};
   let QUADRA_KITS = []; // Lista de nomes de kits da Quadra
 let QUADRA_KIT_MAPPING = {"Kit Massa Especial Mini Sonho": "KIT MASSA ESPECIAL MINI SONHO", "Kit Pão Sovado": "KIT PÃO SOVADO", "Kit Pao De Milho Salgado Cacetinho": "KIT PAO DE MILHO SALGADO CACETINHO", "Kit Cuca Alemã": "KIT CUCA ALEMÃ", "Kit Rosca De Polvilho": "KIT ROSCA DE POLVILHO", "Kit Massa Especial Donuts E Cueca Grande": "KIT MASSA ESPECIAL DONUTS E CUECA GRANDE", "Kit Pão Preto": "KIT PÃO PRETO", "Kit Massa Sonho": "KIT MASSA SONHO", "Kit Massa Especial": "KIT MASSA ESPECIAL", "Kit Massa Doce": "KIT MASSA DOCE", "Kit Pão De Cenoura": "KIT PÃO DE CENOURA", "Kit Cueca Virada": "KIT CUECA VIRADA", "Kit Pão De Leite": "KIT PÃO DE LEITE", "Kit Cuca Colonial": "KIT CUCA COLONIAL", "Kit Pão De Aipim": "KIT PÃO DE AIPIM", "Kit Cuca Frutas": "KIT CUCA FRUTAS", "Kit Cuca Chocolate": "KIT CUCA CHOCOLATE", "Kit Vovo/Gajeta": "KIT VOVO/GAJETA", "Kit Pão De Milho Doce": "KIT PÃO DE MILHO DOCE", "Kit Pão De Batata": "KIT PÃO DE BATATA", "Kit Pão Caseiro": "KIT PÃO CASEIRO", "Kit Raminho": "KIT RAMINHO", "Kit Pão De Milho Salgado": "KIT PÃO DE MILHO SALGADO", "Kit Pão Folhado": "KIT PÃO FOLHADO", "Kit Pão Brioche": "KIT PÃO BRIOCHE", "Kit Pão Integral": "KIT PÃO INTEGRAL", "Kit Grande Premium 6/8": "KIT GRANDE PREMIUM 6/8", "Kit Pão 7 Grãos": "KIT PÃO 7 GRÃOS"};
-const PINS = { confeitaria:'1234', cozinha:'5678', embalagem:'9101', expedicao:'1314', admin:'2504', contagem:'0000', container:'0001', quadra:'2020', testes:'7070', simone:'5050' };
+let PINS = { confeitaria:'1234', cozinha:'5678', embalagem:'9101', expedicao:'1314', admin:'2504', contagem:'0000', container:'0001', quadra:'2020', testes:'7070', simone:'5050' }; // Será carregado do Firebase
 const CORES = { confeitaria:'', cozinha:'verde', embalagem:'', expedicao:'laranja', admin:'roxo', contagem:'roxo', container:'', quadra:'', testes:'', simone:'' };
 const NOMES = { confeitaria:'Confeitaria 🥐', cozinha:'Cozinha 🍳', embalagem:'Embalagem 📦', expedicao:'Expedição 🚚', admin:'Administrativo 📊', contagem:'Contagem 📋', container:'Rafael 📦', quadra:'Quadra 🍞', testes:'Testes MP 🔬', simone:'Simone - Financeiro 💼' };
 const DESTINOS = { confeitaria:'s-conf-home', cozinha:'s-coz-home', embalagem:'s-emb-sel-data', expedicao:'s-exp-sel-data', admin:'s-adm-hub', contagem:'s-contagem-home', container:'s-rafael-home', quadra:'s-quadra-home', testes:'s-testes-home', simone:'s-simone-home' };
@@ -3744,11 +4004,41 @@ async function salvar(){
   const r1=parseFloat(document.getElementById('i-r1').value)||0;
   const r2=parseFloat(document.getElementById('i-r2').value)||0;
   const obs=document.getElementById('i-obs').value;
+  const consumoMassa = parseFloat(document.getElementById('i-massa')?.value || 0);
+  const consumoRecheio = parseFloat(document.getElementById('i-r1')?.value || 0);
+  const consumoRecheio2 = parseFloat(document.getElementById('i-r2')?.value || 0);
+  
   if(!qtd||!massa){alert('Preencha a quantidade e a massa.');return;}
+  
+  // NOVO: Validar estoque de massa e recheio
+  if(prodSel.tipoMassa && consumoMassa > 0){
+    if(!temEstoque('massa', prodSel.tipoMassa, consumoMassa)){
+      const estoque = obterEstoque('massa', prodSel.tipoMassa);
+      alert(`❌ Estoque insuficiente!\n\n🍞 ${prodSel.tipoMassa}\nDisponível: ${estoque.toFixed(2)}kg\nNecessário: ${consumoMassa.toFixed(2)}kg`);
+      return;
+    }
+  }
+  
+  if(prodSel.tipoRecheio && consumoRecheio > 0){
+    if(!temEstoque('recheio', prodSel.tipoRecheio, consumoRecheio)){
+      const estoque = obterEstoque('recheio', prodSel.tipoRecheio);
+      alert(`❌ Estoque insuficiente!\n\n🍲 ${prodSel.tipoRecheio}\nDisponível: ${estoque.toFixed(2)}kg\nNecessário: ${consumoRecheio.toFixed(2)}kg`);
+      return;
+    }
+  }
+  
+  if(prodSel.tipoRecheio2 && consumoRecheio2 > 0){
+    if(!temEstoque('recheio', prodSel.tipoRecheio2, consumoRecheio2)){
+      const estoque = obterEstoque('recheio', prodSel.tipoRecheio2);
+      alert(`❌ Estoque insuficiente!\n\n🍲 ${prodSel.tipoRecheio2}\nDisponível: ${estoque.toFixed(2)}kg\nNecessário: ${consumoRecheio2.toFixed(2)}kg`);
+      return;
+    }
+  }
+  
   const btn=document.getElementById('btn-salvar');
   btn.textContent='Salvando...';btn.className='btn btn-disabled';
   const qtdPct=prodSel.qtdPct||1;
-  const unidades=qtd*qtdPct; // qtd = pacotes, unidades = total de unidades
+  const unidades=qtd*qtdPct;
   const mE=prodSel.grMassa*unidades/1000,r1E=prodSel.grRecheio*unidades/1000,r2E=prodSel.grRecheio2*unidades/1000;
   try {
     await addDoc(collection(db,'registros'),{
@@ -3759,11 +4049,23 @@ async function salvar(){
       embalagem:{feito:false,qtdEmbalada:0,qtdProduzida:qtd},
       expedicao:{parciais:[],totalLiberado:0}
     });
+    
+    // NOVO: Registrar movimentação de estoque (consumo)
+    if(prodSel.tipoMassa && consumoMassa > 0){
+      await adicionarMovimentacao('massa', prodSel.tipoMassa, consumoMassa, 'Confeitaria', 'consumo');
+    }
+    if(prodSel.tipoRecheio && consumoRecheio > 0){
+      await adicionarMovimentacao('recheio', prodSel.tipoRecheio, consumoRecheio, 'Confeitaria', 'consumo');
+    }
+    if(prodSel.tipoRecheio2 && consumoRecheio2 > 0){
+      await adicionarMovimentacao('recheio', prodSel.tipoRecheio2, consumoRecheio2, 'Confeitaria', 'consumo');
+    }
+    
     document.getElementById('conf-banner').textContent='✓ Registro de produção salvo!';
     document.getElementById('conf-banner').style.display='block';
     setTimeout(()=>{document.getElementById('conf-banner').style.display='none';},3000);
     goTo('s-conf-home');
-  } catch(e){alert('Erro ao salvar.');btn.textContent='Salvar registro ✓';btn.className='btn btn-primary';}
+  } catch(e){alert('Erro ao salvar.');console.error(e);btn.textContent='Salvar registro ✓';btn.className='btn btn-primary';}
 }
 function renderMeusReg(dataFiltro){
   const regConf=registros.filter(r=>r.origem!=='quadra');
@@ -3953,11 +4255,15 @@ async function salvarRecheio(){
   btn.textContent='Salvando...';btn.className='btn btn-disabled';
   try {
     await addDoc(collection(db,'recheios'),{recheio:recheioSel,qtdKg:qtd,obs,hora:agora(),data:dataRecheio,timestamp:Date.now()});
+    
+    // NOVO: Registrar ENTRADA de recheio no estoque
+    await adicionarMovimentacao('recheio', recheioSel, qtd, 'Cozinha', 'entrada');
+    
     document.getElementById('coz-banner').textContent='✓ Produção de recheio salva!';
     document.getElementById('coz-banner').style.display='block';
     setTimeout(()=>{document.getElementById('coz-banner').style.display='none';},3000);
     recheioSel=null;dataRecheio=null;goTo('s-coz-home');
-  } catch(e){alert('Erro ao salvar.');btn.textContent='Salvar lançamento ✓';btn.className='btn btn-verde';}
+  } catch(e){alert('Erro ao salvar.');console.error(e);btn.textContent='Salvar lançamento ✓';btn.className='btn btn-verde';}
 }
 function renderCozReg(dataFiltro){
   const datas=sortDatas([...new Set(regRecheios.map(r=>r.data))]);
@@ -4910,11 +5216,10 @@ async function salvarEditParcial(fid, idx){
 
 // ===== EXCLUIR REGISTROS =====
 async function excluirRegistro(colecao, fid, nome){
-  if(!window.adminMode){alert('Apenas o administrador pode excluir registros.');return;}
   if(!confirm('Excluir "'+nome+'"?\nEssa ação não pode ser desfeita.'))return;
   try{
-    
     await deleteDoc(doc(db,colecao,fid));
+    console.log('✅ Registro deletado:', nome);
   }catch(e){alert('Erro ao excluir: '+e.message);}
 }
 
@@ -5697,6 +6002,503 @@ function admFiltrar(tab, data){
 
 async function toggleConf(fid,val){await updateDoc(doc(db,'registros',fid),{confirmado:val});}
 
+// ===== GERENCIAR SENHAS DOS SETORES =====
+let setorEmEdicao = '';
+
+window.renderSenhasList = () => {
+  let html = '';
+  Object.keys(NOMES).forEach(setor => {
+    const nome = NOMES[setor];
+    html += `
+      <div style="background:white;padding:16px;border-radius:8px;border-left:3px solid var(--mc-azul);display:flex;justify-content:space-between;align-items:center;">
+        <div>
+          <div style="font-weight:600;font-size:16px;margin-bottom:4px;">${nome}</div>
+          <div style="font-size:13px;color:var(--text-secondary);">Setor: <code style="background:var(--bg-page);padding:2px 6px;border-radius:4px;">${setor}</code></div>
+        </div>
+        <button onclick="abrirEditarSenha('${setor}')" style="padding:10px 16px;background:var(--mc-azul);color:white;border:0;border-radius:6px;cursor:pointer;font-weight:600;">✏️ Alterar</button>
+      </div>
+    `;
+  });
+  document.getElementById('senhas-list').innerHTML = html;
+  goTo('s-adm-senhas');
+};
+
+window.abrirEditarSenha = (setor) => {
+  setorEmEdicao = setor;
+  document.getElementById('editar-senha-titulo').textContent = '🔐 Alterar senha de ' + NOMES[setor];
+  document.getElementById('editar-senha-setor').textContent = NOMES[setor];
+  document.getElementById('editar-senha-input').value = '';
+  document.getElementById('editar-senha-input').focus();
+  goTo('s-adm-editar-senha');
+};
+
+window.salvarNovaSenha = async () => {
+  const novaSenha = document.getElementById('editar-senha-input').value.trim();
+  
+  if(!novaSenha){
+    alert('⚠️ Digite uma senha!');
+    return;
+  }
+  
+  if(novaSenha.length < 4){
+    alert('⚠️ Senha deve ter pelo menos 4 caracteres');
+    return;
+  }
+  
+  const confirma = confirm(`Tem certeza que quer alterar a senha de ${NOMES[setorEmEdicao]} para "${novaSenha}"?`);
+  if(!confirma) return;
+  
+  console.log('💾 Atualizando senha de', setorEmEdicao);
+  const sucesso = await atualizarSenhaSetor(setorEmEdicao, novaSenha);
+  
+  if(sucesso){
+    alert('✅ Senha alterada com sucesso!');
+    goTo('s-adm-senhas');
+  } else {
+    alert('❌ Erro ao alterar senha. Tenta novamente.');
+  }
+};
+
+// ===== CONTROLE DE ESTOQUES - MASSAS E RECHEIOS =====
+// Estrutura: 
+// estoqueMassas/{nome}: {nome, estoque, movimentacoes: [{tipo:'entrada'|'consumo', qtd, data, hora, setor}]}
+// estoqueRecheios/{nome}: {nome, estoque, movimentacoes: [{tipo:'entrada'|'consumo', qtd, data, hora, setor}]}
+
+const estoqueMassas = {}; // {nomeMassa: {estoque, movimentacoes[]}}
+const estoqueRecheios = {}; // {nomeRecheio: {estoque, movimentacoes[]}}
+
+// Carregar estoques do Firebase
+async function carregarEstoques(){
+  try {
+    // Massas
+    const snapMassas = await getDocs(collection(db, 'estoqueMassas'));
+    snapMassas.forEach(doc => {
+      const data = doc.data();
+      estoqueMassas[data.nome] = {
+        id: doc.id,
+        nome: data.nome,
+        estoque: data.estoque || 0,
+        movimentacoes: data.movimentacoes || []
+      };
+    });
+    
+    // Recheios
+    const snapRecheios = await getDocs(collection(db, 'estoqueRecheios'));
+    snapRecheios.forEach(doc => {
+      const data = doc.data();
+      estoqueRecheios[data.nome] = {
+        id: doc.id,
+        nome: data.nome,
+        estoque: data.estoque || 0,
+        movimentacoes: data.movimentacoes || []
+      };
+    });
+    
+    console.log('✅ Estoques carregados:', Object.keys(estoqueMassas).length, 'massas,', Object.keys(estoqueRecheios).length, 'recheios');
+  } catch(e) {
+    console.warn('⚠️ Erro ao carregar estoques:', e.message);
+  }
+}
+
+// Adicionar movimentação (entrada ou consumo)
+async function adicionarMovimentacao(tipo, nomeProduto, quantidade, setor, tipoMovimento){
+  // tipo: 'massa' ou 'recheio'
+  // nomeProduto: ex "Massa Folhada" ou "Recheio Calabresa"
+  // quantidade: qtd produzida/consumida
+  // tipoMovimento: "entrada" ou "consumo"
+  
+  try {
+    const colecao = tipo === 'massa' ? 'estoqueMassas' : 'estoqueRecheios';
+    const estoques = tipo === 'massa' ? estoqueMassas : estoqueRecheios;
+    
+    let estoqueAtual = estoques[nomeProduto];
+    
+    // Se não existe, criar
+    if(!estoqueAtual){
+      estoqueAtual = {
+        nome: nomeProduto,
+        estoque: 0,
+        movimentacoes: []
+      };
+      estoques[nomeProduto] = estoqueAtual;
+    }
+    
+    // Adicionar movimentação
+    const mov = {
+      tipo: tipoMovimento,
+      qtd: quantidade,
+      setor: setor,
+      data: hoje(),
+      hora: agora()
+    };
+    
+    estoqueAtual.movimentacoes.push(mov);
+    
+    // Atualizar estoque
+    if(tipoMovimento === 'entrada'){
+      estoqueAtual.estoque += quantidade;
+    } else if(tipoMovimento === 'consumo' || tipoMovimento === 'descarte'){
+      estoqueAtual.estoque -= quantidade;
+    }
+    
+    // Salvar no Firebase
+    const docRef = doc(db, colecao, nomeProduto.toLowerCase().replace(/ /g, '_'));
+    await setDoc(docRef, {
+      nome: nomeProduto,
+      estoque: estoqueAtual.estoque,
+      movimentacoes: estoqueAtual.movimentacoes,
+      ultimaAtualizacao: new Date().toISOString()
+    });
+    
+    console.log('✅ Movimentação:', tipoMovimento, nomeProduto, quantidade);
+    return true;
+  } catch(e) {
+    console.error('❌ Erro ao registrar:', e);
+    return false;
+  }
+}
+
+// Validar estoque
+function temEstoque(tipo, nomeProduto, quantidadeNecessaria){
+  const estoques = tipo === 'massa' ? estoqueMassas : estoqueRecheios;
+  const est = estoques[nomeProduto];
+  return est && est.estoque >= quantidadeNecessaria;
+}
+
+// Obter estoque atual
+function obterEstoque(tipo, nomeProduto){
+  const estoques = tipo === 'massa' ? estoqueMassas : estoqueRecheios;
+  return estoques[nomeProduto]?.estoque || 0;
+}
+
+// Renderizar tela de controle de estoques
+window.renderControleEstoques = () => {
+  let html = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">';
+  
+  // Massas
+  html += '<div><h3 style="margin-bottom:12px;">🍞 Massas</h3>';
+  if(Object.keys(estoqueMassas).length === 0){
+    html += '<div style="background:white;padding:12px;border-radius:8px;color:var(--text-secondary);">Nenhuma massa registrada</div>';
+  } else {
+    Object.values(estoqueMassas).forEach(m => {
+      const cor = m.estoque > 0 ? '#22c55e' : '#ef4444';
+      html += `
+        <div style="background:white;padding:12px;border-radius:8px;margin-bottom:8px;border-left:3px solid ${cor};">
+          <div style="font-weight:600;">${m.nome}</div>
+          <div style="font-size:20px;font-weight:700;color:${cor};margin:8px 0;">${m.estoque.toFixed(2)} kg</div>
+          <button onclick="abrirHistoricoEstoque('massa','${m.nome}')" style="padding:6px 12px;background:var(--mc-azul);color:white;border:0;border-radius:6px;cursor:pointer;font-size:12px;">📋 Histórico</button>
+        </div>
+      `;
+    });
+  }
+  html += '</div>';
+  
+  // Recheios
+  html += '<div><h3 style="margin-bottom:12px;">🍲 Recheios</h3>';
+  if(Object.keys(estoqueRecheios).length === 0){
+    html += '<div style="background:white;padding:12px;border-radius:8px;color:var(--text-secondary);">Nenhum recheio registrado</div>';
+  } else {
+    Object.values(estoqueRecheios).forEach(r => {
+      const cor = r.estoque > 0 ? '#22c55e' : '#ef4444';
+      html += `
+        <div style="background:white;padding:12px;border-radius:8px;margin-bottom:8px;border-left:3px solid ${cor};">
+          <div style="font-weight:600;">${r.nome}</div>
+          <div style="font-size:20px;font-weight:700;color:${cor};margin:8px 0;">${r.estoque.toFixed(2)} kg</div>
+          <button onclick="abrirHistoricoEstoque('recheio','${r.nome}')" style="padding:6px 12px;background:var(--mc-azul);color:white;border:0;border-radius:6px;cursor:pointer;font-size:12px;">📋 Histórico</button>
+        </div>
+      `;
+    });
+  }
+  html += '</div></div>';
+  
+  document.getElementById('controle-estoques-content').innerHTML = html;
+  goTo('s-controle-estoques');
+};
+
+// Visualizar histórico de movimentações
+window.abrirHistoricoEstoque = (tipo, nome) => {
+  const estoques = tipo === 'massa' ? estoqueMassas : estoqueRecheios;
+  const est = estoques[nome];
+  if(!est) return;
+  
+  let html = `<h3 style="margin-bottom:16px;">${tipo === 'massa' ? '🍞' : '🍲'} ${nome}</h3>`;
+  html += `<div style="background:white;padding:12px;border-radius:8px;margin-bottom:16px;">
+    <strong style="font-size:18px;">Estoque atual: ${est.estoque.toFixed(2)} kg</strong>
+  </div>`;
+  
+  html += '<h4 style="margin-top:20px;margin-bottom:12px;">Movimentações</h4>';
+  
+  if(est.movimentacoes.length === 0){
+    html += '<div style="color:var(--text-secondary);">Sem movimentações</div>';
+  } else {
+    html += '<table style="width:100%;border-collapse:collapse;">';
+    html += '<thead><tr style="background:var(--bg-page);border-bottom:1px solid var(--border);"><th style="padding:8px;text-align:left;">Data</th><th style="padding:8px;text-align:left;">Tipo</th><th style="padding:8px;text-align:right;">Qtd (kg)</th><th style="padding:8px;text-align:left;">Setor</th></tr></thead>';
+    html += '<tbody>';
+    
+    est.movimentacoes.forEach(mov => {
+      let bgColor, textColor, icon, label;
+      
+      if(mov.tipo === 'entrada'){
+        bgColor = '#f0fdf4';
+        textColor = '#22c55e';
+        icon = '📥';
+        label = 'ENTRADA';
+      } else if(mov.tipo === 'descarte'){
+        bgColor = '#fef2f2';
+        textColor = '#dc2626';
+        icon = '🗑️';
+        label = 'DESCARTE';
+      } else {
+        bgColor = '#fef2f2';
+        textColor = '#ef4444';
+        icon = '📤';
+        label = 'CONSUMO';
+      }
+      
+      html += `<tr style="border-bottom:1px solid var(--border);background:${bgColor};">
+        <td style="padding:8px;">${mov.data} ${mov.hora}</td>
+        <td style="padding:8px;"><strong style="color:${textColor};">${icon} ${label}</strong></td>
+        <td style="padding:8px;text-align:right;"><strong>${mov.qtd.toFixed(2)}</strong></td>
+        <td style="padding:8px;">${mov.setor}</td>
+      </tr>`;
+    });
+    
+    html += '</tbody></table>';
+  }
+  
+  document.getElementById('historico-estoque-content').innerHTML = html;
+  goTo('s-historico-estoque');
+};
+
+// Carregar estoques ao iniciar
+setTimeout(() => carregarEstoques(), 2000);
+
+// ===== GERENCIAMENTO DE DESCARTES =====
+const descartes = {}; // {data: [{tipo, item, qtd, motivo, hora, setor}]}
+
+// Registrar descarte (consume estoque e registra como descarte)
+async function registrarDescarte(tipo, nomeItem, quantidade, motivo, setor){
+  // tipo: 'massa' ou 'recheio'
+  // nomeItem: nome do produto
+  // quantidade: qtd descartada
+  // motivo: ex "Queda no chão", "Contaminação", etc
+  // setor: "Confeitaria", "Cozinha"
+  
+  try {
+    // Validar estoque
+    if(!temEstoque(tipo, nomeItem, quantidade)){
+      const estoque = obterEstoque(tipo, nomeItem);
+      throw new Error(`Estoque insuficiente! Disponível: ${estoque.toFixed(2)}kg, Necessário: ${quantidade.toFixed(2)}kg`);
+    }
+    
+    // Registrar como CONSUMO (descarte) no estoque
+    await adicionarMovimentacao(tipo, nomeItem, quantidade, setor, 'descarte');
+    
+    // Salvar registro de descarte no Firebase (para auditoria)
+    await addDoc(collection(db, 'descartes'), {
+      tipo: tipo,
+      item: nomeItem,
+      qtd: quantidade,
+      motivo: motivo,
+      setor: setor,
+      data: hoje(),
+      hora: agora(),
+      timestamp: Date.now()
+    });
+    
+    console.log('✅ Descarte registrado:', tipo, nomeItem, quantidade, 'kg');
+    return true;
+  } catch(e) {
+    console.error('❌ Erro ao registrar descarte:', e.message);
+    throw e;
+  }
+}
+
+// Renderizar tela de descartes (CONFEITARIA - Massas)
+window.abrirDescartesMassa = () => {
+  let html = '<div style="margin-bottom:20px;">';
+  
+  if(Object.keys(estoqueMassas).length === 0){
+    html += '<div style="background:white;padding:16px;border-radius:8px;color:var(--text-secondary);text-align:center;">Nenhuma massa registrada no estoque</div>';
+  } else {
+    Object.values(estoqueMassas).forEach(m => {
+      const cor = m.estoque > 0 ? '#22c55e' : '#ef4444';
+      html += `
+        <div style="background:white;padding:12px;border-radius:8px;margin-bottom:12px;border-left:3px solid ${cor};">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <div>
+              <div style="font-weight:600;">${m.nome}</div>
+              <div style="font-size:12px;color:var(--text-secondary);">Estoque: <strong style="color:${cor};">${m.estoque.toFixed(2)} kg</strong></div>
+            </div>
+            <button onclick="abrirFormDescarteMassa('${m.nome}')" style="padding:8px 12px;background:var(--mc-azul);color:white;border:0;border-radius:6px;cursor:pointer;font-size:14px;">🗑️ Descartar</button>
+          </div>
+        </div>
+      `;
+    });
+  }
+  
+  html += '</div>';
+  document.getElementById('descartes-massa-content').innerHTML = html;
+  goTo('s-descartes-massa');
+};
+
+window.abrirFormDescarteMassa = (nomeMassa) => {
+  const estoque = obterEstoque('massa', nomeMassa);
+  
+  let html = `
+    <div style="background:white;padding:16px;border-radius:8px;margin-bottom:16px;">
+      <h3 style="margin-top:0;">${nomeMassa}</h3>
+      <div style="background:var(--bg-page);padding:12px;border-radius:6px;margin-bottom:16px;">
+        <div style="font-size:12px;color:var(--text-secondary);">Estoque disponível</div>
+        <div style="font-size:24px;font-weight:700;color:#22c55e;">${estoque.toFixed(2)} kg</div>
+      </div>
+      
+      <label style="display:block;margin-bottom:12px;">
+        <div style="font-size:12px;color:var(--text-secondary);margin-bottom:4px;font-weight:600;">Quantidade a descartar (kg)</div>
+        <input type="number" id="desc-qtd" placeholder="0" min="0" max="${estoque}" inputmode="decimal" step="0.001" style="width:100%;padding:10px;border:1px solid var(--border);border-radius:6px;font-size:16px;background:var(--bg-primary);color:var(--text-primary);" />
+      </label>
+      
+      <label style="display:block;margin-bottom:16px;">
+        <div style="font-size:12px;color:var(--text-secondary);margin-bottom:4px;font-weight:600;">Motivo do descarte</div>
+        <select id="desc-motivo" style="width:100%;padding:10px;border:1px solid var(--border);border-radius:6px;font-size:16px;background:var(--bg-primary);color:var(--text-primary);font-family:inherit;">
+          <option value="">-- Selecione um motivo --</option>
+          <option value="Queda no chão">Queda no chão</option>
+          <option value="Contaminação">Contaminação</option>
+          <option value="Produto vencido">Produto vencido</option>
+          <option value="Qualidade inadequada">Qualidade inadequada</option>
+          <option value="Ajuste de inventário">Ajuste de inventário</option>
+          <option value="Outro">Outro</option>
+        </select>
+      </label>
+      
+      <div style="display:flex;gap:8px;">
+        <button onclick="abrirDescartesMassa()" style="flex:1;padding:12px;background:var(--bg-page);border:1px solid var(--border);border-radius:6px;cursor:pointer;font-weight:600;font-family:inherit;">Cancelar</button>
+        <button onclick="confirmarDescarteMassa('${nomeMassa}')" style="flex:1;padding:12px;background:#ef4444;color:white;border:0;border-radius:6px;cursor:pointer;font-weight:600;font-family:inherit;">🗑️ Confirmar Descarte</button>
+      </div>
+    </div>
+  `;
+  
+  document.getElementById('form-descarte-massa-content').innerHTML = html;
+  goTo('s-form-descarte-massa');
+};
+
+window.confirmarDescarteMassa = async (nomeMassa) => {
+  const qtd = parseFloat(document.getElementById('desc-qtd').value || 0);
+  const motivo = document.getElementById('desc-motivo').value;
+  
+  if(!qtd || qtd <= 0){
+    alert('Informe uma quantidade válida.');
+    return;
+  }
+  
+  if(!motivo){
+    alert('Selecione um motivo.');
+    return;
+  }
+  
+  try {
+    await registrarDescarte('massa', nomeMassa, qtd, motivo, 'Confeitaria');
+    document.getElementById('conf-banner').textContent = '✓ Descarte registrado!';
+    document.getElementById('conf-banner').style.display = 'block';
+    setTimeout(() => {document.getElementById('conf-banner').style.display = 'none';}, 3000);
+    abrirDescartesMassa();
+  } catch(e) {
+    alert('❌ ' + e.message);
+  }
+};
+
+// Renderizar tela de descartes (COZINHA - Recheios)
+window.abrirDescartesRecheio = () => {
+  let html = '<div style="margin-bottom:20px;">';
+  
+  if(Object.keys(estoqueRecheios).length === 0){
+    html += '<div style="background:white;padding:16px;border-radius:8px;color:var(--text-secondary);text-align:center;">Nenhum recheio registrado no estoque</div>';
+  } else {
+    Object.values(estoqueRecheios).forEach(r => {
+      const cor = r.estoque > 0 ? '#22c55e' : '#ef4444';
+      html += `
+        <div style="background:white;padding:12px;border-radius:8px;margin-bottom:12px;border-left:3px solid ${cor};">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <div>
+              <div style="font-weight:600;">${r.nome}</div>
+              <div style="font-size:12px;color:var(--text-secondary);">Estoque: <strong style="color:${cor};">${r.estoque.toFixed(2)} kg</strong></div>
+            </div>
+            <button onclick="abrirFormDescarteRecheio('${r.nome}')" style="padding:8px 12px;background:var(--mc-verde);color:white;border:0;border-radius:6px;cursor:pointer;font-size:14px;">🗑️ Descartar</button>
+          </div>
+        </div>
+      `;
+    });
+  }
+  
+  html += '</div>';
+  document.getElementById('descartes-recheio-content').innerHTML = html;
+  goTo('s-descartes-recheio');
+};
+
+window.abrirFormDescarteRecheio = (nomeRecheio) => {
+  const estoque = obterEstoque('recheio', nomeRecheio);
+  
+  let html = `
+    <div style="background:white;padding:16px;border-radius:8px;margin-bottom:16px;">
+      <h3 style="margin-top:0;">${nomeRecheio}</h3>
+      <div style="background:var(--bg-page);padding:12px;border-radius:6px;margin-bottom:16px;">
+        <div style="font-size:12px;color:var(--text-secondary);">Estoque disponível</div>
+        <div style="font-size:24px;font-weight:700;color:#22c55e;">${estoque.toFixed(2)} kg</div>
+      </div>
+      
+      <label style="display:block;margin-bottom:12px;">
+        <div style="font-size:12px;color:var(--text-secondary);margin-bottom:4px;font-weight:600;">Quantidade a descartar (kg)</div>
+        <input type="number" id="desc-qtd" placeholder="0" min="0" max="${estoque}" inputmode="decimal" step="0.001" style="width:100%;padding:10px;border:1px solid var(--border);border-radius:6px;font-size:16px;background:var(--bg-primary);color:var(--text-primary);" />
+      </label>
+      
+      <label style="display:block;margin-bottom:16px;">
+        <div style="font-size:12px;color:var(--text-secondary);margin-bottom:4px;font-weight:600;">Motivo do descarte</div>
+        <select id="desc-motivo" style="width:100%;padding:10px;border:1px solid var(--border);border-radius:6px;font-size:16px;background:var(--bg-primary);color:var(--text-primary);font-family:inherit;">
+          <option value="">-- Selecione um motivo --</option>
+          <option value="Queda no chão">Queda no chão</option>
+          <option value="Contaminação">Contaminação</option>
+          <option value="Produto vencido">Produto vencido</option>
+          <option value="Qualidade inadequada">Qualidade inadequada</option>
+          <option value="Ajuste de inventário">Ajuste de inventário</option>
+          <option value="Outro">Outro</option>
+        </select>
+      </label>
+      
+      <div style="display:flex;gap:8px;">
+        <button onclick="abrirDescartesRecheio()" style="flex:1;padding:12px;background:var(--bg-page);border:1px solid var(--border);border-radius:6px;cursor:pointer;font-weight:600;font-family:inherit;">Cancelar</button>
+        <button onclick="confirmarDescarteRecheio('${nomeRecheio}')" style="flex:1;padding:12px;background:#ef4444;color:white;border:0;border-radius:6px;cursor:pointer;font-weight:600;font-family:inherit;">🗑️ Confirmar Descarte</button>
+      </div>
+    </div>
+  `;
+  
+  document.getElementById('form-descarte-recheio-content').innerHTML = html;
+  goTo('s-form-descarte-recheio');
+};
+
+window.confirmarDescarteRecheio = async (nomeRecheio) => {
+  const qtd = parseFloat(document.getElementById('desc-qtd').value || 0);
+  const motivo = document.getElementById('desc-motivo').value;
+  
+  if(!qtd || qtd <= 0){
+    alert('Informe uma quantidade válida.');
+    return;
+  }
+  
+  if(!motivo){
+    alert('Selecione um motivo.');
+    return;
+  }
+  
+  try {
+    await registrarDescarte('recheio', nomeRecheio, qtd, motivo, 'Cozinha');
+    document.getElementById('coz-banner').textContent = '✓ Descarte registrado!';
+    document.getElementById('coz-banner').style.display = 'block';
+    setTimeout(() => {document.getElementById('coz-banner').style.display = 'none';}, 3000);
+    abrirDescartesRecheio();
+  } catch(e) {
+    alert('❌ ' + e.message);
+  }
+};
 
 // Admin mode: navigates any area without PIN, with back to hub
 window.adminMode = false;
@@ -11701,7 +12503,7 @@ window.selecionarDataEmb=selecionarDataEmb; window.irParaEmbalagem=irParaEmbalag
 window.toggleEmb=toggleEmb; window.toggleAjuste=toggleAjuste; window.confirmarAjuste=confirmarAjuste;
 window.selecionarDataExp=selecionarDataExp; window.irParaExpedicao=irParaExpedicao;
 window.adicionarLiberacao=adicionarLiberacao;
-window.tab=tab; window.toggleConf=toggleConf; window.admFiltrar=admFiltrar; window.toggleEditProd=toggleEditProd; window.salvarEditProd=salvarEditProd; window.toggleEditRecheio=toggleEditRecheio; window.salvarEditRecheio=salvarEditRecheio; window.renderMeusReg=renderMeusReg; window.renderCozReg=renderCozReg; window.abrirPresenca=abrirPresenca; window.adicionarParcialEmb=adicionarParcialEmb; window.salvarObsEmb=salvarObsEmb; window.abrirExpView=abrirExpView; window.renderAdmStatus=renderAdmStatus; window.renderBuscarProduto=renderBuscarProduto; window.renderAdmKits=renderAdmKits; window.abrirNovoKit=abrirNovoKit; window.abrirEditarKit=abrirEditarKit; window.duplicarKitPadrao=duplicarKitPadrao; window.salvarKit=salvarKit; window.excluirKit=excluirKit; window.adicionarIngrediente=adicionarIngrediente; window.removerIngrediente=removerIngrediente; window.atualizarIngrediente=atualizarIngrediente; window.abrirNovoProduto=abrirNovoProduto; window.abrirEditarProduto=abrirEditarProduto; window.salvarProduto=salvarProduto; window.excluirProduto=excluirProduto; window.abrirExpViewData=abrirExpViewData; window.renderExpView=renderExpView; window.renderExpViewSelData=renderExpViewSelData; window.confirmarEmbalagEmCompleto=confirmarEmbalagEmCompleto; window.subtrairParcialEmb=subtrairParcialEmb; window.salvarEmbManual=salvarEmbManual; window.excluirPresenca=excluirPresenca; window.salvarPresenca=salvarPresenca; window.voltarPresenca=voltarPresenca; window.renderPresencaForm=renderPresencaForm; window.selecionarDataPresenca=selecionarDataPresenca; window.selecionarDataPresencaManual=selecionarDataPresencaManual; window.adicionarColaborador=adicionarColaborador; window.removerColab=removerColab; window.updateColab=updateColab; window.renderPresencaReg=renderPresencaReg; window.abrirContagem=abrirContagem; window.subtrairContagem=subtrairContagem; window.filtrarContagem=filtrarContagem; window.adicionarContagem=adicionarContagem; window.renderContagemHist=renderContagemHist; window.verDetalheContagem=verDetalheContagem; window.renderContagemLanc=renderContagemLanc; window.renderContagemHome=renderContagemHome; window.toggleContDay=toggleContDay; window.abrirContainerItem=abrirContainerItem; window.iniciarContainerEntrada=iniciarContainerEntrada; window.selecionarDataContainerEntradaBtn=selecionarDataContainerEntradaBtn; window.selecionarDataContainerEntrada=selecionarDataContainerEntrada; window.salvarContainerEntrada=salvarContainerEntrada; window.iniciarContainerSaida=iniciarContainerSaida; window.selecionarLoteSaida=selecionarLoteSaida; window.salvarContainerSaida=salvarContainerSaida; window.excluirLoteContainer=excluirLoteContainer; window.iniciarNovoLancQuadra=iniciarNovoLancQuadra; window.selecionarDataQuadraBtn=selecionarDataQuadraBtn; window.selecionarDataQuadra=selecionarDataQuadra; window.filtrarKitsQuadra=filtrarKitsQuadra; window.selKitQuadra=selKitQuadra; window.atualizarProdQuadra=atualizarProdQuadra; window.salvarQuadra=salvarQuadra; window.renderQuadraReg=renderQuadraReg; window.excluirRegQuadra=excluirRegQuadra; window.renderQuadraDateGrid=renderQuadraDateGrid; window.atualizarResumoQuadra=atualizarResumoQuadra; window.renderTestesList=renderTestesList; window.abrirTestesProduto=abrirTestesProduto; window.abrirNovoTeste=abrirNovoTeste; window.salvarTeste=salvarTeste; window.excluirTeste=excluirTeste; window.adicionarProdutoTeste=adicionarProdutoTeste; window.abrirEditarTeste=abrirEditarTeste; window.salvarEdicaoTeste=salvarEdicaoTeste; window.excluirMovContainer=excluirMovContainer; window.abrirFarinhaLanc=abrirFarinhaLanc; window.atualizarPreviewFarinha=atualizarPreviewFarinha; window.salvarFarinhaLanc=salvarFarinhaLanc; window.renderFarinhaHist=renderFarinhaHist; window.excluirFarinhaRec=excluirFarinhaRec; window.excluirContagem=excluirContagem; window.abrirManut=abrirManut; window.voltarManut=voltarManut; window.salvarNovaMaquina=salvarNovaMaquina; window.excluirMaquina=excluirMaquina; window.abrirMaquina=abrirMaquina; window.iniciarNovaManutencao=iniciarNovaManutencao; window.selecionarDataManut=selecionarDataManut; window.salvarManutencao=salvarManutencao; window.selecionarDataManutBtn=selecionarDataManutBtn; window.abrirPlano=abrirPlano; window.voltarPlano=voltarPlano; window.salvarPlano=salvarPlano; window.adicionarItemPlano=adicionarItemPlano; window.atualizarQtdPlano=atualizarQtdPlano; window.removerItemPlano=removerItemPlano; window.trocarSemanaPlano=trocarSemanaPlano; window.togglePlanoDia=togglePlanoDia; window.toggleFeriado=toggleFeriado; window.importarPlanoPaste=importarPlanoPaste; window.limparPlano=limparPlano; window.renderManutDateGrid=renderManutDateGrid; window.toggleEditParcial=toggleEditParcial; window.salvarEditParcial=salvarEditParcial; window.excluirRegistro=excluirRegistro; window.gerarExcel=gerarExcel; window.renderPresencaForm=renderPresencaForm; window.goToAdmin=goToAdmin; window.sairAdmin=sairAdmin; window.backFromArea=backFromArea;
+window.tab=tab; window.toggleConf=toggleConf; window.admFiltrar=admFiltrar; window.toggleEditProd=toggleEditProd; window.salvarEditProd=salvarEditProd; window.toggleEditRecheio=toggleEditRecheio; window.salvarEditRecheio=salvarEditRecheio; window.renderMeusReg=renderMeusReg; window.renderCozReg=renderCozReg; window.abrirPresenca=abrirPresenca; window.adicionarParcialEmb=adicionarParcialEmb; window.salvarObsEmb=salvarObsEmb; window.abrirExpView=abrirExpView; window.renderAdmStatus=renderAdmStatus; window.renderBuscarProduto=renderBuscarProduto; window.renderAdmKits=renderAdmKits; window.abrirNovoKit=abrirNovoKit; window.abrirEditarKit=abrirEditarKit; window.duplicarKitPadrao=duplicarKitPadrao; window.salvarKit=salvarKit; window.excluirKit=excluirKit; window.adicionarIngrediente=adicionarIngrediente; window.removerIngrediente=removerIngrediente; window.atualizarIngrediente=atualizarIngrediente; window.abrirNovoProduto=abrirNovoProduto; window.abrirEditarProduto=abrirEditarProduto; window.salvarProduto=salvarProduto; window.excluirProduto=excluirProduto; window.abrirExpViewData=abrirExpViewData; window.renderExpView=renderExpView; window.renderExpViewSelData=renderExpViewSelData; window.confirmarEmbalagEmCompleto=confirmarEmbalagEmCompleto; window.subtrairParcialEmb=subtrairParcialEmb; window.salvarEmbManual=salvarEmbManual; window.excluirPresenca=excluirPresenca; window.salvarPresenca=salvarPresenca; window.voltarPresenca=voltarPresenca; window.renderPresencaForm=renderPresencaForm; window.selecionarDataPresenca=selecionarDataPresenca; window.selecionarDataPresencaManual=selecionarDataPresencaManual; window.adicionarColaborador=adicionarColaborador; window.removerColab=removerColab; window.updateColab=updateColab; window.renderPresencaReg=renderPresencaReg; window.abrirContagem=abrirContagem; window.subtrairContagem=subtrairContagem; window.filtrarContagem=filtrarContagem; window.adicionarContagem=adicionarContagem; window.renderContagemHist=renderContagemHist; window.verDetalheContagem=verDetalheContagem; window.renderContagemLanc=renderContagemLanc; window.renderContagemHome=renderContagemHome; window.toggleContDay=toggleContDay; window.abrirContainerItem=abrirContainerItem; window.iniciarContainerEntrada=iniciarContainerEntrada; window.selecionarDataContainerEntradaBtn=selecionarDataContainerEntradaBtn; window.selecionarDataContainerEntrada=selecionarDataContainerEntrada; window.salvarContainerEntrada=salvarContainerEntrada; window.iniciarContainerSaida=iniciarContainerSaida; window.selecionarLoteSaida=selecionarLoteSaida; window.salvarContainerSaida=salvarContainerSaida; window.excluirLoteContainer=excluirLoteContainer; window.iniciarNovoLancQuadra=iniciarNovoLancQuadra; window.selecionarDataQuadraBtn=selecionarDataQuadraBtn; window.selecionarDataQuadra=selecionarDataQuadra; window.filtrarKitsQuadra=filtrarKitsQuadra; window.selKitQuadra=selKitQuadra; window.atualizarProdQuadra=atualizarProdQuadra; window.salvarQuadra=salvarQuadra; window.renderQuadraReg=renderQuadraReg; window.excluirRegQuadra=excluirRegQuadra; window.renderQuadraDateGrid=renderQuadraDateGrid; window.atualizarResumoQuadra=atualizarResumoQuadra; window.renderTestesList=renderTestesList; window.abrirTestesProduto=abrirTestesProduto; window.abrirNovoTeste=abrirNovoTeste; window.salvarTeste=salvarTeste; window.excluirTeste=excluirTeste; window.adicionarProdutoTeste=adicionarProdutoTeste; window.abrirEditarTeste=abrirEditarTeste; window.salvarEdicaoTeste=salvarEdicaoTeste; window.excluirMovContainer=excluirMovContainer; window.abrirFarinhaLanc=abrirFarinhaLanc; window.atualizarPreviewFarinha=atualizarPreviewFarinha; window.salvarFarinhaLanc=salvarFarinhaLanc; window.renderFarinhaHist=renderFarinhaHist; window.excluirFarinhaRec=excluirFarinhaRec; window.excluirContagem=excluirContagem; window.abrirManut=abrirManut; window.voltarManut=voltarManut; window.salvarNovaMaquina=salvarNovaMaquina; window.excluirMaquina=excluirMaquina; window.abrirMaquina=abrirMaquina; window.iniciarNovaManutencao=iniciarNovaManutencao; window.selecionarDataManut=selecionarDataManut; window.salvarManutencao=salvarManutencao; window.selecionarDataManutBtn=selecionarDataManutBtn; window.abrirPlano=abrirPlano; window.voltarPlano=voltarPlano; window.salvarPlano=salvarPlano; window.adicionarItemPlano=adicionarItemPlano; window.atualizarQtdPlano=atualizarQtdPlano; window.removerItemPlano=removerItemPlano; window.trocarSemanaPlano=trocarSemanaPlano; window.togglePlanoDia=togglePlanoDia; window.toggleFeriado=toggleFeriado; window.importarPlanoPaste=importarPlanoPaste; window.limparPlano=limparPlano; window.renderManutDateGrid=renderManutDateGrid; window.toggleEditParcial=toggleEditParcial; window.salvarEditParcial=salvarEditParcial; window.excluirRegistro=excluirRegistro; window.gerarExcel=gerarExcel; window.renderPresencaForm=renderPresencaForm; window.goToAdmin=goToAdmin; window.sairAdmin=sairAdmin; window.backFromArea=backFromArea; window.renderSenhasList=renderSenhasList; window.abrirEditarSenha=abrirEditarSenha; window.salvarNovaSenha=salvarNovaSenha; window.renderControleEstoques=renderControleEstoques; window.abrirHistoricoEstoque=abrirHistoricoEstoque; window.adicionarMovimentacao=adicionarMovimentacao; window.temEstoque=temEstoque; window.obterEstoque=obterEstoque; window.registrarDescarte=registrarDescarte; window.abrirDescartesMassa=abrirDescartesMassa; window.abrirFormDescarteMassa=abrirFormDescarteMassa; window.confirmarDescarteMassa=confirmarDescarteMassa; window.abrirDescartesRecheio=abrirDescartesRecheio; window.abrirFormDescarteRecheio=abrirFormDescarteRecheio; window.confirmarDescarteRecheio=confirmarDescarteRecheio;
 </script>
 </body>
 </html>
