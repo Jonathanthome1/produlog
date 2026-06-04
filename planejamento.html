@@ -66,6 +66,8 @@ tbody tr:hover{background:#f9fafb}
 
 .prod-name{cursor:pointer;color:var(--text)}
 .prod-name:hover{color:var(--mc-azul);text-decoration:underline}
+.btn-mover{display:inline-block;margin-left:6px;padding:1px 7px;border:1px solid var(--mc-roxo);background:#f5f3ff;color:var(--mc-roxo);border-radius:5px;font-size:11px;font-weight:700;cursor:pointer;line-height:1.5;vertical-align:middle;white-space:nowrap}
+.btn-mover:hover{background:var(--mc-roxo);color:#fff}
 
 .modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:100}
 .modal.show{display:flex;align-items:center;justify-content:center;padding:16px}
@@ -386,7 +388,7 @@ async function render(){
     
     return '<tr>'+
       '<td class="cod" data-cod="'+p.cod+'">'+p.cod+' '+(temFaltaEstoque(p.cod)?'<span style="color:var(--mc-vermelho);cursor:pointer;font-weight:700" title="Clique para ver simulação" onclick="abrirSimulacao(\''+p.cod+'\')">🔴</span>':'<span style="color:var(--mc-verde);cursor:pointer;font-weight:700" title="Clique para ver simulação" onclick="abrirSimulacao(\''+p.cod+'\')">🟢</span>')+' </td>'+
-      '<td><span class="prod-name" onclick="abrirDetalhe(\''+p.cod+'\')">'+p.desc+'</span></td>'+
+      '<td><span class="prod-name" onclick="abrirDetalhe(\''+p.cod+'\')">'+p.desc+'</span> <button class="btn-mover" title="Mover para '+(setorAtivo==='quadra'?'Confeitaria':'Quadra')+'" onclick="moverProduto(\''+p.cod+'\')">→ '+(setorAtivo==='quadra'?'Conf':'Quadra')+'</button></td>'+
       '<td class="num">'+p.estoque+'</td>'+
       '<td class="num">'+Math.round((p.totalPeriodo||0)/4)+'</td>'+
       '<td class="num"><strong>'+ideal+'</strong></td>'+
@@ -1218,8 +1220,12 @@ window.abrirDetalhe = (cod) => {
     ? topClientes.map(c => '<div class="cliente-row"><div>'+c.nome+'</div><div style="font-weight:700;color:var(--mc-azul)">'+Math.round(c.qtd)+'</div></div>').join('')
     : '<div style="color:var(--text-sec);font-style:italic;padding:8px">Sem dados de clientes</div>';
   
+  const destinoLabel = p.setor === 'quadra' ? '🥐 Confeitaria' : '🍞 Quadra';
   document.getElementById('modal-detalhe-title').textContent = '['+p.cod+'] '+p.desc;
   document.getElementById('modal-detalhe-body').innerHTML =
+    '<div style="margin-bottom:14px;display:flex;justify-content:flex-end">'+
+      '<button class="btn btn-primary" style="background:var(--mc-roxo)" onclick="moverProduto(\''+p.cod+'\')">↔️ Mover para '+destinoLabel+'</button>'+
+    '</div>'+
     '<div class="stat-grid">'+
       '<div class="stat-card"><div class="stat-label">Estoque atual</div><div class="stat-value">'+p.estoque+'</div></div>'+
       '<div class="stat-card"><div class="stat-label">Média semanal</div><div class="stat-value">'+Math.round((p.totalPeriodo||0)/4)+'</div></div>'+
@@ -1232,10 +1238,38 @@ window.abrirDetalhe = (cod) => {
   document.getElementById('modal-detalhe').classList.add('show');
 };
 
+// NOVO: Mover produto de um setor para o outro (Quadra <-> Confeitaria)
+window.moverProduto = async (cod) => {
+  const p = produtos.find(x => x.cod === cod);
+  if(!p){ alert('Produto não encontrado.'); return; }
+  const origem = p.setor;
+  const destino = origem === 'quadra' ? 'conf' : 'quadra';
+  const nomeOrigem = origem === 'quadra' ? 'Quadra' : 'Confeitaria';
+  const nomeDestino = destino === 'quadra' ? 'Quadra' : 'Confeitaria';
+  if(!confirm('Mover "'+p.desc+'" (cód '+cod+')\n\nde '+nomeOrigem+'  →  '+nomeDestino+'\n\nO produto sai do plano da '+nomeOrigem+' e passa pro da '+nomeDestino+'. As quantidades já preenchidas vão junto.')) return;
+  try {
+    await setDoc(doc(db, 'planejProdutos', String(p.id || cod)), {setor: destino}, {merge: true});
+    p.setor = destino; // refletir na hora (o onSnapshot também confirma depois)
+    fecharModal();
+    render();
+    alert('✓ "'+p.desc+'" movido para '+nomeDestino+'!');
+  } catch(err){
+    console.error('❌ Erro ao mover produto:', err);
+    alert('Erro ao mover: ' + err.message);
+  }
+};
+
 window.processarVendas = async () => {
   const texto = document.getElementById('vendas-textarea').value;
   const linhas = texto.trim().split('\n');
   const porCodigo = {};
+
+  // NOVO: preservar setor de produtos já movidos manualmente (não sobrescrever no reimport)
+  const setorExistente = {};
+  try {
+    const existSnap = await getDocs(collection(db, 'planejProdutos'));
+    existSnap.docs.forEach(d => { const s = d.data().setor; if(s) setorExistente[d.id] = s; });
+  } catch(e){ console.warn('Não foi possível ler setores existentes:', e); }
   
   // Função para converter data em dia da semana
   function getWeekDay(dateStr) {
@@ -1287,7 +1321,7 @@ window.processarVendas = async () => {
     if(!porCodigo[cod]){
       porCodigo[cod] = {
         cod, desc,
-        setor: parseInt(cod) < 200 ? 'quadra' : 'conf',
+        setor: setorExistente[cod] || (parseInt(cod) < 200 ? 'quadra' : 'conf'),
         totalPeriodo: 0,
         porDia: {Seg:0, Ter:0, Qua:0, Qui:0, Sex:0, Sáb:0},
         clientesMap: {} // NOVO: para agregar por cliente
