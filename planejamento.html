@@ -964,17 +964,32 @@ td.num{text-align:center}
 
 window.exportarParaExcel = async () => {
   try {
-    // Verificar se XLSX está carregado, se não, carregar
+    // Verificar se XLSX está carregado, se não, carregar (com fallback de CDN)
     if(typeof XLSX === 'undefined'){
       console.log('⏳ Carregando SheetJS...');
-      await new Promise((resolve, reject) => {
-        const script = document.createElement('script');
-        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.min.js';
-        script.onload = resolve;
-        script.onerror = reject;
-        document.head.appendChild(script);
-      });
-      console.log('✅ SheetJS carregado!');
+      const cdns = [
+        'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.min.js',
+        'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js',
+        'https://unpkg.com/xlsx@0.18.5/dist/xlsx.full.min.js'
+      ];
+      for(const url of cdns){
+        if(typeof XLSX !== 'undefined') break;
+        try {
+          await new Promise((resolve, reject) => {
+            const script = document.createElement('script');
+            script.src = url;
+            script.onload = resolve;
+            script.onerror = () => reject(new Error('falhou: '+url));
+            document.head.appendChild(script);
+          });
+          console.log('✅ SheetJS carregado de', url);
+        } catch(e){ console.warn('⚠️ CDN falhou, tentando próximo...', e.message); }
+      }
+    }
+
+    if(typeof XLSX === 'undefined'){
+      alert('❌ Não foi possível carregar a biblioteca de Excel (SheetJS).\n\nVerifique sua conexão com a internet e tente novamente.');
+      return;
     }
     
     // Coletar dados da tabela
@@ -1003,17 +1018,22 @@ window.exportarParaExcel = async () => {
       const descVenda = calcDescontoVenda(p); // NOVO
 
       const total = seg + ter + qua + qui + sex + sab + totalProdAnt;
-      const saldo = p.estoque - descVenda + total - (p.totalPeriodo || 0);
-      const cob = p.totalPeriodo > 0 ? Math.round((p.estoque - descVenda + total) / p.totalPeriodo * 100) : 0;
+      const estoqueNum = Number(p.estoque) || 0;
+      const saldo = Math.round(estoqueNum - descVenda + total - (p.totalPeriodo || 0));
+      const cob = p.totalPeriodo > 0 ? Math.round((estoqueNum - descVenda + total) / p.totalPeriodo * 100) : 0;
+
+      // CORRIGIDO: pico seguro (evita -Infinity quando porDia está vazio)
+      const porDiaVals = Object.values(p.porDia || {}).map(v => Number(v) || 0);
+      const pico = porDiaVals.length ? Math.max(...porDiaVals) : 0;
       
       dados.push([
         p.cod,
         p.desc,
-        p.estoque,
+        estoqueNum,
         descVenda > 0 ? -descVenda : 0,
-        Math.round(p.totalPeriodo / 4),
-        p.totalPeriodo,
-        Math.max(...Object.keys(p.porDia || {}).map(d => p.porDia[d] || 0)),
+        Math.round((p.totalPeriodo || 0) / 4),
+        p.totalPeriodo || 0,
+        pico,
         prodAntAuto,
         prodAntManualVal,
         totalProdAnt,
