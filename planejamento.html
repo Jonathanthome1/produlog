@@ -132,6 +132,7 @@ textarea{width:100%;height:300px;padding:12px;border:1px solid var(--border);bor
   </select>
   <input type="text" id="busca" class="search-box" placeholder="🔍 Buscar...">
   <button class="btn btn-primary" onclick="abrirProducoesAnteriores()" style="background:#9333ea">📅 Produções Anteriores</button>
+  <button class="btn btn-primary" onclick="abrirDescontarVenda()" style="background:#ea580c">📉 Descontar Venda</button>
   <button class="btn btn-primary" onclick="abrirModalVendas()">📥 Importar Vendas</button>
   <button class="btn btn-success" onclick="abrirModalEstoque()">📦 Importar Estoque</button>
   <button class="btn btn-primary" onclick="gerarRelatorio()" style="background:var(--mc-roxo)">📄 Gerar Plano de Produção</button>
@@ -149,6 +150,7 @@ textarea{width:100%;height:300px;padding:12px;border:1px solid var(--border);bor
           <th class="num">Cód</th>
           <th>Produto</th>
           <th class="num">Estoque</th>
+          <th class="num">Desc. Venda</th>
           <th class="num">Méd/sem</th>
           <th class="num">Ideal</th>
           <th>Pico</th>
@@ -244,6 +246,16 @@ textarea{width:100%;height:300px;padding:12px;border:1px solid var(--border);bor
   </div>
 </div>
 
+<div id="modal-descontar" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <div class="modal-title">📉 Descontar Venda por Dia</div>
+      <button class="modal-close" onclick="fecharModal()">✕</button>
+    </div>
+    <div class="modal-body" id="descontar-body" style="max-height:60vh;overflow-y:auto"></div>
+  </div>
+</div>
+
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
 import { getFirestore, collection, doc, setDoc, onSnapshot, getDocs, getDoc, deleteDoc } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
@@ -263,6 +275,7 @@ let setorAtivo = 'quadra';
 const plano = {};
 const producoesAnteriores = {}; // Datas selecionadas do ProduLog
 const prodAntManual = {}; // NOVO: Produções anteriores MANUAIS por produto
+const diasDescontar = new Set(); // NOVO: dias da semana cuja venda média será descontada do estoque
 
 const DIAS = ['Seg','Ter','Qua','Qui','Sex','Sáb'];
 function mult(){ return parseFloat(document.getElementById('mult').value)||2; }
@@ -273,8 +286,16 @@ function calcPlanoTotal(cod){
   const prodAntTotal = (parseInt(prodAntManual[cod]) || 0); // NOVO: incluir manual
   return diasTotal + prodAntTotal;
 }
-function calcSaldo(p){ return Math.round(p.estoque + calcPlanoTotal(p.cod) - calcIdeal(p)); }
-function calcCob(p){ const i=calcIdeal(p); return i<=0?100:Math.round((p.estoque+calcPlanoTotal(p.cod))/i*100); }
+// NOVO: soma da venda média (das 4 semanas) dos dias selecionados para descontar
+function calcDescontoVenda(p){
+  if(!p || diasDescontar.size === 0) return 0;
+  const porDia = p.porDia || {};
+  let soma = 0;
+  diasDescontar.forEach(d => { soma += (porDia[d] || 0) / 4; });
+  return Math.round(soma);
+}
+function calcSaldo(p){ return Math.round(p.estoque - calcDescontoVenda(p) + calcPlanoTotal(p.cod) - calcIdeal(p)); }
+function calcCob(p){ const i=calcIdeal(p); return i<=0?100:Math.round((p.estoque - calcDescontoVenda(p) + calcPlanoTotal(p.cod))/i*100); }
 function badgeCob(pct){
   if(pct>=100) return '<span class="badge b-verde">'+pct+'%</span>';
   if(pct>=70) return '<span class="badge b-laranja">'+pct+'%</span>';
@@ -292,7 +313,8 @@ function simularEstoque(cod){
   // NOVO: Considerar produções anteriores no estoque inicial
   const prodAntAuto = 0; // será calculado depois
   const prodAntManualVal = parseInt(prodAntManual[cod]) || 0;
-  let estoqueAtual = p.estoque + prodAntAuto + prodAntManualVal;
+  const descontoVenda = calcDescontoVenda(p); // NOVO: venda dos dias selecionados a descontar
+  let estoqueAtual = p.estoque - descontoVenda + prodAntAuto + prodAntManualVal;
   
   DIAS.forEach((dia, idx) => {
     const producao = (plano[cod] || {})[dia] || 0;
@@ -390,6 +412,7 @@ async function render(){
       '<td class="cod" data-cod="'+p.cod+'">'+p.cod+' '+(temFaltaEstoque(p.cod)?'<span style="color:var(--mc-vermelho);cursor:pointer;font-weight:700" title="Clique para ver simulação" onclick="abrirSimulacao(\''+p.cod+'\')">🔴</span>':'<span style="color:var(--mc-verde);cursor:pointer;font-weight:700" title="Clique para ver simulação" onclick="abrirSimulacao(\''+p.cod+'\')">🟢</span>')+' </td>'+
       '<td><span class="prod-name" onclick="abrirDetalhe(\''+p.cod+'\')">'+p.desc+'</span> <button class="btn-mover" title="Mover para '+(setorAtivo==='quadra'?'Confeitaria':'Quadra')+'" onclick="moverProduto(\''+p.cod+'\')">→ '+(setorAtivo==='quadra'?'Conf':'Quadra')+'</button></td>'+
       '<td class="num">'+p.estoque+'</td>'+
+      '<td class="num" id="desc-venda-'+p.cod+'" style="font-weight:700;color:'+(calcDescontoVenda(p)>0?'var(--mc-vermelho)':'var(--text-mut)')+'">'+(calcDescontoVenda(p)>0?'-'+calcDescontoVenda(p):'0')+'</td>'+
       '<td class="num">'+Math.round((p.totalPeriodo||0)/4)+'</td>'+
       '<td class="num"><strong>'+ideal+'</strong></td>'+
       '<td>'+(maxDia?'<span class="badge '+(picoPct>=40?'b-laranja':'b-azul')+'">'+maxDia+' '+picoPct+'%</span>':'-')+'</td>'+
@@ -616,6 +639,57 @@ window.fecharModal = () => {
   document.getElementById('modal-historico').classList.remove('show');
   document.getElementById('modal-simulacao').classList.remove('show');
   document.getElementById('modal-producoes').classList.remove('show');
+  document.getElementById('modal-descontar').classList.remove('show');
+};
+
+// NOVO: Abrir modal de desconto de venda por dia da semana
+window.abrirDescontarVenda = () => {
+  const NOMES = {Seg:'Segunda', Ter:'Terça', Qua:'Quarta', Qui:'Quinta', Sex:'Sexta', 'Sáb':'Sábado'};
+
+  let html = '<div style="padding:12px;border-bottom:1px solid #ddd;margin-bottom:12px;">';
+  html += '<strong>Selecione os dias cuja venda média já deve ser descontada do estoque:</strong>';
+  html += '<div style="font-size:12px;color:#666;margin-top:6px">Use quando montar o plano antes do estoque ser atualizado. Ex: montando na quinta, marque <b>Sexta</b> para descontar a venda que ainda vai sair. Vale para todos os produtos.</div>';
+  html += '</div>';
+
+  html += '<div style="display:flex;flex-direction:column;gap:8px;">';
+  DIAS.forEach(dia => {
+    const isSelected = diasDescontar.has(dia);
+    // venda média total daquele dia somando todos os produtos do setor ativo (referência)
+    const totalDiaSetor = produtos
+      .filter(p => p.setor === setorAtivo)
+      .reduce((s,p) => s + ((p.porDia && p.porDia[dia]) ? p.porDia[dia] : 0), 0) / 4;
+    html += '<label style="display:flex;align-items:center;padding:10px;border:1px solid #ddd;border-radius:6px;cursor:pointer;background:'+(isSelected?'#fed7aa':'#f9fafb')+'">';
+    html += '<input type="checkbox" id="diadesc-'+dia+'" '+(isSelected?'checked':'')+' onchange="selecionarDiaDesconto(\''+dia+'\')" style="margin-right:10px;width:18px;height:18px;cursor:pointer">';
+    html += '<div style="flex:1"><strong>'+(NOMES[dia]||dia)+'</strong> <span style="color:#666;font-size:12px">(venda média '+setorAtivo+': '+Math.round(totalDiaSetor)+' pcts/dia no total)</span></div>';
+    html += '</label>';
+  });
+  html += '</div>';
+
+  html += '<div style="margin-top:16px;padding:12px;background:#fef3c7;border-radius:6px;">';
+  html += '<strong style="color:#92400e">📉 Dias sendo descontados:</strong><br>';
+  html += '<div id="dias-desc-selecionados" style="margin-top:6px;font-size:13px;">'+
+          (diasDescontar.size > 0 ? [...diasDescontar].join(', ') : 'Nenhum (estoque sem desconto)')+
+          '</div>';
+  html += '</div>';
+
+  document.getElementById('descontar-body').innerHTML = html;
+  document.getElementById('modal-descontar').classList.add('show');
+};
+
+// NOVO: Marcar/desmarcar um dia para descontar
+window.selecionarDiaDesconto = async (dia) => {
+  const checkbox = document.getElementById('diadesc-'+dia);
+  if(checkbox.checked){
+    diasDescontar.add(dia);
+    // refletir cor de fundo do label
+    checkbox.closest('label').style.background = '#fed7aa';
+  } else {
+    diasDescontar.delete(dia);
+    checkbox.closest('label').style.background = '#f9fafb';
+  }
+  const el = document.getElementById('dias-desc-selecionados');
+  if(el) el.textContent = diasDescontar.size > 0 ? [...diasDescontar].join(', ') : 'Nenhum (estoque sem desconto)';
+  await render();
 };
 
 // NOVO: Abrir modal de produções anteriores
@@ -706,7 +780,17 @@ window.abrirSimulacao = (cod) => {
   
   document.getElementById('simulacao-titulo').textContent = '📊 Simulação de Estoque - ['+p.cod+'] '+p.desc;
   
-  let html = '<table style="width:100%;border-collapse:collapse;"><tr style="background:#1e3a8a;color:white;">';
+  let html = '';
+  // NOVO: aviso quando há desconto de venda aplicado ao estoque inicial
+  const descAplicado = calcDescontoVenda(p);
+  if(descAplicado > 0){
+    html += '<div style="margin-bottom:12px;padding:10px;background:#ffedd5;border-left:4px solid #ea580c;border-radius:4px;font-size:13px;">';
+    html += '<strong style="color:#9a3412">📉 Desconto de venda aplicado:</strong> '+
+            'estoque inicial reduzido em <strong>-'+descAplicado+' pcts</strong> '+
+            '(venda média dos dias: '+[...diasDescontar].join(', ')+').';
+    html += '</div>';
+  }
+  html += '<table style="width:100%;border-collapse:collapse;"><tr style="background:#1e3a8a;color:white;">';
   html += '<th style="padding:8px;border:1px solid #ddd;text-align:left">Dia</th>';
   html += '<th style="padding:8px;border:1px solid #ddd;text-align:center">Est. Início</th>';
   html += '<th style="padding:8px;border:1px solid #ddd;text-align:center">Produção</th>';
@@ -898,7 +982,7 @@ window.exportarParaExcel = async () => {
     
     // CABEÇALHO
     dados.push([
-      'COD', 'PRODUTO', 'ESTOQUE', 'MÉD/SEM', 'IDEAL', 'PICO',
+      'COD', 'PRODUTO', 'ESTOQUE', 'DESC. VENDA', 'MÉD/SEM', 'IDEAL', 'PICO',
       'PROD. ANT. (AUTO)', 'PROD. ANT. (MANUAL)', 'TOTAL PROD. ANT.',
       'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SÁB', 'TOTAL', 'SALDO', '% COB'
     ]);
@@ -916,15 +1000,17 @@ window.exportarParaExcel = async () => {
       const prodAntAuto = 0; // Seria necessário buscar do histórico de seleção de datas
       const prodAntManualVal = parseInt(prodAntManual[p.cod]) || 0;
       const totalProdAnt = prodAntAuto + prodAntManualVal;
-      
+      const descVenda = calcDescontoVenda(p); // NOVO
+
       const total = seg + ter + qua + qui + sex + sab + totalProdAnt;
-      const saldo = p.estoque + total - (p.totalPeriodo || 0);
-      const cob = p.totalPeriodo > 0 ? Math.round((p.estoque + total) / p.totalPeriodo * 100) : 0;
+      const saldo = p.estoque - descVenda + total - (p.totalPeriodo || 0);
+      const cob = p.totalPeriodo > 0 ? Math.round((p.estoque - descVenda + total) / p.totalPeriodo * 100) : 0;
       
       dados.push([
         p.cod,
         p.desc,
         p.estoque,
+        descVenda > 0 ? -descVenda : 0,
         Math.round(p.totalPeriodo / 4),
         p.totalPeriodo,
         Math.max(...Object.keys(p.porDia || {}).map(d => p.porDia[d] || 0)),
@@ -952,6 +1038,7 @@ window.exportarParaExcel = async () => {
       {wch: 8},   // COD
       {wch: 35},  // PRODUTO
       {wch: 10},  // ESTOQUE
+      {wch: 12},  // DESC. VENDA
       {wch: 10},  // MÉD/SEM
       {wch: 8},   // IDEAL
       {wch: 8},   // PICO
@@ -1042,6 +1129,7 @@ window.salvarPlano = async () => {
     multiplicador: mult(),
     planos: {...plano},
     prodAntManual: {...prodAntManual},
+    diasDescontar: [...diasDescontar],
     produtos: produtosSnapshot
   };
   
@@ -1131,6 +1219,12 @@ window.carregarPlano = async (id) => {
     Object.keys(prodAntManual).forEach(k => delete prodAntManual[k]);
     if(data.prodAntManual){
       Object.assign(prodAntManual, data.prodAntManual);
+    }
+    
+    // NOVO: Restaurar dias a descontar
+    diasDescontar.clear();
+    if(Array.isArray(data.diasDescontar)){
+      data.diasDescontar.forEach(d => diasDescontar.add(d));
     }
     
     // NOVO: Restaurar produtos (snapshot completo)
