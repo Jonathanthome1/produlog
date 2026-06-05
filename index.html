@@ -244,6 +244,10 @@
     .confirm-row { display: flex; align-items: center; gap: 10px; padding: 11px 0; border-bottom: 0.5px solid var(--border); }
     .confirm-check { width: 24px; height: 24px; border-radius: 50%; border: 1.5px solid var(--border-md); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 13px; flex-shrink: 0; background: var(--bg-primary); }
     .confirm-check.chk { background: var(--mc-azul); border-color: var(--mc-azul); color: white; }
+    .cf-tipo-btn { flex:1; padding:11px 8px; border-radius:10px; border:1px solid var(--border-md); background:var(--bg-primary); font-family:inherit; font-size:13px; font-weight:600; color:var(--text-secondary); cursor:pointer; }
+    .cf-tipo-btn.on { background:var(--mc-roxo); border-color:var(--mc-roxo); color:#fff; }
+    .cf-tipo-btn.on.abrir { background:var(--mc-vermelho); border-color:var(--mc-vermelho); }
+    .confirm-check.chk-admin { background:var(--mc-vermelho); border-color:var(--mc-vermelho); }
 
     .empty { text-align: center; padding: 40px 20px; color: var(--text-secondary); font-size: 14px; line-height: 1.6; }
     .op-stat-card { background: var(--mc-azul); border-radius: 14px; padding: 20px; margin-bottom: 12px; border-bottom: 3px solid var(--mc-dourado); }
@@ -1408,6 +1412,11 @@
       <button class="home-btn" onclick="abrirPlano()" style="border-left-color:var(--mc-roxo);margin-bottom:4px;">
         <div class="hb-icon" style="background:#ede9fe;">📅</div>
         <div style="flex:1;"><div class="hb-title">Plano de Produção</div><div class="hb-desc">Cronograma da semana</div></div>
+        <span style="color:var(--text-secondary);font-size:20px;">›</span>
+      </button>
+      <button class="home-btn" onclick="goTo('s-emb-cf')" style="border-left-color:#7c3aed;margin-bottom:4px;">
+        <div class="hb-icon" style="background:#ede9fe;">🤝</div>
+        <div style="flex:1;"><div class="hb-title">Cliente C&amp;F</div><div class="hb-desc" id="cf-emb-badge">Produção e abertura de pacotes</div></div>
         <span style="color:var(--text-secondary);font-size:20px;">›</span>
       </button>
 
@@ -3212,6 +3221,50 @@
     <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;" id="estoque-emb-form-content"></div>
   </div>
 
+  <!-- EMBALAGEM: CLIENTE C&F -->
+  <div class="screen" id="s-emb-cf">
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="goTo('s-emb-sel-data')">‹</button>
+      <div class="mc-brand">
+        <div class="mc-brand-logo">MC</div>
+        <div class="mc-brand-text">
+          <div class="mc-brand-name">Monte Castelo</div>
+          <div class="mc-brand-sub">Embalagem</div>
+        </div>
+      </div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info">
+        <div class="mc-page-title">🤝 Cliente C&amp;F</div>
+        <div class="mc-page-sub">Produção e abertura de pacotes</div>
+      </div>
+    </div>
+    <div class="content">
+      <div class="card" style="border-left:3px solid var(--mc-roxo);">
+        <div style="font-size:13px;font-weight:600;color:var(--mc-azul);margin-bottom:10px;">➕ Adicionar produto C&amp;F</div>
+        <div class="card-label">Produto</div>
+        <input type="text" id="cf-produto" placeholder="Ex: PÃO DE QUEIJO C&F..." style="font-size:15px;" />
+        <div class="card-label" style="margin-top:12px;">Quantidade (unidades)</div>
+        <input type="number" id="cf-qtd" placeholder="0" min="0" inputmode="numeric" />
+        <div class="card-label" style="margin-top:12px;">Previsão de entrega</div>
+        <input type="date" id="cf-entrega" />
+        <div class="card-label" style="margin-top:12px;">Como vai ser feito?</div>
+        <div style="display:flex;gap:8px;">
+          <button type="button" id="cf-tipo-prod" class="cf-tipo-btn on" onclick="setCFTipo('producao')">📅 Produzir em dia</button>
+          <button type="button" id="cf-tipo-abrir" class="cf-tipo-btn" onclick="setCFTipo('abrir')">📦 Abrir pacote</button>
+        </div>
+        <div id="cf-data-wrap" style="margin-top:12px;">
+          <div class="card-label">Dia da produção</div>
+          <input type="date" id="cf-data" />
+        </div>
+        <div class="card-label" style="margin-top:12px;">Observação (opcional)</div>
+        <input type="text" id="cf-obs" placeholder="Ex: embalagem do cliente, lote..." />
+        <button class="btn btn-primary" id="cf-btn" onclick="salvarCF()" style="margin-top:14px;">Adicionar à lista C&amp;F ✓</button>
+      </div>
+      <div id="cf-list"></div>
+    </div>
+  </div>
+
+
 <!-- ADMIN STATUS PANEL -->
   <div class="screen" id="s-adm-status">
     <div class="mc-header">
@@ -3583,6 +3636,7 @@ function atualizarTela(){
   if(tela==='s-coz-home') renderCozHome();
   if(tela==='s-emb-home') renderEmbalagem(); // embManual listener triggers this
   if(tela==='s-emb-sel-data') renderSelDataEmb();
+  if(tela==='s-emb-cf') renderCF();
   if(tela==='s-exp-home') renderExpedicao();
   if(tela==='s-adm-status') renderAdmStatus();
   if(tela==='s-exp-view-sel') renderExpViewSelData();
@@ -3676,6 +3730,7 @@ function goTo(id){
   if(id==='s-conf-massas') renderConfMassas();
   if(id==='s-coz-reg') renderCozReg();
   if(id==='s-emb-home') renderEmbalagem();
+  if(id==='s-emb-cf') renderCF();
   if(id==='s-emb-manual'){ const b=document.getElementById('emb-manual-btn');if(b){b.textContent='Adicionar ao checklist ✓';b.disabled=false;} }
   if(id==='s-exp-home') renderExpedicao();
   if(id==='s-exp-view-sel') renderExpViewSelData();
@@ -4175,6 +4230,197 @@ async function salvarEmbManual(){
     btn.textContent='Adicionar ao checklist ✓';btn.disabled=false;
   }
 }
+
+// ===== CLIENTE C&F =====
+let cfPedidos = [];
+let cfTipoSel = 'producao';
+let cfAgrupar = 'status'; // 'status' ou 'entrega'
+
+function setCFAgrupar(modo){ cfAgrupar=modo; renderCF(); }
+
+function cfDateKey(br){ // 'dd/mm/aaaa' -> 'aaaa-mm-dd' (sem data vai pro fim)
+  if(!br) return '9999-99-99';
+  const p=br.split('/'); if(p.length!==3) return '9999-99-99';
+  return p[2]+'-'+p[1].padStart(2,'0')+'-'+p[0].padStart(2,'0');
+}
+function cfDiasAteEntrega(br){
+  if(!br) return null;
+  const p=br.split('/'); if(p.length!==3) return null;
+  const alvo=new Date(+p[2], +p[1]-1, +p[0]); alvo.setHours(0,0,0,0);
+  const h=new Date(); h.setHours(0,0,0,0);
+  return Math.round((alvo-h)/86400000);
+}
+function cfUrgenciaBadge(br){
+  const d=cfDiasAteEntrega(br);
+  if(d===null) return '';
+  if(d<0) return '<span class="badge" style="background:var(--mc-vermelho-claro);color:#991b1b;border-radius:99px;">⚠️ Atrasado '+(-d)+'d</span>';
+  if(d===0) return '<span class="badge" style="background:var(--mc-vermelho-claro);color:#991b1b;border-radius:99px;">🔴 Entrega hoje</span>';
+  if(d===1) return '<span class="badge" style="background:#fef3c7;color:#92400e;border-radius:99px;">🟠 Amanhã</span>';
+  return '<span class="badge" style="background:#e8eaff;color:#1e40af;border-radius:99px;">em '+d+' dias</span>';
+}
+
+onSnapshot(collection(db,'cfPedidos'), snap=>{
+  try{
+    cfPedidos = snap.docs.map(d=>({firestoreId:d.id,...d.data()})).sort((a,b)=>(b.timestamp||0)-(a.timestamp||0));
+    const badge=document.getElementById('cf-emb-badge');
+    if(badge){
+      const pend = cfPedidos.filter(p=>!cfPedidoCompleto(p)).length;
+      badge.textContent = pend>0 ? (pend+' pendente'+(pend>1?'s':'')) : 'Produção e abertura de pacotes';
+    }
+    atualizarTela();
+  }catch(e){ console.error('cfPedidos snap:',e); }
+});
+
+function cfPedidoCompleto(p){
+  if(p.tipo==='abrir') return !!p.checkEmb && !!p.checkAdmin;
+  return !!p.checkEmb;
+}
+
+function setCFTipo(tipo){
+  cfTipoSel = tipo;
+  const bp=document.getElementById('cf-tipo-prod'), ba=document.getElementById('cf-tipo-abrir');
+  if(bp) bp.className='cf-tipo-btn'+(tipo==='producao'?' on':'');
+  if(ba) ba.className='cf-tipo-btn'+(tipo==='abrir'?' on abrir':'');
+  const dw=document.getElementById('cf-data-wrap');
+  if(dw) dw.style.display = tipo==='producao' ? 'block' : 'none';
+}
+
+function cfBrDate(iso){ // 'aaaa-mm-dd' -> 'dd/mm/aaaa'
+  if(!iso) return '';
+  const p=iso.split('-'); if(p.length!==3) return iso;
+  return p[2]+'/'+p[1]+'/'+p[0];
+}
+
+async function salvarCF(){
+  const produto=document.getElementById('cf-produto').value.trim();
+  const qtd=parseInt(document.getElementById('cf-qtd').value)||0;
+  const obs=document.getElementById('cf-obs').value.trim();
+  const dataIso=document.getElementById('cf-data').value;
+  const entregaIso=document.getElementById('cf-entrega').value;
+  if(!produto){alert('Informe o produto.');return;}
+  if(!qtd){alert('Informe a quantidade.');return;}
+  if(!entregaIso){alert('Informe a previsão de entrega.');return;}
+  if(cfTipoSel==='producao' && !dataIso){alert('Informe o dia da produção.');return;}
+  const btn=document.getElementById('cf-btn');
+  btn.textContent='Salvando...';btn.disabled=true;
+  try{
+    await addDoc(collection(db,'cfPedidos'),{
+      produto, qtd, obs,
+      tipo: cfTipoSel,
+      dataProducao: cfTipoSel==='producao' ? cfBrDate(dataIso) : '',
+      dataEntrega: cfBrDate(entregaIso),
+      checkEmb:false, checkEmbTs:'',
+      checkAdmin:false, checkAdminTs:'',
+      data:hoje(), hora:agora(), timestamp:Date.now()
+    });
+    document.getElementById('cf-produto').value='';
+    document.getElementById('cf-qtd').value='';
+    document.getElementById('cf-obs').value='';
+    document.getElementById('cf-data').value='';
+    document.getElementById('cf-entrega').value='';
+    setCFTipo('producao');
+    btn.textContent='Adicionar à lista C&F ✓';btn.disabled=false;
+  }catch(e){
+    alert('Erro ao salvar: '+e.message);
+    btn.textContent='Adicionar à lista C&F ✓';btn.disabled=false;
+  }
+}
+
+async function toggleCFEmb(fid){
+  const p=cfPedidos.find(x=>x.firestoreId===fid); if(!p) return;
+  const novo=!p.checkEmb;
+  try{ await updateDoc(doc(db,'cfPedidos',fid),{ checkEmb:novo, checkEmbTs: novo?agora():'' }); }
+  catch(e){ alert('Erro: '+e.message); }
+}
+
+async function toggleCFAdmin(fid){
+  if(!window.adminMode){ alert('Apenas o administrador pode marcar a baixa no sistema.'); return; }
+  const p=cfPedidos.find(x=>x.firestoreId===fid); if(!p) return;
+  const novo=!p.checkAdmin;
+  try{ await updateDoc(doc(db,'cfPedidos',fid),{ checkAdmin:novo, checkAdminTs: novo?agora():'' }); }
+  catch(e){ alert('Erro: '+e.message); }
+}
+
+function renderCF(){
+  const el=document.getElementById('cf-list'); if(!el) return;
+  if(!cfPedidos.length){ el.innerHTML='<div class="empty">Nenhum produto C&F lançado ainda.<br>Use o formulário acima para adicionar.</div>'; return; }
+
+  const cardHtml = p=>{
+    const isAbrir = p.tipo==='abrir';
+    const completo = cfPedidoCompleto(p);
+    const tipoBadge = isAbrir
+      ? '<span class="badge" style="background:var(--mc-vermelho-claro);color:#991b1b;border-radius:99px;">📦 Abrir pacote</span>'
+      : '<span class="badge" style="background:#ede9fe;color:#5b21b6;border-radius:99px;">📅 '+(p.dataProducao||'Produção')+'</span>';
+    const nomeSafe=(p.produto||'').replace(/'/g,"");
+    const entregaLinha = p.dataEntrega
+      ? `<div style="display:flex;align-items:center;gap:6px;margin-top:5px;flex-wrap:wrap;"><span style="font-size:12px;font-weight:600;">🚚 Entrega: ${p.dataEntrega}</span>${completo?'':cfUrgenciaBadge(p.dataEntrega)}</div>`
+      : '<div style="font-size:12px;color:var(--text-secondary);margin-top:5px;">🚚 Entrega: sem data</div>';
+    return `<div class="card" style="margin-bottom:10px;${completo?'opacity:0.6;':''}border-left:3px solid ${isAbrir?'var(--mc-vermelho)':'var(--mc-roxo)'};">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:6px;">
+        <div style="flex:1;">
+          <div style="font-size:15px;font-weight:700;${completo?'text-decoration:line-through;':''}">${p.produto}</div>
+          <div style="font-size:12px;color:var(--text-secondary);margin-top:2px;">${p.qtd} un · lançado ${p.data}</div>
+          ${entregaLinha}
+          ${p.obs?`<div style="font-size:12px;color:var(--text-secondary);margin-top:3px;font-style:italic;">${p.obs}</div>`:''}
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;">
+          ${tipoBadge}
+          ${window.adminMode?`<button onclick="excluirRegistro('cfPedidos','${p.firestoreId}','${nomeSafe}')" class="btn-del-admin" style="background:none;border:1px solid #ef9a9a;color:#c62828;font-size:11px;padding:2px 6px;border-radius:6px;cursor:pointer;font-family:inherit;">🗑</button>`:''}
+        </div>
+      </div>
+      <div class="confirm-row" style="border-bottom:none;padding:6px 0 0;">
+        <div class="confirm-check ${p.checkEmb?'chk':''}" onclick="toggleCFEmb('${p.firestoreId}')">${p.checkEmb?'✓':''}</div>
+        <div style="flex:1;"><div style="font-size:13px;font-weight:600;">Feito pela embalagem</div>${(p.checkEmb&&p.checkEmbTs)?`<div style="font-size:11px;color:var(--text-secondary);">${p.checkEmbTs}</div>`:''}</div>
+      </div>
+      ${isAbrir?`<div class="confirm-row" style="border-bottom:none;padding:6px 0 0;">
+        <div class="confirm-check ${p.checkAdmin?'chk chk-admin':''}" onclick="toggleCFAdmin('${p.firestoreId}')" style="${!window.adminMode?'opacity:0.45;':''}">${p.checkAdmin?'✓':(window.adminMode?'':'🔒')}</div>
+        <div style="flex:1;"><div style="font-size:13px;font-weight:600;">Baixa no sistema <span style="font-size:10px;color:var(--mc-vermelho);font-weight:700;">ADMIN</span></div>${(p.checkAdmin&&p.checkAdminTs)?`<div style="font-size:11px;color:var(--text-secondary);">${p.checkAdminTs}</div>`:`<div style="font-size:11px;color:var(--text-secondary);">${window.adminMode?'Marque ao dar baixa da quantidade':'Somente o admin marca'}</div>`}</div>
+      </div>`:''}
+    </div>`;
+  };
+
+  const pendentes=cfPedidos.filter(p=>!cfPedidoCompleto(p));
+  const feitos=cfPedidos.filter(p=>cfPedidoCompleto(p));
+
+  // Toggle de agrupamento
+  let html = `<div style="display:flex;gap:8px;margin:2px 0 12px;">
+    <button type="button" class="cf-tipo-btn ${cfAgrupar==='status'?'on':''}" onclick="setCFAgrupar('status')">📋 Por status</button>
+    <button type="button" class="cf-tipo-btn ${cfAgrupar==='entrega'?'on':''}" onclick="setCFAgrupar('entrega')">🚚 Por dia de entrega</button>
+  </div>`;
+
+  if(cfAgrupar==='entrega'){
+    // Agrupar pendentes por data de entrega (mais próxima primeiro = prioridade)
+    const grupos={};
+    pendentes.forEach(p=>{ const k=p.dataEntrega||''; (grupos[k]=grupos[k]||[]).push(p); });
+    const chaves=Object.keys(grupos).sort((a,b)=>cfDateKey(a).localeCompare(cfDateKey(b)));
+    if(!pendentes.length){
+      html+='<div class="empty" style="padding:20px;">Nenhum item pendente. 🎉</div>';
+    }
+    chaves.forEach(k=>{
+      const dias=cfDiasAteEntrega(k);
+      const alerta = dias!==null ? (dias<0?' ⚠️':(dias===0?' 🔴':(dias===1?' 🟠':''))) : '';
+      const label = k ? ('🚚 Entrega '+k+alerta) : '🚚 Sem data de entrega';
+      html+='<div class="section-divider" style="margin-top:10px;">'+label+' ('+grupos[k].length+')</div>';
+      html+=grupos[k].map(cardHtml).join('');
+    });
+    if(feitos.length){
+      html+='<div class="section-divider" style="margin-top:14px;">Concluídos ('+feitos.length+')</div>';
+      html+=feitos.map(cardHtml).join('');
+    }
+  } else {
+    if(pendentes.length){
+      html+='<div class="section-divider" style="margin-top:6px;">Pendentes ('+pendentes.length+')</div>';
+      html+=pendentes.map(cardHtml).join('');
+    }
+    if(feitos.length){
+      html+='<div class="section-divider" style="margin-top:14px;">Concluídos ('+feitos.length+')</div>';
+      html+=feitos.map(cardHtml).join('');
+    }
+  }
+  el.innerHTML=html;
+}
+
+window.renderCF=renderCF; window.salvarCF=salvarCF; window.setCFTipo=setCFTipo; window.toggleCFEmb=toggleCFEmb; window.toggleCFAdmin=toggleCFAdmin; window.setCFAgrupar=setCFAgrupar;
 
 // ===== EMBALAGEM =====
 function statusEmbalagem(data){
