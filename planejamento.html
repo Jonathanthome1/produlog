@@ -167,12 +167,12 @@ textarea{width:100%;height:300px;padding:12px;border:1px solid var(--border);bor
           <th class="num">Prod. Ant. (Auto)</th>
           <th class="num">Prod. Ant. (Manual)</th>
           <th class="num">Total Prod. Ant.</th>
-          <th class="num">Seg</th>
-          <th class="num">Ter</th>
-          <th class="num">Qua</th>
-          <th class="num">Qui</th>
-          <th class="num">Sex</th>
-          <th class="num">Sáb</th>
+          <th class="num" data-coldia="Seg">Seg</th>
+          <th class="num" data-coldia="Ter">Ter</th>
+          <th class="num" data-coldia="Qua">Qua</th>
+          <th class="num" data-coldia="Qui">Qui</th>
+          <th class="num" data-coldia="Sex">Sex</th>
+          <th class="num" data-coldia="Sáb">Sáb</th>
           <th class="num">Total</th>
           <th class="num">Saldo</th>
           <th class="num">% cob</th>
@@ -371,10 +371,48 @@ window.trocarTab = (s) => {
   render();
 };
 
+// NOVO: esconder/mostrar colunas dos dias conforme o filtro de dia
+function aplicarFiltroColunasDia(){
+  const fd = document.getElementById('filtroDia')?.value || 'todos';
+  DIAS.forEach(d => {
+    const mostrar = (fd === 'todos' || fd === d);
+    document.querySelectorAll('[data-coldia="'+d+'"]').forEach(el => { el.style.display = mostrar ? '' : 'none'; });
+  });
+}
+
+// NOVO: calcula a Prod. Ant. (AUTO) de TODOS os produtos ANTES de filtrar/renderizar
+// (garante que filtros e cálculos que dependem dela — ex: "Em falta" — usem o valor correto)
+async function atualizarProdAntAutoMap(){
+  const datasSelecionadas = Object.keys(producoesAnteriores);
+  if(datasSelecionadas.length === 0){
+    produtos.forEach(p => { prodAntAutoMap[p.cod] = 0; });
+    return;
+  }
+  try {
+    const snapshot = await getDocs(collection(db, 'registros'));
+    const todosRegistros = snapshot.docs.map(d => ({id: d.id, ...d.data()}));
+    produtos.forEach(p => {
+      let prodAnterior = 0;
+      const codPlan = String(p.cod).trim();
+      todosRegistros.forEach(r => {
+        if(String(r.cod||'').trim() === codPlan && datasSelecionadas.includes(r.data)){
+          prodAnterior += r.qtd || 0;
+        }
+      });
+      prodAntAutoMap[p.cod] = prodAnterior;
+    });
+  } catch(err){
+    console.error('❌ Erro ao calcular Prod. Ant. (AUTO):', err);
+  }
+}
+
 async function render(){
   const filtro = document.getElementById('filtro')?.value || 'ativos';
   const busca = document.getElementById('busca')?.value.toLowerCase() || '';
   const ordem = document.getElementById('order')?.value || 'urg';
+  
+  // NOVO: calcular a Prod. Ant. (AUTO) ANTES de filtrar, para o filtro "Em falta" funcionar
+  await atualizarProdAntAutoMap();
   
   let lista = produtos.filter(p => p.setor === setorAtivo);
   if(filtro==='ativos') lista = lista.filter(p => (p.totalPeriodo||0) > 0);
@@ -424,7 +462,7 @@ async function render(){
     });
     const picoPct = (p.totalPeriodo||0) > 0 ? Math.round((maxQtd / (p.totalPeriodo||1)) * 100) : 0;
     
-    const diasInputs = DIAS.map(d => '<td class="num"><input type="number" class="day-input" data-cod="'+p.cod+'" data-dia="'+d+'" value="'+(pl[d]||'')+'" placeholder="0"></td>').join('');
+    const diasInputs = DIAS.map(d => '<td class="num" data-coldia="'+d+'"><input type="number" class="day-input" data-cod="'+p.cod+'" data-dia="'+d+'" value="'+(pl[d]||'')+'" placeholder="0"></td>').join('');
     
     return '<tr>'+
       '<td class="cod" data-cod="'+p.cod+'">'+p.cod+' '+(temFaltaEstoque(p.cod)?'<span style="color:var(--mc-vermelho);cursor:pointer;font-weight:700" title="Clique para ver simulação" onclick="abrirSimulacao(\''+p.cod+'\')">🔴</span>':'<span style="color:var(--mc-verde);cursor:pointer;font-weight:700" title="Clique para ver simulação" onclick="abrirSimulacao(\''+p.cod+'\')">🟢</span>')+' </td>'+
@@ -444,113 +482,25 @@ async function render(){
     '</tr>';
   }).join('');
   
-  // NOVO: Buscar e atualizar produções anteriores
-  try {
-    console.log('🔍 Buscando registros do ProduLog...');
-    const snapshot = await getDocs(collection(db, 'registros'));
-    const todosRegistros = snapshot.docs.map(d => ({id: d.id, ...d.data()}));
-    console.log('📊 Total de registros encontrados:', todosRegistros.length);
-    console.log('🔎 Primeiro registro - CAMPOS:');
-    if(todosRegistros.length > 0){
-      const r = todosRegistros[0];
-      console.log('  ⚠️ TODOS OS CAMPOS DO REGISTRO:');
-      console.log(r);
-      console.log('  cod:', r.cod);
-      console.log('  codigo:', r.codigo);
-      console.log('  codigoProduto:', r.codigoProduto);
-      console.log('  prodData.cod:', r.prodData?.cod);
-      console.log('  prodData.codigo:', r.prodData?.codigo);
-      console.log('  produto:', r.produto);
-      console.log('  data:', r.data);
-      console.log('  qtd:', r.qtd);
-      console.log('  prodData:', r.prodData);
-      if(r.prodData){
-        console.log('    prodData.cod:', r.prodData.cod);
-        console.log('    prodData.nome:', r.prodData.nome);
-      }
+  // Atualizar células de Prod. Ant. (AUTO/Total) a partir do mapa já calculado em atualizarProdAntAutoMap()
+  const datasSelecionadas = Object.keys(producoesAnteriores);
+  lista.forEach(p => {
+    const prodAnterior = parseInt(prodAntAutoMap[p.cod]) || 0;
+    const cell = document.getElementById('prodant-auto-'+p.cod);
+    if(cell){
+      const datasLabel = datasSelecionadas.length > 0 ? ' ('+datasSelecionadas.join(', ')+')' : '';
+      cell.innerHTML = prodAnterior > 0 ? prodAnterior : '-';
+      cell.title = 'Produções anteriores (automático)'+datasLabel;
     }
-    
-    const datasSelecionadas = Object.keys(producoesAnteriores);
-    console.log('📅 Datas selecionadas:', datasSelecionadas);
-    
-    lista.forEach((p, idx) => {
-      let prodAnterior = 0;
-      
-      // Debug: mostrar nome do produto planejamento
-      console.log('---');
-      console.log('PRODUTO PLANEJAMENTO #'+idx);
-      console.log('  cod:', p.cod);
-      console.log('  desc:', p.desc);
-      console.log('  desc.UPPER:', p.desc.trim().toUpperCase());
-      
-      // Buscar registros por CÓDIGO (muito mais confiável que nome!)
-      const registrosProduto = todosRegistros.filter(r => {
-        const codProduLog = String(r.cod || '').trim();
-        const codPlanejamento = String(p.cod).trim();
-        const match = codProduLog === codPlanejamento;
-        
-        // Debug dos primeiros 3
-        if(idx < 3){
-          console.log('    Comparando por CÓDIGO:');
-          console.log('      ProduLog:', codProduLog);
-          console.log('      Planejamento:', codPlanejamento);
-          console.log('      Match:', match);
-        }
-        
-        return match;
-      });
-      
-      console.log('  ✅ '+registrosProduto.length+' registros encontrados');
-      
-      datasSelecionadas.forEach(data => {
-        const regsData = registrosProduto.filter(r => r.data === data);
-        regsData.forEach(r => {
-          console.log('    '+data+': +'+r.qtd + ' ('+r.produto+')');
-          prodAnterior += r.qtd || 0;
-        });
-      });
-      
-      // NOVO: DEBUG - mostrar produtos da data selecionada que NÃO tiveram match
-      if(prodAnterior === 0 && datasSelecionadas.length > 0){
-        console.log('  ⚠️ Nenhuma produção encontrada para este produto na data selecionada');
-        // Mostrar todos os produtos produzidos nas datas selecionadas para comparação
-        datasSelecionadas.forEach(data => {
-          const regsDataGeral = todosRegistros.filter(r => r.data === data);
-          console.log('    Produtos em '+data+': ', regsDataGeral.slice(0,5).map(r => r.produto || r.prodData?.nome).join(' | '));
-        });
-      }
-      
-      const cell = document.getElementById('prodant-auto-'+p.cod);
-      if(cell){
-        const datasLabel = datasSelecionadas.length > 0 ? ' ('+datasSelecionadas.join(', ')+')' : '';
-        cell.innerHTML = prodAnterior > 0 ? prodAnterior : '-';
-        cell.title = 'Produções anteriores (automático)'+datasLabel;
-      }
-      prodAntAutoMap[p.cod] = prodAnterior; // NOVO: disponibilizar para a simulação de estoque
-      
-      // NOVO: Atualizar total de prod. ant. (auto + manual)
-      const manualVal = parseInt(prodAntManual[p.cod]||0);
-      const totalCell = document.getElementById('prodant-total-'+p.cod);
-      if(totalCell){
-        totalCell.innerHTML = '<strong>'+(prodAnterior + manualVal)+'</strong>';
-      }
-
-      // NOVO: recalcular saldo, cobertura e ícone agora que a prod. ant. AUTO está disponível
-      const saldoR = calcSaldo(p);
-      const cobR = calcCob(p);
-      const saldoCellR = document.querySelector('[data-saldo="'+p.cod+'"]');
-      const cobCellR = document.querySelector('[data-cob="'+p.cod+'"]');
-      if(saldoCellR) saldoCellR.innerHTML = '<strong style="color:'+(saldoR<0?'var(--mc-vermelho)':'var(--mc-verde)')+'">'+(saldoR>=0?'+':'')+saldoR+'</strong>';
-      if(cobCellR) cobCellR.innerHTML = badgeCob(cobR);
-      const temFaltaR = temFaltaEstoque(p.cod);
-      const codCellR = document.querySelector('[data-cod="'+p.cod+'"]');
-      if(codCellR){
-        codCellR.innerHTML = p.cod + ' <span style="color:'+(temFaltaR?'var(--mc-vermelho)':'var(--mc-verde)')+';cursor:pointer;font-weight:700" title="Clique para ver simulação" onclick="abrirSimulacao(\''+p.cod+'\')">'+(temFaltaR?'🔴':'🟢')+'</span> ';
-      }
-    });
-  } catch(err) {
-    console.error('❌ Erro ao atualizar produções anteriores:', err);
-  }
+    const manualVal = parseInt(prodAntManual[p.cod]||0);
+    const totalCell = document.getElementById('prodant-total-'+p.cod);
+    if(totalCell){
+      totalCell.innerHTML = '<strong>'+(prodAnterior + manualVal)+'</strong>';
+    }
+  });
+  
+  // NOVO: esconder colunas dos outros dias quando filtrar por um dia específico
+  aplicarFiltroColunasDia();
   
   // Hooks inputs - atualizar células quando mudar
   document.querySelectorAll('.day-input').forEach(inp => {
