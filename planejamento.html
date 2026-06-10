@@ -277,6 +277,7 @@ const producoesAnteriores = {}; // Datas selecionadas do ProduLog
 const prodAntManual = {}; // NOVO: Produções anteriores MANUAIS por produto
 const diasDescontar = new Set(); // NOVO: dias da semana cuja venda média será descontada do estoque
 const prodAntAutoMap = {}; // NOVO: produção anterior AUTOMÁTICA por código (calculada do Produlog), usada na simulação
+const diasSimulIgnorar = new Set(); // NOVO: dias da semana a DESCONSIDERAR na simulação (estoque começa no 1º dia considerado)
 
 const DIAS = ['Seg','Ter','Qua','Qui','Sex','Sáb'];
 function mult(){ return parseFloat(document.getElementById('mult').value)||2; }
@@ -318,22 +319,24 @@ function simularEstoque(cod){
   let estoqueAtual = p.estoque - descontoVenda + prodAntAuto + prodAntManualVal;
   
   DIAS.forEach((dia, idx) => {
+    // NOVO: dia desconsiderado = ignora SÓ a venda; a produção planejada continua contando
+    const ignorarVenda = diasSimulIgnorar.has(dia);
     const producao = (plano[cod] || {})[dia] || 0;
-    const vendaMedia = (porDia[dia] || 0) / 4;
+    const vendaMedia = ignorarVenda ? 0 : (porDia[dia] || 0) / 4;
     const saldoAntigo = estoqueAtual;
     estoqueAtual = estoqueAtual + producao - vendaMedia;
     
     const temFalta = estoqueAtual < 0;
     
     simulacao.push({
-      dia,
+      dia, ignorado: ignorarVenda,
       estoqueInicio: saldoAntigo,
       producao,
       venda: Math.round(vendaMedia),
       vendaExata: vendaMedia,
       saldo: Math.round(estoqueAtual),
       temFalta,
-      status: temFalta ? '❌ FALTA' : '✅ OK'
+      status: temFalta ? '❌ FALTA' : (ignorarVenda ? '➖ Sem venda' : '✅ OK')
     });
   });
   
@@ -783,6 +786,19 @@ window.abrirSimulacao = (cod) => {
   document.getElementById('simulacao-titulo').textContent = '📊 Simulação de Estoque - ['+p.cod+'] '+p.desc;
   
   let html = '';
+  // NOVO: seletor de dias a desconsiderar na simulação
+  html += '<div style="margin-bottom:12px;padding:10px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:6px;">';
+  html += '<div style="font-size:12px;font-weight:600;margin-bottom:6px;">➖ Desconsiderar venda dos dias <span style="font-weight:400;color:#6b7280;">(a venda desses dias não é descontada; a produção planejada continua valendo)</span></div>';
+  html += '<div style="display:flex;gap:5px;flex-wrap:wrap;">';
+  DIAS.forEach(d => {
+    const on = diasSimulIgnorar.has(d);
+    html += '<button onclick="toggleDiaSimul(\''+cod+'\',\''+d+'\')" style="padding:5px 11px;border-radius:6px;border:1px solid '+(on?'#dc2626':'#d1d5db')+';background:'+(on?'#fee2e2':'#fff')+';color:'+(on?'#991b1b':'#374151')+';font-weight:600;font-size:12px;cursor:pointer;font-family:inherit;">'+d+'</button>';
+  });
+  html += '</div>';
+  if(diasSimulIgnorar.size>0){
+    html += '<div style="font-size:11px;color:#991b1b;margin-top:6px;">Desconsiderando: '+[...diasSimulIgnorar].join(', ')+'. Aplica-se a todos os produtos e ao indicador 🟢/🔴.</div>';
+  }
+  html += '</div>';
   // NOVO: aviso quando há desconto de venda aplicado ao estoque inicial
   const descAplicado = calcDescontoVenda(p);
   if(descAplicado > 0){
@@ -811,6 +827,17 @@ window.abrirSimulacao = (cod) => {
   html += '<th style="padding:8px;border:1px solid #ddd;text-align:left">Status</th></tr>';
   
   sim.forEach(s => {
+    if(s.ignorado){
+      // venda desconsiderada — produção planejada continua valendo
+      html += '<tr style="background:#fefce8;color:#854d0e">';
+      html += '<td style="padding:8px;border:1px solid #ddd;font-weight:600">'+s.dia+'</td>';
+      html += '<td style="padding:8px;border:1px solid #ddd;text-align:center">'+s.estoqueInicio+'</td>';
+      html += '<td style="padding:8px;border:1px solid #ddd;text-align:center;background:#e0f2fe;color:#111">'+s.producao+'</td>';
+      html += '<td style="padding:8px;border:1px solid #ddd;text-align:center">— <span style="font-size:10px">(desconsid.)</span></td>';
+      html += '<td style="padding:8px;border:1px solid #ddd;text-align:center;font-weight:700;font-size:14px">'+s.saldo+'</td>';
+      html += '<td style="padding:8px;border:1px solid #ddd">➖ Venda desconsiderada</td></tr>';
+      return;
+    }
     const bgColor = s.temFalta ? '#fee2e2' : '#dcfce7';
     const textColor = s.temFalta ? '#991b1b' : '#065f46';
     html += '<tr style="background:'+bgColor+';color:'+textColor+'">';
@@ -843,6 +870,14 @@ window.abrirSimulacao = (cod) => {
   
   document.getElementById('simulacao-body').innerHTML = html;
   document.getElementById('modal-simulacao').classList.add('show');
+};
+
+// NOVO: marcar/desmarcar um dia a desconsiderar na simulação (global) e atualizar tela + modal
+window.toggleDiaSimul = async (cod, dia) => {
+  if(diasSimulIgnorar.has(dia)) diasSimulIgnorar.delete(dia);
+  else diasSimulIgnorar.add(dia);
+  abrirSimulacao(cod);   // re-renderiza o modal do mesmo produto
+  await render();        // atualiza os indicadores 🟢/🔴 da tabela
 };
 
 window.gerarRelatorio = async () => {
@@ -1162,6 +1197,7 @@ window.salvarPlano = async () => {
     planos: {...plano},
     prodAntManual: {...prodAntManual},
     diasDescontar: [...diasDescontar],
+    diasSimulIgnorar: [...diasSimulIgnorar],
     produtos: produtosSnapshot
   };
   
@@ -1257,6 +1293,12 @@ window.carregarPlano = async (id) => {
     diasDescontar.clear();
     if(Array.isArray(data.diasDescontar)){
       data.diasDescontar.forEach(d => diasDescontar.add(d));
+    }
+    
+    // NOVO: Restaurar dias desconsiderados na simulação
+    diasSimulIgnorar.clear();
+    if(Array.isArray(data.diasSimulIgnorar)){
+      data.diasSimulIgnorar.forEach(d => diasSimulIgnorar.add(d));
     }
     
     // NOVO: Restaurar produtos (snapshot completo)
