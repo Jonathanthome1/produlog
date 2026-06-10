@@ -297,8 +297,8 @@ function calcDescontoVenda(p){
   diasDescontar.forEach(d => { soma += (porDia[d] || 0) / 4; });
   return Math.round(soma);
 }
-function calcSaldo(p){ return Math.round(p.estoque - calcDescontoVenda(p) + calcPlanoTotal(p.cod) - calcIdeal(p)); }
-function calcCob(p){ const i=calcIdeal(p); return i<=0?100:Math.round((p.estoque - calcDescontoVenda(p) + calcPlanoTotal(p.cod))/i*100); }
+function calcSaldo(p){ return Math.round(p.estoque - calcDescontoVenda(p) + calcPlanoTotal(p.cod) + (parseInt(prodAntAutoMap[p.cod])||0) - calcIdeal(p)); }
+function calcCob(p){ const i=calcIdeal(p); return i<=0?100:Math.round((p.estoque - calcDescontoVenda(p) + calcPlanoTotal(p.cod) + (parseInt(prodAntAutoMap[p.cod])||0))/i*100); }
 function badgeCob(pct){
   if(pct>=100) return '<span class="badge b-verde">'+pct+'%</span>';
   if(pct>=70) return '<span class="badge b-laranja">'+pct+'%</span>';
@@ -521,6 +521,19 @@ async function render(){
       const totalCell = document.getElementById('prodant-total-'+p.cod);
       if(totalCell){
         totalCell.innerHTML = '<strong>'+(prodAnterior + manualVal)+'</strong>';
+      }
+
+      // NOVO: recalcular saldo, cobertura e ícone agora que a prod. ant. AUTO está disponível
+      const saldoR = calcSaldo(p);
+      const cobR = calcCob(p);
+      const saldoCellR = document.querySelector('[data-saldo="'+p.cod+'"]');
+      const cobCellR = document.querySelector('[data-cob="'+p.cod+'"]');
+      if(saldoCellR) saldoCellR.innerHTML = '<strong style="color:'+(saldoR<0?'var(--mc-vermelho)':'var(--mc-verde)')+'">'+(saldoR>=0?'+':'')+saldoR+'</strong>';
+      if(cobCellR) cobCellR.innerHTML = badgeCob(cobR);
+      const temFaltaR = temFaltaEstoque(p.cod);
+      const codCellR = document.querySelector('[data-cod="'+p.cod+'"]');
+      if(codCellR){
+        codCellR.innerHTML = p.cod + ' <span style="color:'+(temFaltaR?'var(--mc-vermelho)':'var(--mc-verde)')+';cursor:pointer;font-weight:700" title="Clique para ver simulação" onclick="abrirSimulacao(\''+p.cod+'\')">'+(temFaltaR?'🔴':'🟢')+'</span> ';
       }
     });
   } catch(err) {
