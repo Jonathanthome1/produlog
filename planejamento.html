@@ -129,6 +129,7 @@ textarea{width:100%;height:300px;padding:12px;border:1px solid var(--border);bor
   <select id="filtro" class="control-input">
     <option value="ativos">Só com venda</option>
     <option value="todos">Todos</option>
+    <option value="falta">🔴 Em falta (simulação)</option>
   </select>
   <input type="text" id="busca" class="search-box" placeholder="🔍 Buscar...">
   <button class="btn btn-primary" onclick="abrirProducoesAnteriores()" style="background:#9333ea">📅 Produções Anteriores</button>
@@ -368,6 +369,7 @@ async function render(){
   
   let lista = produtos.filter(p => p.setor === setorAtivo);
   if(filtro==='ativos') lista = lista.filter(p => (p.totalPeriodo||0) > 0);
+  if(filtro==='falta') lista = lista.filter(p => temFaltaEstoque(p.cod));
   if(busca) lista = lista.filter(p => String(p.cod).includes(busca) || (p.desc||'').toLowerCase().includes(busca));
   
   if(ordem==='urg') lista.sort((a,b) => calcCob(a) - calcCob(b));
@@ -1198,6 +1200,7 @@ window.salvarPlano = async () => {
     prodAntManual: {...prodAntManual},
     diasDescontar: [...diasDescontar],
     diasSimulIgnorar: [...diasSimulIgnorar],
+    producoesAnteriores: {...producoesAnteriores},
     produtos: produtosSnapshot
   };
   
@@ -1299,6 +1302,12 @@ window.carregarPlano = async (id) => {
     diasSimulIgnorar.clear();
     if(Array.isArray(data.diasSimulIgnorar)){
       data.diasSimulIgnorar.forEach(d => diasSimulIgnorar.add(d));
+    }
+    
+    // NOVO: Restaurar datas de Produção Anterior (AUTO)
+    Object.keys(producoesAnteriores).forEach(k => delete producoesAnteriores[k]);
+    if(data.producoesAnteriores){
+      Object.assign(producoesAnteriores, data.producoesAnteriores);
     }
     
     // NOVO: Restaurar produtos (snapshot completo)
