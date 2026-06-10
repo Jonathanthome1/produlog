@@ -131,6 +131,15 @@ textarea{width:100%;height:300px;padding:12px;border:1px solid var(--border);bor
     <option value="todos">Todos</option>
     <option value="falta">🔴 Em falta (simulação)</option>
   </select>
+  <select id="filtroDia" class="control-input" title="Mostrar só produtos planejados nesse dia">
+    <option value="todos">📆 Todos os dias</option>
+    <option value="Seg">Seg</option>
+    <option value="Ter">Ter</option>
+    <option value="Qua">Qua</option>
+    <option value="Qui">Qui</option>
+    <option value="Sex">Sex</option>
+    <option value="Sáb">Sáb</option>
+  </select>
   <input type="text" id="busca" class="search-box" placeholder="🔍 Buscar...">
   <button class="btn btn-primary" onclick="abrirProducoesAnteriores()" style="background:#9333ea">📅 Produções Anteriores</button>
   <button class="btn btn-primary" onclick="abrirDescontarVenda()" style="background:#ea580c">📉 Descontar Venda</button>
@@ -370,6 +379,9 @@ async function render(){
   let lista = produtos.filter(p => p.setor === setorAtivo);
   if(filtro==='ativos') lista = lista.filter(p => (p.totalPeriodo||0) > 0);
   if(filtro==='falta') lista = lista.filter(p => temFaltaEstoque(p.cod));
+  // NOVO: filtro por dia da semana — só produtos com quantidade planejada nesse dia
+  const filtroDia = document.getElementById('filtroDia')?.value || 'todos';
+  if(filtroDia!=='todos') lista = lista.filter(p => ((plano[p.cod]||{})[filtroDia]||0) > 0);
   if(busca) lista = lista.filter(p => String(p.cod).includes(busca) || (p.desc||'').toLowerCase().includes(busca));
   
   if(ordem==='urg') lista.sort((a,b) => calcCob(a) - calcCob(b));
@@ -1617,7 +1629,7 @@ window.limparTudo = async () => {
   alert('✓ Dados removidos!');
 };
 
-['mult','order','filtro','busca'].forEach(id => {
+['mult','order','filtro','filtroDia','busca'].forEach(id => {
   document.getElementById(id)?.addEventListener('change', render);
   document.getElementById(id)?.addEventListener('input', render);
 });
