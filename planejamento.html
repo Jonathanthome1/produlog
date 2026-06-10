@@ -276,6 +276,7 @@ const plano = {};
 const producoesAnteriores = {}; // Datas selecionadas do ProduLog
 const prodAntManual = {}; // NOVO: Produções anteriores MANUAIS por produto
 const diasDescontar = new Set(); // NOVO: dias da semana cuja venda média será descontada do estoque
+const prodAntAutoMap = {}; // NOVO: produção anterior AUTOMÁTICA por código (calculada do Produlog), usada na simulação
 
 const DIAS = ['Seg','Ter','Qua','Qui','Sex','Sáb'];
 function mult(){ return parseFloat(document.getElementById('mult').value)||2; }
@@ -311,7 +312,7 @@ function simularEstoque(cod){
   const simulacao = [];
   
   // NOVO: Considerar produções anteriores no estoque inicial
-  const prodAntAuto = 0; // será calculado depois
+  const prodAntAuto = parseInt(prodAntAutoMap[cod]) || 0; // AUTO (calculado do Produlog na tela)
   const prodAntManualVal = parseInt(prodAntManual[cod]) || 0;
   const descontoVenda = calcDescontoVenda(p); // NOVO: venda dos dias selecionados a descontar
   let estoqueAtual = p.estoque - descontoVenda + prodAntAuto + prodAntManualVal;
@@ -508,6 +509,7 @@ async function render(){
         cell.innerHTML = prodAnterior > 0 ? prodAnterior : '-';
         cell.title = 'Produções anteriores (automático)'+datasLabel;
       }
+      prodAntAutoMap[p.cod] = prodAnterior; // NOVO: disponibilizar para a simulação de estoque
       
       // NOVO: Atualizar total de prod. ant. (auto + manual)
       const manualVal = parseInt(prodAntManual[p.cod]||0);
@@ -788,6 +790,16 @@ window.abrirSimulacao = (cod) => {
     html += '<strong style="color:#9a3412">📉 Desconto de venda aplicado:</strong> '+
             'estoque inicial reduzido em <strong>-'+descAplicado+' pcts</strong> '+
             '(venda média dos dias: '+[...diasDescontar].join(', ')+').';
+    html += '</div>';
+  }
+  // NOVO: aviso quando há produção anterior somada ao estoque inicial
+  const paAuto = parseInt(prodAntAutoMap[cod]) || 0;
+  const paManual = parseInt(prodAntManual[cod]) || 0;
+  if(paAuto + paManual > 0){
+    html += '<div style="margin-bottom:12px;padding:10px;background:#e0f2fe;border-left:4px solid #1e3a8a;border-radius:4px;font-size:13px;">';
+    html += '<strong style="color:#1e3a8a">📦 Produção anterior somada:</strong> '+
+            'estoque inicial acrescido de <strong>+'+(paAuto+paManual)+' pcts</strong> '+
+            '(auto: '+paAuto+' · manual: '+paManual+').';
     html += '</div>';
   }
   html += '<table style="width:100%;border-collapse:collapse;"><tr style="background:#1e3a8a;color:white;">';
