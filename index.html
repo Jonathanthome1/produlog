@@ -1419,6 +1419,11 @@
         <div style="flex:1;"><div class="hb-title">Cliente C&amp;F</div><div class="hb-desc" id="cf-emb-badge">Produção e abertura de pacotes</div></div>
         <span style="color:var(--text-secondary);font-size:20px;">›</span>
       </button>
+      <button class="home-btn" onclick="goTo('s-exp-manual')" style="border-left-color:var(--mc-laranja);margin-bottom:4px;">
+        <div class="hb-icon" style="background:#fef3c7;">📥</div>
+        <div style="flex:1;"><div class="hb-title">Expedição já pegou</div><div class="hb-desc">Lançar produto pego antes da embalagem</div></div>
+        <span style="color:var(--text-secondary);font-size:20px;">›</span>
+      </button>
 
       <div class="section-divider" style="margin-top:14px;">Equipe</div>
       <button class="home-btn" onclick="abrirPresenca('emb')" style="border-left-color:var(--mc-azul);">
@@ -2481,7 +2486,9 @@
         <div class="mc-page-title">Expedição 🚚</div>
         <div class="mc-page-sub">Selecione o dia</div>
       </div>
-      
+      <div class="mc-header-actions">
+        <button class="mc-act-btn-secondary" onclick="goTo('s-exp-manual')" title="Lançar produto já pego antes da embalagem">📥 Já peguei</button>
+      </div>
     </div>
     <div class="content" id="exp-sel-content"></div>
   </div>
@@ -2508,6 +2515,33 @@
     </div>
     <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;" id="exp-content"></div>
   </div>
+
+  <!-- EXPEDIÇÃO: LANÇAMENTO MANUAL ("JÁ PEGUEI") -->
+  <div class="screen" id="s-exp-manual">
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="goTo('s-exp-sel-data')">‹</button>
+      <div class="mc-brand">
+        <div class="mc-brand-logo">MC</div>
+        <div class="mc-brand-text">
+          <div class="mc-brand-name">Monte Castelo</div>
+          <div class="mc-brand-sub">Expedição</div>
+        </div>
+      </div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info">
+        <div class="mc-page-title">📥 Já peguei (manual)</div>
+        <div class="mc-page-sub">Saída antes da embalagem lançar</div>
+      </div>
+    </div>
+    <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;">
+      <div class="card" style="margin-bottom:12px;border-left:3px solid var(--mc-laranja);">
+        <div style="font-size:12px;color:var(--text-secondary);line-height:1.5;">Use quando você já pegou um produto que <strong>foi produzido</strong> mas a embalagem <strong>ainda não lançou</strong>. Busque o produto, escolha a produção certa e informe quanto pegou. Quando a embalagem lançar, esse valor já vem descontado.</div>
+      </div>
+      <input type="text" id="exp-manual-busca" placeholder="🔍 Buscar produto..." style="width:100%;padding:11px 12px;border:1px solid var(--border-md,#d1d5db);border-radius:10px;font-size:15px;font-family:inherit;margin-bottom:14px;" oninput="renderExpManual()" />
+      <div id="exp-manual-list"></div>
+    </div>
+  </div>
+
 
 
   <!-- ADMIN HUB -->
@@ -3638,6 +3672,7 @@ function atualizarTela(){
   if(tela==='s-emb-sel-data') renderSelDataEmb();
   if(tela==='s-emb-cf') renderCF();
   if(tela==='s-exp-home') renderExpedicao();
+  if(tela==='s-exp-manual') renderExpManual();
   if(tela==='s-adm-status') renderAdmStatus();
   if(tela==='s-exp-view-sel') renderExpViewSelData();
   if(tela==='s-exp-view') renderExpView();
@@ -3733,6 +3768,7 @@ function goTo(id){
   if(id==='s-emb-cf') renderCF();
   if(id==='s-emb-manual'){ const b=document.getElementById('emb-manual-btn');if(b){b.textContent='Adicionar ao checklist ✓';b.disabled=false;} }
   if(id==='s-exp-home') renderExpedicao();
+  if(id==='s-exp-manual') renderExpManual();
   if(id==='s-exp-view-sel') renderExpViewSelData();
   if(id==='s-exp-view') renderExpView();
   if(id==='s-adm') renderAdm(tabAtiva);
@@ -4929,6 +4965,107 @@ async function adicionarLiberacao(fid,qtdEmb){
   const totalLiberado=Math.min((exp.totalLiberado||0)+val,qtdEmb);
   await updateDoc(doc(db,'registros',fid),{expedicao:{parciais,totalLiberado}});
 }
+
+// ===== EXPEDIÇÃO: LANÇAMENTO MANUAL ("JÁ PEGUEI") =====
+function renderExpManual(){
+  const el=document.getElementById('exp-manual-list'); if(!el) return;
+  const busca=(document.getElementById('exp-manual-busca')?.value||'').toLowerCase().trim();
+
+  // Produzidos mas ainda NÃO embalados
+  let naoEmbalados = registros.filter(r => !(r.embalagem && r.embalagem.feito));
+  if(busca) naoEmbalados = naoEmbalados.filter(r => (r.produto||'').toLowerCase().includes(busca) || String(r.cod||'').includes(busca));
+  naoEmbalados.sort((a,b)=>(b.timestamp||0)-(a.timestamp||0));
+
+  const comAntecipada = naoEmbalados.filter(r => (r.expedicao && r.expedicao.totalLiberado>0));
+
+  let html='';
+
+  if(naoEmbalados.length===0){
+    html += '<div class="empty">Nenhuma produção aguardando embalagem'+(busca?' para essa busca':'')+'.</div>';
+  } else {
+    const grupos={};
+    naoEmbalados.forEach(r=>{ const k=r.produto||'(sem nome)'; (grupos[k]=grupos[k]||[]).push(r); });
+    Object.keys(grupos).sort().forEach(nome=>{
+      html += '<div class="section-divider" style="margin:6px 0 8px;">'+nome+'</div>';
+      grupos[nome].forEach(r=>{
+        const exp=r.expedicao||{parciais:[],totalLiberado:0};
+        const jaPego=exp.totalLiberado||0;
+        const origemTxt = r.origem==='quadra' ? '🍞 Quadra' : '🥐 Confeitaria';
+        html += `<div class="emb-item" style="margin-bottom:10px;">
+          <div class="emb-item-header">
+            <div class="emb-item-info">
+              <div class="emb-item-nome">📅 Produção de ${r.data} <span style="font-size:11px;color:var(--text-secondary);font-weight:500;">· ${origemTxt}</span></div>
+              <div class="emb-item-qtd">Produzido: <strong>${r.qtd} un</strong>${jaPego>0?` · Já pego: <strong style="color:var(--mc-laranja);">${jaPego} un</strong>`:''}</div>
+            </div>
+          </div>
+          <div class="exp-add-form">
+            <span style="font-size:13px;color:var(--text-secondary);white-space:nowrap;">Peguei:</span>
+            <input type="number" class="emb-input-qtd" id="expman-input-${r.firestoreId}" placeholder="0" min="1" inputmode="numeric" style="border-color:var(--mc-laranja);" />
+            <button class="btn-sm-laranja" onclick="lancarExpAntecipada('${r.firestoreId}')">Lançar</button>
+          </div>
+        </div>`;
+      });
+    });
+  }
+
+  if(comAntecipada.length>0){
+    html += '<div class="section-divider" style="background:rgba(245,158,11,0.12);color:#92400e;border-left:3px solid var(--mc-laranja);padding:8px 12px;border-radius:8px;margin:18px 0 10px;font-weight:700;">⏳ Saídas antecipadas (aguardando embalagem)</div>';
+    comAntecipada.forEach(r=>{
+      const exp=r.expedicao||{parciais:[],totalLiberado:0};
+      html += `<div class="emb-item done-parcial" style="margin-bottom:10px;">
+        <div class="emb-item-header">
+          <div class="emb-item-info">
+            <div class="emb-item-nome">${r.produto} <span style="font-size:11px;color:var(--text-secondary);font-weight:500;">· ${r.data}</span></div>
+            <div class="emb-item-qtd">Já reservado: <strong style="color:var(--mc-laranja);">−${exp.totalLiberado} un</strong> <span style="font-size:11px;color:var(--text-secondary);">(some quando a embalagem lançar)</span></div>
+          </div>
+        </div>
+        <div class="exp-parcial-list">
+          ${(exp.parciais||[]).map((p,i)=>`<div class="exp-parcial-item">
+            <span>${p.hora||''}</span>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span class="exp-parcial-qtd">+${p.qtd} un</span>
+              <button onclick="removerParcialExp('${r.firestoreId}',${i})" style="background:none;border:1px solid var(--mc-vermelho);color:var(--mc-vermelho);font-size:11px;padding:2px 8px;border-radius:6px;cursor:pointer;font-family:inherit;">Apagar</button>
+            </div>
+          </div>`).join('')}
+        </div>
+      </div>`;
+    });
+  }
+
+  el.innerHTML=html;
+}
+
+async function lancarExpAntecipada(fid){
+  const inp=document.getElementById('expman-input-'+fid);
+  const val=parseInt(inp?.value)||0;
+  if(val<=0){alert('Informe quanto você pegou.');return;}
+  const reg=registros.find(r=>r.firestoreId===fid);
+  if(!reg){alert('Produção não encontrada.');return;}
+  if(reg.embalagem&&reg.embalagem.feito){alert('Esse produto já foi embalado — use a tela normal da Expedição.');return;}
+  const exp=reg.expedicao||{parciais:[],totalLiberado:0};
+  const parciais=[...(exp.parciais||[]),{qtd:val,hora:agora(),antecipada:true}];
+  const totalLiberado=(exp.totalLiberado||0)+val;
+  try{
+    await updateDoc(doc(db,'registros',fid),{expedicao:{parciais,totalLiberado}});
+    if(inp)inp.value='';
+  }catch(e){alert('Erro: '+e.message);}
+}
+
+async function removerParcialExp(fid,idx){
+  const reg=registros.find(r=>r.firestoreId===fid);
+  if(!reg)return;
+  const exp=reg.expedicao||{parciais:[],totalLiberado:0};
+  const parciais=[...(exp.parciais||[])];
+  if(idx<0||idx>=parciais.length)return;
+  if(!confirm('Apagar esta saída antecipada de +'+parciais[idx].qtd+' un?'))return;
+  parciais.splice(idx,1);
+  const totalLiberado=parciais.reduce((s,p)=>s+(p.qtd||0),0);
+  try{
+    await updateDoc(doc(db,'registros',fid),{expedicao:{parciais,totalLiberado}});
+  }catch(e){alert('Erro: '+e.message);}
+}
+
+window.renderExpManual=renderExpManual; window.lancarExpAntecipada=lancarExpAntecipada; window.removerParcialExp=removerParcialExp;
 
 // ===== PRESENÇA =====
 let presencas = {};
