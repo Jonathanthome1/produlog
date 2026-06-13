@@ -788,6 +788,14 @@
           </div>
           <span class="mc-sector-arrow">›</span>
         </button>
+        <button class="mc-sector-card" style="border-left:3px solid var(--mc-azul);" onclick="goTo('s-mp-home')">
+          <div class="mc-sector-icon blue">🧪</div>
+          <div class="mc-sector-info">
+            <div class="mc-sector-title">Matérias-Primas</div>
+            <div class="mc-sector-desc">Base de ingredientes (fichas técnicas)</div>
+          </div>
+          <span class="mc-sector-arrow">›</span>
+        </button>
         <button class="mc-sector-card" style="border-left:3px solid var(--mc-roxo);" onclick="abrirPin('admin')">
           <div class="mc-sector-icon purple">📊</div>
           <div class="mc-sector-info">
@@ -798,6 +806,54 @@
         </button>
       </div>
       <div style="text-align:center;margin-top:24px;font-size:11px;color:var(--text-muted);">Monte Castelo Panificadora · v6.0</div>
+    </div>
+  </div>
+
+  <!-- MATÉRIAS-PRIMAS -->
+  <div class="screen" id="s-mp-home">
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="goTo('s-inicio')">‹</button>
+      <div class="mc-brand">
+        <div class="mc-brand-logo">MC</div>
+        <div class="mc-brand-text">
+          <div class="mc-brand-name">Monte Castelo</div>
+          <div class="mc-brand-sub">Matérias-Primas</div>
+        </div>
+      </div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info">
+        <div class="mc-page-title">🧪 Matérias-Primas</div>
+        <div class="mc-page-sub" id="mp-count-sub">Base de ingredientes</div>
+      </div>
+    </div>
+    <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;">
+      <div class="card" style="margin-bottom:12px;border-left:3px solid var(--mc-azul);">
+        <div id="mp-form-titulo" style="font-size:13px;font-weight:600;color:var(--mc-azul);margin-bottom:10px;">➕ Nova matéria-prima</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <div style="flex:1;min-width:90px;">
+            <div class="card-label">Código</div>
+            <input type="text" id="mp-cod" placeholder="ex: 14125" inputmode="numeric" />
+          </div>
+          <div style="flex:1;min-width:90px;">
+            <div class="card-label">Unidade</div>
+            <select id="mp-uni"><option>KG</option><option>UNIDADE</option><option>Litro</option><option>Grama</option></select>
+          </div>
+        </div>
+        <div style="margin-top:10px;">
+          <div class="card-label">Nome</div>
+          <input type="text" id="mp-nome" placeholder="ex: CARNE COXAO" style="text-transform:uppercase;" />
+        </div>
+        <div style="display:flex;gap:8px;margin-top:12px;">
+          <button class="btn btn-primary" id="mp-btn" onclick="salvarMP()" style="flex:1;">Adicionar ✓</button>
+          <button class="mc-act-btn-secondary" id="mp-cancel" onclick="cancelarEdicaoMP()" style="display:none;">Cancelar</button>
+        </div>
+      </div>
+      <div class="card" id="mp-import-card" style="margin-bottom:12px;background:#fef3c7;border:1px solid #fcd34d;display:none;">
+        <div style="font-size:12px;color:#92400e;line-height:1.5;">Importe a lista inicial de matérias-primas de uma vez. Roda só uma vez e não duplica (pula as que já existem).</div>
+        <button class="btn btn-laranja" id="mp-import-btn" onclick="importarMPSeed()" style="margin-top:10px;width:100%;">📥 Importar lista inicial (<span id="mp-seed-count"></span>)</button>
+      </div>
+      <input type="text" id="mp-busca" placeholder="🔍 Buscar por nome ou código..." style="width:100%;padding:11px 12px;border:1px solid var(--border-md,#d1d5db);border-radius:10px;font-size:15px;font-family:inherit;margin-bottom:14px;" oninput="renderMP()" />
+      <div id="mp-list"></div>
     </div>
   </div>
 
@@ -3673,6 +3729,7 @@ function atualizarTela(){
   if(tela==='s-emb-cf') renderCF();
   if(tela==='s-exp-home') renderExpedicao();
   if(tela==='s-exp-manual') renderExpManual();
+  if(tela==='s-mp-home') renderMP();
   if(tela==='s-adm-status') renderAdmStatus();
   if(tela==='s-exp-view-sel') renderExpViewSelData();
   if(tela==='s-exp-view') renderExpView();
@@ -3769,6 +3826,7 @@ function goTo(id){
   if(id==='s-emb-manual'){ const b=document.getElementById('emb-manual-btn');if(b){b.textContent='Adicionar ao checklist ✓';b.disabled=false;} }
   if(id==='s-exp-home') renderExpedicao();
   if(id==='s-exp-manual') renderExpManual();
+  if(id==='s-mp-home') renderMP();
   if(id==='s-exp-view-sel') renderExpViewSelData();
   if(id==='s-exp-view') renderExpView();
   if(id==='s-adm') renderAdm(tabAtiva);
@@ -5066,6 +5124,117 @@ async function removerParcialExp(fid,idx){
 }
 
 window.renderExpManual=renderExpManual; window.lancarExpAntecipada=lancarExpAntecipada; window.removerParcialExp=removerParcialExp;
+
+// ===== MATÉRIAS-PRIMAS (base de ingredientes / fichas técnicas) =====
+const MP_SEED = [{"codigo":"14006","nome":"AIPIM","unidade":"KG"},{"codigo":"14007","nome":"ALFACE","unidade":"UNIDADE"},{"codigo":"14008","nome":"ALHO","unidade":"KG"},{"codigo":"14009","nome":"AMACIANTE DE CARNE","unidade":"KG"},{"codigo":"14001","nome":"AMIDO DE MILHO SACO 25KG","unidade":"KG"},{"codigo":"3968","nome":"AMIDO ESPECIAL PODIUM (AMIDO PARA RECHEIO)","unidade":"KG"},{"codigo":"14010","nome":"ARROZ","unidade":"KG"},{"codigo":"14003","nome":"AÇUCAR CONCENTRADO","unidade":"KG"},{"codigo":"14004","nome":"AÇUCAR CRISTAL","unidade":"KG"},{"codigo":"14005","nome":"AÇUCAR REFINADO","unidade":"KG"},{"codigo":"14011","nome":"BATATA","unidade":"KG"},{"codigo":"14012","nome":"BATATA DOCE","unidade":"KG"},{"codigo":"14013","nome":"BETERRABA","unidade":"KG"},{"codigo":"14014","nome":"BROCOLIS","unidade":"KG"},{"codigo":"14015","nome":"CACAU EM PÓ - BLACK","unidade":"KG"},{"codigo":"14016","nome":"CACHAÇA","unidade":"Litro"},{"codigo":"14017","nome":"CAFÉ","unidade":"KG"},{"codigo":"14018","nome":"CALDO DE CARNE","unidade":"KG"},{"codigo":"14019","nome":"CALDO DE GALINHA","unidade":"KG"},{"codigo":"14020","nome":"CALDO DE LEGUMES","unidade":"KG"},{"codigo":"14021","nome":"CANELA","unidade":"KG"},{"codigo":"14033","nome":"CARNE ACEM","unidade":"KG"},{"codigo":"14125","nome":"CARNE COXAO","unidade":"KG"},{"codigo":"14022","nome":"CATCHUP","unidade":"KG"},{"codigo":"14023","nome":"CEBOLA","unidade":"KG"},{"codigo":"14024","nome":"CENOURA","unidade":"KG"},{"codigo":"14025","nome":"CHEDDAR","unidade":"KG"},{"codigo":"14026","nome":"CHOCOLATE AO LEITE EM BARRA 24GR","unidade":"KG"},{"codigo":"14146","nome":"CHOCOLATE AO LEITE EM BARRA 6GR","unidade":"KG"},{"codigo":"14028","nome":"CHUCHU","unidade":"KG"},{"codigo":"14120","nome":"COLORAU","unidade":"KG"},{"codigo":"14029","nome":"CORANTE AMARELO GEMA","unidade":"KG"},{"codigo":"14030","nome":"CORANTE CARAMELO","unidade":"Litro"},{"codigo":"14031","nome":"COUVE FLOR","unidade":"KG"},{"codigo":"14032","nome":"COUVE MANTEIGA","unidade":"UNIDADE"},{"codigo":"14034","nome":"COXA SOBRECOXA","unidade":"KG"},{"codigo":"14121","nome":"CREME DE LEITE","unidade":"KG"},{"codigo":"14035","nome":"DOCE DE LEITE","unidade":"KG"},{"codigo":"2233","nome":"EMULSIFICANTE - INATIVO","unidade":"KG"},{"codigo":"14038","nome":"ERVA DOCE","unidade":"KG"},{"codigo":"14039","nome":"ESPINAFRE","unidade":"UNIDADE"},{"codigo":"14040","nome":"ESSENCIA DE BAUNILHA","unidade":"KG"},{"codigo":"14041","nome":"ESSENCIA DE QUEIJO","unidade":"KG"},{"codigo":"14042","nome":"ESSENCIA MANTEIGA","unidade":"KG"},{"codigo":"14140","nome":"FARINHA ANACONDA","unidade":"KG"},{"codigo":"14043","nome":"FARINHA BELONI","unidade":"KG"},{"codigo":"1505","nome":"FARINHA DE MILHO FINA","unidade":"KG"},{"codigo":"14045","nome":"FARINHA DE MILHO MÉDIA","unidade":"KG"},{"codigo":"14046","nome":"FARINHA DE ROSCA","unidade":"KG"},{"codigo":"14047","nome":"FARINHA DE TRIGO SUPER","unidade":"KG"},{"codigo":"14137","nome":"FARINHA ESTRELA","unidade":"KG"},{"codigo":"14048","nome":"FARINHA FIBRA DE TRIGO","unidade":"KG"},{"codigo":"14049","nome":"FARINHA INTEGRAL","unidade":"KG"},{"codigo":"14052","nome":"FARINHA M DIAS","unidade":"KG"},{"codigo":"14050","nome":"FARINHA MANDIOCA","unidade":"KG"},{"codigo":"14051","nome":"FARINHA MIX PRIFAL","unidade":"KG"},{"codigo":"14138","nome":"FARINHA PADEIRO","unidade":"KG"},{"codigo":"14053","nome":"FEIJÃO PRETO","unidade":"KG"},{"codigo":"14054","nome":"FERMENTO DOCE","unidade":"KG"},{"codigo":"14055","nome":"FERMENTO EM PÓ","unidade":"KG"},{"codigo":"14056","nome":"FERMENTO FLASHMANN","unidade":"KG"},{"codigo":"14057","nome":"FERMENTO ITAIQUARA","unidade":"KG"},{"codigo":"14058","nome":"FILÉ PEITO DE FRANGO","unidade":"KG"},{"codigo":"14059","nome":"FLOCOS DE BATATA","unidade":"KG"},{"codigo":"14060","nome":"FRUTAS CRISTALIZADAS","unidade":"KG"},{"codigo":"14061","nome":"GOIABADA","unidade":"KG"},{"codigo":"14062","nome":"GOTAS PINGO CHOCOLATE","unidade":"KG"},{"codigo":"14063","nome":"GRANOLA 7 CEREAIS","unidade":"KG"},{"codigo":"14064","nome":"HORTELA","unidade":"KG"},{"codigo":"14065","nome":"LEITE","unidade":"Litro"},{"codigo":"14066","nome":"LENTILHA","unidade":"KG"},{"codigo":"14142","nome":"LIMAO","unidade":"KG"},{"codigo":"14139","nome":"LINGUIÇA CALABRESA FINA","unidade":"KG"},{"codigo":"14067","nome":"LINGUIÇA CALABRESA MÉDIA","unidade":"KG"},{"codigo":"14145","nome":"MANJERONA","unidade":"KG"},{"codigo":"14068","nome":"MARGARINA COAMO","unidade":"KG"},{"codigo":"14149","nome":"MARGARINA CREMOSA 60% (REFEITÓRIO)","unidade":"KG"},{"codigo":"14069","nome":"MARGARINA FOLHADA","unidade":"KG"},{"codigo":"14147","nome":"MARGARINA VIGOR (AMELIA)","unidade":"KG"},{"codigo":"14122","nome":"MASSA ESPAGUETE","unidade":"KG"},{"codigo":"14143","nome":"MAÇA","unidade":"KG"},{"codigo":"2555","nome":"MELHORADOR BIOPAN - INATIVO","unidade":"KG"},{"codigo":"14070","nome":"MILHO","unidade":"KG"},{"codigo":"14071","nome":"MISTURA AUSTRALIANO","unidade":"KG"},{"codigo":"14073","nome":"MISTURA DE PÃO DE QUEIJO RECHEADO 6520","unidade":"KG"},{"codigo":"14074","nome":"MISTURA PARA PÃO DE QUEIJO NORMAL","unidade":"KG"},{"codigo":"14154","nome":"MISTURA PQ POLVILHO ESP. PODIUM PSE560","unidade":"KG"},{"codigo":"14075","nome":"MISTURA PRA CUCA ALEMA","unidade":"KG"},{"codigo":"14141","nome":"MOLHO BARBECUE","unidade":"Litro"},{"codigo":"14076","nome":"MOLHO INGLES","unidade":"Litro"},{"codigo":"14077","nome":"MOLHO REFOGADO","unidade":"KG"},{"codigo":"14078","nome":"MOLHO SHOYO","unidade":"Litro"},{"codigo":"14079","nome":"MORANGA CABUTIA","unidade":"KG"},{"codigo":"14080","nome":"MOSTARDA","unidade":"Litro"},{"codigo":"14081","nome":"NOZ MOSCADA","unidade":"KG"},{"codigo":"14082","nome":"OLEO DE SOJA","unidade":"Litro"},{"codigo":"14083","nome":"OLEO EMULSIFICANTE","unidade":"Litro"},{"codigo":"14150","nome":"OLEO OVAM25 (OLEO ALIMENTICIO)","unidade":"Litro"},{"codigo":"14084","nome":"OREGANO","unidade":"KG"},{"codigo":"14132","nome":"OVO EM GALAO","unidade":"KG"},{"codigo":"14085","nome":"OVO EM PÓ","unidade":"KG"},{"codigo":"14086","nome":"OVO IN NATURA","unidade":"KG"},{"codigo":"14088","nome":"PAPRICA DOCE","unidade":"KG"},{"codigo":"14089","nome":"PEPINO","unidade":"KG"},{"codigo":"14151","nome":"PIMENTA DEDO DE MOÇA","unidade":"KG"},{"codigo":"14090","nome":"PIMENTA MOÍDA BRANCA","unidade":"KG"},{"codigo":"14152","nome":"PIMENTA MOÍDA PRETA","unidade":"KG"},{"codigo":"14144","nome":"PIMENTA VERMELHA","unidade":"KG"},{"codigo":"14091","nome":"PIMENTAO","unidade":"KG"},{"codigo":"14092","nome":"POLVILHO AZEDO","unidade":"KG"},{"codigo":"14093","nome":"PRESUNTO","unidade":"KG"},{"codigo":"14094","nome":"PROTEINA DE SOJA SABOR CEBOLA E SALSA","unidade":"KG"},{"codigo":"14095","nome":"PROTEINA DE SOJA SABOR PICANHA","unidade":"KG"},{"codigo":"14096","nome":"PROTEINA DE SOJA TEXTURIZADA CARAMELO","unidade":"KG"},{"codigo":"14097","nome":"PROTEINA DE SOJA TEXTURIZADA NATURAL","unidade":"KG"},{"codigo":"14133","nome":"PROTEINA DE SOJA TEXTURIZADA NATURAL (EM FLOCOS)","unidade":"KG"},{"codigo":"14134","nome":"PROTEINA DE SOJA TEXTURIZADA NATURAL RED BORDO","unidade":"KG"},{"codigo":"14098","nome":"QUEIJO MINAS (MEIA CURA)","unidade":"KG"},{"codigo":"14099","nome":"QUEIJO MUSSARELA","unidade":"KG"},{"codigo":"14100","nome":"QUEIJO TROPICAL (PARMESÃO)","unidade":"KG"},{"codigo":"14102","nome":"RABANETE","unidade":"UNIDADE"},{"codigo":"14103","nome":"REFORÇADOR(MELHORADOR)","unidade":"KG"},{"codigo":"14104","nome":"REPOLHO","unidade":"UNIDADE"},{"codigo":"14153","nome":"REQUEIJÃO (AMARILIS)","unidade":"KG"},{"codigo":"14105","nome":"REQUEIJÃO (VALE DO PARDO)","unidade":"KG"},{"codigo":"14107","nome":"RETARDADOR","unidade":"KG"},{"codigo":"14108","nome":"RUCULA","unidade":"KG"},{"codigo":"14109","nome":"SAL","unidade":"KG"},{"codigo":"14110","nome":"SAL GROSSO","unidade":"KG"},{"codigo":"14111","nome":"SALSICHA EXCELSIOR","unidade":"KG"},{"codigo":"14148","nome":"SALSICHA NOBRE/PENA BRANCA","unidade":"KG"},{"codigo":"14112","nome":"SEMENTE DE LINHAÇA","unidade":"KG"},{"codigo":"14113","nome":"SOBREPALETA SUINA","unidade":"KG"},{"codigo":"14124","nome":"SORBATO DE POTASSIO","unidade":"KG"},{"codigo":"14114","nome":"SORO DE LEITE EM PO","unidade":"KG"},{"codigo":"14155","nome":"TEMPERO SABOR AMI (C/ PIMENTA)","unidade":"KG"},{"codigo":"14115","nome":"TEMPERO VERDE","unidade":"KG"},{"codigo":"14116","nome":"TOMATE","unidade":"KG"},{"codigo":"14117","nome":"TRIGO PARA KIBE","unidade":"KG"},{"codigo":"14118","nome":"VAGEM","unidade":"KG"},{"codigo":"14119","nome":"VINAGRE ALCOOL 750 ML","unidade":"Litro"}];
+
+let materiasPrimas = []; // Firestore 'materiasPrimas' (doc id = código)
+let _mpEditando = null;
+
+onSnapshot(collection(db,'materiasPrimas'), snap=>{
+  try{
+    materiasPrimas = snap.docs.map(d=>({firestoreId:d.id,...d.data()}));
+    const sub=document.getElementById('mp-count-sub');
+    if(sub) sub.textContent = materiasPrimas.length+' matéria(s)-prima(s)';
+    const tela=document.getElementById('s-mp-home');
+    if(tela && tela.classList.contains('active')) renderMP();
+  }catch(e){ console.error('materiasPrimas snap:',e); }
+});
+
+function renderMP(){
+  const el=document.getElementById('mp-list'); if(!el) return;
+  const seedCount=document.getElementById('mp-seed-count'); if(seedCount) seedCount.textContent=MP_SEED.length;
+  const impCard=document.getElementById('mp-import-card');
+  if(impCard) impCard.style.display = materiasPrimas.length>0 ? 'none' : 'block';
+
+  const busca=(document.getElementById('mp-busca')?.value||'').toLowerCase().trim();
+  let lista=[...materiasPrimas];
+  if(busca) lista=lista.filter(m=>(m.nome||'').toLowerCase().includes(busca)||String(m.codigo||'').includes(busca));
+  lista.sort((a,b)=>(a.nome||'').localeCompare(b.nome||''));
+
+  if(lista.length===0){ el.innerHTML='<div class="empty">'+(materiasPrimas.length===0?'Nenhuma matéria-prima cadastrada ainda.':'Nada encontrado para a busca.')+'</div>'; return; }
+
+  el.innerHTML = lista.map(m=>`<div class="card" style="margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;gap:8px;">
+    <div style="flex:1;min-width:0;">
+      <div style="font-size:14px;font-weight:600;">${m.nome}</div>
+      <div style="font-size:12px;color:var(--text-secondary);margin-top:2px;">Cód: <strong>${m.codigo}</strong> · ${m.unidade||'KG'}</div>
+    </div>
+    <div style="display:flex;gap:6px;flex-shrink:0;">
+      <button onclick="editarMP('${m.firestoreId}')" class="btn-sm-outline" style="font-size:13px;padding:5px 9px;">✏️</button>
+      ${window.adminMode?`<button onclick="excluirMP('${m.firestoreId}','${(m.nome||'').replace(/'/g,'')}')" style="background:none;border:1px solid var(--mc-vermelho);color:var(--mc-vermelho);font-size:13px;padding:5px 9px;border-radius:6px;cursor:pointer;font-family:inherit;">🗑</button>`:''}
+    </div>
+  </div>`).join('');
+}
+
+async function salvarMP(){
+  const cod=(document.getElementById('mp-cod').value||'').trim();
+  const nome=(document.getElementById('mp-nome').value||'').trim().toUpperCase();
+  const uni=document.getElementById('mp-uni').value||'KG';
+  if(!cod){alert('Informe o código.');return;}
+  if(!nome){alert('Informe o nome.');return;}
+  const existe=materiasPrimas.find(m=>String(m.codigo)===cod);
+  if(existe && (!_mpEditando || existe.firestoreId!==_mpEditando)){
+    alert('Já existe uma matéria-prima com o código '+cod+': '+existe.nome);return;
+  }
+  const btn=document.getElementById('mp-btn'); const txt=btn.textContent; btn.disabled=true; btn.textContent='Salvando...';
+  try{
+    if(_mpEditando){
+      await updateDoc(doc(db,'materiasPrimas',_mpEditando),{codigo:cod,nome:nome,unidade:uni,atualizadoEm:agora()});
+    } else {
+      await setDoc(doc(db,'materiasPrimas',cod),{codigo:cod,nome:nome,unidade:uni,atualizadoEm:agora()});
+    }
+    cancelarEdicaoMP();
+  }catch(e){ alert('Erro ao salvar: '+e.message); btn.disabled=false; btn.textContent=txt; return; }
+  btn.disabled=false; btn.textContent='Adicionar ✓';
+}
+
+function editarMP(fid){
+  const m=materiasPrimas.find(x=>x.firestoreId===fid); if(!m) return;
+  _mpEditando=fid;
+  const c=document.getElementById('mp-cod'); c.value=m.codigo||''; c.disabled=true;
+  document.getElementById('mp-nome').value=m.nome||'';
+  document.getElementById('mp-uni').value=m.unidade||'KG';
+  document.getElementById('mp-btn').textContent='Salvar alteração ✓';
+  document.getElementById('mp-cancel').style.display='block';
+  document.getElementById('mp-form-titulo').textContent='✏️ Editar matéria-prima';
+  c.scrollIntoView({behavior:'smooth',block:'center'});
+}
+
+function cancelarEdicaoMP(){
+  _mpEditando=null;
+  const c=document.getElementById('mp-cod'); if(c){c.value='';c.disabled=false;}
+  const n=document.getElementById('mp-nome'); if(n)n.value='';
+  const u=document.getElementById('mp-uni'); if(u)u.value='KG';
+  const b=document.getElementById('mp-btn'); if(b)b.textContent='Adicionar ✓';
+  const ca=document.getElementById('mp-cancel'); if(ca)ca.style.display='none';
+  const t=document.getElementById('mp-form-titulo'); if(t)t.textContent='➕ Nova matéria-prima';
+}
+
+async function excluirMP(fid,nome){
+  if(!window.adminMode){alert('Apenas o administrador pode excluir matérias-primas.');return;}
+  if(!confirm('Excluir a matéria-prima "'+nome+'"?\n\nSe ela já estiver em alguma receita, a receita ficará sem esse ingrediente.'))return;
+  try{ await deleteDoc(doc(db,'materiasPrimas',fid)); }
+  catch(e){ alert('Erro ao excluir: '+e.message); }
+}
+
+async function importarMPSeed(){
+  if(!confirm('Importar '+MP_SEED.length+' matérias-primas iniciais?\n\n(Não duplica: pula as que já existem.)'))return;
+  const btn=document.getElementById('mp-import-btn'); if(btn){btn.disabled=true;btn.textContent='Importando...';}
+  let criados=0, pulados=0;
+  try{
+    for(const mp of MP_SEED){
+      const existe=materiasPrimas.find(m=>String(m.codigo)===String(mp.codigo));
+      if(existe){pulados++;continue;}
+      await setDoc(doc(db,'materiasPrimas',String(mp.codigo)),{codigo:String(mp.codigo),nome:mp.nome,unidade:mp.unidade||'KG',atualizadoEm:agora()});
+      criados++;
+    }
+    alert('✓ Importação concluída!\nCriadas: '+criados+'\nJá existiam: '+pulados);
+  }catch(e){ alert('Erro na importação: '+e.message); }
+  if(btn){btn.disabled=false;btn.textContent='📥 Importar lista inicial';}
+}
+
+window.renderMP=renderMP; window.salvarMP=salvarMP; window.editarMP=editarMP; window.cancelarEdicaoMP=cancelarEdicaoMP; window.excluirMP=excluirMP; window.importarMPSeed=importarMPSeed;
+
 
 // ===== PRESENÇA =====
 let presencas = {};
