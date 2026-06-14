@@ -2789,6 +2789,14 @@
         </div>
         <span class="mc-sector-arrow" style="color:var(--mc-verde);">›</span>
       </button>
+      <button class="mc-sector-card" style="border-left:3px solid var(--mc-roxo);margin-bottom:10px;" onclick="goTo('s-sim')">
+        <div class="mc-sector-icon purple">🧮</div>
+        <div class="mc-sector-info">
+          <div class="mc-sector-title">Simulador de Matéria-Prima</div>
+          <div class="mc-sector-desc">Necessidade de MP por produção (avulso ou do plano)</div>
+        </div>
+        <span class="mc-sector-arrow">›</span>
+      </button>
       <button class="mc-sector-card" style="border-left:3px solid var(--mc-azul);margin-bottom:10px;" onclick="goTo('s-rastreio')">
         <div class="mc-sector-icon blue">🔎</div>
         <div class="mc-sector-info">
@@ -3621,6 +3629,17 @@
     <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;" id="painel-content"></div>
   </div>
 
+  <!-- SIMULADOR DE MATÉRIA-PRIMA -->
+  <div class="screen" id="s-sim">
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="goTo('s-adm-hub')">‹</button>
+      <div class="mc-brand"><div class="mc-brand-logo">MC</div><div class="mc-brand-text"><div class="mc-brand-name">Monte Castelo</div><div class="mc-brand-sub">Planejamento</div></div></div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info"><div class="mc-page-title">🧮 Simulador de Matéria-Prima</div><div class="mc-page-sub">Necessidade por produção</div></div>
+    </div>
+    <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;" id="sim-content"></div>
+  </div>
+
   <!-- CONTAGEM HOME -->
   <div class="screen" id="s-contagem-home">
     <div class="mc-header">
@@ -3973,6 +3992,7 @@ function atualizarTela(){
   if(tela==='s-estoque-mov') renderMovEstoque();
   if(tela==='s-painel-proto') renderPainelProto();
   if(tela==='s-painel') renderPainel();
+  if(tela==='s-sim') renderSim();
   if(tela==='s-coz-home') renderCozHome();
   if(tela==='s-emb-home') renderEmbalagem(); // embManual listener triggers this
   if(tela==='s-emb-sel-data') renderSelDataEmb();
@@ -4084,6 +4104,7 @@ function goTo(id){
   if(id==='s-estoque-mov') renderMovEstoque();
   if(id==='s-painel-proto') renderPainelProto();
   if(id==='s-painel') renderPainel();
+  if(id==='s-sim') renderSim();
   if(id==='s-rastreio'){
     popularSelectMPRastreio();
     if(!document.getElementById('rastreio-ini').value){ rastreioPeriodoRapido('mes'); }
@@ -11234,6 +11255,185 @@ function _pgRelatoriosHTML(){
     '<div style="display:flex;justify-content:space-between;align-items:center;"><div><div style="font-size:15px;font-weight:700;">⬇️ Exportar dados (Excel)</div><div style="font-size:12px;color:var(--text-secondary);margin-top:2px;">Baixar planilhas por período</div></div><span style="font-size:20px;color:var(--mc-verde);">›</span></div></div>';
 }
 window.renderPainel=renderPainel; window.setPgPeriodo=setPgPeriodo; window.setPgSetor=setPgSetor; window.setPgTab=setPgTab;
+
+// ===== SIMULADOR DE NECESSIDADE DE MATÉRIA-PRIMA =====
+let _simModo='avulso', _simItens=[], _simDia='todos', _simResData=null;
+
+function _simExplodir(itens){
+  const massas={}, recheios={}, mp={}, semFicha=new Set();
+  itens.forEach(({produto,pacotes})=>{
+    if(!produto) return;
+    const qtdPct=produto.qtdPct||1;
+    const unidades=pacotes*qtdPct;
+    if((produto.grMassa||0)>0 && produto.tipoMassa){ massas[produto.tipoMassa]=(massas[produto.tipoMassa]||0)+produto.grMassa*unidades/1000; }
+    if((produto.grRecheio||0)>0 && produto.tipoRecheio){ recheios[produto.tipoRecheio]=(recheios[produto.tipoRecheio]||0)+produto.grRecheio*unidades/1000; }
+    if((produto.grRecheio2||0)>0 && produto.tipoRecheio2){ recheios[produto.tipoRecheio2]=(recheios[produto.tipoRecheio2]||0)+produto.grRecheio2*unidades/1000; }
+  });
+  function explodir(nome,kg,fichas){
+    const f=fichas.find(x=>_normNome(x.nome)===_normNome(nome));
+    if(!f||!f.ingredientes||!f.ingredientes.length){ semFicha.add(nome); return; }
+    const total=(f.rendimentoKg&&f.rendimentoKg>0)?f.rendimentoKg:f.ingredientes.reduce((s,i)=>s+(parseFloat(i.kg)||0),0);
+    if(total<=0){ semFicha.add(nome); return; }
+    f.ingredientes.forEach(ing=>{
+      const consumo=kg*((parseFloat(ing.kg)||0)/total);
+      const cod=ing.mpCodigo||ing.mpNome||'?';
+      if(!mp[cod]) mp[cod]={mpCodigo:ing.mpCodigo||'',mpNome:ing.mpNome||cod,mpUnidade:ing.mpUnidade||'kg',kg:0};
+      mp[cod].kg+=consumo;
+    });
+  }
+  Object.entries(massas).forEach(([n,kg])=>explodir(n,kg,massasFirebase));
+  Object.entries(recheios).forEach(([n,kg])=>explodir(n,kg,recheiosFirebase));
+  return {massas,recheios,mp,semFicha:[...semFicha]};
+}
+
+function _simItensDoPlano(dia){
+  const dias=(planejPlanos['conf_atual']||{}).dias||{};
+  const listaDias = dia==='todos'? PLANEJ_DIAS : [dia];
+  const agg={};
+  listaDias.forEach(d=>{
+    (dias[d]||[]).forEach(it=>{
+      const pacotes=parseInt(it.qtd)||0; if(pacotes<=0) return;
+      const cod=String(it.cod);
+      const prod=PRODUTOS.find(p=>String(p.cod)===cod);
+      if(!agg[cod]) agg[cod]={cod,nome:prod?prod.nome:('Cód '+cod),pacotes:0,produto:prod};
+      agg[cod].pacotes+=pacotes;
+    });
+  });
+  return Object.values(agg).sort((a,b)=>b.pacotes-a.pacotes);
+}
+
+function setSimModo(m){ _simModo=m; _simResData=null; renderSim(); }
+function setSimDia(d){ _simDia=d; renderSim(); }
+
+function _simPopularProdutos(){
+  const sel=document.getElementById('sim-prod'); if(!sel) return;
+  const lista=PRODUTOS.filter(p=>(p.grMassa||0)>0).sort((a,b)=>(a.nome||'').localeCompare(b.nome||'','pt-BR'));
+  sel.innerHTML='<option value="">— selecione o produto —</option>'+lista.map(p=>'<option value="'+p.cod+'">'+(p.nome||p.cod)+'</option>').join('');
+}
+function simAddItem(){
+  const sel=document.getElementById('sim-prod'); const cod=sel?sel.value:'';
+  const pacotes=parseInt(document.getElementById('sim-pacotes').value)||0;
+  if(!cod){ alert('Selecione o produto.'); return; }
+  if(pacotes<=0){ alert('Informe a quantidade em pacotes.'); return; }
+  const produto=PRODUTOS.find(p=>String(p.cod)===String(cod));
+  if(!produto){ alert('Produto não encontrado.'); return; }
+  const ex=_simItens.find(i=>String(i.cod)===String(cod));
+  if(ex) ex.pacotes+=pacotes; else _simItens.push({cod,nome:produto.nome,pacotes,produto});
+  renderSim();
+}
+function simRemoveItem(i){ _simItens.splice(i,1); renderSim(); }
+function simLimpar(){ _simItens=[]; _simResData=null; renderSim(); }
+function simCalcularAvulso(){
+  if(!_simItens.length){ alert('Adicione ao menos um produto.'); return; }
+  const res=_simExplodir(_simItens);
+  _simResData={...res, itens:_simItens.slice(), contexto:'Simulação avulsa · '+_simItens.length+' produto(s)'};
+  renderSim();
+}
+function simCalcularPlano(){
+  const itens=_simItensDoPlano(_simDia);
+  if(!itens.length){ alert('Sem produtos no plano para '+(_simDia==='todos'?'a semana':_simDia)+'.'); return; }
+  const res=_simExplodir(itens);
+  _simResData={...res, itens, contexto:'Plano · '+(_simDia==='todos'?'semana toda':_simDia)};
+  renderSim();
+}
+
+function _simResultadoHTML(){
+  if(!_simResData) return '';
+  const d=_simResData;
+  const massas=Object.entries(d.massas).sort((a,b)=>b[1]-a[1]);
+  const recheios=Object.entries(d.recheios).sort((a,b)=>b[1]-a[1]);
+  const mp=Object.values(d.mp).sort((a,b)=>b.kg-a.kg);
+  const totMassa=massas.reduce((s,[,kg])=>s+kg,0), totRech=recheios.reduce((s,[,kg])=>s+kg,0);
+
+  const itensHtml=d.itens.map(it=>'<div style="display:flex;justify-content:space-between;font-size:12px;padding:2px 0;color:var(--text-secondary);"><span>'+it.nome+'</span><span>'+it.pacotes+' pct</span></div>').join('');
+
+  let html='<div class="card" style="margin-top:14px;border-left:3px solid var(--mc-roxo);">'+
+    '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;"><div style="font-size:15px;font-weight:700;">📋 '+d.contexto+'</div>'+
+    '<button class="mc-act-btn-secondary" style="font-size:11px;padding:4px 10px;" onclick="simExportarExcel()">⬇️ Excel</button></div>'+
+    '<div style="font-size:11px;font-weight:700;color:var(--text-secondary);text-transform:uppercase;margin-bottom:4px;">Produtos</div>'+itensHtml+'</div>';
+
+  if(d.semFicha.length){
+    html+='<div style="background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:10px 12px;margin-top:10px;font-size:12px;color:#92400e;">⚠️ Sem ficha técnica (não explodido em MP): '+d.semFicha.join(', ')+'</div>';
+  }
+
+  // Massas e recheios necessários
+  html+='<div class="card" style="margin-top:10px;">'+
+    '<div style="font-size:15px;font-weight:700;margin-bottom:8px;">🥄 Massas e recheios a produzir</div>';
+  if(massas.length){ html+='<div style="font-size:11px;font-weight:700;color:var(--text-secondary);text-transform:uppercase;margin:6px 0 4px;">Massas ('+_fmtKg(totMassa)+' kg)</div>'+
+    massas.map(([n,kg])=>'<div style="display:flex;justify-content:space-between;font-size:13px;padding:3px 0;border-bottom:1px dashed var(--border);"><span>⚖️ '+n+'</span><strong>'+_fmtKg(kg)+' kg</strong></div>').join(''); }
+  if(recheios.length){ html+='<div style="font-size:11px;font-weight:700;color:var(--text-secondary);text-transform:uppercase;margin:10px 0 4px;">Recheios ('+_fmtKg(totRech)+' kg)</div>'+
+    recheios.map(([n,kg])=>'<div style="display:flex;justify-content:space-between;font-size:13px;padding:3px 0;border-bottom:1px dashed var(--border);"><span>🥄 '+n+'</span><strong>'+_fmtKg(kg)+' kg</strong></div>').join(''); }
+  html+='</div>';
+
+  // Matérias-primas necessárias
+  html+='<div class="card" style="margin-top:10px;border-left:3px solid var(--mc-verde);">'+
+    '<div style="font-size:15px;font-weight:700;margin-bottom:8px;">🧪 Matérias-primas necessárias ('+mp.length+')</div>';
+  if(!mp.length) html+='<div class="empty">Nada a calcular.</div>';
+  else html+=mp.map(m=>'<div style="display:flex;justify-content:space-between;align-items:center;font-size:13px;padding:5px 0;border-bottom:1px dashed var(--border);"><div><strong>'+m.mpNome+'</strong>'+(m.mpCodigo?' <span style="font-size:11px;color:var(--text-secondary);">'+m.mpCodigo+'</span>':'')+'</div><strong style="color:var(--mc-verde);white-space:nowrap;">'+_fmtKg(m.kg)+' '+(m.mpUnidade||'kg')+'</strong></div>').join('');
+  html+='</div>';
+  return html;
+}
+
+function renderSim(){
+  const el=document.getElementById('sim-content'); if(!el) return;
+  const tabModo='<div style="display:flex;gap:6px;margin-bottom:14px;">'+
+    [['avulso','✍️ Avulso'],['plano','📅 Do plano']].map(([m,l])=>{
+      const on=_simModo===m;
+      return '<button onclick="setSimModo(\''+m+'\')" style="flex:1;padding:9px;border-radius:8px;border:1px solid '+(on?'var(--mc-roxo)':'var(--border-md,#d1d5db)')+';background:'+(on?'var(--mc-roxo)':'var(--bg-primary)')+';color:'+(on?'#fff':'var(--text-primary)')+';font-size:13px;font-weight:700;font-family:inherit;cursor:pointer;">'+l+'</button>';
+    }).join('')+'</div>';
+
+  let corpo='';
+  if(_simModo==='avulso'){
+    const itensHtml=_simItens.length? _simItens.map((it,i)=>'<div style="display:flex;justify-content:space-between;align-items:center;font-size:13px;padding:6px 0;border-bottom:1px dashed var(--border);"><span>'+it.nome+' · <strong>'+it.pacotes+' pct</strong></span><button onclick="simRemoveItem('+i+')" style="background:none;border:1px solid #ef9a9a;color:#c62828;font-size:11px;padding:3px 8px;border-radius:6px;cursor:pointer;font-family:inherit;">remover</button></div>').join('') : '<div class="empty">Nenhum produto adicionado.</div>';
+    corpo='<div class="card">'+
+      '<div class="card-label">Produto</div>'+
+      '<select id="sim-prod" style="width:100%;margin-top:6px;font-size:14px;padding:10px;border-radius:8px;border:1px solid var(--border-md,#d1d5db);"></select>'+
+      '<div class="card-label" style="margin-top:10px;">Quantidade (pacotes)</div>'+
+      '<div style="display:flex;gap:8px;margin-top:6px;"><input type="number" id="sim-pacotes" min="1" inputmode="numeric" placeholder="0" style="flex:1;font-size:14px;padding:10px;border-radius:8px;border:1px solid var(--border-md,#d1d5db);" />'+
+      '<button class="btn btn-secondary" style="white-space:nowrap;" onclick="simAddItem()">+ Adicionar</button></div>'+
+      '<div style="margin-top:12px;">'+itensHtml+'</div>'+
+      (_simItens.length?'<div style="display:flex;gap:8px;margin-top:12px;"><button class="btn btn-primary" style="flex:1;" onclick="simCalcularAvulso()">Calcular 🧮</button><button class="btn btn-secondary" onclick="simLimpar()">Limpar</button></div>':'')+
+      '</div>';
+  } else {
+    const chips='<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;">'+
+      [['todos','Todos'],['Seg','Seg'],['Ter','Ter'],['Qua','Qua'],['Qui','Qui'],['Sex','Sex'],['Sáb','Sáb']].map(([v,l])=>{
+        const on=_simDia===v;
+        return '<button onclick="setSimDia(\''+v+'\')" style="padding:7px 12px;border-radius:8px;border:1px solid '+(on?'var(--mc-roxo)':'var(--border-md,#d1d5db)')+';background:'+(on?'var(--mc-roxo)':'var(--bg-primary)')+';color:'+(on?'#fff':'var(--text-primary)')+';font-size:12px;font-weight:600;font-family:inherit;cursor:pointer;">'+l+'</button>';
+      }).join('')+'</div>';
+    const prev=_simItensDoPlano(_simDia);
+    const prevHtml=prev.length? prev.map(it=>'<div style="display:flex;justify-content:space-between;font-size:13px;padding:4px 0;border-bottom:1px dashed var(--border);"><span>'+it.nome+(it.produto?'':' <span style=\"color:var(--mc-vermelho);font-size:11px;\">(sem cadastro)</span>')+'</span><strong>'+it.pacotes+' pct</strong></div>').join('') : '<div class="empty">Sem produtos no plano para essa seleção.</div>';
+    corpo='<div class="card">'+
+      '<div class="card-label">Dia do plano (Confeitaria)</div>'+chips+
+      '<div style="font-size:11px;font-weight:700;color:var(--text-secondary);text-transform:uppercase;margin-bottom:4px;">Produtos no plano</div>'+prevHtml+
+      (prev.length?'<button class="btn btn-primary" style="width:100%;margin-top:12px;" onclick="simCalcularPlano()">Calcular 🧮</button>':'')+
+      '</div>';
+  }
+
+  el.innerHTML='<div style="background:var(--mc-roxo-claro);border:1px solid #ddd6fe;border-radius:10px;padding:10px 12px;margin-bottom:14px;font-size:12px;color:#5b21b6;">🧮 Informe produtos (ou puxe do plano) e calcule quanta <strong>massa/recheio</strong> e <strong>matéria-prima</strong> você precisa.</div>'+tabModo+corpo+'<div id="sim-result">'+_simResultadoHTML()+'</div>';
+  if(_simModo==='avulso') _simPopularProdutos();
+}
+
+async function simExportarExcel(){
+  if(!_simResData){ alert('Calcule primeiro.'); return; }
+  const d=_simResData;
+  await new Promise((res,rej)=>{ if(window.XLSX){res();return;} const s=document.createElement('script'); s.src='https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js'; s.onload=res; s.onerror=rej; document.head.appendChild(s); });
+  const wb=XLSX.utils.book_new();
+  const sp=[['PRODUTO','PACOTES']]; d.itens.forEach(it=>sp.push([it.nome,it.pacotes]));
+  const ws1=XLSX.utils.aoa_to_sheet(sp); ws1['!cols']=[{wch:38},{wch:12}]; XLSX.utils.book_append_sheet(wb,ws1,'Produtos');
+  const mr=[['TIPO','NOME','KG']];
+  Object.entries(d.massas).sort((a,b)=>b[1]-a[1]).forEach(([n,kg])=>mr.push(['Massa',n,Number(kg.toFixed(3))]));
+  Object.entries(d.recheios).sort((a,b)=>b[1]-a[1]).forEach(([n,kg])=>mr.push(['Recheio',n,Number(kg.toFixed(3))]));
+  const ws2=XLSX.utils.aoa_to_sheet(mr); ws2['!cols']=[{wch:10},{wch:38},{wch:12}]; XLSX.utils.book_append_sheet(wb,ws2,'Massas-Recheios');
+  const mpv=[['CÓDIGO','MATÉRIA-PRIMA','UNIDADE','QTD NECESSÁRIA']];
+  Object.values(d.mp).sort((a,b)=>b.kg-a.kg).forEach(m=>mpv.push([m.mpCodigo,m.mpNome,m.mpUnidade||'kg',Number(m.kg.toFixed(3))]));
+  const ws3=XLSX.utils.aoa_to_sheet(mpv); ws3['!cols']=[{wch:10},{wch:38},{wch:10},{wch:16}]; XLSX.utils.book_append_sheet(wb,ws3,'Materias-Primas');
+  XLSX.writeFile(wb,'simulacao_materia_prima.xlsx');
+}
+
+window.setSimModo=setSimModo; window.setSimDia=setSimDia; window.simAddItem=simAddItem; window.simRemoveItem=simRemoveItem;
+window.simLimpar=simLimpar; window.simCalcularAvulso=simCalcularAvulso; window.simCalcularPlano=simCalcularPlano;
+window.simExportarExcel=simExportarExcel; window.renderSim=renderSim;
+
 
 
 
