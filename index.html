@@ -2765,19 +2765,11 @@
     <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;">
 
       <!-- DESTAQUE: Status Geral -->
-      <button class="mc-sector-card" style="border-left:3px solid var(--mc-roxo);margin-bottom:10px;background:linear-gradient(135deg, var(--bg-primary) 0%, var(--mc-roxo-claro) 100%);" onclick="goTo('s-adm-status')">
+      <button class="mc-sector-card" style="border-left:3px solid var(--mc-roxo);margin-bottom:10px;background:linear-gradient(135deg, var(--bg-primary) 0%, var(--mc-roxo-claro) 100%);" onclick="goTo('s-painel')">
         <div class="mc-sector-icon purple">📊</div>
         <div class="mc-sector-info">
-          <div class="mc-sector-title" style="color:var(--mc-roxo);">Status Geral</div>
-          <div class="mc-sector-desc">Visão consolidada das pendências em todos os setores</div>
-        </div>
-        <span class="mc-sector-arrow" style="color:var(--mc-roxo);">›</span>
-      </button>
-      <button class="mc-sector-card" style="border-left:3px solid var(--mc-roxo);margin-bottom:10px;background:linear-gradient(135deg, var(--bg-primary) 0%, var(--mc-roxo-claro) 100%);" onclick="goTo('s-painel-proto')">
-        <div class="mc-sector-icon purple">🧪</div>
-        <div class="mc-sector-info">
-          <div class="mc-sector-title" style="color:var(--mc-roxo);">Painel Gerencial (protótipo)</div>
-          <div class="mc-sector-desc">Amostra de KPI + gráfico para validar o estilo</div>
+          <div class="mc-sector-title" style="color:var(--mc-roxo);">Painel Gerencial</div>
+          <div class="mc-sector-desc">Indicadores, gráficos, pendências e relatórios</div>
         </div>
         <span class="mc-sector-arrow" style="color:var(--mc-roxo);">›</span>
       </button>
@@ -3617,6 +3609,18 @@
     <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;" id="painel-proto-content"></div>
   </div>
 
+  <!-- PAINEL GERENCIAL (completo) -->
+  <div class="screen" id="s-painel">
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="goTo('s-adm-hub')">‹</button>
+      <div class="mc-brand"><div class="mc-brand-logo">MC</div><div class="mc-brand-text"><div class="mc-brand-name">Monte Castelo</div><div class="mc-brand-sub">Gerencial</div></div></div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info"><div class="mc-page-title">📊 Painel Gerencial</div><div class="mc-page-sub">Indicadores e pendências</div></div>
+      <div class="mc-header-actions"><button class="mc-act-btn-secondary" onclick="renderPainel()">↻ Atualizar</button></div>
+    </div>
+    <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;" id="painel-content"></div>
+  </div>
+
   <!-- CONTAGEM HOME -->
   <div class="screen" id="s-contagem-home">
     <div class="mc-header">
@@ -3968,6 +3972,7 @@ function atualizarTela(){
   if(tela==='s-estoque-descarte') renderDescarteEstoque();
   if(tela==='s-estoque-mov') renderMovEstoque();
   if(tela==='s-painel-proto') renderPainelProto();
+  if(tela==='s-painel') renderPainel();
   if(tela==='s-coz-home') renderCozHome();
   if(tela==='s-emb-home') renderEmbalagem(); // embManual listener triggers this
   if(tela==='s-emb-sel-data') renderSelDataEmb();
@@ -4078,6 +4083,7 @@ function goTo(id){
   if(id==='s-estoque-descarte') renderDescarteEstoque();
   if(id==='s-estoque-mov') renderMovEstoque();
   if(id==='s-painel-proto') renderPainelProto();
+  if(id==='s-painel') renderPainel();
   if(id==='s-rastreio'){
     popularSelectMPRastreio();
     if(!document.getElementById('rastreio-ini').value){ rastreioPeriodoRapido('mes'); }
@@ -8987,8 +8993,8 @@ async function excluirTeste(fid){
 }
 
 
-function renderAdmStatus(){
-  const el=document.getElementById('adm-status-content');
+function renderAdmStatus(elId){
+  const el=document.getElementById(typeof elId==='string'?elId:'adm-status-content');
   if(!el)return;
 
   const hojeStr=hoje();
@@ -11056,6 +11062,179 @@ function renderPainelProto(){
   el.innerHTML='<div style="background:var(--mc-roxo-claro);border:1px solid #ddd6fe;border-radius:10px;padding:10px 12px;margin-bottom:14px;font-size:12px;color:#5b21b6;">🧪 <strong>Protótipo</strong> — estilo dos KPIs e gráficos pra você validar. Se curtir, eu construo o Painel Gerencial completo (3 abas) em cima disso.</div>'+kpiFunil+grafico;
 }
 window.renderPainelProto=renderPainelProto;
+
+// ===== PAINEL GERENCIAL (completo, 3 abas) =====
+let _pgPeriodo='7', _pgSetor='todos', _pgTab='visao';
+
+function _pgRange(p){
+  const now=new Date();
+  let dias;
+  if(p==='hoje') dias=1; else if(p==='7') dias=7; else if(p==='14') dias=14;
+  else if(p==='30') dias=30; else if(p==='mes') dias=now.getDate(); else dias=7;
+  const ini=new Date(now); ini.setHours(0,0,0,0); ini.setDate(ini.getDate()-(dias-1));
+  const iniTs=ini.getTime(); const end=Date.now();
+  const prevFimTs=iniTs-1; const prevIniTs=iniTs-dias*86400000;
+  const labels={hoje:'Hoje','7':'Últimos 7 dias','14':'Últimos 14 dias','30':'Últimos 30 dias',mes:'Mês atual'};
+  return {iniTs,end,dias,prevIniTs,prevFimTs,label:labels[p]||('Últimos '+dias+' dias')};
+}
+function _pgRegFiltrados(){
+  return registros.filter(r=>{
+    if(_pgSetor==='conf') return r.origem!=='quadra';
+    if(_pgSetor==='quadra') return r.origem==='quadra';
+    return true;
+  });
+}
+function _pgFunil(iniTs,fimTs){
+  let prod=0,emb=0,exp=0;
+  _pgRegFiltrados().forEach(r=>{
+    const t=r.data?_parseDataBR(r.data):0; if(t<iniTs||t>fimTs) return;
+    prod+=_proURegProduzido(r); emb+=_proUEmbalado(r); exp+=_proUExpedido(r);
+  });
+  return {prod,emb,exp};
+}
+function _pgProducaoDiaria(dias){
+  const arr=[]; const regs=_pgRegFiltrados();
+  for(let i=dias-1;i>=0;i--){ const d=new Date(); d.setDate(d.getDate()-i); const ds=fmtData(d);
+    let total=0; regs.forEach(r=>{ if(r.data===ds) total+=_proURegProduzido(r); });
+    arr.push({dia:ds.slice(0,2),total}); }
+  return arr;
+}
+function _pgDescartePeriodo(iniTs,fimTs){
+  let kg=0; const porMotivo={};
+  descartesEstoque.forEach(d=>{ const t=d.timestamp||(d.data?_parseDataBR(d.data):0); if(t<iniTs||t>fimTs) return;
+    const q=parseFloat(d.qtd)||0; kg+=q; porMotivo[d.motivo||'—']=(porMotivo[d.motivo||'—']||0)+q; });
+  return {kg,porMotivo};
+}
+function _pgTrend(cur,prev,bomSeSobe){
+  if((prev||0)===0 && (cur||0)===0) return '<span style="font-size:11px;color:var(--text-secondary);">— sem base</span>';
+  const pct = (prev||0)===0 ? 100 : Math.round(((cur-prev)/Math.abs(prev))*100);
+  const igual=Math.abs(cur-prev)<0.0001;
+  const sobe=cur>prev; const bom = bomSeSobe? sobe : !sobe;
+  const cor = igual?'var(--text-secondary)':(bom?'var(--mc-verde)':'var(--mc-vermelho)');
+  const arrow = igual?'→':(sobe?'▲':'▼');
+  return '<span style="font-size:11px;font-weight:700;color:'+cor+';">'+arrow+' '+Math.abs(pct)+'% <span style="font-weight:400;color:var(--text-secondary);">vs ant.</span></span>';
+}
+function _pgPct(a,b){ return b>0? Math.round((a/b)*1000)/10 : 0; }
+function _pgKpiCard(titulo,valor,sub,trendHtml,cor){
+  return '<div class="card" style="padding:12px;margin:0;">'+
+    '<div style="font-size:10px;color:var(--text-secondary);text-transform:uppercase;font-weight:700;letter-spacing:.3px;">'+titulo+'</div>'+
+    '<div style="font-size:22px;font-weight:800;color:'+(cor||'var(--text-primary)')+';margin-top:4px;line-height:1.1;">'+valor+'</div>'+
+    '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px;gap:6px;"><span style="font-size:11px;color:var(--text-secondary);">'+(sub||'')+'</span>'+(trendHtml||'')+'</div>'+
+    '</div>';
+}
+function _pgChip(label,val,atual,fn){
+  const on=val===atual;
+  return '<button onclick="'+fn+'(\''+val+'\')" style="flex:1;min-width:fit-content;padding:7px 10px;border-radius:8px;border:1px solid '+(on?'var(--mc-roxo)':'var(--border-md,#d1d5db)')+';background:'+(on?'var(--mc-roxo)':'var(--bg-primary)')+';color:'+(on?'#fff':'var(--text-primary)')+';font-size:12px;font-weight:600;font-family:inherit;cursor:pointer;white-space:nowrap;">'+label+'</button>';
+}
+
+function setPgPeriodo(p){ _pgPeriodo=p; renderPainel(); }
+function setPgSetor(s){ _pgSetor=s; renderPainel(); }
+function setPgTab(t){ _pgTab=t; renderPainel(); }
+
+function renderPainel(){
+  const el=document.getElementById('painel-content'); if(!el) return;
+  const r=_pgRange(_pgPeriodo);
+
+  const chipsPeriodo='<div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap;">'+
+    _pgChip('Hoje','hoje',_pgPeriodo,'setPgPeriodo')+_pgChip('7 dias','7',_pgPeriodo,'setPgPeriodo')+
+    _pgChip('14 dias','14',_pgPeriodo,'setPgPeriodo')+_pgChip('30 dias','30',_pgPeriodo,'setPgPeriodo')+
+    _pgChip('Mês','mes',_pgPeriodo,'setPgPeriodo')+'</div>';
+
+  const tabs='<div style="display:flex;gap:6px;margin-bottom:14px;border-bottom:1px solid var(--border);padding-bottom:0;">'+
+    [['visao','📊 Visão Geral'],['pend','⚠️ Pendências'],['relat','📑 Relatórios']].map(([t,l])=>{
+      const on=_pgTab===t;
+      return '<button onclick="setPgTab(\''+t+'\')" style="padding:8px 12px;border:0;background:none;border-bottom:3px solid '+(on?'var(--mc-roxo)':'transparent')+';color:'+(on?'var(--mc-roxo)':'var(--text-secondary)')+';font-size:13px;font-weight:700;font-family:inherit;cursor:pointer;">'+l+'</button>';
+    }).join('')+'</div>';
+
+  let corpo='';
+  if(_pgTab==='visao') corpo=_pgVisaoHTML(r);
+  else if(_pgTab==='pend') corpo='<div id="pg-pend-content"></div>';
+  else corpo=_pgRelatoriosHTML();
+
+  el.innerHTML='<div style="font-size:12px;color:var(--text-secondary);margin-bottom:8px;">📅 '+r.label+'</div>'+chipsPeriodo+tabs+corpo;
+
+  if(_pgTab==='pend') renderAdmStatus('pg-pend-content');
+}
+
+function _pgVisaoHTML(r){
+  const f=_pgFunil(r.iniTs,r.end);
+  const fp=_pgFunil(r.prevIniTs,r.prevFimTs);
+  const desc=_pgDescartePeriodo(r.iniTs,r.end);
+  const descp=_pgDescartePeriodo(r.prevIniTs,r.prevFimTs);
+  const estoque=calcEstoqueMassasRecheios();
+  const todosEst=[...Object.values(estoque.massas).map(e=>({...e,tipo:'massa'})),...Object.values(estoque.recheios).map(e=>({...e,tipo:'recheio'}))];
+  const negativos=todosEst.filter(e=>e.saldo<-0.0001).sort((a,b)=>a.saldo-b.saldo);
+  const saldoMassas=Object.values(estoque.massas).reduce((s,e)=>s+e.saldo,0);
+  const saldoRecheios=Object.values(estoque.recheios).reduce((s,e)=>s+e.saldo,0);
+
+  // KPI strip
+  const taxaEmb=_pgPct(f.emb,f.prod), taxaEmbP=_pgPct(fp.emb,fp.prod);
+  const taxaExp=_pgPct(f.exp,f.prod), taxaExpP=_pgPct(fp.exp,fp.prod);
+  const kpis='<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-bottom:16px;">'+
+    _pgKpiCard('Produção','<span style="font-size:22px;">'+f.prod.toLocaleString('pt-BR')+'</span> <span style="font-size:12px;color:var(--text-secondary);">un</span>','no período',_pgTrend(f.prod,fp.prod,true))+
+    _pgKpiCard('Taxa de embalagem',taxaEmb+'%','embalado / produzido',_pgTrend(taxaEmb,taxaEmbP,true),'var(--mc-dourado)')+
+    _pgKpiCard('Taxa de expedição',taxaExp+'%','expedido / produzido',_pgTrend(taxaExp,taxaExpP,true),'var(--mc-verde)')+
+    _pgKpiCard('Itens negativos',negativos.length+'','no estoque (agora)','',negativos.length?'var(--mc-vermelho)':'var(--mc-verde)')+
+    _pgKpiCard('Descarte',_fmtKg(desc.kg)+' kg','no período',_pgTrend(desc.kg,descp.kg,false),'var(--mc-vermelho)')+
+    '</div>';
+
+  // Funil + filtro setor
+  const chipsSetor='<div style="display:flex;gap:6px;margin-bottom:10px;">'+
+    _pgChipSetor('Todos','todos')+_pgChipSetor('Confeitaria','conf')+_pgChipSetor('Quadra','quadra')+'</div>';
+  const funil='<div class="card" style="margin-bottom:14px;">'+
+    '<div style="font-size:15px;font-weight:700;margin-bottom:10px;">🔻 Funil de Produção</div>'+chipsSetor+
+    _proBarraFunil('Produzido',f.prod,f.prod,'var(--mc-azul)')+
+    _proBarraFunil('Embalado',f.emb,f.prod,'var(--mc-dourado)')+
+    _proBarraFunil('Expedido',f.exp,f.prod,'var(--mc-verde)')+
+    '<div style="margin-top:8px;padding-top:8px;border-top:1px dashed var(--border);text-align:center;font-size:12px;color:var(--text-secondary);">Em aberto: <strong style="color:var(--mc-vermelho);">'+(f.prod-f.exp).toLocaleString('pt-BR')+' un</strong> aguardando expedição</div>'+
+    '</div>';
+
+  // Gráfico produção diária
+  const diaria=_pgProducaoDiaria(r.dias);
+  const media=Math.round(diaria.reduce((s,d)=>s+d.total,0)/Math.max(diaria.length,1));
+  const grafico='<div class="card" style="margin-bottom:14px;">'+
+    '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;"><div style="font-size:15px;font-weight:700;">📈 Produção diária</div><div style="font-size:11px;color:var(--text-secondary);">média '+media.toLocaleString('pt-BR')+' un/dia</div></div>'+
+    _proGraficoBarras(diaria)+'</div>';
+
+  // Saúde do estoque
+  let negHtml;
+  if(negativos.length===0) negHtml='<div style="font-size:13px;color:var(--mc-verde);padding:4px 0;">✓ Nenhum item negativo.</div>';
+  else negHtml=negativos.slice(0,8).map(e=>'<div style="display:flex;justify-content:space-between;font-size:13px;padding:4px 0;border-bottom:1px dashed var(--border);"><span>'+(e.tipo==='massa'?'⚖️':'🥄')+' '+e.nome+'</span><strong style="color:var(--mc-vermelho);">'+_fmtKg(e.saldo)+' kg</strong></div>').join('')+(negativos.length>8?'<div style="font-size:11px;color:var(--text-secondary);margin-top:4px;">+'+(negativos.length-8)+' outros</div>':'');
+  const estCard='<div class="card" style="margin-bottom:14px;">'+
+    '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;"><div style="font-size:15px;font-weight:700;">📦 Saúde do Estoque</div><button class="mc-act-btn-secondary" style="font-size:11px;padding:4px 10px;" onclick="goTo(\'s-estoque-admin\')">Abrir ›</button></div>'+
+    '<div style="display:flex;gap:8px;margin-bottom:10px;">'+
+      '<div style="flex:1;text-align:center;padding:8px;background:var(--bg-page);border-radius:8px;"><div style="font-size:18px;font-weight:800;color:'+(saldoMassas<0?'var(--mc-vermelho)':'var(--mc-verde)')+';">'+_fmtKg(saldoMassas)+'</div><div style="font-size:11px;color:var(--text-secondary);">kg massas</div></div>'+
+      '<div style="flex:1;text-align:center;padding:8px;background:var(--bg-page);border-radius:8px;"><div style="font-size:18px;font-weight:800;color:'+(saldoRecheios<0?'var(--mc-vermelho)':'var(--mc-verde)')+';">'+_fmtKg(saldoRecheios)+'</div><div style="font-size:11px;color:var(--text-secondary);">kg recheios</div></div>'+
+      '<div style="flex:1;text-align:center;padding:8px;background:var(--bg-page);border-radius:8px;"><div style="font-size:18px;font-weight:800;color:'+(negativos.length?'var(--mc-vermelho)':'var(--mc-verde)')+';">'+negativos.length+'</div><div style="font-size:11px;color:var(--text-secondary);">negativos</div></div>'+
+    '</div>'+
+    '<div style="font-size:11px;font-weight:700;color:var(--text-secondary);text-transform:uppercase;margin-bottom:4px;">Itens críticos (negativos)</div>'+negHtml+
+    '</div>';
+
+  // Descarte por motivo (Pareto)
+  const motivos=Object.entries(desc.porMotivo).sort((a,b)=>b[1]-a[1]);
+  let paretoCard='';
+  if(motivos.length){
+    const maxM=Math.max(...motivos.map(m=>m[1]));
+    paretoCard='<div class="card" style="margin-bottom:14px;">'+
+      '<div style="font-size:15px;font-weight:700;margin-bottom:10px;">🗑️ Descartes por motivo</div>'+
+      motivos.map(([m,kg])=>'<div style="margin-bottom:8px;"><div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:3px;"><span>'+m+'</span><strong>'+_fmtKg(kg)+' kg</strong></div><div style="height:10px;background:var(--bg-page);border-radius:5px;overflow:hidden;"><div style="height:100%;width:'+Math.max((kg/maxM)*100,2)+'%;background:var(--mc-vermelho);border-radius:5px;"></div></div></div>').join('')+
+      '</div>';
+  }
+
+  return kpis+funil+grafico+estCard+paretoCard;
+}
+function _pgChipSetor(label,val){
+  const on=val===_pgSetor;
+  return '<button onclick="setPgSetor(\''+val+'\')" style="flex:1;padding:6px 8px;border-radius:7px;border:1px solid '+(on?'var(--mc-azul)':'var(--border-md,#d1d5db)')+';background:'+(on?'var(--mc-azul)':'var(--bg-primary)')+';color:'+(on?'#fff':'var(--text-primary)')+';font-size:12px;font-weight:600;font-family:inherit;cursor:pointer;">'+label+'</button>';
+}
+function _pgRelatoriosHTML(){
+  return '<div class="card" style="margin-bottom:10px;cursor:pointer;" onclick="goToAdmin(\'s-adm\')">'+
+    '<div style="display:flex;justify-content:space-between;align-items:center;"><div><div style="font-size:15px;font-weight:700;">📑 Relatórios detalhados</div><div style="font-size:12px;color:var(--text-secondary);margin-top:2px;">Resumo, Massas, Recheios, Embalagem, Expedição, Produção, Quebras, Presença, Manutenção, Plano</div></div><span style="font-size:20px;color:var(--mc-roxo);">›</span></div></div>'+
+    '<div class="card" style="cursor:pointer;" onclick="goToAdmin(\'s-adm\');setTimeout(()=>{var b=[...document.querySelectorAll(\'#s-adm .tab\')].find(x=>/Exportar/.test(x.textContent));if(b)b.click();},200);">'+
+    '<div style="display:flex;justify-content:space-between;align-items:center;"><div><div style="font-size:15px;font-weight:700;">⬇️ Exportar dados (Excel)</div><div style="font-size:12px;color:var(--text-secondary);margin-top:2px;">Baixar planilhas por período</div></div><span style="font-size:20px;color:var(--mc-verde);">›</span></div></div>';
+}
+window.renderPainel=renderPainel; window.setPgPeriodo=setPgPeriodo; window.setPgSetor=setPgSetor; window.setPgTab=setPgTab;
+
 
 
 
