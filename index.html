@@ -11286,17 +11286,26 @@ function _simExplodir(itens){
   return {massas,recheios,mp,semFicha:[...semFicha]};
 }
 
+function _simPlanoConfAtual(){
+  const sem=(typeof semanaAtual==='function')?semanaAtual():'';
+  let rec=planos.find(p=>p.semana===sem && (!p.setor||p.setor==='conf'));
+  if(!rec){ const confs=planos.filter(p=>!p.setor||p.setor==='conf'); rec=confs.sort((a,b)=>String(b.semana||'').localeCompare(String(a.semana||'')))[0]; }
+  return rec;
+}
 function _simItensDoPlano(dia){
-  const dias=(planejPlanos['conf_atual']||{}).dias||{};
-  const listaDias = dia==='todos'? PLANEJ_DIAS : [dia];
+  const rec=_simPlanoConfAtual();
+  const itensPlano=(rec&&rec.itens)||{};
+  const DIAS=['Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
+  const listaDias = dia==='todos'? DIAS : [dia];
   const agg={};
   listaDias.forEach(d=>{
-    (dias[d]||[]).forEach(it=>{
-      const pacotes=parseInt(it.qtd)||0; if(pacotes<=0) return;
-      const cod=String(it.cod);
-      const prod=PRODUTOS.find(p=>String(p.cod)===cod);
-      if(!agg[cod]) agg[cod]={cod,nome:prod?prod.nome:('Cód '+cod),pacotes:0,produto:prod};
-      agg[cod].pacotes+=pacotes;
+    (itensPlano[d]||[]).forEach(it=>{
+      const pacotes=parseInt(it.qtdPacotes||it.qtd)||0; if(pacotes<=0) return;
+      const nome=it.nome||it.produtoNome||'';
+      const prod=PRODUTOS.find(p=>p.nome===nome);
+      const key=nome||('?'+Object.keys(agg).length);
+      if(!agg[key]) agg[key]={cod:prod?prod.cod:'',nome:nome||'(sem nome)',pacotes:0,produto:prod};
+      agg[key].pacotes+=pacotes;
     });
   });
   return Object.values(agg).sort((a,b)=>b.pacotes-a.pacotes);
@@ -11312,7 +11321,7 @@ function _simPopularProdutos(){
 }
 function simAddItem(){
   const sel=document.getElementById('sim-prod'); const cod=sel?sel.value:'';
-  const pacotes=parseInt(document.getElementById('sim-pacotes').value)||0;
+  const pacotes=parseFloat(String(document.getElementById('sim-pacotes').value).replace(',','.'))||0;
   if(!cod){ alert('Selecione o produto.'); return; }
   if(pacotes<=0){ alert('Informe a quantidade em pacotes.'); return; }
   const produto=PRODUTOS.find(p=>String(p.cod)===String(cod));
@@ -11389,14 +11398,14 @@ function renderSim(){
       '<div class="card-label">Produto</div>'+
       '<select id="sim-prod" style="width:100%;margin-top:6px;font-size:14px;padding:10px;border-radius:8px;border:1px solid var(--border-md,#d1d5db);"></select>'+
       '<div class="card-label" style="margin-top:10px;">Quantidade (pacotes)</div>'+
-      '<div style="display:flex;gap:8px;margin-top:6px;"><input type="number" id="sim-pacotes" min="1" inputmode="numeric" placeholder="0" style="flex:1;font-size:14px;padding:10px;border-radius:8px;border:1px solid var(--border-md,#d1d5db);" />'+
-      '<button class="btn btn-secondary" style="white-space:nowrap;" onclick="simAddItem()">+ Adicionar</button></div>'+
+      '<input type="text" id="sim-pacotes" inputmode="decimal" placeholder="0" style="width:100%;margin-top:6px;font-size:15px;padding:12px;border-radius:8px;border:1px solid var(--border-md,#d1d5db);box-sizing:border-box;" />'+
+      '<button class="btn btn-secondary" style="width:100%;margin-top:8px;" onclick="simAddItem()">+ Adicionar produto</button>'+
       '<div style="margin-top:12px;">'+itensHtml+'</div>'+
       (_simItens.length?'<div style="display:flex;gap:8px;margin-top:12px;"><button class="btn btn-primary" style="flex:1;" onclick="simCalcularAvulso()">Calcular 🧮</button><button class="btn btn-secondary" onclick="simLimpar()">Limpar</button></div>':'')+
       '</div>';
   } else {
     const chips='<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;">'+
-      [['todos','Todos'],['Seg','Seg'],['Ter','Ter'],['Qua','Qua'],['Qui','Qui'],['Sex','Sex'],['Sáb','Sáb']].map(([v,l])=>{
+      [['todos','Todos'],['Segunda','Seg'],['Terça','Ter'],['Quarta','Qua'],['Quinta','Qui'],['Sexta','Sex'],['Sábado','Sáb']].map(([v,l])=>{
         const on=_simDia===v;
         return '<button onclick="setSimDia(\''+v+'\')" style="padding:7px 12px;border-radius:8px;border:1px solid '+(on?'var(--mc-roxo)':'var(--border-md,#d1d5db)')+';background:'+(on?'var(--mc-roxo)':'var(--bg-primary)')+';color:'+(on?'#fff':'var(--text-primary)')+';font-size:12px;font-weight:600;font-family:inherit;cursor:pointer;">'+l+'</button>';
       }).join('')+'</div>';
