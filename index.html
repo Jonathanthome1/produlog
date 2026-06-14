@@ -804,7 +804,7 @@
   <!-- MATÉRIAS-PRIMAS -->
   <div class="screen" id="s-mp-home">
     <div class="mc-header">
-      <button class="mc-header-back" onclick="window.adminMode?goTo('s-adm-hub'):goTo('s-inicio')">‹</button>
+      <button class="mc-header-back" onclick="window.adminMode?goTo('s-adm-cadastros'):goTo('s-inicio')">‹</button>
       <div class="mc-brand">
         <div class="mc-brand-logo">MC</div>
         <div class="mc-brand-text">
@@ -2797,14 +2797,6 @@
         </div>
         <span class="mc-sector-arrow">›</span>
       </button>
-      <button class="mc-sector-card" style="border-left:3px solid var(--mc-azul);margin-bottom:10px;" onclick="goTo('s-mp-home')">
-        <div class="mc-sector-icon blue">🧪</div>
-        <div class="mc-sector-info">
-          <div class="mc-sector-title">Matérias-Primas</div>
-          <div class="mc-sector-desc">Base de ingredientes e fichas técnicas</div>
-        </div>
-        <span class="mc-sector-arrow">›</span>
-      </button>
       <button class="mc-sector-card" style="border-left:3px solid var(--mc-vermelho);margin-bottom:10px;background:linear-gradient(135deg, var(--bg-primary) 0%, var(--mc-vermelho-claro) 100%);" onclick="goTo('s-prioridades')">
         <div class="mc-sector-icon red">🚩</div>
         <div class="mc-sector-info">
@@ -2813,53 +2805,14 @@
         </div>
         <span class="mc-sector-arrow" style="color:var(--mc-vermelho);">›</span>
       </button>
-      <button class="mc-sector-card" style="border-left:3px solid var(--mc-dourado);margin-bottom:10px;background:linear-gradient(135deg, var(--bg-primary) 0%, var(--mc-dourado-claro) 100%);" onclick="goTo('s-adm-kits')">
-        <div class="mc-sector-icon gold">🍞</div>
+
+      <button class="mc-sector-card" style="border-left:3px solid var(--mc-indigo);margin-bottom:16px;background:linear-gradient(135deg, var(--bg-primary) 0%, var(--mc-indigo-claro) 100%);" onclick="goTo('s-adm-cadastros')">
+        <div class="mc-sector-icon indigo">🗂️</div>
         <div class="mc-sector-info">
-          <div class="mc-sector-title" style="color:#92400e;">Kits & Produtos (Quadra)</div>
-          <div class="mc-sector-desc">Cadastrar receitas e produtos da Quadra</div>
+          <div class="mc-sector-title" style="color:var(--mc-indigo);">Cadastros & Configurações</div>
+          <div class="mc-sector-desc">Massas/recheios, produtos, kits, matérias-primas, contagem, farinhas e senhas</div>
         </div>
-        <span class="mc-sector-arrow" style="color:#92400e;">›</span>
-      </button>
-      <button class="mc-sector-card" style="border-left:3px solid var(--mc-azul);margin-bottom:10px;background:linear-gradient(135deg, var(--bg-primary) 0%, var(--mc-azul-claro) 100%);" onclick="goTo('s-adm-prod-conf')">
-        <div class="mc-sector-icon blue">🥐</div>
-        <div class="mc-sector-info">
-          <div class="mc-sector-title" style="color:var(--mc-azul);">Produtos da Confeitaria</div>
-          <div class="mc-sector-desc">Cadastrar produtos com gramatura padrão</div>
-        </div>
-        <span class="mc-sector-arrow" style="color:var(--mc-azul);">›</span>
-      </button>
-      <button class="mc-sector-card" style="border-left:3px solid var(--mc-verde);margin-bottom:10px;background:linear-gradient(135deg, var(--bg-primary) 0%, var(--mc-verde-claro) 100%);" onclick="goTo('s-adm-mr')">
-        <div class="mc-sector-icon green">🥄</div>
-        <div class="mc-sector-info">
-          <div class="mc-sector-title" style="color:#065f46;">Massas & Recheios</div>
-          <div class="mc-sector-desc">Tipos disponíveis nos lançamentos</div>
-        </div>
-        <span class="mc-sector-arrow" style="color:#065f46;">›</span>
-      </button>
-      <button class="mc-sector-card" style="border-left:3px solid #0891b2;margin-bottom:10px;background:linear-gradient(135deg, var(--bg-primary) 0%, #ecfeff 100%);" onclick="goTo('s-adm-contagem-itens')">
-        <div class="mc-sector-icon blue">📋</div>
-        <div class="mc-sector-info">
-          <div class="mc-sector-title" style="color:#0c4a6e;">Itens de Contagem</div>
-          <div class="mc-sector-desc">Matéria prima, plásticos, kits, produto acabado</div>
-        </div>
-        <span class="mc-sector-arrow" style="color:#0c4a6e;">›</span>
-      </button>
-      <button class="mc-sector-card" style="border-left:3px solid #92400e;margin-bottom:16px;background:linear-gradient(135deg, var(--bg-primary) 0%, var(--mc-dourado-claro) 100%);" onclick="goTo('s-adm-farinhas-cfg')">
-        <div class="mc-sector-icon gold">🌾</div>
-        <div class="mc-sector-info">
-          <div class="mc-sector-title" style="color:#92400e;">Farinhas & Estoques</div>
-          <div class="mc-sector-desc">Tipos de farinha por estoque (Dentro, Quadra, Confeitaria)</div>
-        </div>
-        <span class="mc-sector-arrow" style="color:#92400e;">›</span>
-      </button>
-      <button class="mc-sector-card" style="border-left:3px solid #dc2626;margin-bottom:16px;background:linear-gradient(135deg, var(--bg-primary) 0%, rgba(220, 38, 38, 0.1) 100%);" onclick="renderSenhasList()">
-        <div class="mc-sector-icon red">🔐</div>
-        <div class="mc-sector-info">
-          <div class="mc-sector-title" style="color:#dc2626;">Gerenciar Senhas</div>
-          <div class="mc-sector-desc">Alterar senhas de acesso dos setores</div>
-        </div>
-        <span class="mc-sector-arrow" style="color:#dc2626;">›</span>
+        <span class="mc-sector-arrow" style="color:var(--mc-indigo);">›</span>
       </button>
 
       <div class="mc-section-header">Setores de produção</div>
@@ -3017,6 +2970,73 @@
   </div>
 
   <!-- ADMIN BUSCAR PRODUTO -->
+
+  <div class="screen" id="s-adm-cadastros">
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="goTo('s-adm-hub')">‹</button>
+      <div class="mc-brand"><div class="mc-brand-logo">MC</div><div class="mc-brand-text"><div class="mc-brand-name">Monte Castelo</div><div class="mc-brand-sub">Administrativo</div></div></div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info"><div class="mc-page-title">🗂️ Cadastros & Configurações</div><div class="mc-page-sub">Bases, produtos e ajustes do sistema</div></div>
+    </div>
+    <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;">
+      <button class="mc-sector-card" style="border-left:3px solid var(--mc-verde);margin-bottom:10px;background:linear-gradient(135deg, var(--bg-primary) 0%, var(--mc-verde-claro) 100%);" onclick="goTo('s-adm-mr')">
+        <div class="mc-sector-icon green">🥄</div>
+        <div class="mc-sector-info">
+          <div class="mc-sector-title" style="color:#065f46;">Massas & Recheios</div>
+          <div class="mc-sector-desc">Tipos disponíveis nos lançamentos</div>
+        </div>
+        <span class="mc-sector-arrow" style="color:#065f46;">›</span>
+      </button>
+      <button class="mc-sector-card" style="border-left:3px solid var(--mc-azul);margin-bottom:10px;background:linear-gradient(135deg, var(--bg-primary) 0%, var(--mc-azul-claro) 100%);" onclick="goTo('s-adm-prod-conf')">
+        <div class="mc-sector-icon blue">🥐</div>
+        <div class="mc-sector-info">
+          <div class="mc-sector-title" style="color:var(--mc-azul);">Produtos da Confeitaria</div>
+          <div class="mc-sector-desc">Cadastrar produtos com gramatura padrão</div>
+        </div>
+        <span class="mc-sector-arrow" style="color:var(--mc-azul);">›</span>
+      </button>
+      <button class="mc-sector-card" style="border-left:3px solid var(--mc-dourado);margin-bottom:10px;background:linear-gradient(135deg, var(--bg-primary) 0%, var(--mc-dourado-claro) 100%);" onclick="goTo('s-adm-kits')">
+        <div class="mc-sector-icon gold">🍞</div>
+        <div class="mc-sector-info">
+          <div class="mc-sector-title" style="color:#92400e;">Kits & Produtos (Quadra)</div>
+          <div class="mc-sector-desc">Cadastrar receitas e produtos da Quadra</div>
+        </div>
+        <span class="mc-sector-arrow" style="color:#92400e;">›</span>
+      </button>
+      <button class="mc-sector-card" style="border-left:3px solid var(--mc-azul);margin-bottom:10px;" onclick="goTo('s-mp-home')">
+        <div class="mc-sector-icon blue">🧪</div>
+        <div class="mc-sector-info">
+          <div class="mc-sector-title">Matérias-Primas</div>
+          <div class="mc-sector-desc">Base de ingredientes e fichas técnicas</div>
+        </div>
+        <span class="mc-sector-arrow">›</span>
+      </button>
+      <button class="mc-sector-card" style="border-left:3px solid #0891b2;margin-bottom:10px;background:linear-gradient(135deg, var(--bg-primary) 0%, #ecfeff 100%);" onclick="goTo('s-adm-contagem-itens')">
+        <div class="mc-sector-icon blue">📋</div>
+        <div class="mc-sector-info">
+          <div class="mc-sector-title" style="color:#0c4a6e;">Itens de Contagem</div>
+          <div class="mc-sector-desc">Matéria prima, plásticos, kits, produto acabado</div>
+        </div>
+        <span class="mc-sector-arrow" style="color:#0c4a6e;">›</span>
+      </button>
+      <button class="mc-sector-card" style="border-left:3px solid #92400e;margin-bottom:16px;background:linear-gradient(135deg, var(--bg-primary) 0%, var(--mc-dourado-claro) 100%);" onclick="goTo('s-adm-farinhas-cfg')">
+        <div class="mc-sector-icon gold">🌾</div>
+        <div class="mc-sector-info">
+          <div class="mc-sector-title" style="color:#92400e;">Farinhas & Estoques</div>
+          <div class="mc-sector-desc">Tipos de farinha por estoque (Dentro, Quadra, Confeitaria)</div>
+        </div>
+        <span class="mc-sector-arrow" style="color:#92400e;">›</span>
+      </button>
+      <button class="mc-sector-card" style="border-left:3px solid #dc2626;margin-bottom:16px;background:linear-gradient(135deg, var(--bg-primary) 0%, rgba(220, 38, 38, 0.1) 100%);" onclick="renderSenhasList()">
+        <div class="mc-sector-icon red">🔐</div>
+        <div class="mc-sector-info">
+          <div class="mc-sector-title" style="color:#dc2626;">Gerenciar Senhas</div>
+          <div class="mc-sector-desc">Alterar senhas de acesso dos setores</div>
+        </div>
+        <span class="mc-sector-arrow" style="color:#dc2626;">›</span>
+      </button>
+    </div>
+  </div>
   <div class="screen" id="s-adm-buscar">
     <div class="mc-header">
       <button class="mc-header-back" onclick="goTo('s-adm-hub')">‹</button>
@@ -3049,7 +3069,7 @@
   <!-- ADMIN KITS HUB -->
   <div class="screen" id="s-adm-kits">
     <div class="mc-header">
-      <button class="mc-header-back" onclick="goTo('s-adm-hub')">‹</button>
+      <button class="mc-header-back" onclick="goTo('s-adm-cadastros')">‹</button>
       <div class="mc-brand">
         <div class="mc-brand-logo">MC</div>
         <div class="mc-brand-text">
@@ -3118,7 +3138,7 @@
   <!-- ADMIN PRODUTOS CONFEITARIA -->
   <div class="screen" id="s-adm-prod-conf">
     <div class="mc-header">
-      <button class="mc-header-back" onclick="goTo('s-adm-hub')">‹</button>
+      <button class="mc-header-back" onclick="goTo('s-adm-cadastros')">‹</button>
       <div class="mc-brand">
         <div class="mc-brand-logo">MC</div>
         <div class="mc-brand-text">
@@ -3164,7 +3184,7 @@
   <!-- ADMIN MASSAS E RECHEIOS -->
   <div class="screen" id="s-adm-mr">
     <div class="mc-header">
-      <button class="mc-header-back" onclick="goTo('s-adm-hub')">‹</button>
+      <button class="mc-header-back" onclick="goTo('s-adm-cadastros')">‹</button>
       <div class="mc-brand">
         <div class="mc-brand-logo">MC</div>
         <div class="mc-brand-text">
@@ -3219,7 +3239,7 @@
   <!-- ADMIN GERENCIAR SENHAS -->
   <div class="screen" id="s-adm-senhas">
     <div class="mc-header">
-      <button class="mc-header-back" onclick="goTo('s-adm-hub')">‹</button>
+      <button class="mc-header-back" onclick="goTo('s-adm-cadastros')">‹</button>
       <div class="mc-brand">
         <div class="mc-brand-logo">MC</div>
         <div class="mc-brand-text">
@@ -3275,7 +3295,7 @@
 
   <div class="screen" id="s-adm-contagem-itens">
     <div class="mc-header">
-      <button class="mc-header-back" onclick="goTo('s-adm-hub')">‹</button>
+      <button class="mc-header-back" onclick="goTo('s-adm-cadastros')">‹</button>
       <div class="mc-brand">
         <div class="mc-brand-logo">MC</div>
         <div class="mc-brand-text">
@@ -3317,7 +3337,7 @@
   <!-- ADMIN FARINHAS CONFIG -->
   <div class="screen" id="s-adm-farinhas-cfg">
     <div class="mc-header">
-      <button class="mc-header-back" onclick="goTo('s-adm-hub')">‹</button>
+      <button class="mc-header-back" onclick="goTo('s-adm-cadastros')">‹</button>
       <div class="mc-brand">
         <div class="mc-brand-logo">MC</div>
         <div class="mc-brand-text">
