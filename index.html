@@ -907,6 +907,74 @@
     </div>
   </div>
 
+  <!-- ESTOQUE: COZINHA (recheios) -->
+  <div class="screen" id="s-estoque-coz">
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="goTo('s-coz-home')">‹</button>
+      <div class="mc-brand"><div class="mc-brand-logo">MC</div><div class="mc-brand-text"><div class="mc-brand-name">Monte Castelo</div><div class="mc-brand-sub">Cozinha</div></div></div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info"><div class="mc-page-title">📦 Estoque de Recheios</div><div class="mc-page-sub">Saldo em tempo real</div></div>
+      <div class="mc-header-actions"><button class="mc-act-btn-secondary" onclick="abrirDescarteEstoque('recheio','Cozinha')">🗑️ Descartar</button></div>
+    </div>
+    <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;"><div id="estoque-coz-list"></div></div>
+  </div>
+
+  <!-- ESTOQUE: CONFEITARIA (massas + recheios) -->
+  <div class="screen" id="s-estoque-conf">
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="goTo('s-conf-home')">‹</button>
+      <div class="mc-brand"><div class="mc-brand-logo">MC</div><div class="mc-brand-text"><div class="mc-brand-name">Monte Castelo</div><div class="mc-brand-sub">Confeitaria</div></div></div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info"><div class="mc-page-title">📦 Estoque</div><div class="mc-page-sub">Massas e recheios · tempo real</div></div>
+      <div class="mc-header-actions"><button class="mc-act-btn-secondary" onclick="abrirDescarteEstoque('massa','Confeitaria')">🗑️ Descartar massa</button></div>
+    </div>
+    <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;"><div id="estoque-conf-list"></div></div>
+  </div>
+
+  <!-- ESTOQUE: DESCARTE -->
+  <div class="screen" id="s-estoque-descarte">
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="voltarDescarte()">‹</button>
+      <div class="mc-brand"><div class="mc-brand-logo">MC</div><div class="mc-brand-text"><div class="mc-brand-name">Monte Castelo</div><div class="mc-brand-sub">Estoque</div></div></div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info"><div class="mc-page-title" id="descarte-titulo">🗑️ Descartar</div><div class="mc-page-sub">Baixa de estoque com justificativa</div></div>
+    </div>
+    <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;">
+      <div class="card">
+        <div class="card-label">Item</div>
+        <select id="descarte-item" style="width:100%;margin-top:6px;font-size:14px;padding:10px;border-radius:8px;border:1px solid var(--border-md,#d1d5db);"></select>
+        <div class="card-label" style="margin-top:12px;">Quantidade a descartar (kg)</div>
+        <input type="number" id="descarte-qtd" step="0.001" min="0" inputmode="decimal" placeholder="0" style="width:100%;margin-top:6px;font-size:14px;padding:10px;border-radius:8px;border:1px solid var(--border-md,#d1d5db);" />
+        <div class="card-label" style="margin-top:12px;">Motivo</div>
+        <select id="descarte-motivo" style="width:100%;margin-top:6px;font-size:14px;padding:10px;border-radius:8px;border:1px solid var(--border-md,#d1d5db);">
+          <option value="">— selecione —</option>
+          <option>Queda no chão</option>
+          <option>Contaminação</option>
+          <option>Vencido / estragado</option>
+          <option>Sobra de produção</option>
+          <option>Erro de produção</option>
+          <option>Outro</option>
+        </select>
+        <button class="btn btn-primary" style="width:100%;margin-top:16px;" onclick="salvarDescarteEstoque()">Confirmar descarte 🗑️</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ESTOQUE: ADMIN -->
+  <div class="screen" id="s-estoque-admin">
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="goTo('s-adm-hub')">‹</button>
+      <div class="mc-brand"><div class="mc-brand-logo">MC</div><div class="mc-brand-text"><div class="mc-brand-name">Monte Castelo</div><div class="mc-brand-sub">Administrativo</div></div></div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info"><div class="mc-page-title">📦 Controle de Estoque</div><div class="mc-page-sub">Massas e recheios</div></div>
+    </div>
+    <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;">
+      <div id="estoque-admin-toggle"></div>
+      <div id="estoque-admin-list"></div>
+      <div id="estoque-admin-hist" style="margin-top:8px;"></div>
+    </div>
+  </div>
+
   <!-- PIN LOGIN -->
   <div class="screen" id="s-pin">
     <div class="pin-screen" id="pin-bg">
@@ -995,6 +1063,14 @@
 
       <div class="mc-section-header">Consultas</div>
       <div class="mc-sector-grid">
+        <button class="mc-sector-card" onclick="goTo('s-estoque-conf')">
+          <div class="mc-sector-icon green">📦</div>
+          <div class="mc-sector-info">
+            <div class="mc-sector-title">Estoque</div>
+            <div class="mc-sector-desc">Massas e recheios · tempo real · descarte</div>
+          </div>
+          <span class="mc-sector-arrow">›</span>
+        </button>
         <button class="mc-sector-card" onclick="goTo('s-meus-reg')">
           <div class="mc-sector-icon blue">📊</div>
           <div class="mc-sector-info">
@@ -1332,6 +1408,14 @@
           <div class="mc-sector-info">
             <div class="mc-sector-title">Lançar recheio</div>
             <div class="mc-sector-desc">Registrar produção</div>
+          </div>
+          <span class="mc-sector-arrow">›</span>
+        </button>
+        <button class="mc-sector-card" onclick="goTo('s-estoque-coz')">
+          <div class="mc-sector-icon green">📦</div>
+          <div class="mc-sector-info">
+            <div class="mc-sector-title">Estoque de recheios</div>
+            <div class="mc-sector-desc">Saldo em tempo real · descarte</div>
           </div>
           <span class="mc-sector-arrow">›</span>
         </button>
@@ -2691,6 +2775,14 @@
         </div>
         <span class="mc-sector-arrow" style="color:var(--mc-indigo);">›</span>
       </button>
+      <button class="mc-sector-card" style="border-left:3px solid var(--mc-verde);margin-bottom:10px;background:linear-gradient(135deg, var(--bg-primary) 0%, var(--mc-verde-claro) 100%);" onclick="goTo('s-estoque-admin')">
+        <div class="mc-sector-icon green">📦</div>
+        <div class="mc-sector-info">
+          <div class="mc-sector-title" style="color:var(--mc-verde);">Controle de Estoque</div>
+          <div class="mc-sector-desc">Saldo de massas/recheios · chave-mestra · ajuste de saldo</div>
+        </div>
+        <span class="mc-sector-arrow" style="color:var(--mc-verde);">›</span>
+      </button>
       <button class="mc-sector-card" style="border-left:3px solid var(--mc-vermelho);margin-bottom:10px;background:linear-gradient(135deg, var(--bg-primary) 0%, var(--mc-vermelho-claro) 100%);" onclick="goTo('s-prioridades')">
         <div class="mc-sector-icon red">🚩</div>
         <div class="mc-sector-info">
@@ -3808,6 +3900,10 @@ function atualizarTela(){
   const tela=document.querySelector('.screen.active')?.id;
   if(!tela||tela==='loading'){ goTo('s-inicio'); return; }
   if(tela==='s-conf-home') renderConfHome();
+  if(tela==='s-estoque-coz') renderEstoqueCoz();
+  if(tela==='s-estoque-conf') renderEstoqueConf();
+  if(tela==='s-estoque-admin') renderEstoqueAdmin();
+  if(tela==='s-estoque-descarte') renderDescarteEstoque();
   if(tela==='s-coz-home') renderCozHome();
   if(tela==='s-emb-home') renderEmbalagem(); // embManual listener triggers this
   if(tela==='s-emb-sel-data') renderSelDataEmb();
@@ -3912,6 +4008,10 @@ function goTo(id){
   if(id==='s-exp-home') renderExpedicao();
   if(id==='s-exp-manual') renderExpManual();
   if(id==='s-mp-home') renderMP();
+  if(id==='s-estoque-coz') renderEstoqueCoz();
+  if(id==='s-estoque-conf') renderEstoqueConf();
+  if(id==='s-estoque-admin') renderEstoqueAdmin();
+  if(id==='s-estoque-descarte') renderDescarteEstoque();
   if(id==='s-rastreio'){
     popularSelectMPRastreio();
     if(!document.getElementById('rastreio-ini').value){ rastreioPeriodoRapido('mes'); }
@@ -4098,6 +4198,15 @@ async function salvar(){
   const r2=parseFloat(document.getElementById('i-r2').value)||0;
   const obs=document.getElementById('i-obs').value;
   
+  // BLOQUEIO por estoque (massa/recheio) — só quando o controle está ligado
+  if(estoqueControleAtivo){
+    const faltas=verificarEstoqueProduto(prodSel,massa,r1,r2);
+    if(faltas.length){
+      alert('🚫 Estoque insuficiente para lançar este produto:\n\n'+faltas.join('\n')+'\n\nLance a produção da massa/recheio que falta, ou peça ao admin para ajustar o saldo / desligar o controle.');
+      return;
+    }
+  }
+
   const btn=document.getElementById('btn-salvar');
   btn.textContent='Salvando...';btn.className='btn btn-disabled';
   const qtdPct=prodSel.qtdPct||1;
@@ -10541,6 +10650,175 @@ async function exportarRastreioExcel(){
 window.rastreioPeriodoRapido=rastreioPeriodoRapido; window.popularSelectMPRastreio=popularSelectMPRastreio;
 window.calcularRastreio=calcularRastreio; window.renderRastreioResult=renderRastreioResult;
 window.toggleRastreioDet=toggleRastreioDet; window.exportarRastreioExcel=exportarRastreioExcel;
+
+// ===== CONTROLE DE ESTOQUE DE MASSAS E RECHEIOS (tempo real, calculado) =====
+let descartesEstoque=[], ajustesEstoque=[], estoqueControleAtivo=true;
+
+onSnapshot(collection(db,'descartesEstoque'), snap=>{
+  try{ descartesEstoque=snap.docs.map(d=>({firestoreId:d.id,...d.data()})); _refreshEstoqueScreens(); }catch(e){console.error('descartes snap',e);}
+});
+onSnapshot(collection(db,'ajustesEstoque'), snap=>{
+  try{ ajustesEstoque=snap.docs.map(d=>({firestoreId:d.id,...d.data()})); _refreshEstoqueScreens(); }catch(e){console.error('ajustes snap',e);}
+});
+onSnapshot(doc(db,'configuracoes','controleEstoque'), snap=>{
+  try{ estoqueControleAtivo = snap.exists()?(snap.data().ativo!==false):true; _refreshEstoqueScreens(); }catch(e){console.error('toggle snap',e);}
+});
+function _refreshEstoqueScreens(){
+  const t=document.querySelector('.screen.active')?.id;
+  if(t && t.indexOf('s-estoque')===0) atualizarTela();
+}
+
+function calcEstoqueMassasRecheios(){
+  const norm=_normNome;
+  const massas={}, recheios={};
+  massasFirebase.forEach(m=>{ massas[norm(m.nome)]={nome:m.nome,entrada:0,consumo:0,descarte:0,ajuste:0}; });
+  recheiosFirebase.forEach(r=>{ recheios[norm(r.nome)]={nome:r.nome,entrada:0,consumo:0,descarte:0,ajuste:0}; });
+  function ensure(map,nome){ const k=norm(nome); if(!map[k]) map[k]={nome:nome,entrada:0,consumo:0,descarte:0,ajuste:0}; return map[k]; }
+  // entradas (produção de batelada)
+  regMassas.forEach(r=>{ if(r.massa) ensure(massas,r.massa).entrada+=parseFloat(r.qtdKg)||0; });
+  regRecheios.forEach(r=>{ if(r.recheio) ensure(recheios,r.recheio).entrada+=parseFloat(r.qtdKg)||0; });
+  // consumos (uso nos produtos da confeitaria)
+  registros.filter(r=>r.origem!=='quadra').forEach(r=>{
+    const pd=r.prodData||{};
+    if((parseFloat(r.massa)||0)>0 && pd.tipoMassa) ensure(massas,pd.tipoMassa).consumo+=parseFloat(r.massa)||0;
+    if((parseFloat(r.r1)||0)>0 && pd.tipoRecheio) ensure(recheios,pd.tipoRecheio).consumo+=parseFloat(r.r1)||0;
+    if((parseFloat(r.r2)||0)>0 && pd.tipoRecheio2) ensure(recheios,pd.tipoRecheio2).consumo+=parseFloat(r.r2)||0;
+  });
+  // descartes
+  descartesEstoque.forEach(d=>{ const map=d.tipo==='massa'?massas:recheios; ensure(map,d.nome).descarte+=parseFloat(d.qtd)||0; });
+  // ajustes (delta)
+  ajustesEstoque.forEach(a=>{ const map=a.tipo==='massa'?massas:recheios; ensure(map,a.nome).ajuste+=parseFloat(a.delta)||0; });
+  Object.values(massas).forEach(e=>e.saldo=e.entrada-e.consumo-e.descarte+e.ajuste);
+  Object.values(recheios).forEach(e=>e.saldo=e.entrada-e.consumo-e.descarte+e.ajuste);
+  return {massas,recheios};
+}
+function saldoEstoque(tipo,nome){
+  const c=calcEstoqueMassasRecheios();
+  const map=tipo==='massa'?c.massas:c.recheios;
+  const e=map[_normNome(nome)];
+  return e?e.saldo:0;
+}
+
+function _estoqueItemCard(e,comAjuste,tipo){
+  const neg=e.saldo<-0.0001;
+  const cor=neg?'var(--mc-vermelho)':(e.saldo>0.0001?'var(--mc-verde)':'var(--text-secondary)');
+  return '<div class="card" style="margin-bottom:8px;border-left:3px solid '+cor+';">'+
+    '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">'+
+    '<div style="flex:1;min-width:0;font-size:14px;font-weight:600;">'+e.nome+'</div>'+
+    '<div style="font-size:16px;font-weight:800;color:'+cor+';white-space:nowrap;">'+_fmtKg(e.saldo)+' kg</div></div>'+
+    '<div style="font-size:11px;color:var(--text-secondary);margin-top:3px;">Produzido '+_fmtKg(e.entrada)+' · Consumido '+_fmtKg(e.consumo)+' · Descarte '+_fmtKg(e.descarte)+(Math.abs(e.ajuste)>0.0001?(' · Ajuste '+(e.ajuste>0?'+':'')+_fmtKg(e.ajuste)):'')+'</div>'+
+    (comAjuste?'<button class="mc-act-btn-secondary" style="margin-top:8px;font-size:11px;padding:4px 10px;" onclick="abrirAjusteEstoque(\''+tipo+'\',\''+escapeJsStr(e.nome)+'\')">Definir saldo</button>':'')+
+    '</div>';
+}
+function renderEstoqueView(mostrar,comAjuste){
+  const c=calcEstoqueMassasRecheios();
+  function sec(titulo,map,tipo){
+    const itens=Object.values(map).filter(e=>(Math.abs(e.entrada)+Math.abs(e.consumo)+Math.abs(e.descarte)+Math.abs(e.ajuste))>0.0001)
+      .sort((a,b)=>(a.saldo-b.saldo)||a.nome.localeCompare(b.nome,'pt-BR'));
+    let h='<div class="mc-section-header">'+titulo+' ('+itens.length+')</div>';
+    h+= itens.length? itens.map(e=>_estoqueItemCard(e,comAjuste,tipo)).join('') : '<div class="empty">Sem movimentação ainda.</div>';
+    return h;
+  }
+  let html='';
+  if(mostrar==='recheio'||mostrar==='ambos') html+=sec('🥄 Recheios',c.recheios,'recheio');
+  if(mostrar==='massa'||mostrar==='ambos') html+=sec('⚖️ Massas',c.massas,'massa');
+  return html;
+}
+
+function renderEstoqueCoz(){ const el=document.getElementById('estoque-coz-list'); if(el) el.innerHTML=renderEstoqueView('recheio',false); }
+function renderEstoqueConf(){ const el=document.getElementById('estoque-conf-list'); if(el) el.innerHTML=renderEstoqueView('ambos',false); }
+function renderEstoqueAdmin(){
+  const on=estoqueControleAtivo;
+  const st=document.getElementById('estoque-admin-toggle');
+  if(st){
+    st.innerHTML='<div class="card" style="border-left:3px solid '+(on?'var(--mc-verde)':'var(--mc-vermelho)')+';margin-bottom:14px;">'+
+      '<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;">'+
+      '<div style="flex:1;min-width:0;"><div style="font-weight:700;">Controle de estoque: '+(on?'🟢 LIGADO':'🔴 DESLIGADO')+'</div>'+
+      '<div style="font-size:12px;color:var(--text-secondary);margin-top:2px;">'+(on?'Bloqueia o lançamento de produtos quando falta massa/recheio.':'Lançamentos liberados — o saldo pode ficar negativo.')+'</div></div>'+
+      '<button class="btn '+(on?'btn-laranja':'btn-verde')+'" style="white-space:nowrap;" onclick="toggleControleEstoque()">'+(on?'Desligar':'Ligar')+'</button>'+
+      '</div></div>';
+  }
+  const list=document.getElementById('estoque-admin-list'); if(list) list.innerHTML=renderEstoqueView('ambos',true);
+  const hist=document.getElementById('estoque-admin-hist');
+  if(hist){
+    const movs=[...descartesEstoque.map(d=>({...d,_t:'descarte'})),...ajustesEstoque.map(a=>({...a,_t:'ajuste'}))]
+      .sort((a,b)=>(b.timestamp||0)-(a.timestamp||0)).slice(0,40);
+    hist.innerHTML = movs.length? ('<div class="mc-section-header">Descartes e ajustes recentes</div>'+movs.map(m=>
+      m._t==='descarte'
+        ? '<div class="card" style="margin-bottom:6px;border-left:3px solid var(--mc-vermelho);"><div style="font-size:13px;"><strong>🗑️ '+m.nome+'</strong> · −'+_fmtKg(m.qtd)+' kg</div><div style="font-size:11px;color:var(--text-secondary);">'+(m.motivo||'')+' · '+(m.setor||'')+' · '+(m.hora||m.data||'')+'</div></div>'
+        : '<div class="card" style="margin-bottom:6px;border-left:3px solid var(--mc-azul);"><div style="font-size:13px;"><strong>⚙️ '+m.nome+'</strong> · definido p/ '+_fmtKg(m.valorAlvo)+' kg ('+(m.delta>=0?'+':'')+_fmtKg(m.delta)+')</div><div style="font-size:11px;color:var(--text-secondary);">'+(m.motivo||'')+' · '+(m.hora||m.data||'')+'</div></div>'
+    ).join('')) : '';
+  }
+}
+
+// ---- Descarte ----
+let _descarteTipo='recheio', _descarteSetor='Cozinha';
+function abrirDescarteEstoque(tipo,setor){ _descarteTipo=tipo; _descarteSetor=setor; goTo('s-estoque-descarte'); }
+function voltarDescarte(){ goTo(_descarteSetor==='Cozinha'?'s-estoque-coz':'s-estoque-conf'); }
+function renderDescarteEstoque(){
+  const tit=document.getElementById('descarte-titulo'); if(tit) tit.textContent='🗑️ Descartar '+(_descarteTipo==='massa'?'massa':'recheio');
+  const c=calcEstoqueMassasRecheios();
+  const map=_descarteTipo==='massa'?c.massas:c.recheios;
+  const itens=Object.values(map).sort((a,b)=>a.nome.localeCompare(b.nome,'pt-BR'));
+  const sel=document.getElementById('descarte-item');
+  if(sel) sel.innerHTML='<option value="">— selecione —</option>'+itens.map(e=>'<option value="'+e.nome.replace(/"/g,'&quot;')+'">'+e.nome+' (saldo '+_fmtKg(e.saldo)+' kg)</option>').join('');
+  const q=document.getElementById('descarte-qtd'); if(q) q.value='';
+}
+async function salvarDescarteEstoque(){
+  const nome=document.getElementById('descarte-item').value;
+  const qtd=parseFloat(document.getElementById('descarte-qtd').value)||0;
+  const motivo=document.getElementById('descarte-motivo').value;
+  if(!nome){ alert('Selecione o item.'); return; }
+  if(qtd<=0){ alert('Informe a quantidade descartada.'); return; }
+  if(!motivo){ alert('Selecione o motivo.'); return; }
+  if(estoqueControleAtivo){
+    const s=saldoEstoque(_descarteTipo,nome);
+    if(qtd>s+0.0001){ alert('🚫 Não dá pra descartar '+_fmtKg(qtd)+' kg: o saldo atual é '+_fmtKg(s)+' kg.\n\nPeça ao admin para ajustar o saldo ou desligar o controle.'); return; }
+  }
+  try{
+    await addDoc(collection(db,'descartesEstoque'),{tipo:_descarteTipo,nome,qtd,motivo,setor:_descarteSetor,data:hoje(),hora:agora(),timestamp:Date.now()});
+    alert('✓ Descarte de '+_fmtKg(qtd)+' kg registrado!');
+    voltarDescarte();
+  }catch(e){ alert('Erro: '+e.message); }
+}
+
+// ---- Ajuste (admin): definir saldo exato ----
+async function abrirAjusteEstoque(tipo,nome){
+  const s=saldoEstoque(tipo,nome);
+  const v=prompt('Definir o saldo de "'+nome+'" para quantos kg?\n\nSaldo atual: '+_fmtKg(s)+' kg', String(Math.round(s*1000)/1000));
+  if(v===null) return;
+  const alvo=parseFloat(String(v).replace(',','.'));
+  if(isNaN(alvo)){ alert('Valor inválido.'); return; }
+  const delta=alvo-s;
+  try{
+    await addDoc(collection(db,'ajustesEstoque'),{tipo,nome,delta,valorAlvo:alvo,saldoAntes:s,motivo:'Definir saldo (admin)',setor:'admin',data:hoje(),hora:agora(),timestamp:Date.now()});
+    alert('✓ Saldo de "'+nome+'" definido para '+_fmtKg(alvo)+' kg.');
+  }catch(e){ alert('Erro: '+e.message); }
+}
+
+// ---- Chave-mestra (admin) ----
+async function toggleControleEstoque(){
+  const novo=!estoqueControleAtivo;
+  const msg=novo
+    ? 'LIGAR o controle de estoque?\n\nOs lançamentos passam a ser BLOQUEADOS quando faltar massa/recheio.'
+    : 'DESLIGAR o controle de estoque?\n\nOs lançamentos ficam LIBERADOS mesmo sem saldo (o estoque pode ficar negativo).';
+  if(!confirm(msg)) return;
+  try{ await setDoc(doc(db,'configuracoes','controleEstoque'),{ativo:novo}); }catch(e){ alert('Erro: '+e.message); }
+}
+
+// ---- Validação usada no lançamento de produto (Confeitaria) ----
+function verificarEstoqueProduto(prodSel,massa,r1,r2){
+  const faltas=[];
+  if((parseFloat(massa)||0)>0 && prodSel.tipoMassa){ const s=saldoEstoque('massa',prodSel.tipoMassa); if(s<massa-0.0001) faltas.push('• Massa "'+prodSel.tipoMassa+'": saldo '+_fmtKg(s)+' kg, precisa '+_fmtKg(massa)+' kg'); }
+  if((parseFloat(r1)||0)>0 && prodSel.tipoRecheio){ const s=saldoEstoque('recheio',prodSel.tipoRecheio); if(s<r1-0.0001) faltas.push('• Recheio "'+prodSel.tipoRecheio+'": saldo '+_fmtKg(s)+' kg, precisa '+_fmtKg(r1)+' kg'); }
+  if((parseFloat(r2)||0)>0 && prodSel.tipoRecheio2){ const s=saldoEstoque('recheio',prodSel.tipoRecheio2); if(s<r2-0.0001) faltas.push('• Recheio "'+prodSel.tipoRecheio2+'": saldo '+_fmtKg(s)+' kg, precisa '+_fmtKg(r2)+' kg'); }
+  return faltas;
+}
+
+window.renderEstoqueCoz=renderEstoqueCoz; window.renderEstoqueConf=renderEstoqueConf; window.renderEstoqueAdmin=renderEstoqueAdmin;
+window.abrirDescarteEstoque=abrirDescarteEstoque; window.voltarDescarte=voltarDescarte; window.renderDescarteEstoque=renderDescarteEstoque; window.salvarDescarteEstoque=salvarDescarteEstoque;
+window.abrirAjusteEstoque=abrirAjusteEstoque; window.toggleControleEstoque=toggleControleEstoque;
+
 
 
 
