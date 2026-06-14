@@ -3017,6 +3017,41 @@
     <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;" id="adm-mr-content"></div>
   </div>
 
+  <!-- EDITOR DE FICHA TÉCNICA (massa / recheio) -->
+  <div class="screen" id="s-receita-edit">
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="goTo('s-adm-mr')">‹</button>
+      <div class="mc-brand">
+        <div class="mc-brand-logo">MC</div>
+        <div class="mc-brand-text">
+          <div class="mc-brand-name">Monte Castelo</div>
+          <div class="mc-brand-sub">Ficha Técnica</div>
+        </div>
+      </div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info">
+        <div class="mc-page-title" id="receita-titulo">Receita</div>
+        <div class="mc-page-sub" id="receita-sub">Ingredientes e rendimento</div>
+      </div>
+    </div>
+    <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;">
+      <div class="card" style="margin-bottom:12px;">
+        <div><div class="card-label">Código da receita</div><input type="text" id="receita-cod" placeholder="ex: 15026" inputmode="numeric" /></div>
+        <div style="margin-top:10px;"><div class="card-label">Nome (comece com MASSA ou RECHEIO)</div><input type="text" id="receita-nome" placeholder="ex: MASSA FOLHADA" style="text-transform:uppercase;" /></div>
+      </div>
+      <div class="card" style="margin-bottom:12px;">
+        <div class="card-label" style="margin-bottom:8px;">Adicionar ingrediente (da base de Matérias-Primas)</div>
+        <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+          <select id="receita-mp-sel" style="flex:2;min-width:150px;font-size:13px;padding:9px;border-radius:8px;border:1px solid var(--border-md,#d1d5db);"></select>
+          <input type="number" id="receita-mp-kg" step="0.001" placeholder="kg" inputmode="decimal" style="flex:1;min-width:70px;font-size:13px;padding:9px;border-radius:8px;border:1px solid var(--border-md,#d1d5db);" />
+          <button class="mc-act-btn-secondary" style="padding:9px 12px;" onclick="addReceitaIng()">+ Add</button>
+        </div>
+        <div id="receita-ings" style="margin-top:12px;"></div>
+      </div>
+      <button class="btn btn-primary" onclick="salvarReceita()" style="width:100%;">💾 Salvar ficha técnica</button>
+    </div>
+  </div>
+
   <!-- ADMIN GERENCIAR SENHAS -->
   <div class="screen" id="s-adm-senhas">
     <div class="mc-header">
@@ -9825,6 +9860,23 @@ function renderAdmMassasRecheios(){
   const migradoRecheios=totalRecheiosDB>0;
 
   let html='';
+
+  // Card de importação das fichas da Confeitaria (some quando todas já têm ficha)
+  if(typeof RECEITAS_CONF_SEED!=='undefined'){
+    let pend=0;
+    RECEITAS_CONF_SEED.forEach(r=>{
+      const lista=r.tipo==='Recheio'?recheiosFirebase:massasFirebase;
+      const ex=lista.find(x=>_normNome(x.nome)===_normNome(r.nome));
+      if(!ex || !(ex.ingredientes && ex.ingredientes.length)) pend++;
+    });
+    if(pend>0){
+      html+='<div class="card" style="background:#fef3c7;border:1px solid #fcd34d;margin-bottom:14px;">'+
+        '<div style="font-size:12px;color:#92400e;line-height:1.5;">Importar as fichas técnicas da Confeitaria (massas e recheios com ingredientes). Atualiza as existentes pelo nome, cria as novas, e adiciona a ÁGUA à base se faltar.</div>'+
+        '<button class="btn btn-laranja" style="margin-top:10px;width:100%;" onclick="importarFichasConfeitaria()">📥 Importar/atualizar fichas ('+pend+' pendente(s))</button>'+
+        '</div>';
+    }
+  }
+
   if(!migradoMassas||!migradoRecheios){
     const pendentes=[];
     if(!migradoMassas) pendentes.push(totalMassasCode+' massa(s)');
@@ -9846,7 +9898,7 @@ function renderAdmMassasRecheios(){
   // ============ MASSAS ============
   html+='<div class="mc-section-header" style="display:flex;align-items:center;gap:8px;">';
   html+='<span>🌾 Massas ('+(migradoMassas?totalMassasDB:totalMassasCode)+')</span>';
-  html+='<button class="mc-act-btn-secondary" style="font-size:11px;padding:4px 10px;margin-left:auto;" onclick="adicionarMassa()">+ Nova Massa</button>';
+  html+='<button class="mc-act-btn-secondary" style="font-size:11px;padding:4px 10px;margin-left:auto;" onclick="abrirReceitaEditor(\'massasList\',null,\'Massa\')">+ Nova Massa</button>';
   html+='</div>';
 
   const listaMassas=migradoMassas
@@ -9859,10 +9911,18 @@ function renderAdmMassasRecheios(){
   } else {
     listaMassas.forEach(m=>{
       const isFB=m._origem==='firebase';
+      const nIng=(m.ingredientes||[]).length;
+      const rend=m.rendimentoKg||0;
+      const temFicha=nIng>0;
       html+='<div style="background:var(--bg-primary);border:1px solid var(--border);border-left:3px solid '+(isFB?'var(--mc-verde)':'var(--text-muted)')+';border-radius:var(--r-md);padding:10px 12px;margin-bottom:6px;display:flex;align-items:center;gap:10px;">';
-      html+='<div style="flex:1;font-size:13px;font-weight:500;color:var(--text-primary);">'+(m.nome||'')+'</div>';
+      html+='<div style="flex:1;min-width:0;">';
+      html+='<div style="font-size:13px;font-weight:600;color:var(--text-primary);">'+(m.nome||'')+'</div>';
       if(isFB){
-        html+='<button class="mc-act-btn-secondary" style="font-size:11px;padding:4px 10px;" onclick="editarMassaNome(\''+m.firestoreId+'\')">Editar</button>';
+        html+='<div style="font-size:11px;color:var(--text-secondary);margin-top:2px;">'+(m.codigo?'Cód '+m.codigo+' · ':'')+(temFicha?(nIng+' ingrediente(s) · rende '+rend+' kg'):'<span style="color:var(--mc-laranja);">sem ficha técnica</span>')+'</div>';
+      }
+      html+='</div>';
+      if(isFB){
+        html+='<button class="mc-act-btn-secondary" style="font-size:11px;padding:4px 10px;" onclick="abrirReceitaEditor(\'massasList\',\''+m.firestoreId+'\',\'Massa\')">'+(temFicha?'Ficha':'+ Ficha')+'</button>';
         html+='<button class="mc-act-btn-secondary" style="border-color:var(--mc-vermelho);color:var(--mc-vermelho);font-size:11px;padding:4px 10px;" onclick="excluirMassaNome(\''+m.firestoreId+'\',\''+escapeJsStr(m.nome)+'\')">×</button>';
       } else {
         html+='<span style="font-size:9px;color:var(--text-muted);">🔒 código</span>';
@@ -9874,7 +9934,7 @@ function renderAdmMassasRecheios(){
   // ============ RECHEIOS ============
   html+='<div class="mc-section-header" style="display:flex;align-items:center;gap:8px;margin-top:20px;">';
   html+='<span>🥄 Recheios ('+(migradoRecheios?totalRecheiosDB:totalRecheiosCode)+')</span>';
-  html+='<button class="mc-act-btn-secondary" style="font-size:11px;padding:4px 10px;margin-left:auto;" onclick="adicionarRecheio()">+ Novo Recheio</button>';
+  html+='<button class="mc-act-btn-secondary" style="font-size:11px;padding:4px 10px;margin-left:auto;" onclick="abrirReceitaEditor(\'recheiosList\',null,\'Recheio\')">+ Novo Recheio</button>';
   html+='</div>';
 
   const listaRecheios=migradoRecheios
@@ -9887,10 +9947,18 @@ function renderAdmMassasRecheios(){
   } else {
     listaRecheios.forEach(r=>{
       const isFB=r._origem==='firebase';
+      const nIng=(r.ingredientes||[]).length;
+      const rend=r.rendimentoKg||0;
+      const temFicha=nIng>0;
       html+='<div style="background:var(--bg-primary);border:1px solid var(--border);border-left:3px solid '+(isFB?'var(--mc-laranja)':'var(--text-muted)')+';border-radius:var(--r-md);padding:10px 12px;margin-bottom:6px;display:flex;align-items:center;gap:10px;">';
-      html+='<div style="flex:1;font-size:13px;font-weight:500;color:var(--text-primary);">'+(r.nome||'')+'</div>';
+      html+='<div style="flex:1;min-width:0;">';
+      html+='<div style="font-size:13px;font-weight:600;color:var(--text-primary);">'+(r.nome||'')+'</div>';
       if(isFB){
-        html+='<button class="mc-act-btn-secondary" style="font-size:11px;padding:4px 10px;" onclick="editarRecheioNome(\''+r.firestoreId+'\')">Editar</button>';
+        html+='<div style="font-size:11px;color:var(--text-secondary);margin-top:2px;">'+(r.codigo?'Cód '+r.codigo+' · ':'')+(temFicha?(nIng+' ingrediente(s) · rende '+rend+' kg'):'<span style="color:var(--mc-laranja);">sem ficha técnica</span>')+'</div>';
+      }
+      html+='</div>';
+      if(isFB){
+        html+='<button class="mc-act-btn-secondary" style="font-size:11px;padding:4px 10px;" onclick="abrirReceitaEditor(\'recheiosList\',\''+r.firestoreId+'\',\'Recheio\')">'+(temFicha?'Ficha':'+ Ficha')+'</button>';
         html+='<button class="mc-act-btn-secondary" style="border-color:var(--mc-vermelho);color:var(--mc-vermelho);font-size:11px;padding:4px 10px;" onclick="excluirRecheioNome(\''+r.firestoreId+'\',\''+escapeJsStr(r.nome)+'\')">×</button>';
       } else {
         html+='<span style="font-size:9px;color:var(--text-muted);">🔒 código</span>';
@@ -9978,6 +10046,150 @@ async function migrarMassasRecheios(){
 }
 
 window.renderAdmMassasRecheios=renderAdmMassasRecheios;
+
+// ===== EDITOR DE FICHA TÉCNICA (massas / recheios da Confeitaria) =====
+let _receitaColecao=null; // 'massasList' | 'recheiosList'
+let _receitaTipo='Massa';
+let _receitaId=null;      // firestoreId ou null (nova)
+let _receitaIngs=[];      // [{mpCodigo, mpNome, mpUnidade, kg}]
+
+function popularSelectMP(selId, atual){
+  const sel=document.getElementById(selId); if(!sel) return;
+  const ord=[...materiasPrimas].sort((a,b)=>(a.nome||'').localeCompare(b.nome||'','pt-BR'));
+  sel.innerHTML='<option value="">— selecione a matéria-prima —</option>'+
+    ord.map(m=>`<option value="${m.codigo}">${m.nome} (${m.codigo})</option>`).join('');
+  if(atual) sel.value=atual;
+}
+
+window.abrirReceitaEditor=(colecao, fid, tipo)=>{
+  _receitaColecao=colecao; _receitaTipo=tipo||'Receita'; _receitaId=fid||null; _receitaIngs=[];
+  const lista = colecao==='massasList' ? massasFirebase : recheiosFirebase;
+  const r = fid ? lista.find(x=>x.firestoreId===fid) : null;
+  const t=document.getElementById('receita-titulo'); if(t) t.textContent=(r?'Editar ':'Nova ')+_receitaTipo;
+  const cod=document.getElementById('receita-cod'); if(cod) cod.value=(r&&r.codigo)?r.codigo:'';
+  const nome=document.getElementById('receita-nome'); if(nome) nome.value=(r&&r.nome)?r.nome:'';
+  _receitaIngs = (r&&Array.isArray(r.ingredientes)) ? r.ingredientes.map(i=>({...i})) : [];
+  popularSelectMP('receita-mp-sel');
+  renderReceitaIngs();
+  goTo('s-receita-edit');
+};
+
+function renderReceitaIngs(){
+  const el=document.getElementById('receita-ings'); if(!el) return;
+  if(materiasPrimas.length===0){
+    el.innerHTML='<div style="font-size:12px;color:var(--mc-laranja);font-style:italic;">Cadastre/importe as Matérias-Primas primeiro (tela 🧪 Matérias-Primas).</div>';
+    return;
+  }
+  if(_receitaIngs.length===0){
+    el.innerHTML='<div style="font-size:12px;color:var(--text-secondary);font-style:italic;">Nenhum ingrediente adicionado ainda.</div>';
+    return;
+  }
+  const total=_receitaIngs.reduce((s,i)=>s+(parseFloat(i.kg)||0),0);
+  el.innerHTML=_receitaIngs.map((i,idx)=>{
+    const kg=parseFloat(i.kg)||0;
+    const pct=total>0?(kg/total*100):0;
+    return `<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px dashed var(--border);">
+    <div style="flex:1;min-width:0;font-size:13px;">${i.mpNome} <span style="color:var(--text-secondary);font-size:11px;">(${i.mpCodigo})</span></div>
+    <div style="font-size:12px;color:var(--mc-azul);font-weight:600;white-space:nowrap;">${pct.toFixed(2)}%</div>
+    <div style="font-size:13px;font-weight:600;white-space:nowrap;min-width:64px;text-align:right;">${kg.toFixed(3)} ${i.mpUnidade||'kg'}</div>
+    <button onclick="removeReceitaIng(${idx})" style="background:none;border:1px solid var(--mc-vermelho);color:var(--mc-vermelho);border-radius:6px;padding:2px 9px;font-size:13px;cursor:pointer;font-family:inherit;">×</button>
+  </div>`;}).join('')+
+  `<div style="text-align:right;font-size:13px;font-weight:700;color:var(--mc-azul);margin-top:8px;">Total da receita: ${total.toFixed(3)} kg <span style="color:var(--text-secondary);font-weight:500;">(= 100%)</span></div>`;
+}
+
+window.addReceitaIng=()=>{
+  const sel=document.getElementById('receita-mp-sel');
+  const kgInp=document.getElementById('receita-mp-kg');
+  const cod=sel.value;
+  const kg=parseFloat(kgInp.value)||0;
+  if(!cod){ alert('Selecione a matéria-prima.'); return; }
+  if(kg<=0){ alert('Informe a quantidade em kg.'); return; }
+  const mp=materiasPrimas.find(m=>String(m.codigo)===String(cod));
+  if(!mp){ alert('Matéria-prima não encontrada.'); return; }
+  const existe=_receitaIngs.find(i=>String(i.mpCodigo)===String(cod));
+  if(existe){ existe.kg=(parseFloat(existe.kg)||0)+kg; }
+  else _receitaIngs.push({mpCodigo:String(mp.codigo), mpNome:mp.nome, mpUnidade:mp.unidade||'KG', kg:kg});
+  kgInp.value=''; sel.value='';
+  renderReceitaIngs();
+};
+
+window.removeReceitaIng=(idx)=>{ _receitaIngs.splice(idx,1); renderReceitaIngs(); };
+
+window.salvarReceita=async ()=>{
+  const cod=(document.getElementById('receita-cod').value||'').trim();
+  const nome=(document.getElementById('receita-nome').value||'').trim().toUpperCase();
+  if(!nome){ alert('Informe o nome da receita.'); return; }
+  if(!cod){ alert('Informe o código da receita.'); return; }
+  const total=_receitaIngs.reduce((s,i)=>s+(parseFloat(i.kg)||0),0);
+  // checagem leve de código duplicado dentro do mesmo tipo
+  const lista = _receitaColecao==='massasList' ? massasFirebase : recheiosFirebase;
+  const dup = lista.find(x=>String(x.codigo||'')===cod && x.firestoreId!==_receitaId);
+  if(dup){ if(!confirm('Já existe '+_receitaTipo.toLowerCase()+' com código '+cod+' ('+dup.nome+'). Salvar mesmo assim?')) return; }
+  const dados={
+    codigo:cod,
+    nome:nome,
+    ingredientes:_receitaIngs.map(i=>({mpCodigo:String(i.mpCodigo), mpNome:i.mpNome, mpUnidade:i.mpUnidade||'KG', kg:parseFloat(i.kg)||0})),
+    rendimentoKg:total,
+    atualizadoEm:agora()
+  };
+  try{
+    if(_receitaId){
+      await updateDoc(doc(db,_receitaColecao,_receitaId),dados);
+    } else {
+      await addDoc(collection(db,_receitaColecao),dados);
+    }
+    goTo('s-adm-mr');
+  }catch(e){ alert('Erro ao salvar: '+e.message); }
+};
+window.popularSelectMP=popularSelectMP; window.renderReceitaIngs=renderReceitaIngs;
+
+// ===== IMPORT DAS FICHAS DA CONFEITARIA (massas + recheios) =====
+const RECEITAS_CONF_SEED = [{"tipo": "Massa", "codigo": "15026", "nome": "MASSA FOLHADA", "ingredientes": [{"mpCodigo": "14047", "mpNome": "FARINHA DE TRIGO SUPER", "mpUnidade": "KG", "kg": 100.0}, {"mpCodigo": "14069", "mpNome": "MARGARINA FOLHADA", "mpUnidade": "KG", "kg": 39.0}, {"mpCodigo": "14147", "mpNome": "MARGARINA VIGOR (AMELIA)", "mpUnidade": "KG", "kg": 2.0}, {"mpCodigo": "99001", "mpNome": "ÁGUA", "mpUnidade": "KG", "kg": 52.0}, {"mpCodigo": "14109", "mpNome": "SAL", "mpUnidade": "KG", "kg": 2.5}]}, {"tipo": "Massa", "codigo": "15039", "nome": "MASSA UNIVERSAL", "ingredientes": [{"mpCodigo": "14138", "mpNome": "FARINHA PADEIRO", "mpUnidade": "KG", "kg": 23.7}, {"mpCodigo": "14019", "mpNome": "CALDO DE GALINHA", "mpUnidade": "KG", "kg": 0.675}, {"mpCodigo": "14109", "mpNome": "SAL", "mpUnidade": "KG", "kg": 0.555}, {"mpCodigo": "14147", "mpNome": "MARGARINA VIGOR (AMELIA)", "mpUnidade": "KG", "kg": 0.9}, {"mpCodigo": "14029", "mpNome": "CORANTE AMARELO GEMA", "mpUnidade": "KG", "kg": 0.022}, {"mpCodigo": "99001", "mpNome": "ÁGUA", "mpUnidade": "KG", "kg": 34.0}, {"mpCodigo": "14114", "mpNome": "SORO DE LEITE EM PO", "mpUnidade": "KG", "kg": 0.9}]}, {"tipo": "Massa", "codigo": "15040", "nome": "MASSA PÃO DE QUEIJO PURO", "ingredientes": [{"mpCodigo": "14074", "mpNome": "MISTURA PARA PÃO DE QUEIJO NORMAL", "mpUnidade": "KG", "kg": 75.0}, {"mpCodigo": "14132", "mpNome": "OVO EM GALAO", "mpUnidade": "KG", "kg": 22.5}, {"mpCodigo": "99001", "mpNome": "ÁGUA", "mpUnidade": "KG", "kg": 72.0}, {"mpCodigo": "14068", "mpNome": "MARGARINA COAMO", "mpUnidade": "KG", "kg": 2.25}, {"mpCodigo": "14109", "mpNome": "SAL", "mpUnidade": "KG", "kg": 2.62}, {"mpCodigo": "14082", "mpNome": "OLEO DE SOJA", "mpUnidade": "Litro", "kg": 8.0}, {"mpCodigo": "14114", "mpNome": "SORO DE LEITE EM PO", "mpUnidade": "KG", "kg": 2.4}, {"mpCodigo": "14100", "mpNome": "QUEIJO TROPICAL (PARMESÃO)", "mpUnidade": "KG", "kg": 7.5}, {"mpCodigo": "14098", "mpNome": "QUEIJO MINAS (MEIA CURA)", "mpUnidade": "KG", "kg": 12.0}]}, {"tipo": "Massa", "codigo": "15041", "nome": "MASSA PÃO DE QUEIJO RECHEADO", "ingredientes": [{"mpCodigo": "14073", "mpNome": "MISTURA DE PÃO DE QUEIJO RECHEADO 6520", "mpUnidade": "KG", "kg": 60.0}, {"mpCodigo": "14132", "mpNome": "OVO EM GALAO", "mpUnidade": "KG", "kg": 15.0}, {"mpCodigo": "99001", "mpNome": "ÁGUA", "mpUnidade": "KG", "kg": 25.4}, {"mpCodigo": "14082", "mpNome": "OLEO DE SOJA", "mpUnidade": "Litro", "kg": 6.0}, {"mpCodigo": "14098", "mpNome": "QUEIJO MINAS (MEIA CURA)", "mpUnidade": "KG", "kg": 12.0}]}, {"tipo": "Massa", "codigo": "15042", "nome": "MASSA CROQUETE DE FRANGO", "ingredientes": [{"mpCodigo": "99001", "mpNome": "ÁGUA", "mpUnidade": "KG", "kg": 30.54}, {"mpCodigo": "3968", "mpNome": "AMIDO ESPECIAL PODIUM (AMIDO PARA RECHEIO)", "mpUnidade": "KG", "kg": 0.138}, {"mpCodigo": "14019", "mpNome": "CALDO DE GALINHA", "mpUnidade": "KG", "kg": 0.596}, {"mpCodigo": "14023", "mpNome": "CEBOLA", "mpUnidade": "KG", "kg": 3.347}, {"mpCodigo": "14120", "mpNome": "COLORAU", "mpUnidade": "KG", "kg": 0.161}, {"mpCodigo": "14029", "mpNome": "CORANTE AMARELO GEMA", "mpUnidade": "KG", "kg": 0.012}, {"mpCodigo": "14046", "mpNome": "FARINHA DE ROSCA", "mpUnidade": "KG", "kg": 11.184}, {"mpCodigo": "14047", "mpNome": "FARINHA DE TRIGO SUPER", "mpUnidade": "KG", "kg": 12.92}, {"mpCodigo": "14058", "mpNome": "FILÉ PEITO DE FRANGO", "mpUnidade": "KG", "kg": 14.21}, {"mpCodigo": "14068", "mpNome": "MARGARINA COAMO", "mpUnidade": "KG", "kg": 0.49}, {"mpCodigo": "14077", "mpNome": "MOLHO REFOGADO", "mpUnidade": "KG", "kg": 0.809}, {"mpCodigo": "14097", "mpNome": "PROTEINA DE SOJA TEXTURIZADA NATURAL", "mpUnidade": "KG", "kg": 2.368}, {"mpCodigo": "14109", "mpNome": "SAL", "mpUnidade": "KG", "kg": 0.534}, {"mpCodigo": "14114", "mpNome": "SORO DE LEITE EM PO", "mpUnidade": "KG", "kg": 0.49}, {"mpCodigo": "14115", "mpNome": "TEMPERO VERDE", "mpUnidade": "KG", "kg": 1.319}, {"mpCodigo": "14116", "mpNome": "TOMATE", "mpUnidade": "KG", "kg": 3.34}]}, {"tipo": "Massa", "codigo": "15043", "nome": "MASSA CHURROS", "ingredientes": [{"mpCodigo": "14138", "mpNome": "FARINHA PADEIRO", "mpUnidade": "KG", "kg": 20.0}, {"mpCodigo": "14109", "mpNome": "SAL", "mpUnidade": "KG", "kg": 0.22}, {"mpCodigo": "14005", "mpNome": "AÇUCAR REFINADO", "mpUnidade": "KG", "kg": 3.4}, {"mpCodigo": "14068", "mpNome": "MARGARINA COAMO", "mpUnidade": "KG", "kg": 3.5}, {"mpCodigo": "99001", "mpNome": "ÁGUA", "mpUnidade": "KG", "kg": 25.5}, {"mpCodigo": "14083", "mpNome": "OLEO EMULSIFICANTE", "mpUnidade": "Litro", "kg": 0.03}]}, {"tipo": "Massa", "codigo": "15044", "nome": "MASSA BOLINHA DE AIPIM", "ingredientes": [{"mpCodigo": "14006", "mpNome": "AIPIM", "mpUnidade": "KG", "kg": 34.61}, {"mpCodigo": "14046", "mpNome": "FARINHA DE ROSCA", "mpUnidade": "KG", "kg": 12.5}, {"mpCodigo": "14115", "mpNome": "TEMPERO VERDE", "mpUnidade": "KG", "kg": 1.5}, {"mpCodigo": "14138", "mpNome": "FARINHA PADEIRO", "mpUnidade": "KG", "kg": 13.9}, {"mpCodigo": "14019", "mpNome": "CALDO DE GALINHA", "mpUnidade": "KG", "kg": 0.552}, {"mpCodigo": "14109", "mpNome": "SAL", "mpUnidade": "KG", "kg": 0.602}, {"mpCodigo": "14068", "mpNome": "MARGARINA COAMO", "mpUnidade": "KG", "kg": 0.736}, {"mpCodigo": "14059", "mpNome": "FLOCOS DE BATATA", "mpUnidade": "KG", "kg": 2.28}, {"mpCodigo": "14029", "mpNome": "CORANTE AMARELO GEMA", "mpUnidade": "KG", "kg": 0.018}, {"mpCodigo": "99001", "mpNome": "ÁGUA", "mpUnidade": "KG", "kg": 27.81}, {"mpCodigo": "14114", "mpNome": "SORO DE LEITE EM PO", "mpUnidade": "KG", "kg": 0.736}]}, {"tipo": "Massa", "codigo": "15045", "nome": "MASSA CROISSANT", "ingredientes": [{"mpCodigo": "14138", "mpNome": "FARINHA PADEIRO", "mpUnidade": "KG", "kg": 21.6}, {"mpCodigo": "14147", "mpNome": "MARGARINA VIGOR (AMELIA)", "mpUnidade": "KG", "kg": 1.3}, {"mpCodigo": "14132", "mpNome": "OVO EM GALAO", "mpUnidade": "KG", "kg": 1.72}, {"mpCodigo": "14109", "mpNome": "SAL", "mpUnidade": "KG", "kg": 0.345}, {"mpCodigo": "99001", "mpNome": "ÁGUA", "mpUnidade": "KG", "kg": 8.65}, {"mpCodigo": "14005", "mpNome": "AÇUCAR REFINADO", "mpUnidade": "KG", "kg": 2.0}, {"mpCodigo": "14054", "mpNome": "FERMENTO DOCE", "mpUnidade": "KG", "kg": 0.5}, {"mpCodigo": "14029", "mpNome": "CORANTE AMARELO GEMA", "mpUnidade": "KG", "kg": 0.02}, {"mpCodigo": "14103", "mpNome": "REFORÇADOR(MELHORADOR)", "mpUnidade": "KG", "kg": 0.22}, {"mpCodigo": "14069", "mpNome": "MARGARINA FOLHADA", "mpUnidade": "KG", "kg": 6.0}]}, {"tipo": "Recheio", "codigo": "15050", "nome": "RECHEIO DE CROQUETE DE CARNE", "ingredientes": [{"mpCodigo": "99001", "mpNome": "ÁGUA", "mpUnidade": "KG", "kg": 23.88}, {"mpCodigo": "14008", "mpNome": "ALHO", "mpUnidade": "KG", "kg": 0.01}, {"mpCodigo": "14009", "mpNome": "AMACIANTE DE CARNE", "mpUnidade": "KG", "kg": 0.1}, {"mpCodigo": "14018", "mpNome": "CALDO DE CARNE", "mpUnidade": "KG", "kg": 0.216}, {"mpCodigo": "14019", "mpNome": "CALDO DE GALINHA", "mpUnidade": "KG", "kg": 0.377}, {"mpCodigo": "14125", "mpNome": "CARNE COXAO", "mpUnidade": "KG", "kg": 15.3}, {"mpCodigo": "14023", "mpNome": "CEBOLA", "mpUnidade": "KG", "kg": 4.1}, {"mpCodigo": "14029", "mpNome": "CORANTE AMARELO GEMA", "mpUnidade": "KG", "kg": 0.011}, {"mpCodigo": "14046", "mpNome": "FARINHA DE ROSCA", "mpUnidade": "KG", "kg": 10.4}, {"mpCodigo": "14138", "mpNome": "FARINHA PADEIRO", "mpUnidade": "KG", "kg": 9.44}, {"mpCodigo": "14068", "mpNome": "MARGARINA COAMO", "mpUnidade": "KG", "kg": 0.5}, {"mpCodigo": "14082", "mpNome": "OLEO DE SOJA", "mpUnidade": "Litro", "kg": 0.45}, {"mpCodigo": "14090", "mpNome": "PIMENTA MOÍDA BRANCA", "mpUnidade": "KG", "kg": 0.006}, {"mpCodigo": "14091", "mpNome": "PIMENTAO", "mpUnidade": "KG", "kg": 0.5}, {"mpCodigo": "14096", "mpNome": "PROTEINA DE SOJA TEXTURIZADA CARAMELO", "mpUnidade": "KG", "kg": 2.7}, {"mpCodigo": "14094", "mpNome": "PROTEINA DE SOJA SABOR CEBOLA E SALSA", "mpUnidade": "KG", "kg": 0.45}, {"mpCodigo": "14095", "mpNome": "PROTEINA DE SOJA SABOR PICANHA", "mpUnidade": "KG", "kg": 0.45}, {"mpCodigo": "14109", "mpNome": "SAL", "mpUnidade": "KG", "kg": 0.685}, {"mpCodigo": "14114", "mpNome": "SORO DE LEITE EM PO", "mpUnidade": "KG", "kg": 0.5}, {"mpCodigo": "14059", "mpNome": "FLOCOS DE BATATA", "mpUnidade": "KG", "kg": 1.86}, {"mpCodigo": "14115", "mpNome": "TEMPERO VERDE", "mpUnidade": "KG", "kg": 1.14}, {"mpCodigo": "14116", "mpNome": "TOMATE", "mpUnidade": "KG", "kg": 4.0}]}, {"tipo": "Massa", "codigo": "15051", "nome": "Massa Kibe", "ingredientes": [{"mpCodigo": "14125", "mpNome": "CARNE COXAO", "mpUnidade": "KG", "kg": 15.25}, {"mpCodigo": "14117", "mpNome": "TRIGO PARA KIBE", "mpUnidade": "KG", "kg": 15.0}, {"mpCodigo": "14023", "mpNome": "CEBOLA", "mpUnidade": "KG", "kg": 6.23}, {"mpCodigo": "14064", "mpNome": "HORTELA", "mpUnidade": "KG", "kg": 0.64}, {"mpCodigo": "99001", "mpNome": "ÁGUA", "mpUnidade": "KG", "kg": 10.0}, {"mpCodigo": "14046", "mpNome": "FARINHA DE ROSCA", "mpUnidade": "KG", "kg": 4.0}, {"mpCodigo": "14082", "mpNome": "OLEO DE SOJA", "mpUnidade": "Litro", "kg": 0.45}, {"mpCodigo": "14116", "mpNome": "TOMATE", "mpUnidade": "KG", "kg": 4.0}, {"mpCodigo": "14091", "mpNome": "PIMENTAO", "mpUnidade": "KG", "kg": 0.997}, {"mpCodigo": "14008", "mpNome": "ALHO", "mpUnidade": "KG", "kg": 0.02}, {"mpCodigo": "14018", "mpNome": "CALDO DE CARNE", "mpUnidade": "KG", "kg": 0.45}, {"mpCodigo": "14096", "mpNome": "PROTEINA DE SOJA TEXTURIZADA CARAMELO", "mpUnidade": "KG", "kg": 3.75}, {"mpCodigo": "14109", "mpNome": "SAL", "mpUnidade": "KG", "kg": 1.06}, {"mpCodigo": "14120", "mpNome": "COLORAU", "mpUnidade": "KG", "kg": 0.054}, {"mpCodigo": "14090", "mpNome": "PIMENTA MOÍDA BRANCA", "mpUnidade": "KG", "kg": 0.0184}, {"mpCodigo": "14009", "mpNome": "AMACIANTE DE CARNE", "mpUnidade": "KG", "kg": 0.15}, {"mpCodigo": "3968", "mpNome": "AMIDO ESPECIAL PODIUM (AMIDO PARA RECHEIO)", "mpUnidade": "KG", "kg": 0.15}]}, {"tipo": "Massa", "codigo": "15052", "nome": "MASSA DOG", "ingredientes": [{"mpCodigo": "14114", "mpNome": "SORO DE LEITE EM PO", "mpUnidade": "KG", "kg": 2.0}, {"mpCodigo": "14109", "mpNome": "SAL", "mpUnidade": "KG", "kg": 0.45}, {"mpCodigo": "14005", "mpNome": "AÇUCAR REFINADO", "mpUnidade": "KG", "kg": 2.0}, {"mpCodigo": "14132", "mpNome": "OVO EM GALAO", "mpUnidade": "KG", "kg": 2.5}, {"mpCodigo": "14082", "mpNome": "OLEO DE SOJA", "mpUnidade": "Litro", "kg": 2.5}, {"mpCodigo": "14059", "mpNome": "FLOCOS DE BATATA", "mpUnidade": "KG", "kg": 5.0}, {"mpCodigo": "14137", "mpNome": "FARINHA ESTRELA", "mpUnidade": "KG", "kg": 12.5}, {"mpCodigo": "14047", "mpNome": "FARINHA DE TRIGO SUPER", "mpUnidade": "KG", "kg": 12.5}, {"mpCodigo": "14054", "mpNome": "FERMENTO DOCE", "mpUnidade": "KG", "kg": 0.5}, {"mpCodigo": "14103", "mpNome": "REFORÇADOR(MELHORADOR)", "mpUnidade": "KG", "kg": 0.25}, {"mpCodigo": "99001", "mpNome": "ÁGUA", "mpUnidade": "KG", "kg": 13.0}]}, {"tipo": "Recheio", "codigo": "15053", "nome": "RECHEIO DE FRANGO", "ingredientes": [{"mpCodigo": "14058", "mpNome": "FILÉ PEITO DE FRANGO", "mpUnidade": "KG", "kg": 30.78}, {"mpCodigo": "14116", "mpNome": "TOMATE", "mpUnidade": "KG", "kg": 12.0}, {"mpCodigo": "14023", "mpNome": "CEBOLA", "mpUnidade": "KG", "kg": 8.48}, {"mpCodigo": "14109", "mpNome": "SAL", "mpUnidade": "KG", "kg": 0.63}, {"mpCodigo": "14019", "mpNome": "CALDO DE GALINHA", "mpUnidade": "KG", "kg": 0.48}, {"mpCodigo": "14020", "mpNome": "CALDO DE LEGUMES", "mpUnidade": "KG", "kg": 0.1}, {"mpCodigo": "14152", "mpNome": "PIMENTA MOÍDA PRETA", "mpUnidade": "KG", "kg": 0.004}, {"mpCodigo": "14115", "mpNome": "TEMPERO VERDE", "mpUnidade": "KG", "kg": 0.456}, {"mpCodigo": "14077", "mpNome": "MOLHO REFOGADO", "mpUnidade": "KG", "kg": 2.05}, {"mpCodigo": "14046", "mpNome": "FARINHA DE ROSCA", "mpUnidade": "KG", "kg": 3.0}, {"mpCodigo": "14120", "mpNome": "COLORAU", "mpUnidade": "KG", "kg": 0.47}, {"mpCodigo": "99001", "mpNome": "ÁGUA", "mpUnidade": "KG", "kg": 36.4}, {"mpCodigo": "14133", "mpNome": "PROTEINA DE SOJA TEXTURIZADA NATURAL (EM FLOCOS)", "mpUnidade": "KG", "kg": 6.0}, {"mpCodigo": "3968", "mpNome": "AMIDO ESPECIAL PODIUM (AMIDO PARA RECHEIO)", "mpUnidade": "KG", "kg": 0.543}]}, {"tipo": "Recheio", "codigo": "15054", "nome": "RECHEIO DE CARNE", "ingredientes": [{"mpCodigo": "14125", "mpNome": "CARNE COXAO", "mpUnidade": "KG", "kg": 15.25}, {"mpCodigo": "14082", "mpNome": "OLEO DE SOJA", "mpUnidade": "Litro", "kg": 0.45}, {"mpCodigo": "14116", "mpNome": "TOMATE", "mpUnidade": "KG", "kg": 4.0}, {"mpCodigo": "14023", "mpNome": "CEBOLA", "mpUnidade": "KG", "kg": 4.15}, {"mpCodigo": "14091", "mpNome": "PIMENTAO", "mpUnidade": "KG", "kg": 0.457}, {"mpCodigo": "14115", "mpNome": "TEMPERO VERDE", "mpUnidade": "KG", "kg": 0.324}, {"mpCodigo": "14008", "mpNome": "ALHO", "mpUnidade": "KG", "kg": 0.02}, {"mpCodigo": "14018", "mpNome": "CALDO DE CARNE", "mpUnidade": "KG", "kg": 0.45}, {"mpCodigo": "14096", "mpNome": "PROTEINA DE SOJA TEXTURIZADA CARAMELO", "mpUnidade": "KG", "kg": 3.75}, {"mpCodigo": "14109", "mpNome": "SAL", "mpUnidade": "KG", "kg": 0.41}, {"mpCodigo": "14120", "mpNome": "COLORAU", "mpUnidade": "KG", "kg": 0.054}, {"mpCodigo": "99001", "mpNome": "ÁGUA", "mpUnidade": "KG", "kg": 8.0}, {"mpCodigo": "14086", "mpNome": "OVO IN NATURA", "mpUnidade": "KG", "kg": 12.4}, {"mpCodigo": "14090", "mpNome": "PIMENTA MOÍDA BRANCA", "mpUnidade": "KG", "kg": 0.0045}, {"mpCodigo": "14009", "mpNome": "AMACIANTE DE CARNE", "mpUnidade": "KG", "kg": 0.15}, {"mpCodigo": "3968", "mpNome": "AMIDO ESPECIAL PODIUM (AMIDO PARA RECHEIO)", "mpUnidade": "KG", "kg": 0.15}]}, {"tipo": "Recheio", "codigo": "15055", "nome": "RECHEIO STROGONOFF", "ingredientes": [{"mpCodigo": "14125", "mpNome": "CARNE COXAO", "mpUnidade": "KG", "kg": 10.68}, {"mpCodigo": "14018", "mpNome": "CALDO DE CARNE", "mpUnidade": "KG", "kg": 0.17}, {"mpCodigo": "14068", "mpNome": "MARGARINA COAMO", "mpUnidade": "KG", "kg": 0.35}, {"mpCodigo": "14023", "mpNome": "CEBOLA", "mpUnidade": "KG", "kg": 3.18}, {"mpCodigo": "14109", "mpNome": "SAL", "mpUnidade": "KG", "kg": 0.2}, {"mpCodigo": "14088", "mpNome": "PAPRICA DOCE", "mpUnidade": "KG", "kg": 0.05}, {"mpCodigo": "14076", "mpNome": "MOLHO INGLES", "mpUnidade": "Litro", "kg": 0.05}, {"mpCodigo": "14022", "mpNome": "CATCHUP", "mpUnidade": "KG", "kg": 1.13}, {"mpCodigo": "14080", "mpNome": "MOSTARDA", "mpUnidade": "Litro", "kg": 0.07}, {"mpCodigo": "14077", "mpNome": "MOLHO REFOGADO", "mpUnidade": "KG", "kg": 1.38}, {"mpCodigo": "14065", "mpNome": "LEITE", "mpUnidade": "Litro", "kg": 2.3}, {"mpCodigo": "99001", "mpNome": "ÁGUA", "mpUnidade": "KG", "kg": 1.2}, {"mpCodigo": "14082", "mpNome": "OLEO DE SOJA", "mpUnidade": "Litro", "kg": 1.0}, {"mpCodigo": "14096", "mpNome": "PROTEINA DE SOJA TEXTURIZADA CARAMELO", "mpUnidade": "KG", "kg": 1.25}, {"mpCodigo": "3968", "mpNome": "AMIDO ESPECIAL PODIUM (AMIDO PARA RECHEIO)", "mpUnidade": "KG", "kg": 0.2}, {"mpCodigo": "14009", "mpNome": "AMACIANTE DE CARNE", "mpUnidade": "KG", "kg": 0.18}]}, {"tipo": "Recheio", "codigo": "15056", "nome": "Recheio Brocolis Empanada", "ingredientes": [{"mpCodigo": "14014", "mpNome": "BROCOLIS", "mpUnidade": "KG", "kg": 5.175}, {"mpCodigo": "14023", "mpNome": "CEBOLA", "mpUnidade": "KG", "kg": 4.39}, {"mpCodigo": "14065", "mpNome": "LEITE", "mpUnidade": "Litro", "kg": 5.0}, {"mpCodigo": "14068", "mpNome": "MARGARINA COAMO", "mpUnidade": "KG", "kg": 1.87}, {"mpCodigo": "99001", "mpNome": "ÁGUA", "mpUnidade": "KG", "kg": 2.5}, {"mpCodigo": "14109", "mpNome": "SAL", "mpUnidade": "KG", "kg": 0.15}, {"mpCodigo": "14001", "mpNome": "AMIDO DE MILHO SACO 25KG", "mpUnidade": "KG", "kg": 1.0}, {"mpCodigo": "14020", "mpNome": "CALDO DE LEGUMES", "mpUnidade": "KG", "kg": 0.09}, {"mpCodigo": "3968", "mpNome": "AMIDO ESPECIAL PODIUM (AMIDO PARA RECHEIO)", "mpUnidade": "KG", "kg": 0.2}]}, {"tipo": "Recheio", "codigo": "15062", "nome": "RECHEIO PRESUNTO E REQUEIJÃO", "ingredientes": [{"mpCodigo": "14105", "mpNome": "REQUEIJÃO (VALE DO PARDO)", "mpUnidade": "KG", "kg": 5.5}, {"mpCodigo": "14093", "mpNome": "PRESUNTO", "mpUnidade": "KG", "kg": 7.8}]}, {"tipo": "Massa", "codigo": "15074", "nome": "MASSA EMPANADA", "ingredientes": [{"mpCodigo": "14047", "mpNome": "FARINHA DE TRIGO SUPER", "mpUnidade": "KG", "kg": 10.0}, {"mpCodigo": "14138", "mpNome": "FARINHA PADEIRO", "mpUnidade": "KG", "kg": 10.0}, {"mpCodigo": "14068", "mpNome": "MARGARINA COAMO", "mpUnidade": "KG", "kg": 6.0}, {"mpCodigo": "99001", "mpNome": "ÁGUA", "mpUnidade": "KG", "kg": 7.8}, {"mpCodigo": "14005", "mpNome": "AÇUCAR REFINADO", "mpUnidade": "KG", "kg": 0.5}, {"mpCodigo": "14109", "mpNome": "SAL", "mpUnidade": "KG", "kg": 0.25}, {"mpCodigo": "14020", "mpNome": "CALDO DE LEGUMES", "mpUnidade": "KG", "kg": 0.4}, {"mpCodigo": "14001", "mpNome": "AMIDO DE MILHO SACO 25KG", "mpUnidade": "KG", "kg": 6.0}]}, {"tipo": "Massa", "codigo": "15075", "nome": "MASSA RISOLES", "ingredientes": [{"mpCodigo": "14138", "mpNome": "FARINHA PADEIRO", "mpUnidade": "KG", "kg": 17.0}, {"mpCodigo": "14019", "mpNome": "CALDO DE GALINHA", "mpUnidade": "KG", "kg": 0.7}, {"mpCodigo": "14109", "mpNome": "SAL", "mpUnidade": "KG", "kg": 0.56}, {"mpCodigo": "14068", "mpNome": "MARGARINA COAMO", "mpUnidade": "KG", "kg": 0.9}, {"mpCodigo": "14059", "mpNome": "FLOCOS DE BATATA", "mpUnidade": "KG", "kg": 0.0}, {"mpCodigo": "14029", "mpNome": "CORANTE AMARELO GEMA", "mpUnidade": "KG", "kg": 0.022}, {"mpCodigo": "99001", "mpNome": "ÁGUA", "mpUnidade": "KG", "kg": 15.8}, {"mpCodigo": "14114", "mpNome": "SORO DE LEITE EM PO", "mpUnidade": "KG", "kg": 0.9}]}, {"tipo": "Recheio", "codigo": "15076", "nome": "RECHEIO DE CARNE RISOLES", "ingredientes": [{"mpCodigo": "14125", "mpNome": "CARNE COXAO", "mpUnidade": "KG", "kg": 10.0}, {"mpCodigo": "14082", "mpNome": "OLEO DE SOJA", "mpUnidade": "Litro", "kg": 0.3}, {"mpCodigo": "14116", "mpNome": "TOMATE", "mpUnidade": "KG", "kg": 3.0}, {"mpCodigo": "14023", "mpNome": "CEBOLA", "mpUnidade": "KG", "kg": 3.0}, {"mpCodigo": "14091", "mpNome": "PIMENTAO", "mpUnidade": "KG", "kg": 0.4}, {"mpCodigo": "14115", "mpNome": "TEMPERO VERDE", "mpUnidade": "KG", "kg": 0.18}, {"mpCodigo": "14008", "mpNome": "ALHO", "mpUnidade": "KG", "kg": 0.013}, {"mpCodigo": "14018", "mpNome": "CALDO DE CARNE", "mpUnidade": "KG", "kg": 0.195}, {"mpCodigo": "14096", "mpNome": "PROTEINA DE SOJA TEXTURIZADA CARAMELO", "mpUnidade": "KG", "kg": 1.9}, {"mpCodigo": "14109", "mpNome": "SAL", "mpUnidade": "KG", "kg": 0.195}, {"mpCodigo": "14120", "mpNome": "COLORAU", "mpUnidade": "KG", "kg": 0.06}, {"mpCodigo": "99001", "mpNome": "ÁGUA", "mpUnidade": "KG", "kg": 1.33}, {"mpCodigo": "14090", "mpNome": "PIMENTA MOÍDA BRANCA", "mpUnidade": "KG", "kg": 0.01}, {"mpCodigo": "14005", "mpNome": "AÇUCAR REFINADO", "mpUnidade": "KG", "kg": 0.03}, {"mpCodigo": "14094", "mpNome": "PROTEINA DE SOJA SABOR CEBOLA E SALSA", "mpUnidade": "KG", "kg": 0.8}, {"mpCodigo": "3968", "mpNome": "AMIDO ESPECIAL PODIUM (AMIDO PARA RECHEIO)", "mpUnidade": "KG", "kg": 0.08}, {"mpCodigo": "14105", "mpNome": "REQUEIJÃO (VALE DO PARDO)", "mpUnidade": "KG", "kg": 6.0}]}, {"tipo": "Recheio", "codigo": "15078", "nome": "Recheio Lombo Barbecue", "ingredientes": [{"mpCodigo": "14113", "mpNome": "SOBREPALETA SUINA", "mpUnidade": "KG", "kg": 5.0}, {"mpCodigo": "14023", "mpNome": "CEBOLA", "mpUnidade": "KG", "kg": 0.925}, {"mpCodigo": "14018", "mpNome": "CALDO DE CARNE", "mpUnidade": "KG", "kg": 0.055}, {"mpCodigo": "14082", "mpNome": "OLEO DE SOJA", "mpUnidade": "Litro", "kg": 0.222}, {"mpCodigo": "14008", "mpNome": "ALHO", "mpUnidade": "KG", "kg": 0.026}, {"mpCodigo": "14109", "mpNome": "SAL", "mpUnidade": "KG", "kg": 0.054}, {"mpCodigo": "14152", "mpNome": "PIMENTA MOÍDA PRETA", "mpUnidade": "KG", "kg": 0.007}, {"mpCodigo": "14142", "mpNome": "LIMAO", "mpUnidade": "KG", "kg": 0.17}, {"mpCodigo": "14011", "mpNome": "BATATA", "mpUnidade": "KG", "kg": 1.25}, {"mpCodigo": "14084", "mpNome": "OREGANO", "mpUnidade": "KG", "kg": 0.002}, {"mpCodigo": "14141", "mpNome": "MOLHO BARBECUE", "mpUnidade": "Litro", "kg": 1.4}, {"mpCodigo": "99001", "mpNome": "ÁGUA", "mpUnidade": "KG", "kg": 0.508}, {"mpCodigo": "3968", "mpNome": "AMIDO ESPECIAL PODIUM (AMIDO PARA RECHEIO)", "mpUnidade": "KG", "kg": 0.269}, {"mpCodigo": "14143", "mpNome": "MAÇA", "mpUnidade": "KG", "kg": 0.235}, {"mpCodigo": "14005", "mpNome": "AÇUCAR REFINADO", "mpUnidade": "KG", "kg": 0.182}, {"mpCodigo": "14151", "mpNome": "PIMENTA DEDO DE MOÇA", "mpUnidade": "KG", "kg": 0.005}]}, {"tipo": "Recheio", "codigo": "15081", "nome": "Recheio Frango Croissant", "ingredientes": [{"mpCodigo": "14058", "mpNome": "FILÉ PEITO DE FRANGO", "mpUnidade": "KG", "kg": 36.0}, {"mpCodigo": "14023", "mpNome": "CEBOLA", "mpUnidade": "KG", "kg": 8.3}, {"mpCodigo": "14008", "mpNome": "ALHO", "mpUnidade": "KG", "kg": 0.114}, {"mpCodigo": "14120", "mpNome": "COLORAU", "mpUnidade": "KG", "kg": 0.586}, {"mpCodigo": "14019", "mpNome": "CALDO DE GALINHA", "mpUnidade": "KG", "kg": 0.357}, {"mpCodigo": "14109", "mpNome": "SAL", "mpUnidade": "KG", "kg": 0.178}, {"mpCodigo": "14020", "mpNome": "CALDO DE LEGUMES", "mpUnidade": "KG", "kg": 0.229}, {"mpCodigo": "14082", "mpNome": "OLEO DE SOJA", "mpUnidade": "Litro", "kg": 4.1}, {"mpCodigo": "14105", "mpNome": "REQUEIJÃO (VALE DO PARDO)", "mpUnidade": "KG", "kg": 14.25}, {"mpCodigo": "14084", "mpNome": "OREGANO", "mpUnidade": "KG", "kg": 0.012}, {"mpCodigo": "14090", "mpNome": "PIMENTA MOÍDA BRANCA", "mpUnidade": "KG", "kg": 0.025}]}, {"tipo": "Recheio", "codigo": "15082", "nome": "Recheio Carne Empanada", "ingredientes": [{"mpCodigo": "14125", "mpNome": "CARNE COXAO", "mpUnidade": "KG", "kg": 10.68}, {"mpCodigo": "14018", "mpNome": "CALDO DE CARNE", "mpUnidade": "KG", "kg": 0.17}, {"mpCodigo": "14068", "mpNome": "MARGARINA COAMO", "mpUnidade": "KG", "kg": 0.35}, {"mpCodigo": "14023", "mpNome": "CEBOLA", "mpUnidade": "KG", "kg": 3.18}, {"mpCodigo": "14109", "mpNome": "SAL", "mpUnidade": "KG", "kg": 0.2}, {"mpCodigo": "14088", "mpNome": "PAPRICA DOCE", "mpUnidade": "KG", "kg": 0.05}, {"mpCodigo": "14076", "mpNome": "MOLHO INGLES", "mpUnidade": "Litro", "kg": 0.05}, {"mpCodigo": "14022", "mpNome": "CATCHUP", "mpUnidade": "KG", "kg": 1.13}, {"mpCodigo": "14080", "mpNome": "MOSTARDA", "mpUnidade": "Litro", "kg": 0.07}, {"mpCodigo": "14077", "mpNome": "MOLHO REFOGADO", "mpUnidade": "KG", "kg": 1.38}, {"mpCodigo": "14065", "mpNome": "LEITE", "mpUnidade": "Litro", "kg": 2.3}, {"mpCodigo": "99001", "mpNome": "ÁGUA", "mpUnidade": "KG", "kg": 1.2}, {"mpCodigo": "14082", "mpNome": "OLEO DE SOJA", "mpUnidade": "Litro", "kg": 1.0}, {"mpCodigo": "14096", "mpNome": "PROTEINA DE SOJA TEXTURIZADA CARAMELO", "mpUnidade": "KG", "kg": 1.25}, {"mpCodigo": "3968", "mpNome": "AMIDO ESPECIAL PODIUM (AMIDO PARA RECHEIO)", "mpUnidade": "KG", "kg": 0.2}, {"mpCodigo": "14009", "mpNome": "AMACIANTE DE CARNE", "mpUnidade": "KG", "kg": 0.18}, {"mpCodigo": "14105", "mpNome": "REQUEIJÃO (VALE DO PARDO)", "mpUnidade": "KG", "kg": 3.45}]}, {"tipo": "Recheio", "codigo": "15083", "nome": "Recheio Queijo Empanada", "ingredientes": [{"mpCodigo": "14099", "mpNome": "QUEIJO MUSSARELA", "mpUnidade": "KG", "kg": 4.75}, {"mpCodigo": "14065", "mpNome": "LEITE", "mpUnidade": "Litro", "kg": 2.25}, {"mpCodigo": "14041", "mpNome": "ESSENCIA DE QUEIJO", "mpUnidade": "KG", "kg": 0.007}, {"mpCodigo": "14105", "mpNome": "REQUEIJÃO (VALE DO PARDO)", "mpUnidade": "KG", "kg": 3.08}]}, {"tipo": "Recheio", "codigo": "15084", "nome": "Recheio Calabresa Empanada", "ingredientes": [{"mpCodigo": "14067", "mpNome": "LINGUIÇA CALABRESA MÉDIA", "mpUnidade": "KG", "kg": 17.74}, {"mpCodigo": "14099", "mpNome": "QUEIJO MUSSARELA", "mpUnidade": "KG", "kg": 17.74}, {"mpCodigo": "14105", "mpNome": "REQUEIJÃO (VALE DO PARDO)", "mpUnidade": "KG", "kg": 4.43}, {"mpCodigo": "14023", "mpNome": "CEBOLA", "mpUnidade": "KG", "kg": 3.76}, {"mpCodigo": "14091", "mpNome": "PIMENTAO", "mpUnidade": "KG", "kg": 0.205}, {"mpCodigo": "14082", "mpNome": "OLEO DE SOJA", "mpUnidade": "Litro", "kg": 0.3}, {"mpCodigo": "14008", "mpNome": "ALHO", "mpUnidade": "KG", "kg": 0.04}, {"mpCodigo": "14065", "mpNome": "LEITE", "mpUnidade": "Litro", "kg": 8.87}, {"mpCodigo": "99001", "mpNome": "ÁGUA", "mpUnidade": "KG", "kg": 4.43}, {"mpCodigo": "14109", "mpNome": "SAL", "mpUnidade": "KG", "kg": 0.18}, {"mpCodigo": "14001", "mpNome": "AMIDO DE MILHO SACO 25KG", "mpUnidade": "KG", "kg": 1.24}, {"mpCodigo": "3968", "mpNome": "AMIDO ESPECIAL PODIUM (AMIDO PARA RECHEIO)", "mpUnidade": "KG", "kg": 0.71}, {"mpCodigo": "14068", "mpNome": "MARGARINA COAMO", "mpUnidade": "KG", "kg": 0.53}, {"mpCodigo": "14081", "mpNome": "NOZ MOSCADA", "mpUnidade": "KG", "kg": 0.01}, {"mpCodigo": "14084", "mpNome": "OREGANO", "mpUnidade": "KG", "kg": 0.01}]}, {"tipo": "Massa", "codigo": "15085", "nome": "MASSA FOLHADA MINI", "ingredientes": [{"mpCodigo": "14047", "mpNome": "FARINHA DE TRIGO SUPER", "mpUnidade": "KG", "kg": 75.0}, {"mpCodigo": "14138", "mpNome": "FARINHA PADEIRO", "mpUnidade": "KG", "kg": 25.0}, {"mpCodigo": "14069", "mpNome": "MARGARINA FOLHADA", "mpUnidade": "KG", "kg": 39.0}, {"mpCodigo": "14147", "mpNome": "MARGARINA VIGOR (AMELIA)", "mpUnidade": "KG", "kg": 2.0}, {"mpCodigo": "99001", "mpNome": "ÁGUA", "mpUnidade": "KG", "kg": 52.0}, {"mpCodigo": "14109", "mpNome": "SAL", "mpUnidade": "KG", "kg": 2.5}]}, {"tipo": "Recheio", "codigo": "15086", "nome": "Recheio Mini Risoles Carne", "ingredientes": [{"mpCodigo": "14125", "mpNome": "CARNE COXAO", "mpUnidade": "KG", "kg": 10.35}, {"mpCodigo": "14082", "mpNome": "OLEO DE SOJA", "mpUnidade": "Litro", "kg": 0.3}, {"mpCodigo": "14116", "mpNome": "TOMATE", "mpUnidade": "KG", "kg": 5.0}, {"mpCodigo": "14023", "mpNome": "CEBOLA", "mpUnidade": "KG", "kg": 3.05}, {"mpCodigo": "14091", "mpNome": "PIMENTAO", "mpUnidade": "KG", "kg": 0.4}, {"mpCodigo": "14115", "mpNome": "TEMPERO VERDE", "mpUnidade": "KG", "kg": 0.63}, {"mpCodigo": "14008", "mpNome": "ALHO", "mpUnidade": "KG", "kg": 0.013}, {"mpCodigo": "14018", "mpNome": "CALDO DE CARNE", "mpUnidade": "KG", "kg": 0.195}, {"mpCodigo": "14096", "mpNome": "PROTEINA DE SOJA TEXTURIZADA CARAMELO", "mpUnidade": "KG", "kg": 1.9}, {"mpCodigo": "14109", "mpNome": "SAL", "mpUnidade": "KG", "kg": 0.235}, {"mpCodigo": "14120", "mpNome": "COLORAU", "mpUnidade": "KG", "kg": 0.06}, {"mpCodigo": "99001", "mpNome": "ÁGUA", "mpUnidade": "KG", "kg": 4.53}, {"mpCodigo": "14009", "mpNome": "AMACIANTE DE CARNE", "mpUnidade": "KG", "kg": 0.04}, {"mpCodigo": "14090", "mpNome": "PIMENTA MOÍDA BRANCA", "mpUnidade": "KG", "kg": 0.011}, {"mpCodigo": "14005", "mpNome": "AÇUCAR REFINADO", "mpUnidade": "KG", "kg": 0.03}, {"mpCodigo": "14077", "mpNome": "MOLHO REFOGADO", "mpUnidade": "KG", "kg": 0.06}, {"mpCodigo": "14020", "mpNome": "CALDO DE LEGUMES", "mpUnidade": "KG", "kg": 0.03}, {"mpCodigo": "14094", "mpNome": "PROTEINA DE SOJA SABOR CEBOLA E SALSA", "mpUnidade": "KG", "kg": 0.8}, {"mpCodigo": "3968", "mpNome": "AMIDO ESPECIAL PODIUM (AMIDO PARA RECHEIO)", "mpUnidade": "KG", "kg": 0.26}]}, {"tipo": "Massa", "codigo": "15065", "nome": "KIT PÃO FOLHADO - CONFEITARIA", "ingredientes": [{"mpCodigo": "14051", "mpNome": "FARINHA MIX PRIFAL", "mpUnidade": "KG", "kg": 25.0}, {"mpCodigo": "14057", "mpNome": "FERMENTO ITAIQUARA", "mpUnidade": "KG", "kg": 0.75}, {"mpCodigo": "14069", "mpNome": "MARGARINA FOLHADA", "mpUnidade": "KG", "kg": 9.0}, {"mpCodigo": "14083", "mpNome": "OLEO EMULSIFICANTE", "mpUnidade": "Litro", "kg": 0.03}, {"mpCodigo": "14068", "mpNome": "MARGARINA COAMO", "mpUnidade": "KG", "kg": 0.1}, {"mpCodigo": "99001", "mpNome": "ÁGUA", "mpUnidade": "KG", "kg": 12.5}]}, {"tipo": "Massa", "codigo": "15048", "nome": "MASSA MINI PASTEL DE CARNE (LISA)", "ingredientes": [{"mpCodigo": "14047", "mpNome": "FARINHA DE TRIGO SUPER", "mpUnidade": "KG", "kg": 23.0}, {"mpCodigo": "14068", "mpNome": "MARGARINA COAMO", "mpUnidade": "KG", "kg": 5.0}, {"mpCodigo": "14005", "mpNome": "AÇUCAR REFINADO", "mpUnidade": "KG", "kg": 0.4}, {"mpCodigo": "99001", "mpNome": "ÁGUA", "mpUnidade": "KG", "kg": 6.5}, {"mpCodigo": "14109", "mpNome": "SAL", "mpUnidade": "KG", "kg": 0.7}, {"mpCodigo": "14119", "mpNome": "VINAGRE ALCOOL 750 ML", "mpUnidade": "Litro", "kg": 0.35}, {"mpCodigo": "14001", "mpNome": "AMIDO DE MILHO SACO 25KG", "mpUnidade": "KG", "kg": 3.0}, {"mpCodigo": "14020", "mpNome": "CALDO DE LEGUMES", "mpUnidade": "KG", "kg": 0.4}]}, {"tipo": "Massa", "codigo": "15047", "nome": "MASSA PASTEL DE CARNE GRANDE", "ingredientes": [{"mpCodigo": "14047", "mpNome": "FARINHA DE TRIGO SUPER", "mpUnidade": "KG", "kg": 50.0}, {"mpCodigo": "99001", "mpNome": "ÁGUA", "mpUnidade": "KG", "kg": 16.1}, {"mpCodigo": "14109", "mpNome": "SAL", "mpUnidade": "KG", "kg": 1.25}, {"mpCodigo": "14082", "mpNome": "OLEO DE SOJA", "mpUnidade": "Litro", "kg": 5.0}]}, {"tipo": "Massa", "codigo": "15049", "nome": "MASSA POLENTINHA DE MILHO", "ingredientes": [{"mpCodigo": "99001", "mpNome": "ÁGUA", "mpUnidade": "KG", "kg": 50.5}, {"mpCodigo": "14029", "mpNome": "CORANTE AMARELO GEMA", "mpUnidade": "KG", "kg": 0.036}, {"mpCodigo": "14109", "mpNome": "SAL", "mpUnidade": "KG", "kg": 0.511}, {"mpCodigo": "14045", "mpNome": "FARINHA DE MILHO MÉDIA", "mpUnidade": "KG", "kg": 15.0}, {"mpCodigo": "14020", "mpNome": "CALDO DE LEGUMES", "mpUnidade": "KG", "kg": 0.3}, {"mpCodigo": "14046", "mpNome": "FARINHA DE ROSCA", "mpUnidade": "KG", "kg": 6.5}, {"mpCodigo": "14138", "mpNome": "FARINHA PADEIRO", "mpUnidade": "KG", "kg": 5.25}, {"mpCodigo": "14019", "mpNome": "CALDO DE GALINHA", "mpUnidade": "KG", "kg": 0.208}, {"mpCodigo": "14068", "mpNome": "MARGARINA COAMO", "mpUnidade": "KG", "kg": 0.278}, {"mpCodigo": "14059", "mpNome": "FLOCOS DE BATATA", "mpUnidade": "KG", "kg": 1.03}, {"mpCodigo": "14114", "mpNome": "SORO DE LEITE EM PO", "mpUnidade": "KG", "kg": 0.278}]}, {"tipo": "Recheio", "codigo": "15073", "nome": "Recheio Calabresa - Pastel Caseiro", "ingredientes": [{"mpCodigo": "14099", "mpNome": "QUEIJO MUSSARELA", "mpUnidade": "KG", "kg": 7.16}, {"mpCodigo": "14082", "mpNome": "OLEO DE SOJA", "mpUnidade": "Litro", "kg": 3.53}, {"mpCodigo": "14067", "mpNome": "LINGUIÇA CALABRESA MÉDIA", "mpUnidade": "KG", "kg": 19.02}, {"mpCodigo": "14105", "mpNome": "REQUEIJÃO (VALE DO PARDO)", "mpUnidade": "KG", "kg": 7.1}, {"mpCodigo": "14082", "mpNome": "OLEO DE SOJA", "mpUnidade": "Litro", "kg": 1.36}, {"mpCodigo": "14023", "mpNome": "CEBOLA", "mpUnidade": "KG", "kg": 2.84}]}, {"tipo": "Recheio", "codigo": "15060", "nome": "RECHEIO CALABRESA QUEIJO", "ingredientes": [{"mpCodigo": "14099", "mpNome": "QUEIJO MUSSARELA", "mpUnidade": "KG", "kg": 5.0}, {"mpCodigo": "14067", "mpNome": "LINGUIÇA CALABRESA MÉDIA", "mpUnidade": "KG", "kg": 16.7}, {"mpCodigo": "14105", "mpNome": "REQUEIJÃO (VALE DO PARDO)", "mpUnidade": "KG", "kg": 8.3}, {"mpCodigo": "14105", "mpNome": "REQUEIJÃO (VALE DO PARDO)", "mpUnidade": "KG", "kg": 6.1}, {"mpCodigo": "14067", "mpNome": "LINGUIÇA CALABRESA MÉDIA", "mpUnidade": "KG", "kg": 7.8}]}, {"tipo": "Recheio", "codigo": "15072", "nome": "RECHEIO DE QUEIJOS - PASTEL CASEIRO", "ingredientes": [{"mpCodigo": "14041", "mpNome": "ESSENCIA DE QUEIJO", "mpUnidade": "KG", "kg": 0.007}, {"mpCodigo": "14099", "mpNome": "QUEIJO MUSSARELA", "mpUnidade": "KG", "kg": 4.75}, {"mpCodigo": "14065", "mpNome": "LEITE", "mpUnidade": "Litro", "kg": 2.25}, {"mpCodigo": "14105", "mpNome": "REQUEIJÃO (VALE DO PARDO)", "mpUnidade": "KG", "kg": 3.08}]}, {"tipo": "Recheio", "codigo": "15064", "nome": "RECHEIO MINI PASTEL DE CARNE", "ingredientes": [{"mpCodigo": "14125", "mpNome": "CARNE COXAO", "mpUnidade": "KG", "kg": 31.2}, {"mpCodigo": "14094", "mpNome": "PROTEINA DE SOJA SABOR CEBOLA E SALSA", "mpUnidade": "KG", "kg": 1.8}, {"mpCodigo": "14095", "mpNome": "PROTEINA DE SOJA SABOR PICANHA", "mpUnidade": "KG", "kg": 1.8}, {"mpCodigo": "14096", "mpNome": "PROTEINA DE SOJA TEXTURIZADA CARAMELO", "mpUnidade": "KG", "kg": 1.8}, {"mpCodigo": "14116", "mpNome": "TOMATE", "mpUnidade": "KG", "kg": 6.0}, {"mpCodigo": "14023", "mpNome": "CEBOLA", "mpUnidade": "KG", "kg": 7.15}, {"mpCodigo": "14082", "mpNome": "OLEO DE SOJA", "mpUnidade": "Litro", "kg": 1.8}, {"mpCodigo": "14115", "mpNome": "TEMPERO VERDE", "mpUnidade": "KG", "kg": 0.45}, {"mpCodigo": "14109", "mpNome": "SAL", "mpUnidade": "KG", "kg": 0.45}, {"mpCodigo": "99001", "mpNome": "ÁGUA", "mpUnidade": "KG", "kg": 5.1}, {"mpCodigo": "14086", "mpNome": "OVO IN NATURA", "mpUnidade": "KG", "kg": 15.0}, {"mpCodigo": "14020", "mpNome": "CALDO DE LEGUMES", "mpUnidade": "KG", "kg": 0.03}, {"mpCodigo": "14018", "mpNome": "CALDO DE CARNE", "mpUnidade": "KG", "kg": 0.24}, {"mpCodigo": "14005", "mpNome": "AÇUCAR REFINADO", "mpUnidade": "KG", "kg": 0.03}, {"mpCodigo": "14009", "mpNome": "AMACIANTE DE CARNE", "mpUnidade": "KG", "kg": 0.2}, {"mpCodigo": "14090", "mpNome": "PIMENTA MOÍDA BRANCA", "mpUnidade": "KG", "kg": 0.018}, {"mpCodigo": "14088", "mpNome": "PAPRICA DOCE", "mpUnidade": "KG", "kg": 0.04}, {"mpCodigo": "3968", "mpNome": "AMIDO ESPECIAL PODIUM (AMIDO PARA RECHEIO)", "mpUnidade": "KG", "kg": 0.16}]}, {"tipo": "Recheio", "codigo": "15058", "nome": "RECHEIO PASTEL DE CARNE", "ingredientes": [{"mpCodigo": "14125", "mpNome": "CARNE COXAO", "mpUnidade": "KG", "kg": 30.8}, {"mpCodigo": "14094", "mpNome": "PROTEINA DE SOJA SABOR CEBOLA E SALSA", "mpUnidade": "KG", "kg": 1.8}, {"mpCodigo": "14095", "mpNome": "PROTEINA DE SOJA SABOR PICANHA", "mpUnidade": "KG", "kg": 1.8}, {"mpCodigo": "14096", "mpNome": "PROTEINA DE SOJA TEXTURIZADA CARAMELO", "mpUnidade": "KG", "kg": 1.8}, {"mpCodigo": "14116", "mpNome": "TOMATE", "mpUnidade": "KG", "kg": 4.0}, {"mpCodigo": "14023", "mpNome": "CEBOLA", "mpUnidade": "KG", "kg": 7.2}, {"mpCodigo": "14082", "mpNome": "OLEO DE SOJA", "mpUnidade": "Litro", "kg": 1.8}, {"mpCodigo": "14115", "mpNome": "TEMPERO VERDE", "mpUnidade": "KG", "kg": 0.55}, {"mpCodigo": "14109", "mpNome": "SAL", "mpUnidade": "KG", "kg": 0.452}, {"mpCodigo": "14086", "mpNome": "OVO IN NATURA", "mpUnidade": "KG", "kg": 23.62}, {"mpCodigo": "99001", "mpNome": "ÁGUA", "mpUnidade": "KG", "kg": 3.2}, {"mpCodigo": "14008", "mpNome": "ALHO", "mpUnidade": "KG", "kg": 0.2}, {"mpCodigo": "14018", "mpNome": "CALDO DE CARNE", "mpUnidade": "KG", "kg": 0.247}, {"mpCodigo": "14005", "mpNome": "AÇUCAR REFINADO", "mpUnidade": "KG", "kg": 0.03}, {"mpCodigo": "14088", "mpNome": "PAPRICA DOCE", "mpUnidade": "KG", "kg": 0.04}, {"mpCodigo": "14009", "mpNome": "AMACIANTE DE CARNE", "mpUnidade": "KG", "kg": 0.2}, {"mpCodigo": "14090", "mpNome": "PIMENTA MOÍDA BRANCA", "mpUnidade": "KG", "kg": 0.018}, {"mpCodigo": "3968", "mpNome": "AMIDO ESPECIAL PODIUM (AMIDO PARA RECHEIO)", "mpUnidade": "KG", "kg": 0.1}]}, {"tipo": "Recheio", "codigo": "15059", "nome": "RECHEIO PRESUNTO QUEIJO REQUEIJÃO", "ingredientes": [{"mpCodigo": "14099", "mpNome": "QUEIJO MUSSARELA", "mpUnidade": "KG", "kg": 6.0}, {"mpCodigo": "14093", "mpNome": "PRESUNTO", "mpUnidade": "KG", "kg": 20.0}, {"mpCodigo": "14105", "mpNome": "REQUEIJÃO (VALE DO PARDO)", "mpUnidade": "KG", "kg": 4.0}]}, {"tipo": "Recheio", "codigo": "15077", "nome": "RECHEIO QUEIJO - MINI PASTEL", "ingredientes": [{"mpCodigo": "14099", "mpNome": "QUEIJO MUSSARELA", "mpUnidade": "KG", "kg": 5.0}, {"mpCodigo": "14105", "mpNome": "REQUEIJÃO (VALE DO PARDO)", "mpUnidade": "KG", "kg": 5.0}, {"mpCodigo": "14109", "mpNome": "SAL", "mpUnidade": "KG", "kg": 0.003}, {"mpCodigo": "14145", "mpNome": "MANJERONA", "mpUnidade": "KG", "kg": 0.003}]}];
+
+function _normNome(s){
+  return (s||'').toString().trim().toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+}
+
+async function importarFichasConfeitaria(){
+  if(!confirm('Importar/atualizar '+RECEITAS_CONF_SEED.length+' fichas da Confeitaria?\n\n• Atualiza as que já existem (pelo nome) e cria as novas.\n• A ÁGUA (e o que faltar) é adicionada à base automaticamente.'))return;
+
+  // 1) garantir matérias-primas faltantes (ex: ÁGUA)
+  const faltantes={};
+  RECEITAS_CONF_SEED.forEach(r=>r.ingredientes.forEach(i=>{
+    if(!materiasPrimas.find(m=>String(m.codigo)===String(i.mpCodigo)) && !faltantes[i.mpCodigo]){
+      faltantes[i.mpCodigo]={codigo:String(i.mpCodigo),nome:i.mpNome,unidade:i.mpUnidade||'KG'};
+    }
+  }));
+  let mpCriadas=0;
+  for(const k in faltantes){
+    try{ await setDoc(doc(db,'materiasPrimas',k),{...faltantes[k],atualizadoEm:agora()}); mpCriadas++; }catch(e){ console.error('MP falt',e); }
+  }
+
+  // 2) fichas (massa/recheio)
+  let criadas=0, atualizadas=0, erros=0;
+  for(const r of RECEITAS_CONF_SEED){
+    const colecao = r.tipo==='Recheio' ? 'recheiosList' : 'massasList';
+    const lista = r.tipo==='Recheio' ? recheiosFirebase : massasFirebase;
+    const existente = lista.find(x=>_normNome(x.nome)===_normNome(r.nome));
+    const dados={
+      codigo:r.codigo,
+      nome:r.nome,
+      ingredientes:r.ingredientes,
+      rendimentoKg:r.ingredientes.reduce((s,i)=>s+(parseFloat(i.kg)||0),0),
+      atualizadoEm:agora()
+    };
+    try{
+      if(existente){ await updateDoc(doc(db,colecao,existente.firestoreId),dados); atualizadas++; }
+      else { await addDoc(collection(db,colecao),dados); criadas++; }
+    }catch(e){ erros++; console.error('ficha',r.nome,e); }
+  }
+  alert('✓ Fichas importadas!\nCriadas: '+criadas+'\nAtualizadas: '+atualizadas+
+    (mpCriadas?('\nMatérias-primas novas: '+mpCriadas+' (ex: ÁGUA)'):'')+
+    (erros?('\n⚠ Erros: '+erros):''));
+}
+window.importarFichasConfeitaria=importarFichasConfeitaria; window._normNome=_normNome;
+
+
 window.adicionarMassa=adicionarMassa;
 window.editarMassaNome=editarMassaNome;
 window.excluirMassaNome=excluirMassaNome;
