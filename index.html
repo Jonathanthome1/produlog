@@ -2773,6 +2773,14 @@
         </div>
         <span class="mc-sector-arrow" style="color:var(--mc-roxo);">›</span>
       </button>
+      <button class="mc-sector-card" style="border-left:3px solid var(--mc-roxo);margin-bottom:10px;background:linear-gradient(135deg, var(--bg-primary) 0%, var(--mc-roxo-claro) 100%);" onclick="goTo('s-painel-proto')">
+        <div class="mc-sector-icon purple">🧪</div>
+        <div class="mc-sector-info">
+          <div class="mc-sector-title" style="color:var(--mc-roxo);">Painel Gerencial (protótipo)</div>
+          <div class="mc-sector-desc">Amostra de KPI + gráfico para validar o estilo</div>
+        </div>
+        <span class="mc-sector-arrow" style="color:var(--mc-roxo);">›</span>
+      </button>
       <button class="mc-sector-card" style="border-left:3px solid var(--mc-indigo);margin-bottom:10px;background:linear-gradient(135deg, var(--bg-primary) 0%, var(--mc-indigo-claro) 100%);" onclick="goTo('s-adm-buscar')">
         <div class="mc-sector-icon indigo">🔎</div>
         <div class="mc-sector-info">
@@ -3597,6 +3605,18 @@
     <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;" id="adm-status-content"></div>
   </div>
 
+  <!-- PROTÓTIPO PAINEL GERENCIAL -->
+  <div class="screen" id="s-painel-proto">
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="goTo('s-adm-hub')">‹</button>
+      <div class="mc-brand"><div class="mc-brand-logo">MC</div><div class="mc-brand-text"><div class="mc-brand-name">Monte Castelo</div><div class="mc-brand-sub">Gerencial</div></div></div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info"><div class="mc-page-title">🧪 Painel (protótipo)</div><div class="mc-page-sub">Visão de KPIs e gráficos</div></div>
+      <div class="mc-header-actions"><button class="mc-act-btn-secondary" onclick="renderPainelProto()">↻ Atualizar</button></div>
+    </div>
+    <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;" id="painel-proto-content"></div>
+  </div>
+
   <!-- CONTAGEM HOME -->
   <div class="screen" id="s-contagem-home">
     <div class="mc-header">
@@ -3947,6 +3967,7 @@ function atualizarTela(){
   if(tela==='s-estoque-admin') renderEstoqueAdmin();
   if(tela==='s-estoque-descarte') renderDescarteEstoque();
   if(tela==='s-estoque-mov') renderMovEstoque();
+  if(tela==='s-painel-proto') renderPainelProto();
   if(tela==='s-coz-home') renderCozHome();
   if(tela==='s-emb-home') renderEmbalagem(); // embManual listener triggers this
   if(tela==='s-emb-sel-data') renderSelDataEmb();
@@ -4056,6 +4077,7 @@ function goTo(id){
   if(id==='s-estoque-admin') renderEstoqueAdmin();
   if(id==='s-estoque-descarte') renderDescarteEstoque();
   if(id==='s-estoque-mov') renderMovEstoque();
+  if(id==='s-painel-proto') renderPainelProto();
   if(id==='s-rastreio'){
     popularSelectMPRastreio();
     if(!document.getElementById('rastreio-ini').value){ rastreioPeriodoRapido('mes'); }
@@ -10942,6 +10964,99 @@ window.renderEstoqueCoz=renderEstoqueCoz; window.renderEstoqueConf=renderEstoque
 window.abrirDescarteEstoque=abrirDescarteEstoque; window.voltarDescarte=voltarDescarte; window.renderDescarteEstoque=renderDescarteEstoque; window.salvarDescarteEstoque=salvarDescarteEstoque; window.mudarTipoDescarte=mudarTipoDescarte;
 window.abrirAjusteEstoque=abrirAjusteEstoque; window.toggleControleEstoque=toggleControleEstoque;
 window.abrirMovEstoque=abrirMovEstoque; window.voltarMov=voltarMov; window.setMovDias=setMovDias; window.renderMovEstoque=renderMovEstoque;
+
+// ===== PROTÓTIPO: Painel Gerencial (1 KPI funil + 1 gráfico) =====
+function _proURegProduzido(r){
+  if(r.embalagem && r.embalagem.qtdProduzida!=null) return parseFloat(r.embalagem.qtdProduzida)||0;
+  return parseFloat(r.qtdPacotes||r.qtd)||0;
+}
+function _proUEmbalado(r){ return (r.embalagem && r.embalagem.feito)?(parseFloat(r.embalagem.qtdEmbalada)||0):0; }
+function _proUExpedido(r){ return (r.expedicao && r.expedicao.totalLiberado!=null)?(parseFloat(r.expedicao.totalLiberado)||0):0; }
+
+function _proDadosFunil(diasJanela){
+  const lim=Date.now()-diasJanela*24*60*60*1000;
+  let prod=0, emb=0, exp=0, nProd=0, nEmbOk=0;
+  registros.forEach(r=>{
+    const t=r.data?_parseDataBR(r.data):0;
+    if(t<lim) return;
+    const p=_proURegProduzido(r);
+    prod+=p; emb+=_proUEmbalado(r); exp+=_proUExpedido(r);
+    if(p>0) nProd++;
+    if(r.embalagem&&r.embalagem.feito) nEmbOk++;
+  });
+  return {prod,emb,exp,nProd,nEmbOk};
+}
+function _proProducaoDiaria(nDias){
+  const arr=[];
+  for(let i=nDias-1;i>=0;i--){
+    const d=new Date(); d.setDate(d.getDate()-i);
+    const ds=fmtData(d);
+    let total=0;
+    registros.forEach(r=>{ if(r.data===ds) total+=_proURegProduzido(r); });
+    arr.push({data:ds, dia:ds.slice(0,5), total});
+  }
+  return arr;
+}
+
+function _proPct(a,b){ return b>0? Math.round((a/b)*1000)/10 : 0; }
+
+function _proBarraFunil(label, valor, base, cor){
+  const pct=_proPct(valor,base);
+  return '<div style="margin-bottom:12px;">'+
+    '<div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px;">'+
+    '<span style="font-weight:600;">'+label+'</span>'+
+    '<span style="font-weight:700;">'+valor.toLocaleString('pt-BR')+' un · '+pct+'%</span></div>'+
+    '<div style="height:14px;background:var(--bg-page);border-radius:7px;overflow:hidden;">'+
+    '<div style="height:100%;width:'+Math.max(pct,1.5)+'%;background:'+cor+';border-radius:7px;transition:width .4s;"></div></div></div>';
+}
+
+function _proGraficoBarras(dados){
+  const max=Math.max(1,...dados.map(d=>d.total));
+  const W=700, H=240, padB=34, padT=22, padL=8, padR=8;
+  const chartH=H-padB-padT, n=dados.length;
+  const slot=(W-padL-padR)/n, bw=Math.min(slot*0.62, 42);
+  let bars='';
+  dados.forEach((d,i)=>{
+    const h=Math.round((d.total/max)*chartH);
+    const x=padL+slot*i+(slot-bw)/2;
+    const y=padT+chartH-h;
+    bars+='<rect x="'+x.toFixed(1)+'" y="'+y.toFixed(1)+'" width="'+bw.toFixed(1)+'" height="'+Math.max(h,1)+'" rx="4" fill="var(--mc-azul)"></rect>';
+    if(d.total>0) bars+='<text x="'+(x+bw/2).toFixed(1)+'" y="'+(y-5).toFixed(1)+'" text-anchor="middle" font-size="11" font-weight="700" fill="var(--text-primary)">'+d.total.toLocaleString('pt-BR')+'</text>';
+    bars+='<text x="'+(x+bw/2).toFixed(1)+'" y="'+(H-12)+'" text-anchor="middle" font-size="11" fill="var(--text-secondary)">'+d.dia+'</text>';
+  });
+  return '<svg viewBox="0 0 '+W+' '+H+'" style="width:100%;height:auto;display:block;">'+bars+'</svg>';
+}
+
+function renderPainelProto(){
+  const el=document.getElementById('painel-proto-content'); if(!el) return;
+  const f=_proDadosFunil(14);
+  const diaria=_proProducaoDiaria(14);
+  const totalPeriodo=diaria.reduce((s,d)=>s+d.total,0);
+  const media=Math.round(totalPeriodo/14);
+
+  const kpiFunil='<div class="card" style="margin-bottom:14px;">'+
+    '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">'+
+    '<div style="font-size:15px;font-weight:700;">🔻 Funil de Produção</div>'+
+    '<div style="font-size:11px;color:var(--text-secondary);">últimos 14 dias</div></div>'+
+    _proBarraFunil('Produzido', f.prod, f.prod, 'var(--mc-azul)')+
+    _proBarraFunil('Embalado', f.emb, f.prod, 'var(--mc-dourado)')+
+    _proBarraFunil('Expedido', f.exp, f.prod, 'var(--mc-verde)')+
+    '<div style="margin-top:10px;padding-top:10px;border-top:1px dashed var(--border);display:flex;gap:8px;">'+
+      '<div style="flex:1;text-align:center;"><div style="font-size:18px;font-weight:800;color:var(--mc-dourado);">'+_proPct(f.emb,f.prod)+'%</div><div style="font-size:11px;color:var(--text-secondary);">taxa de embalagem</div></div>'+
+      '<div style="flex:1;text-align:center;"><div style="font-size:18px;font-weight:800;color:var(--mc-verde);">'+_proPct(f.exp,f.prod)+'%</div><div style="font-size:11px;color:var(--text-secondary);">taxa de expedição</div></div>'+
+      '<div style="flex:1;text-align:center;"><div style="font-size:18px;font-weight:800;color:var(--mc-vermelho);">'+(f.prod-f.exp).toLocaleString('pt-BR')+'</div><div style="font-size:11px;color:var(--text-secondary);">un. em aberto</div></div>'+
+    '</div></div>';
+
+  const grafico='<div class="card">'+
+    '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">'+
+    '<div style="font-size:15px;font-weight:700;">📈 Produção diária</div>'+
+    '<div style="font-size:11px;color:var(--text-secondary);">média '+media.toLocaleString('pt-BR')+' un/dia</div></div>'+
+    _proGraficoBarras(diaria)+'</div>';
+
+  el.innerHTML='<div style="background:var(--mc-roxo-claro);border:1px solid #ddd6fe;border-radius:10px;padding:10px 12px;margin-bottom:14px;font-size:12px;color:#5b21b6;">🧪 <strong>Protótipo</strong> — estilo dos KPIs e gráficos pra você validar. Se curtir, eu construo o Painel Gerencial completo (3 abas) em cima disso.</div>'+kpiFunil+grafico;
+}
+window.renderPainelProto=renderPainelProto;
+
 
 
 
