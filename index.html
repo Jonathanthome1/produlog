@@ -788,22 +788,6 @@
           </div>
           <span class="mc-sector-arrow">›</span>
         </button>
-        <button class="mc-sector-card" style="border-left:3px solid var(--mc-azul);" onclick="goTo('s-mp-home')">
-          <div class="mc-sector-icon blue">🧪</div>
-          <div class="mc-sector-info">
-            <div class="mc-sector-title">Matérias-Primas</div>
-            <div class="mc-sector-desc">Base de ingredientes (fichas técnicas)</div>
-          </div>
-          <span class="mc-sector-arrow">›</span>
-        </button>
-        <button class="mc-sector-card" style="border-left:3px solid var(--mc-verde);" onclick="goTo('s-rastreio')">
-          <div class="mc-sector-icon" style="background:var(--mc-verde-claro);">🔎</div>
-          <div class="mc-sector-info">
-            <div class="mc-sector-title">Rastreamento</div>
-            <div class="mc-sector-desc">Consumo de matéria-prima por período</div>
-          </div>
-          <span class="mc-sector-arrow">›</span>
-        </button>
         <button class="mc-sector-card" style="border-left:3px solid var(--mc-roxo);" onclick="abrirPin('admin')">
           <div class="mc-sector-icon purple">📊</div>
           <div class="mc-sector-info">
@@ -941,6 +925,14 @@
     </div>
     <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;">
       <div class="card">
+        <div id="descarte-tipo-wrap" style="display:none;">
+          <div class="card-label">Tipo</div>
+          <select id="descarte-tipo" onchange="mudarTipoDescarte(this.value)" style="width:100%;margin-top:6px;font-size:14px;padding:10px;border-radius:8px;border:1px solid var(--border-md,#d1d5db);">
+            <option value="massa">Massa</option>
+            <option value="recheio">Recheio</option>
+          </select>
+          <div style="height:12px;"></div>
+        </div>
         <div class="card-label">Item</div>
         <select id="descarte-item" style="width:100%;margin-top:6px;font-size:14px;padding:10px;border-radius:8px;border:1px solid var(--border-md,#d1d5db);"></select>
         <div class="card-label" style="margin-top:12px;">Quantidade a descartar (kg)</div>
@@ -972,6 +964,20 @@
       <div id="estoque-admin-toggle"></div>
       <div id="estoque-admin-list"></div>
       <div id="estoque-admin-hist" style="margin-top:8px;"></div>
+    </div>
+  </div>
+
+  <!-- ESTOQUE: MOVIMENTAÇÃO DO ITEM -->
+  <div class="screen" id="s-estoque-mov">
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="voltarMov()">‹</button>
+      <div class="mc-brand"><div class="mc-brand-logo">MC</div><div class="mc-brand-text"><div class="mc-brand-name">Monte Castelo</div><div class="mc-brand-sub">Estoque</div></div></div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info"><div class="mc-page-title">📊 Movimentação</div><div class="mc-page-sub">Entradas, consumos, descartes e ajustes</div></div>
+    </div>
+    <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;">
+      <div id="mov-head"></div>
+      <div id="mov-list"></div>
     </div>
   </div>
 
@@ -2783,6 +2789,22 @@
         </div>
         <span class="mc-sector-arrow" style="color:var(--mc-verde);">›</span>
       </button>
+      <button class="mc-sector-card" style="border-left:3px solid var(--mc-azul);margin-bottom:10px;" onclick="goTo('s-rastreio')">
+        <div class="mc-sector-icon blue">🔎</div>
+        <div class="mc-sector-info">
+          <div class="mc-sector-title">Rastreamento de Matéria-Prima</div>
+          <div class="mc-sector-desc">Consumo de MP por período (massas/recheios/kits)</div>
+        </div>
+        <span class="mc-sector-arrow">›</span>
+      </button>
+      <button class="mc-sector-card" style="border-left:3px solid var(--mc-azul);margin-bottom:10px;" onclick="goTo('s-mp-home')">
+        <div class="mc-sector-icon blue">🧪</div>
+        <div class="mc-sector-info">
+          <div class="mc-sector-title">Matérias-Primas</div>
+          <div class="mc-sector-desc">Base de ingredientes e fichas técnicas</div>
+        </div>
+        <span class="mc-sector-arrow">›</span>
+      </button>
       <button class="mc-sector-card" style="border-left:3px solid var(--mc-vermelho);margin-bottom:10px;background:linear-gradient(135deg, var(--bg-primary) 0%, var(--mc-vermelho-claro) 100%);" onclick="goTo('s-prioridades')">
         <div class="mc-sector-icon red">🚩</div>
         <div class="mc-sector-info">
@@ -3904,6 +3926,7 @@ function atualizarTela(){
   if(tela==='s-estoque-conf') renderEstoqueConf();
   if(tela==='s-estoque-admin') renderEstoqueAdmin();
   if(tela==='s-estoque-descarte') renderDescarteEstoque();
+  if(tela==='s-estoque-mov') renderMovEstoque();
   if(tela==='s-coz-home') renderCozHome();
   if(tela==='s-emb-home') renderEmbalagem(); // embManual listener triggers this
   if(tela==='s-emb-sel-data') renderSelDataEmb();
@@ -4012,6 +4035,7 @@ function goTo(id){
   if(id==='s-estoque-conf') renderEstoqueConf();
   if(id==='s-estoque-admin') renderEstoqueAdmin();
   if(id==='s-estoque-descarte') renderDescarteEstoque();
+  if(id==='s-estoque-mov') renderMovEstoque();
   if(id==='s-rastreio'){
     popularSelectMPRastreio();
     if(!document.getElementById('rastreio-ini').value){ rastreioPeriodoRapido('mes'); }
@@ -10668,26 +10692,38 @@ function _refreshEstoqueScreens(){
   if(t && t.indexOf('s-estoque')===0) atualizarTela();
 }
 
+// Itens adicionais que NÃO entram no controle de estoque por enquanto (matérias-primas usadas direto no produto)
+const _ESTOQUE_IGNORAR_EXATO = new Set([
+  'CHEDDAR','SALSICHA EXCELSIOR','REQUEIJAO (VALE DO PARDO)','REQUEIJAO VALE DO PARDO',
+  'SALSICHA PENA BRANCA','DOCE DE LEITE FRIMESA','ACUCAR CRISTAL'
+].map(s=>_normNome(s)));
+const _ESTOQUE_IGNORAR_PREFIXO = ['CHOCOLATE EM BARRA','GOIABADA FORNEAVEL'].map(s=>_normNome(s));
+function _estoqueIgnorar(nome){
+  const n=_normNome(nome);
+  if(_ESTOQUE_IGNORAR_EXATO.has(n)) return true;
+  return _ESTOQUE_IGNORAR_PREFIXO.some(p=>n.startsWith(p));
+}
+
 function calcEstoqueMassasRecheios(){
   const norm=_normNome;
   const massas={}, recheios={};
-  massasFirebase.forEach(m=>{ massas[norm(m.nome)]={nome:m.nome,entrada:0,consumo:0,descarte:0,ajuste:0}; });
-  recheiosFirebase.forEach(r=>{ recheios[norm(r.nome)]={nome:r.nome,entrada:0,consumo:0,descarte:0,ajuste:0}; });
-  function ensure(map,nome){ const k=norm(nome); if(!map[k]) map[k]={nome:nome,entrada:0,consumo:0,descarte:0,ajuste:0}; return map[k]; }
+  massasFirebase.forEach(m=>{ if(_estoqueIgnorar(m.nome)) return; massas[norm(m.nome)]={nome:m.nome,entrada:0,consumo:0,descarte:0,ajuste:0}; });
+  recheiosFirebase.forEach(r=>{ if(_estoqueIgnorar(r.nome)) return; recheios[norm(r.nome)]={nome:r.nome,entrada:0,consumo:0,descarte:0,ajuste:0}; });
+  function ensure(map,nome){ if(_estoqueIgnorar(nome)) return null; const k=norm(nome); if(!map[k]) map[k]={nome:nome,entrada:0,consumo:0,descarte:0,ajuste:0}; return map[k]; }
   // entradas (produção de batelada)
-  regMassas.forEach(r=>{ if(r.massa) ensure(massas,r.massa).entrada+=parseFloat(r.qtdKg)||0; });
-  regRecheios.forEach(r=>{ if(r.recheio) ensure(recheios,r.recheio).entrada+=parseFloat(r.qtdKg)||0; });
+  regMassas.forEach(r=>{ if(!r.massa) return; const e=ensure(massas,r.massa); if(e) e.entrada+=parseFloat(r.qtdKg)||0; });
+  regRecheios.forEach(r=>{ if(!r.recheio) return; const e=ensure(recheios,r.recheio); if(e) e.entrada+=parseFloat(r.qtdKg)||0; });
   // consumos (uso nos produtos da confeitaria)
   registros.filter(r=>r.origem!=='quadra').forEach(r=>{
     const pd=r.prodData||{};
-    if((parseFloat(r.massa)||0)>0 && pd.tipoMassa) ensure(massas,pd.tipoMassa).consumo+=parseFloat(r.massa)||0;
-    if((parseFloat(r.r1)||0)>0 && pd.tipoRecheio) ensure(recheios,pd.tipoRecheio).consumo+=parseFloat(r.r1)||0;
-    if((parseFloat(r.r2)||0)>0 && pd.tipoRecheio2) ensure(recheios,pd.tipoRecheio2).consumo+=parseFloat(r.r2)||0;
+    if((parseFloat(r.massa)||0)>0 && pd.tipoMassa){ const e=ensure(massas,pd.tipoMassa); if(e) e.consumo+=parseFloat(r.massa)||0; }
+    if((parseFloat(r.r1)||0)>0 && pd.tipoRecheio){ const e=ensure(recheios,pd.tipoRecheio); if(e) e.consumo+=parseFloat(r.r1)||0; }
+    if((parseFloat(r.r2)||0)>0 && pd.tipoRecheio2){ const e=ensure(recheios,pd.tipoRecheio2); if(e) e.consumo+=parseFloat(r.r2)||0; }
   });
   // descartes
-  descartesEstoque.forEach(d=>{ const map=d.tipo==='massa'?massas:recheios; ensure(map,d.nome).descarte+=parseFloat(d.qtd)||0; });
+  descartesEstoque.forEach(d=>{ const map=d.tipo==='massa'?massas:recheios; const e=ensure(map,d.nome); if(e) e.descarte+=parseFloat(d.qtd)||0; });
   // ajustes (delta)
-  ajustesEstoque.forEach(a=>{ const map=a.tipo==='massa'?massas:recheios; ensure(map,a.nome).ajuste+=parseFloat(a.delta)||0; });
+  ajustesEstoque.forEach(a=>{ const map=a.tipo==='massa'?massas:recheios; const e=ensure(map,a.nome); if(e) e.ajuste+=parseFloat(a.delta)||0; });
   Object.values(massas).forEach(e=>e.saldo=e.entrada-e.consumo-e.descarte+e.ajuste);
   Object.values(recheios).forEach(e=>e.saldo=e.entrada-e.consumo-e.descarte+e.ajuste);
   return {massas,recheios};
@@ -10702,12 +10738,12 @@ function saldoEstoque(tipo,nome){
 function _estoqueItemCard(e,comAjuste,tipo){
   const neg=e.saldo<-0.0001;
   const cor=neg?'var(--mc-vermelho)':(e.saldo>0.0001?'var(--mc-verde)':'var(--text-secondary)');
-  return '<div class="card" style="margin-bottom:8px;border-left:3px solid '+cor+';">'+
+  return '<div class="card" style="margin-bottom:8px;border-left:3px solid '+cor+';cursor:pointer;" onclick="abrirMovEstoque(\''+tipo+'\',\''+escapeJsStr(e.nome)+'\')">'+
     '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">'+
     '<div style="flex:1;min-width:0;font-size:14px;font-weight:600;">'+e.nome+'</div>'+
     '<div style="font-size:16px;font-weight:800;color:'+cor+';white-space:nowrap;">'+_fmtKg(e.saldo)+' kg</div></div>'+
-    '<div style="font-size:11px;color:var(--text-secondary);margin-top:3px;">Produzido '+_fmtKg(e.entrada)+' · Consumido '+_fmtKg(e.consumo)+' · Descarte '+_fmtKg(e.descarte)+(Math.abs(e.ajuste)>0.0001?(' · Ajuste '+(e.ajuste>0?'+':'')+_fmtKg(e.ajuste)):'')+'</div>'+
-    (comAjuste?'<button class="mc-act-btn-secondary" style="margin-top:8px;font-size:11px;padding:4px 10px;" onclick="abrirAjusteEstoque(\''+tipo+'\',\''+escapeJsStr(e.nome)+'\')">Definir saldo</button>':'')+
+    '<div style="font-size:11px;color:var(--text-secondary);margin-top:3px;">Produzido '+_fmtKg(e.entrada)+' · Consumido '+_fmtKg(e.consumo)+' · Descarte '+_fmtKg(e.descarte)+(Math.abs(e.ajuste)>0.0001?(' · Ajuste '+(e.ajuste>0?'+':'')+_fmtKg(e.ajuste)):'')+' · toque p/ ver movimentação ›</div>'+
+    (comAjuste?'<button class="mc-act-btn-secondary" style="margin-top:8px;font-size:11px;padding:4px 10px;" onclick="event.stopPropagation();abrirAjusteEstoque(\''+tipo+'\',\''+escapeJsStr(e.nome)+'\')">Definir saldo</button>':'')+
     '</div>';
 }
 function renderEstoqueView(mostrar,comAjuste){
@@ -10753,10 +10789,20 @@ function renderEstoqueAdmin(){
 
 // ---- Descarte ----
 let _descarteTipo='recheio', _descarteSetor='Cozinha';
-function abrirDescarteEstoque(tipo,setor){ _descarteTipo=tipo; _descarteSetor=setor; goTo('s-estoque-descarte'); }
+function abrirDescarteEstoque(tipo,setor){ _descarteSetor=setor; _descarteTipo=(setor==='Cozinha')?'recheio':(tipo||'massa'); goTo('s-estoque-descarte'); }
 function voltarDescarte(){ goTo(_descarteSetor==='Cozinha'?'s-estoque-coz':'s-estoque-conf'); }
+function mudarTipoDescarte(v){ _descarteTipo=v; renderDescarteEstoque(); }
 function renderDescarteEstoque(){
   const tit=document.getElementById('descarte-titulo'); if(tit) tit.textContent='🗑️ Descartar '+(_descarteTipo==='massa'?'massa':'recheio');
+  // seletor de tipo só para Confeitaria (vê os dois); Cozinha só recheio
+  const wrap=document.getElementById('descarte-tipo-wrap');
+  if(wrap){
+    if(_descarteSetor==='Confeitaria'){
+      wrap.style.display='block';
+      const ts=document.getElementById('descarte-tipo');
+      if(ts) ts.value=_descarteTipo;
+    } else { wrap.style.display='none'; }
+  }
   const c=calcEstoqueMassasRecheios();
   const map=_descarteTipo==='massa'?c.massas:c.recheios;
   const itens=Object.values(map).sort((a,b)=>a.nome.localeCompare(b.nome,'pt-BR'));
@@ -10809,15 +10855,74 @@ async function toggleControleEstoque(){
 // ---- Validação usada no lançamento de produto (Confeitaria) ----
 function verificarEstoqueProduto(prodSel,massa,r1,r2){
   const faltas=[];
-  if((parseFloat(massa)||0)>0 && prodSel.tipoMassa){ const s=saldoEstoque('massa',prodSel.tipoMassa); if(s<massa-0.0001) faltas.push('• Massa "'+prodSel.tipoMassa+'": saldo '+_fmtKg(s)+' kg, precisa '+_fmtKg(massa)+' kg'); }
-  if((parseFloat(r1)||0)>0 && prodSel.tipoRecheio){ const s=saldoEstoque('recheio',prodSel.tipoRecheio); if(s<r1-0.0001) faltas.push('• Recheio "'+prodSel.tipoRecheio+'": saldo '+_fmtKg(s)+' kg, precisa '+_fmtKg(r1)+' kg'); }
-  if((parseFloat(r2)||0)>0 && prodSel.tipoRecheio2){ const s=saldoEstoque('recheio',prodSel.tipoRecheio2); if(s<r2-0.0001) faltas.push('• Recheio "'+prodSel.tipoRecheio2+'": saldo '+_fmtKg(s)+' kg, precisa '+_fmtKg(r2)+' kg'); }
+  if((parseFloat(massa)||0)>0 && prodSel.tipoMassa && !_estoqueIgnorar(prodSel.tipoMassa)){ const s=saldoEstoque('massa',prodSel.tipoMassa); if(s<massa-0.0001) faltas.push('• Massa "'+prodSel.tipoMassa+'": saldo '+_fmtKg(s)+' kg, precisa '+_fmtKg(massa)+' kg'); }
+  if((parseFloat(r1)||0)>0 && prodSel.tipoRecheio && !_estoqueIgnorar(prodSel.tipoRecheio)){ const s=saldoEstoque('recheio',prodSel.tipoRecheio); if(s<r1-0.0001) faltas.push('• Recheio "'+prodSel.tipoRecheio+'": saldo '+_fmtKg(s)+' kg, precisa '+_fmtKg(r1)+' kg'); }
+  if((parseFloat(r2)||0)>0 && prodSel.tipoRecheio2 && !_estoqueIgnorar(prodSel.tipoRecheio2)){ const s=saldoEstoque('recheio',prodSel.tipoRecheio2); if(s<r2-0.0001) faltas.push('• Recheio "'+prodSel.tipoRecheio2+'": saldo '+_fmtKg(s)+' kg, precisa '+_fmtKg(r2)+' kg'); }
   return faltas;
 }
 
+// ---- Movimentação por item (histórico) ----
+let _movTipo='recheio', _movNome='', _movOrigem='s-estoque-conf', _movDias=10;
+function abrirMovEstoque(tipo,nome){
+  _movTipo=tipo; _movNome=nome; _movDias=10;
+  const at=document.querySelector('.screen.active')?.id;
+  _movOrigem = (at && at.indexOf('s-estoque')===0) ? at : 's-estoque-conf';
+  goTo('s-estoque-mov');
+}
+function voltarMov(){ goTo(_movOrigem||'s-estoque-conf'); }
+function setMovDias(d){ _movDias=d; renderMovEstoque(); }
+function _movsDoItem(tipo,nome){
+  const norm=_normNome, alvo=norm(nome), movs=[];
+  if(tipo==='massa'){
+    regMassas.forEach(r=>{ if(r.massa&&norm(r.massa)===alvo){ const q=parseFloat(r.qtdKg)||0; if(q>0) movs.push({data:r.data,ts:r.timestamp||0,desc:'Entrada por produção',setor:'Confeitaria',delta:q}); }});
+    registros.filter(r=>r.origem!=='quadra').forEach(r=>{ const pd=r.prodData||{}; if(pd.tipoMassa&&norm(pd.tipoMassa)===alvo){ const q=parseFloat(r.massa)||0; if(q>0) movs.push({data:r.data,ts:r.timestamp||0,desc:'Consumo — '+(r.produto||'produto'),setor:'Confeitaria',delta:-q}); }});
+  } else {
+    regRecheios.forEach(r=>{ if(r.recheio&&norm(r.recheio)===alvo){ const q=parseFloat(r.qtdKg)||0; if(q>0) movs.push({data:r.data,ts:r.timestamp||0,desc:'Entrada por produção',setor:'Cozinha',delta:q}); }});
+    registros.filter(r=>r.origem!=='quadra').forEach(r=>{ const pd=r.prodData||{};
+      if(pd.tipoRecheio&&norm(pd.tipoRecheio)===alvo){ const q=parseFloat(r.r1)||0; if(q>0) movs.push({data:r.data,ts:r.timestamp||0,desc:'Consumo — '+(r.produto||'produto'),setor:'Confeitaria',delta:-q}); }
+      if(pd.tipoRecheio2&&norm(pd.tipoRecheio2)===alvo){ const q=parseFloat(r.r2)||0; if(q>0) movs.push({data:r.data,ts:r.timestamp||0,desc:'Consumo — '+(r.produto||'produto'),setor:'Confeitaria',delta:-q}); }
+    });
+  }
+  descartesEstoque.forEach(d=>{ if(d.tipo===tipo&&norm(d.nome)===alvo){ const q=parseFloat(d.qtd)||0; movs.push({data:d.data,ts:d.timestamp||0,desc:'Descarte'+(d.motivo?' ('+d.motivo+')':''),setor:d.setor||'',delta:-q}); }});
+  ajustesEstoque.forEach(a=>{ if(a.tipo===tipo&&norm(a.nome)===alvo){ movs.push({data:a.data,ts:a.timestamp||0,desc:'Ajuste — definir saldo p/ '+_fmtKg(a.valorAlvo)+' kg',setor:'admin',delta:parseFloat(a.delta)||0}); }});
+  return movs.sort((a,b)=>(b.ts-a.ts)); // mais recente primeiro
+}
+function renderMovEstoque(){
+  const saldoAtual=saldoEstoque(_movTipo,_movNome);
+  const head=document.getElementById('mov-head');
+  if(head){
+    const cor=saldoAtual<-0.0001?'var(--mc-vermelho)':(saldoAtual>0.0001?'var(--mc-verde)':'var(--text-secondary)');
+    head.innerHTML='<div class="card" style="border-left:3px solid '+cor+';margin-bottom:12px;">'+
+      '<div style="font-size:16px;font-weight:700;">'+_movNome+'</div>'+
+      '<div style="font-size:12px;color:var(--text-secondary);margin-top:2px;">'+(_movTipo==='massa'?'Massa':'Recheio')+'</div>'+
+      '<div style="font-size:22px;font-weight:800;color:'+cor+';margin-top:6px;">Saldo: '+_fmtKg(saldoAtual)+' kg</div></div>'+
+      '<div style="display:flex;gap:6px;margin-bottom:12px;">'+
+      [[10,'10 dias'],[30,'30 dias'],[0,'Tudo']].map(([d,l])=>'<button class="btn '+(_movDias===d?'btn-primary':'btn-secondary')+'" style="flex:1;font-size:12px;padding:7px 4px;" onclick="setMovDias('+d+')">'+l+'</button>').join('')+
+      '</div>';
+  }
+  const cont=document.getElementById('mov-list'); if(!cont) return;
+  let movs=_movsDoItem(_movTipo,_movNome);
+  if(_movDias>0){
+    const lim=Date.now()-_movDias*24*60*60*1000;
+    movs=movs.filter(m=>{ const t=m.ts||(m.data?_parseDataBR(m.data):0); return t>=lim; });
+  }
+  if(!movs.length){ cont.innerHTML='<div class="empty">Sem movimentação no período.</div>'; return; }
+  cont.innerHTML='<div class="mc-section-header">Movimentação ('+movs.length+')</div>'+movs.map(m=>{
+    const pos=m.delta>=0;
+    const cor=pos?'var(--mc-verde)':'var(--mc-vermelho)';
+    const icon=m.desc.indexOf('Entrada')===0?'📥':(m.desc.indexOf('Descarte')===0?'🗑️':(m.desc.indexOf('Ajuste')===0?'⚙️':'📤'));
+    return '<div class="card" style="margin-bottom:6px;border-left:3px solid '+cor+';">'+
+      '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">'+
+      '<div style="flex:1;min-width:0;"><div style="font-size:13px;font-weight:600;">'+icon+' '+m.desc+'</div>'+
+      '<div style="font-size:11px;color:var(--text-secondary);">'+(m.data||'')+(m.setor?(' · '+m.setor):'')+'</div></div>'+
+      '<div style="font-size:15px;font-weight:800;color:'+cor+';white-space:nowrap;">'+(pos?'+':'−')+_fmtKg(Math.abs(m.delta))+' kg</div></div></div>';
+  }).join('');
+}
+
 window.renderEstoqueCoz=renderEstoqueCoz; window.renderEstoqueConf=renderEstoqueConf; window.renderEstoqueAdmin=renderEstoqueAdmin;
-window.abrirDescarteEstoque=abrirDescarteEstoque; window.voltarDescarte=voltarDescarte; window.renderDescarteEstoque=renderDescarteEstoque; window.salvarDescarteEstoque=salvarDescarteEstoque;
+window.abrirDescarteEstoque=abrirDescarteEstoque; window.voltarDescarte=voltarDescarte; window.renderDescarteEstoque=renderDescarteEstoque; window.salvarDescarteEstoque=salvarDescarteEstoque; window.mudarTipoDescarte=mudarTipoDescarte;
 window.abrirAjusteEstoque=abrirAjusteEstoque; window.toggleControleEstoque=toggleControleEstoque;
+window.abrirMovEstoque=abrirMovEstoque; window.voltarMov=voltarMov; window.setMovDias=setMovDias; window.renderMovEstoque=renderMovEstoque;
 
 
 
