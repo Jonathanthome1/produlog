@@ -796,6 +796,14 @@
           </div>
           <span class="mc-sector-arrow">›</span>
         </button>
+        <button class="mc-sector-card" style="border-left:3px solid var(--mc-verde);" onclick="goTo('s-rastreio')">
+          <div class="mc-sector-icon" style="background:var(--mc-verde-claro);">🔎</div>
+          <div class="mc-sector-info">
+            <div class="mc-sector-title">Rastreamento</div>
+            <div class="mc-sector-desc">Consumo de matéria-prima por período</div>
+          </div>
+          <span class="mc-sector-arrow">›</span>
+        </button>
         <button class="mc-sector-card" style="border-left:3px solid var(--mc-roxo);" onclick="abrirPin('admin')">
           <div class="mc-sector-icon purple">📊</div>
           <div class="mc-sector-info">
@@ -854,6 +862,48 @@
       </div>
       <input type="text" id="mp-busca" placeholder="🔍 Buscar por nome ou código..." style="width:100%;padding:11px 12px;border:1px solid var(--border-md,#d1d5db);border-radius:10px;font-size:15px;font-family:inherit;margin-bottom:14px;" oninput="renderMP()" />
       <div id="mp-list"></div>
+    </div>
+  </div>
+
+  <!-- RASTREAMENTO DE MATÉRIA-PRIMA -->
+  <div class="screen" id="s-rastreio">
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="goTo('s-inicio')">‹</button>
+      <div class="mc-brand">
+        <div class="mc-brand-logo">MC</div>
+        <div class="mc-brand-text">
+          <div class="mc-brand-name">Monte Castelo</div>
+          <div class="mc-brand-sub">Rastreamento</div>
+        </div>
+      </div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info">
+        <div class="mc-page-title">🔎 Rastreamento de MP</div>
+        <div class="mc-page-sub">Consumo por período</div>
+      </div>
+    </div>
+    <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;">
+      <div class="card" style="margin-bottom:14px;">
+        <div class="card-label">Período</div>
+        <div style="display:flex;gap:8px;align-items:center;margin-top:6px;">
+          <input type="date" id="rastreio-ini" style="flex:1;font-size:14px;padding:9px;border-radius:8px;border:1px solid var(--border-md,#d1d5db);" />
+          <span style="color:var(--text-secondary);font-size:13px;">até</span>
+          <input type="date" id="rastreio-fim" style="flex:1;font-size:14px;padding:9px;border-radius:8px;border:1px solid var(--border-md,#d1d5db);" />
+        </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;">
+          <button class="btn-sm-outline" style="font-size:11px;padding:4px 10px;" onclick="rastreioPeriodoRapido('hoje')">Hoje</button>
+          <button class="btn-sm-outline" style="font-size:11px;padding:4px 10px;" onclick="rastreioPeriodoRapido('7')">Últimos 7 dias</button>
+          <button class="btn-sm-outline" style="font-size:11px;padding:4px 10px;" onclick="rastreioPeriodoRapido('30')">Últimos 30 dias</button>
+          <button class="btn-sm-outline" style="font-size:11px;padding:4px 10px;" onclick="rastreioPeriodoRapido('mes')">Este mês</button>
+        </div>
+        <div class="card-label" style="margin-top:14px;">Matéria-prima</div>
+        <select id="rastreio-mp" style="width:100%;margin-top:6px;font-size:14px;padding:10px;border-radius:8px;border:1px solid var(--border-md,#d1d5db);"></select>
+        <div style="display:flex;gap:8px;margin-top:14px;">
+          <button class="btn btn-primary" style="flex:1;" onclick="calcularRastreio()">🔎 Calcular</button>
+          <button class="btn btn-laranja" onclick="exportarRastreioExcel()">📥 Excel</button>
+        </div>
+      </div>
+      <div id="rastreio-result"></div>
     </div>
   </div>
 
@@ -3862,6 +3912,10 @@ function goTo(id){
   if(id==='s-exp-home') renderExpedicao();
   if(id==='s-exp-manual') renderExpManual();
   if(id==='s-mp-home') renderMP();
+  if(id==='s-rastreio'){
+    popularSelectMPRastreio();
+    if(!document.getElementById('rastreio-ini').value){ rastreioPeriodoRapido('mes'); }
+  }
   if(id==='s-exp-view-sel') renderExpViewSelData();
   if(id==='s-exp-view') renderExpView();
   if(id==='s-adm') renderAdm(tabAtiva);
@@ -10274,6 +10328,192 @@ async function importarKitsQuadra(){
     (mpCriadas?('\nMatérias-primas novas: '+mpCriadas):'')+(erros?('\n⚠ Erros: '+erros):''));
 }
 window.importarKitsQuadra=importarKitsQuadra;
+
+// ===== RASTREAMENTO DE MATÉRIA-PRIMA (Fase 3) =====
+let _rastreioRes = null;       // resultado calculado { mpCodigo: {...} }
+let _rastreioPeriodo = null;   // {iniStr, fimStr} para o Excel
+
+function _parseDataBR(s){
+  if(!s) return null;
+  const p=String(s).split(' ')[0].split('/');
+  if(p.length!==3) return null;
+  const d=parseInt(p[0]),m=parseInt(p[1]),y=parseInt(p[2]);
+  if(!d||!m||!y) return null;
+  return y*10000+m*100+d;
+}
+function _parseDataInput(s){ // "YYYY-MM-DD" -> YYYYMMDD
+  if(!s) return null;
+  const p=String(s).split('-');
+  if(p.length!==3) return null;
+  return parseInt(p[0])*10000+parseInt(p[1])*100+parseInt(p[2]);
+}
+function _ymdLocal(date){
+  const y=date.getFullYear(), m=String(date.getMonth()+1).padStart(2,'0'), d=String(date.getDate()).padStart(2,'0');
+  return `${y}-${m}-${d}`;
+}
+function _fmtKg(n){ return Number(n||0).toLocaleString('pt-BR',{maximumFractionDigits:3}); }
+
+function rastreioPeriodoRapido(tipo){
+  const hojeD=new Date(); let ini=new Date();
+  if(tipo==='hoje'){ ini=new Date(); }
+  else if(tipo==='7'){ ini.setDate(hojeD.getDate()-6); }
+  else if(tipo==='30'){ ini.setDate(hojeD.getDate()-29); }
+  else if(tipo==='mes'){ ini=new Date(hojeD.getFullYear(),hojeD.getMonth(),1); }
+  document.getElementById('rastreio-ini').value=_ymdLocal(ini);
+  document.getElementById('rastreio-fim').value=_ymdLocal(hojeD);
+}
+
+function popularSelectMPRastreio(){
+  const sel=document.getElementById('rastreio-mp'); if(!sel) return;
+  const atual=sel.value;
+  const ord=[...materiasPrimas].sort((a,b)=>(a.nome||'').localeCompare(b.nome||'','pt-BR'));
+  sel.innerHTML='<option value="">— Todas (relatório geral) —</option>'+
+    ord.map(m=>`<option value="${m.codigo}">${m.nome} (${m.codigo})</option>`).join('');
+  if(atual) sel.value=atual;
+}
+
+function calcularRastreamento(iniNum, fimNum){
+  const norm=_normNome;
+  const massaBy={}; massasFirebase.forEach(m=>massaBy[norm(m.nome)]=m);
+  const recheioBy={}; recheiosFirebase.forEach(r=>recheioBy[norm(r.nome)]=r);
+  const kitBy={}; kitsCustom.forEach(k=>kitBy[norm(k.nome)]=k);
+  const res={};
+  function add(cod,nome,uni,origemNome,data,kg){
+    if(!cod||kg<=0) return;
+    cod=String(cod);
+    if(!res[cod]) res[cod]={mpCodigo:cod,mpNome:nome,mpUnidade:uni,total:0,porReceita:{},porData:{}};
+    const e=res[cod];
+    e.total+=kg;
+    e.porReceita[origemNome]=(e.porReceita[origemNome]||0)+kg;
+    e.porData[data]=(e.porData[data]||0)+kg;
+  }
+  function proc(receita,kgProduzido,data){
+    if(!receita||!Array.isArray(receita.ingredientes)) return;
+    const total=receita.ingredientes.reduce((s,i)=>s+(parseFloat(i.kg)||0),0);
+    if(total<=0) return;
+    receita.ingredientes.forEach(i=>{
+      if(!i.mpCodigo) return;
+      const mp=materiasPrimas.find(m=>String(m.codigo)===String(i.mpCodigo));
+      add(i.mpCodigo, i.mpNome||(mp?mp.nome:i.mpCodigo), i.mpUnidade||(mp?mp.unidade:'KG'), receita.nome, data, kgProduzido*(parseFloat(i.kg)||0)/total);
+    });
+  }
+  function inRange(d){ if(d===null) return false; if(iniNum&&d<iniNum) return false; if(fimNum&&d>fimNum) return false; return true; }
+
+  // CONFEITARIA (registros, origem != quadra) — modelo percentual
+  registros.filter(r=>r.origem!=='quadra').forEach(r=>{
+    if(!inRange(_parseDataBR(r.data))) return;
+    const pd=r.prodData||{};
+    if((parseFloat(r.massa)||0)>0 && pd.tipoMassa) proc(massaBy[norm(pd.tipoMassa)], parseFloat(r.massa)||0, r.data);
+    if((parseFloat(r.r1)||0)>0 && pd.tipoRecheio) proc(recheioBy[norm(pd.tipoRecheio)], parseFloat(r.r1)||0, r.data);
+    if((parseFloat(r.r2)||0)>0 && pd.tipoRecheio2) proc(recheioBy[norm(pd.tipoRecheio2)], parseFloat(r.r2)||0, r.data);
+  });
+
+  // QUADRA (quadraRegistros) — por kit: nº kits × kg do ingrediente
+  quadraRegistros.forEach(q=>{
+    if(!inRange(_parseDataBR(q.data))) return;
+    const kit=kitBy[norm(q.kit)]; if(!kit||!Array.isArray(kit.ingredientes)) return;
+    const nk=parseFloat(q.numKits)||0; if(nk<=0) return;
+    kit.ingredientes.forEach(i=>{
+      if(!i.mpCodigo) return;
+      const mp=materiasPrimas.find(m=>String(m.codigo)===String(i.mpCodigo));
+      add(i.mpCodigo, i.mpNome||(mp?mp.nome:i.mpCodigo), i.mpUnidade||(mp?mp.unidade:'KG'), kit.nome, q.data, nk*(parseFloat(i.kg)||0));
+    });
+  });
+
+  return res;
+}
+
+function calcularRastreio(){
+  const iniStr=document.getElementById('rastreio-ini').value;
+  const fimStr=document.getElementById('rastreio-fim').value;
+  if(!iniStr||!fimStr){ alert('Selecione o período (início e fim).'); return; }
+  const iniNum=_parseDataInput(iniStr), fimNum=_parseDataInput(fimStr);
+  if(iniNum>fimNum){ alert('A data inicial não pode ser maior que a final.'); return; }
+  _rastreioRes=calcularRastreamento(iniNum,fimNum);
+  _rastreioPeriodo={iniStr,fimStr};
+  renderRastreioResult();
+}
+
+function renderRastreioResult(){
+  const el=document.getElementById('rastreio-result'); if(!el) return;
+  if(!_rastreioRes){ el.innerHTML=''; return; }
+  const selMp=document.getElementById('rastreio-mp').value;
+  const fmtData=(d)=>d; // já em DD/MM/AAAA
+
+  if(selMp){
+    const e=_rastreioRes[selMp];
+    if(!e||e.total<=0){ el.innerHTML='<div class="empty">Sem consumo dessa matéria-prima no período.</div>'; return; }
+    el.innerHTML=_cardRastreioMP(e,true);
+    return;
+  }
+  // TODAS
+  const lista=Object.values(_rastreioRes).filter(e=>e.total>0).sort((a,b)=>b.total-a.total);
+  if(lista.length===0){ el.innerHTML='<div class="empty">Nenhum consumo no período.</div>'; return; }
+  let html='<div style="font-size:13px;color:var(--text-secondary);margin-bottom:10px;">'+lista.length+' matéria(s)-prima(s) consumida(s) no período · toque para detalhar</div>';
+  lista.forEach((e,idx)=>{ html+=_cardRastreioMP(e,false,idx); });
+  el.innerHTML=html;
+}
+
+function _cardRastreioMP(e, aberto, idx){
+  const det = '<div style="margin-top:8px;">'+
+    '<div style="font-size:11px;font-weight:700;color:var(--text-secondary);text-transform:uppercase;margin:6px 0 4px;">Onde foi usado</div>'+
+    Object.entries(e.porReceita).sort((a,b)=>b[1]-a[1]).map(([nome,kg])=>
+      `<div style="display:flex;justify-content:space-between;font-size:13px;padding:3px 0;border-bottom:1px dashed var(--border);"><span>${nome}</span><strong>${_fmtKg(kg)} ${e.mpUnidade}</strong></div>`).join('')+
+    '<div style="font-size:11px;font-weight:700;color:var(--text-secondary);text-transform:uppercase;margin:10px 0 4px;">Por data</div>'+
+    Object.entries(e.porData).sort((a,b)=>_parseDataBR(a[0])-_parseDataBR(b[0])).map(([data,kg])=>
+      `<div style="display:flex;justify-content:space-between;font-size:13px;padding:3px 0;border-bottom:1px dashed var(--border);"><span>${data}</span><strong>${_fmtKg(kg)} ${e.mpUnidade}</strong></div>`).join('')+
+    '</div>';
+
+  if(aberto){
+    return '<div class="card" style="margin-bottom:10px;border-left:3px solid var(--mc-verde);">'+
+      '<div style="display:flex;justify-content:space-between;align-items:center;"><div style="font-size:15px;font-weight:700;">'+e.mpNome+'</div>'+
+      '<div style="font-size:16px;font-weight:800;color:var(--mc-verde);">'+_fmtKg(e.total)+' '+e.mpUnidade+'</div></div>'+
+      '<div style="font-size:11px;color:var(--text-secondary);">Cód '+e.mpCodigo+'</div>'+det+'</div>';
+  }
+  return '<div class="card" style="margin-bottom:8px;">'+
+    '<div style="display:flex;justify-content:space-between;align-items:center;cursor:pointer;" onclick="toggleRastreioDet('+idx+')">'+
+    '<div style="flex:1;min-width:0;"><div style="font-size:14px;font-weight:600;">'+e.mpNome+'</div><div style="font-size:11px;color:var(--text-secondary);">Cód '+e.mpCodigo+' · toque para detalhe</div></div>'+
+    '<div style="font-size:15px;font-weight:800;color:var(--mc-verde);white-space:nowrap;">'+_fmtKg(e.total)+' '+e.mpUnidade+'</div></div>'+
+    '<div id="rastreio-det-'+idx+'" style="display:none;">'+det+'</div></div>';
+}
+
+function toggleRastreioDet(idx){
+  const d=document.getElementById('rastreio-det-'+idx); if(!d) return;
+  d.style.display = d.style.display==='none' ? 'block' : 'none';
+}
+
+async function exportarRastreioExcel(){
+  if(!_rastreioRes){ alert('Calcule o rastreamento primeiro.'); return; }
+  const selMp=document.getElementById('rastreio-mp').value;
+  let lista=Object.values(_rastreioRes).filter(e=>e.total>0);
+  if(selMp) lista=lista.filter(e=>e.mpCodigo===selMp);
+  lista.sort((a,b)=>b.total-a.total);
+  if(lista.length===0){ alert('Nada para exportar nesse período.'); return; }
+  await new Promise((res,rej)=>{ if(window.XLSX){res();return;} const s=document.createElement('script'); s.src='https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js'; s.onload=res; s.onerror=rej; document.head.appendChild(s); });
+  const wb=XLSX.utils.book_new();
+  // Resumo
+  const resumo=[['CÓDIGO','MATÉRIA-PRIMA','UNIDADE','TOTAL CONSUMIDO']];
+  lista.forEach(e=>resumo.push([e.mpCodigo,e.mpNome,e.mpUnidade,Number(e.total.toFixed(3))]));
+  const wsR=XLSX.utils.aoa_to_sheet(resumo); wsR['!cols']=[{wch:10},{wch:38},{wch:10},{wch:16}];
+  XLSX.utils.book_append_sheet(wb,wsR,'Resumo');
+  // Por Receita/Kit
+  const porRec=[['CÓDIGO','MATÉRIA-PRIMA','RECEITA/KIT','KG']];
+  lista.forEach(e=>Object.entries(e.porReceita).sort((a,b)=>b[1]-a[1]).forEach(([nome,kg])=>porRec.push([e.mpCodigo,e.mpNome,nome,Number(kg.toFixed(3))])));
+  const wsRec=XLSX.utils.aoa_to_sheet(porRec); wsRec['!cols']=[{wch:10},{wch:38},{wch:38},{wch:12}];
+  XLSX.utils.book_append_sheet(wb,wsRec,'Por Receita-Kit');
+  // Por Data
+  const porData=[['CÓDIGO','MATÉRIA-PRIMA','DATA','KG']];
+  lista.forEach(e=>Object.entries(e.porData).sort((a,b)=>_parseDataBR(a[0])-_parseDataBR(b[0])).forEach(([data,kg])=>porData.push([e.mpCodigo,e.mpNome,data,Number(kg.toFixed(3))])));
+  const wsD=XLSX.utils.aoa_to_sheet(porData); wsD['!cols']=[{wch:10},{wch:38},{wch:14},{wch:12}];
+  XLSX.utils.book_append_sheet(wb,wsD,'Por Data');
+  const per=_rastreioPeriodo?('_'+_rastreioPeriodo.iniStr+'_a_'+_rastreioPeriodo.fimStr):'';
+  XLSX.writeFile(wb,'rastreamento'+per+'.xlsx');
+}
+
+window.rastreioPeriodoRapido=rastreioPeriodoRapido; window.popularSelectMPRastreio=popularSelectMPRastreio;
+window.calcularRastreio=calcularRastreio; window.renderRastreioResult=renderRastreioResult;
+window.toggleRastreioDet=toggleRastreioDet; window.exportarRastreioExcel=exportarRastreioExcel;
+
 
 
 
