@@ -10401,13 +10401,18 @@ function calcularRastreamento(iniNum, fimNum){
   }
   function inRange(d){ if(d===null) return false; if(iniNum&&d<iniNum) return false; if(fimNum&&d>fimNum) return false; return true; }
 
-  // CONFEITARIA (registros, origem != quadra) — modelo percentual
-  registros.filter(r=>r.origem!=='quadra').forEach(r=>{
+  // CONFEITARIA — consumo acontece na PRODUÇÃO da batelada de massa/recheio (modelo percentual)
+  // Massas produzidas (coleção 'massas')
+  regMassas.forEach(r=>{
     if(!inRange(_parseDataBR(r.data))) return;
-    const pd=r.prodData||{};
-    if((parseFloat(r.massa)||0)>0 && pd.tipoMassa) proc(massaBy[norm(pd.tipoMassa)], parseFloat(r.massa)||0, r.data);
-    if((parseFloat(r.r1)||0)>0 && pd.tipoRecheio) proc(recheioBy[norm(pd.tipoRecheio)], parseFloat(r.r1)||0, r.data);
-    if((parseFloat(r.r2)||0)>0 && pd.tipoRecheio2) proc(recheioBy[norm(pd.tipoRecheio2)], parseFloat(r.r2)||0, r.data);
+    const kg=parseFloat(r.qtdKg)||0; if(kg<=0) return;
+    proc(massaBy[norm(r.massa)], kg, r.data);
+  });
+  // Recheios produzidos (coleção 'recheios')
+  regRecheios.forEach(r=>{
+    if(!inRange(_parseDataBR(r.data))) return;
+    const kg=parseFloat(r.qtdKg)||0; if(kg<=0) return;
+    proc(recheioBy[norm(r.recheio)], kg, r.data);
   });
 
   // QUADRA (quadraRegistros) — por kit: nº kits × kg do ingrediente
