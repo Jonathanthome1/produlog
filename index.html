@@ -9912,7 +9912,7 @@ function renderAdmMassasRecheios(){
     listaMassas.forEach(m=>{
       const isFB=m._origem==='firebase';
       const nIng=(m.ingredientes||[]).length;
-      const rend=m.rendimentoKg||0;
+      const rend=(Math.round((m.rendimentoKg||0)*100)/100).toFixed(2).replace('.',',');
       const temFicha=nIng>0;
       html+='<div style="background:var(--bg-primary);border:1px solid var(--border);border-left:3px solid '+(isFB?'var(--mc-verde)':'var(--text-muted)')+';border-radius:var(--r-md);padding:10px 12px;margin-bottom:6px;display:flex;align-items:center;gap:10px;">';
       html+='<div style="flex:1;min-width:0;">';
@@ -9948,7 +9948,7 @@ function renderAdmMassasRecheios(){
     listaRecheios.forEach(r=>{
       const isFB=r._origem==='firebase';
       const nIng=(r.ingredientes||[]).length;
-      const rend=r.rendimentoKg||0;
+      const rend=(Math.round((r.rendimentoKg||0)*100)/100).toFixed(2).replace('.',',');
       const temFicha=nIng>0;
       html+='<div style="background:var(--bg-primary);border:1px solid var(--border);border-left:3px solid '+(isFB?'var(--mc-laranja)':'var(--text-muted)')+';border-radius:var(--r-md);padding:10px 12px;margin-bottom:6px;display:flex;align-items:center;gap:10px;">';
       html+='<div style="flex:1;min-width:0;">';
