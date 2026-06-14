@@ -10381,11 +10381,13 @@ function calcularRastreamento(iniNum, fimNum){
   function add(cod,nome,uni,origemNome,data,kg){
     if(!cod||kg<=0) return;
     cod=String(cod);
-    if(!res[cod]) res[cod]={mpCodigo:cod,mpNome:nome,mpUnidade:uni,total:0,porReceita:{},porData:{}};
+    if(!res[cod]) res[cod]={mpCodigo:cod,mpNome:nome,mpUnidade:uni,total:0,porReceita:{},porData:{},porDataReceita:{}};
     const e=res[cod];
     e.total+=kg;
     e.porReceita[origemNome]=(e.porReceita[origemNome]||0)+kg;
     e.porData[data]=(e.porData[data]||0)+kg;
+    if(!e.porDataReceita[data]) e.porDataReceita[data]={};
+    e.porDataReceita[data][origemNome]=(e.porDataReceita[data][origemNome]||0)+kg;
   }
   function proc(receita,kgProduzido,data){
     if(!receita||!Array.isArray(receita.ingredientes)) return;
@@ -10455,14 +10457,22 @@ function renderRastreioResult(){
 }
 
 function _cardRastreioMP(e, aberto, idx){
-  const det = '<div style="margin-top:8px;">'+
-    '<div style="font-size:11px;font-weight:700;color:var(--text-secondary);text-transform:uppercase;margin:6px 0 4px;">Onde foi usado</div>'+
+  const pfx = aberto ? 'sg' : ('a'+idx);
+  const ondeFoiUsado='<div style="font-size:11px;font-weight:700;color:var(--text-secondary);text-transform:uppercase;margin:6px 0 4px;">Onde foi usado (total do período)</div>'+
     Object.entries(e.porReceita).sort((a,b)=>b[1]-a[1]).map(([nome,kg])=>
-      `<div style="display:flex;justify-content:space-between;font-size:13px;padding:3px 0;border-bottom:1px dashed var(--border);"><span>${nome}</span><strong>${_fmtKg(kg)} ${e.mpUnidade}</strong></div>`).join('')+
-    '<div style="font-size:11px;font-weight:700;color:var(--text-secondary);text-transform:uppercase;margin:10px 0 4px;">Por data</div>'+
-    Object.entries(e.porData).sort((a,b)=>_parseDataBR(a[0])-_parseDataBR(b[0])).map(([data,kg])=>
-      `<div style="display:flex;justify-content:space-between;font-size:13px;padding:3px 0;border-bottom:1px dashed var(--border);"><span>${data}</span><strong>${_fmtKg(kg)} ${e.mpUnidade}</strong></div>`).join('')+
-    '</div>';
+      `<div style="display:flex;justify-content:space-between;font-size:13px;padding:3px 0;border-bottom:1px dashed var(--border);"><span>${nome}</span><strong>${_fmtKg(kg)} ${e.mpUnidade}</strong></div>`).join('');
+
+  const datas=Object.keys(e.porData).sort((a,b)=>_parseDataBR(a)-_parseDataBR(b));
+  const porDataHtml='<div style="font-size:11px;font-weight:700;color:var(--text-secondary);text-transform:uppercase;margin:12px 0 4px;">Por data <span style="font-weight:500;text-transform:none;color:var(--text-muted);">(toque no dia p/ ver as receitas)</span></div>'+
+    datas.map((data,di)=>{
+      const recs=e.porDataReceita[data]||{};
+      const recHtml=Object.entries(recs).sort((a,b)=>b[1]-a[1]).map(([nome,kg])=>
+        `<div style="display:flex;justify-content:space-between;font-size:12px;padding:2px 0;color:var(--text-secondary);"><span>↳ ${nome}</span><span>${_fmtKg(kg)} ${e.mpUnidade}</span></div>`).join('');
+      return `<div onclick="toggleRastreioDataDet('${pfx}-${di}')" style="cursor:pointer;display:flex;justify-content:space-between;align-items:center;font-size:13px;padding:5px 0;border-bottom:1px dashed var(--border);"><span style="color:var(--mc-azul);">▸ ${data}</span><strong>${_fmtKg(e.porData[data])} ${e.mpUnidade}</strong></div>`+
+        `<div id="rd-${pfx}-${di}" style="display:none;padding:3px 0 7px 14px;background:var(--bg-page);border-radius:6px;margin-bottom:3px;">${recHtml}</div>`;
+    }).join('');
+
+  const det='<div style="margin-top:8px;">'+ondeFoiUsado+porDataHtml+'</div>';
 
   if(aberto){
     return '<div class="card" style="margin-bottom:10px;border-left:3px solid var(--mc-verde);">'+
@@ -10476,6 +10486,12 @@ function _cardRastreioMP(e, aberto, idx){
     '<div style="font-size:15px;font-weight:800;color:var(--mc-verde);white-space:nowrap;">'+_fmtKg(e.total)+' '+e.mpUnidade+'</div></div>'+
     '<div id="rastreio-det-'+idx+'" style="display:none;">'+det+'</div></div>';
 }
+
+function toggleRastreioDataDet(key){
+  const d=document.getElementById('rd-'+key); if(!d) return;
+  d.style.display = d.style.display==='none' ? 'block' : 'none';
+}
+window.toggleRastreioDataDet=toggleRastreioDataDet;
 
 function toggleRastreioDet(idx){
   const d=document.getElementById('rastreio-det-'+idx); if(!d) return;
@@ -10506,6 +10522,13 @@ async function exportarRastreioExcel(){
   lista.forEach(e=>Object.entries(e.porData).sort((a,b)=>_parseDataBR(a[0])-_parseDataBR(b[0])).forEach(([data,kg])=>porData.push([e.mpCodigo,e.mpNome,data,Number(kg.toFixed(3))])));
   const wsD=XLSX.utils.aoa_to_sheet(porData); wsD['!cols']=[{wch:10},{wch:38},{wch:14},{wch:12}];
   XLSX.utils.book_append_sheet(wb,wsD,'Por Data');
+  // Por Data e Receita (cruzado)
+  const porDR=[['CÓDIGO','MATÉRIA-PRIMA','DATA','RECEITA/KIT','KG']];
+  lista.forEach(e=>Object.keys(e.porDataReceita||{}).sort((a,b)=>_parseDataBR(a)-_parseDataBR(b)).forEach(data=>{
+    Object.entries(e.porDataReceita[data]).sort((a,b)=>b[1]-a[1]).forEach(([nome,kg])=>porDR.push([e.mpCodigo,e.mpNome,data,nome,Number(kg.toFixed(3))]));
+  }));
+  const wsDR=XLSX.utils.aoa_to_sheet(porDR); wsDR['!cols']=[{wch:10},{wch:38},{wch:14},{wch:38},{wch:12}];
+  XLSX.utils.book_append_sheet(wb,wsDR,'Por Data-Receita');
   const per=_rastreioPeriodo?('_'+_rastreioPeriodo.iniStr+'_a_'+_rastreioPeriodo.fimStr):'';
   XLSX.writeFile(wb,'rastreamento'+per+'.xlsx');
 }
