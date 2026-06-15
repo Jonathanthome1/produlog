@@ -3556,27 +3556,7 @@
       </div>
     </div>
     <div class="content">
-      <div class="card" style="border-left:3px solid var(--mc-roxo);">
-        <div style="font-size:13px;font-weight:600;color:var(--mc-azul);margin-bottom:10px;">➕ Adicionar produto C&amp;F</div>
-        <div class="card-label">Produto</div>
-        <input type="text" id="cf-produto" placeholder="Ex: PÃO DE QUEIJO C&F..." style="font-size:15px;" />
-        <div class="card-label" style="margin-top:12px;">Quantidade (unidades)</div>
-        <input type="number" id="cf-qtd" placeholder="0" min="0" inputmode="numeric" />
-        <div class="card-label" style="margin-top:12px;">Previsão de entrega</div>
-        <input type="date" id="cf-entrega" />
-        <div class="card-label" style="margin-top:12px;">Como vai ser feito?</div>
-        <div style="display:flex;gap:8px;">
-          <button type="button" id="cf-tipo-prod" class="cf-tipo-btn on" onclick="setCFTipo('producao')">📅 Produzir em dia</button>
-          <button type="button" id="cf-tipo-abrir" class="cf-tipo-btn" onclick="setCFTipo('abrir')">📦 Abrir pacote</button>
-        </div>
-        <div id="cf-data-wrap" style="margin-top:12px;">
-          <div class="card-label">Dia da produção</div>
-          <input type="date" id="cf-data" />
-        </div>
-        <div class="card-label" style="margin-top:12px;">Observação (opcional)</div>
-        <input type="text" id="cf-obs" placeholder="Ex: embalagem do cliente, lote..." />
-        <button class="btn btn-primary" id="cf-btn" onclick="salvarCF()" style="margin-top:14px;">Adicionar à lista C&amp;F ✓</button>
-      </div>
+      <div id="cf-form"></div>
       <div id="cf-list"></div>
     </div>
   </div>
@@ -4092,7 +4072,7 @@ function goTo(id){
   if(id==='s-conf-massas') renderConfMassas();
   if(id==='s-coz-reg') renderCozReg();
   if(id==='s-emb-home') renderEmbalagem();
-  if(id==='s-emb-cf') renderCF();
+  if(id==='s-emb-cf'){ renderCFForm(); renderCF(); }
   if(id==='s-emb-manual'){ const b=document.getElementById('emb-manual-btn');if(b){b.textContent='Adicionar ao checklist ✓';b.disabled=false;} }
   if(id==='s-exp-home') renderExpedicao();
   if(id==='s-exp-manual') renderExpManual();
@@ -4618,10 +4598,13 @@ async function salvarEmbManual(){
 
 // ===== CLIENTE C&F =====
 let cfPedidos = [];
-let cfTipoSel = 'producao';
 let cfAgrupar = 'status'; // 'status' ou 'entrega'
+let cfFiltroTipo = 'todos'; // 'todos' | 'producao' | 'abrir'
+let cfDraft = [{produto:'',qtd:'',tipo:'producao',dataProducao:''}];
+let cfDraftEntrega = '';
 
 function setCFAgrupar(modo){ cfAgrupar=modo; renderCF(); }
+function setCFFiltroTipo(t){ cfFiltroTipo=t; renderCF(); }
 
 function cfDateKey(br){ // 'dd/mm/aaaa' -> 'aaaa-mm-dd' (sem data vai pro fim)
   if(!br) return '9999-99-99';
@@ -4661,14 +4644,37 @@ function cfPedidoCompleto(p){
   return !!p.checkEmb;
 }
 
-function setCFTipo(tipo){
-  cfTipoSel = tipo;
-  const bp=document.getElementById('cf-tipo-prod'), ba=document.getElementById('cf-tipo-abrir');
-  if(bp) bp.className='cf-tipo-btn'+(tipo==='producao'?' on':'');
-  if(ba) ba.className='cf-tipo-btn'+(tipo==='abrir'?' on abrir':'');
-  const dw=document.getElementById('cf-data-wrap');
-  if(dw) dw.style.display = tipo==='producao' ? 'block' : 'none';
+function cfRowHtml(r,i){
+  const prod=r.tipo!=='abrir';
+  const escP=(r.produto||'').replace(/"/g,'&quot;');
+  return '<div style="border:1px solid var(--border);border-radius:10px;padding:10px;margin-bottom:8px;background:var(--bg-page);">'+
+    '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;"><span style="font-size:11px;font-weight:700;color:var(--text-secondary);">Produto '+(i+1)+'</span>'+
+    (cfDraft.length>1?'<button onclick="cfRemoveRow('+i+')" style="background:none;border:1px solid #ef9a9a;color:#c62828;font-size:11px;padding:2px 8px;border-radius:6px;cursor:pointer;font-family:inherit;">remover</button>':'')+'</div>'+
+    '<input type="text" placeholder="Produto (ex: PÃO DE QUEIJO C&F)" value="'+escP+'" oninput="cfUpd('+i+',\'produto\',this.value)" style="width:100%;font-size:14px;padding:9px;border-radius:8px;border:1px solid var(--border-md,#d1d5db);box-sizing:border-box;" />'+
+    '<input type="number" placeholder="Quantidade (un)" min="0" inputmode="numeric" value="'+(r.qtd||'')+'" oninput="cfUpd('+i+',\'qtd\',this.value)" style="width:100%;margin-top:6px;font-size:14px;padding:9px;border-radius:8px;border:1px solid var(--border-md,#d1d5db);box-sizing:border-box;" />'+
+    '<div style="display:flex;gap:8px;margin-top:6px;">'+
+      '<button type="button" onclick="cfSetRowTipo('+i+',\'producao\')" style="flex:1;padding:9px;border-radius:8px;border:1px solid '+(prod?'var(--mc-roxo)':'var(--border-md,#d1d5db)')+';background:'+(prod?'var(--mc-roxo)':'var(--bg-primary)')+';color:'+(prod?'#fff':'var(--text-primary)')+';font-size:12px;font-weight:600;font-family:inherit;cursor:pointer;">📅 Produzir</button>'+
+      '<button type="button" onclick="cfSetRowTipo('+i+',\'abrir\')" style="flex:1;padding:9px;border-radius:8px;border:1px solid '+(!prod?'var(--mc-vermelho)':'var(--border-md,#d1d5db)')+';background:'+(!prod?'var(--mc-vermelho)':'var(--bg-primary)')+';color:'+(!prod?'#fff':'var(--text-primary)')+';font-size:12px;font-weight:600;font-family:inherit;cursor:pointer;">📦 Abrir pacote</button>'+
+    '</div>'+
+    (prod?'<div style="margin-top:6px;"><div class="card-label">Dia da produção</div><input type="date" value="'+(r.dataProducao||'')+'" onchange="cfUpd('+i+',\'dataProducao\',this.value)" style="width:100%;" /></div>':'')+
+    '</div>';
 }
+function renderCFForm(){
+  const el=document.getElementById('cf-form'); if(!el) return;
+  el.innerHTML='<div class="card" style="border-left:3px solid var(--mc-roxo);">'+
+    '<div style="font-size:13px;font-weight:600;color:var(--mc-azul);margin-bottom:10px;">➕ Adicionar produtos C&F</div>'+
+    '<div class="card-label">Previsão de entrega <span style="font-weight:400;color:var(--text-secondary);">(vale para todos)</span></div>'+
+    '<input type="date" id="cf-entrega-lote" value="'+(cfDraftEntrega||'')+'" onchange="cfUpdEntrega(this.value)" style="width:100%;" />'+
+    '<div style="margin-top:12px;">'+cfDraft.map((r,i)=>cfRowHtml(r,i)).join('')+'</div>'+
+    '<button class="btn btn-secondary" style="width:100%;margin-top:4px;" onclick="cfAddRow()">+ Adicionar outro produto</button>'+
+    '<button class="btn btn-primary" id="cf-btn" style="width:100%;margin-top:8px;" onclick="salvarCFLote()">Salvar na lista C&F ✓</button>'+
+    '</div>';
+}
+function cfUpd(i,campo,val){ if(cfDraft[i]) cfDraft[i][campo]=val; }
+function cfUpdEntrega(val){ cfDraftEntrega=val; }
+function cfSetRowTipo(i,tipo){ if(cfDraft[i]){ cfDraft[i].tipo=tipo; if(tipo==='abrir') cfDraft[i].dataProducao=''; } renderCFForm(); }
+function cfAddRow(){ cfDraft.push({produto:'',qtd:'',tipo:'producao',dataProducao:''}); renderCFForm(); }
+function cfRemoveRow(i){ cfDraft.splice(i,1); if(!cfDraft.length) cfDraft.push({produto:'',qtd:'',tipo:'producao',dataProducao:''}); renderCFForm(); }
 
 function cfBrDate(iso){ // 'aaaa-mm-dd' -> 'dd/mm/aaaa'
   if(!iso) return '';
@@ -4676,38 +4682,30 @@ function cfBrDate(iso){ // 'aaaa-mm-dd' -> 'dd/mm/aaaa'
   return p[2]+'/'+p[1]+'/'+p[0];
 }
 
-async function salvarCF(){
-  const produto=document.getElementById('cf-produto').value.trim();
-  const qtd=parseInt(document.getElementById('cf-qtd').value)||0;
-  const obs=document.getElementById('cf-obs').value.trim();
-  const dataIso=document.getElementById('cf-data').value;
-  const entregaIso=document.getElementById('cf-entrega').value;
-  if(!produto){alert('Informe o produto.');return;}
-  if(!qtd){alert('Informe a quantidade.');return;}
-  if(!entregaIso){alert('Informe a previsão de entrega.');return;}
-  if(cfTipoSel==='producao' && !dataIso){alert('Informe o dia da produção.');return;}
-  const btn=document.getElementById('cf-btn');
-  btn.textContent='Salvando...';btn.disabled=true;
+async function salvarCFLote(){
+  const entregaIso=cfDraftEntrega||(document.getElementById('cf-entrega-lote')||{}).value||'';
+  if(!entregaIso){ alert('Informe a previsão de entrega.'); return; }
+  const validas=cfDraft.filter(r=>(r.produto||'').trim() && (parseInt(r.qtd)||0)>0);
+  if(!validas.length){ alert('Adicione ao menos um produto com quantidade.'); return; }
+  for(const r of validas){ if(r.tipo!=='abrir' && !r.dataProducao){ alert('Informe o dia da produção de "'+(r.produto||'').trim()+'".'); return; } }
+  const btn=document.getElementById('cf-btn'); if(btn){ btn.textContent='Salvando...'; btn.disabled=true; }
   try{
-    await addDoc(collection(db,'cfPedidos'),{
-      produto, qtd, obs,
-      tipo: cfTipoSel,
-      dataProducao: cfTipoSel==='producao' ? cfBrDate(dataIso) : '',
-      dataEntrega: cfBrDate(entregaIso),
-      checkEmb:false, checkEmbTs:'',
-      checkAdmin:false, checkAdminTs:'',
-      data:hoje(), hora:agora(), timestamp:Date.now()
-    });
-    document.getElementById('cf-produto').value='';
-    document.getElementById('cf-qtd').value='';
-    document.getElementById('cf-obs').value='';
-    document.getElementById('cf-data').value='';
-    document.getElementById('cf-entrega').value='';
-    setCFTipo('producao');
-    btn.textContent='Adicionar à lista C&F ✓';btn.disabled=false;
+    for(const r of validas){
+      await addDoc(collection(db,'cfPedidos'),{
+        produto:(r.produto||'').trim(), qtd:parseInt(r.qtd)||0, obs:'',
+        tipo: r.tipo==='abrir'?'abrir':'producao',
+        dataProducao: r.tipo!=='abrir' ? cfBrDate(r.dataProducao) : '',
+        dataEntrega: cfBrDate(entregaIso),
+        checkEmb:false, checkEmbTs:'', checkAdmin:false, checkAdminTs:'',
+        data:hoje(), hora:agora(), timestamp:Date.now()
+      });
+    }
+    cfDraft=[{produto:'',qtd:'',tipo:'producao',dataProducao:''}]; cfDraftEntrega='';
+    renderCFForm();
+    if(btn){ btn.textContent='Salvar na lista C&F ✓'; btn.disabled=false; }
   }catch(e){
     alert('Erro ao salvar: '+e.message);
-    btn.textContent='Adicionar à lista C&F ✓';btn.disabled=false;
+    if(btn){ btn.textContent='Salvar na lista C&F ✓'; btn.disabled=false; }
   }
 }
 
@@ -4764,34 +4762,52 @@ function renderCF(){
     </div>`;
   };
 
-  const pendentes=cfPedidos.filter(p=>!cfPedidoCompleto(p));
-  const feitos=cfPedidos.filter(p=>cfPedidoCompleto(p));
+  // Filtro por tipo
+  let base=cfPedidos.slice();
+  if(cfFiltroTipo==='producao') base=base.filter(p=>p.tipo!=='abrir');
+  else if(cfFiltroTipo==='abrir') base=base.filter(p=>p.tipo==='abrir');
+  // Produção: ordenar pela data de produção (mais próxima → mais distante)
+  if(cfFiltroTipo==='producao') base.sort((a,b)=>cfDateKey(a.dataProducao).localeCompare(cfDateKey(b.dataProducao)));
 
+  const pendentes=base.filter(p=>!cfPedidoCompleto(p));
+  const feitos=base.filter(p=>cfPedidoCompleto(p));
+
+  // Filtro de tipo
+  let html = `<div style="display:flex;gap:6px;margin:2px 0 8px;">
+    <button type="button" class="cf-tipo-btn ${cfFiltroTipo==='todos'?'on':''}" onclick="setCFFiltroTipo('todos')">Todos</button>
+    <button type="button" class="cf-tipo-btn ${cfFiltroTipo==='producao'?'on':''}" onclick="setCFFiltroTipo('producao')">📅 Produção</button>
+    <button type="button" class="cf-tipo-btn ${cfFiltroTipo==='abrir'?'on':''}" onclick="setCFFiltroTipo('abrir')">📦 Abrir</button>
+  </div>`;
   // Toggle de agrupamento
-  let html = `<div style="display:flex;gap:8px;margin:2px 0 12px;">
+  html += `<div style="display:flex;gap:8px;margin:2px 0 12px;">
     <button type="button" class="cf-tipo-btn ${cfAgrupar==='status'?'on':''}" onclick="setCFAgrupar('status')">📋 Por status</button>
     <button type="button" class="cf-tipo-btn ${cfAgrupar==='entrega'?'on':''}" onclick="setCFAgrupar('entrega')">🚚 Por dia de entrega</button>
   </div>`;
 
+  if(!base.length){ el.innerHTML=html+'<div class="empty" style="padding:20px;">Nenhum produto C&F nesse filtro.</div>'; return; }
+
   if(cfAgrupar==='entrega'){
-    // Agrupar pendentes por data de entrega (mais próxima primeiro = prioridade)
+    // Agrupar TODOS por data de entrega (com barra de progresso por dia)
     const grupos={};
-    pendentes.forEach(p=>{ const k=p.dataEntrega||''; (grupos[k]=grupos[k]||[]).push(p); });
+    base.forEach(p=>{ const k=p.dataEntrega||''; (grupos[k]=grupos[k]||[]).push(p); });
     const chaves=Object.keys(grupos).sort((a,b)=>cfDateKey(a).localeCompare(cfDateKey(b)));
-    if(!pendentes.length){
-      html+='<div class="empty" style="padding:20px;">Nenhum item pendente. 🎉</div>';
-    }
     chaves.forEach(k=>{
+      const items=grupos[k];
+      const totalQ=items.reduce((s,p)=>s+(p.qtd||0),0);
+      const doneQ=items.filter(cfPedidoCompleto).reduce((s,p)=>s+(p.qtd||0),0);
+      const pct=totalQ>0?Math.round(doneQ/totalQ*100):0;
       const dias=cfDiasAteEntrega(k);
-      const alerta = dias!==null ? (dias<0?' ⚠️':(dias===0?' 🔴':(dias===1?' 🟠':''))) : '';
-      const label = k ? ('🚚 Entrega '+k+alerta) : '🚚 Sem data de entrega';
-      html+='<div class="section-divider" style="margin-top:10px;">'+label+' ('+grupos[k].length+')</div>';
-      html+=grupos[k].map(cardHtml).join('');
+      const diasTxt = dias===null?'sem data':(dias<0?('⚠️ atrasado '+(-dias)+'d'):(dias===0?'🔴 entrega hoje':(dias===1?'🟠 falta 1 dia':'faltam '+dias+' dias')));
+      const cor = pct>=100?'var(--mc-verde)':((dias!==null&&dias<=1)?'var(--mc-vermelho)':'var(--mc-azul)');
+      html+='<div style="margin-top:14px;margin-bottom:8px;">'+
+        '<div style="display:flex;justify-content:space-between;align-items:center;font-size:13px;font-weight:700;"><span>🚚 '+(k||'Sem data de entrega')+'</span><span style="color:'+cor+';font-size:12px;">'+pct+'% · '+diasTxt+'</span></div>'+
+        '<div style="height:10px;background:var(--bg-page);border-radius:5px;overflow:hidden;margin-top:5px;"><div style="height:100%;width:'+Math.max(pct,2)+'%;background:'+cor+';border-radius:5px;transition:width .4s;"></div></div>'+
+        '<div style="font-size:11px;color:var(--text-secondary);margin-top:3px;">'+doneQ.toLocaleString('pt-BR')+' de '+totalQ.toLocaleString('pt-BR')+' un · '+items.length+' item(s)</div>'+
+        '</div>';
+      const pend=items.filter(p=>!cfPedidoCompleto(p));
+      const done=items.filter(cfPedidoCompleto);
+      html+=[...pend,...done].map(cardHtml).join('');
     });
-    if(feitos.length){
-      html+='<div class="section-divider" style="margin-top:14px;">Concluídos ('+feitos.length+')</div>';
-      html+=feitos.map(cardHtml).join('');
-    }
   } else {
     if(pendentes.length){
       html+='<div class="section-divider" style="margin-top:6px;">Pendentes ('+pendentes.length+')</div>';
@@ -4805,7 +4821,9 @@ function renderCF(){
   el.innerHTML=html;
 }
 
-window.renderCF=renderCF; window.salvarCF=salvarCF; window.setCFTipo=setCFTipo; window.toggleCFEmb=toggleCFEmb; window.toggleCFAdmin=toggleCFAdmin; window.setCFAgrupar=setCFAgrupar;
+window.renderCF=renderCF; window.renderCFForm=renderCFForm; window.salvarCFLote=salvarCFLote;
+window.cfUpd=cfUpd; window.cfUpdEntrega=cfUpdEntrega; window.cfSetRowTipo=cfSetRowTipo; window.cfAddRow=cfAddRow; window.cfRemoveRow=cfRemoveRow;
+window.toggleCFEmb=toggleCFEmb; window.toggleCFAdmin=toggleCFAdmin; window.setCFAgrupar=setCFAgrupar; window.setCFFiltroTipo=setCFFiltroTipo;
 
 // ===== EMBALAGEM =====
 function statusEmbalagem(data){
