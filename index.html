@@ -788,6 +788,14 @@
           </div>
           <span class="mc-sector-arrow">›</span>
         </button>
+        <button class="mc-sector-card" style="border-left:3px solid var(--mc-roxo);" onclick="abrirPin('alteracoes')">
+          <div class="mc-sector-icon purple">✏️</div>
+          <div class="mc-sector-info">
+            <div class="mc-sector-title">Alterações de Receita</div>
+            <div class="mc-sector-desc">Solicitar ajuste em massas, recheios e kits</div>
+          </div>
+          <span class="mc-sector-arrow">›</span>
+        </button>
         <button class="mc-sector-card" style="border-left:3px solid var(--mc-roxo);" onclick="abrirPin('admin')">
           <div class="mc-sector-icon purple">📊</div>
           <div class="mc-sector-info">
@@ -2789,6 +2797,14 @@
         </div>
         <span class="mc-sector-arrow" style="color:var(--mc-verde);">›</span>
       </button>
+      <button class="mc-sector-card" style="border-left:3px solid var(--mc-dourado);margin-bottom:10px;" onclick="goTo('s-alt-admin')">
+        <div class="mc-sector-icon" style="background:var(--mc-dourado-claro);">✏️</div>
+        <div class="mc-sector-info">
+          <div class="mc-sector-title">Solicitações de Receita <span class="alt-badge" style="display:none;background:var(--mc-vermelho);color:#fff;font-size:11px;font-weight:700;border-radius:99px;padding:1px 8px;margin-left:4px;align-items:center;">0</span></div>
+          <div class="mc-sector-desc">Aprovar/negar alterações · histórico por receita</div>
+        </div>
+        <span class="mc-sector-arrow">›</span>
+      </button>
       <button class="mc-sector-card" style="border-left:3px solid var(--mc-roxo);margin-bottom:10px;" onclick="goTo('s-sim')">
         <div class="mc-sector-icon purple">🧮</div>
         <div class="mc-sector-info">
@@ -3620,6 +3636,64 @@
     <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;" id="sim-content"></div>
   </div>
 
+  <!-- ALTERAÇÕES DE RECEITA: HOME -->
+  <div class="screen" id="s-alt-home">
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="window.adminMode?goTo('s-adm-hub'):goTo('s-inicio')">‹</button>
+      <div class="mc-brand"><div class="mc-brand-logo">MC</div><div class="mc-brand-text"><div class="mc-brand-name">Monte Castelo</div><div class="mc-brand-sub">Alterações</div></div></div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info"><div class="mc-page-title">✏️ Alterações de Receita</div><div class="mc-page-sub">Solicite ajustes nas fichas</div></div>
+    </div>
+    <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;">
+      <div style="background:var(--mc-roxo-claro);border:1px solid #ddd6fe;border-radius:10px;padding:10px 12px;margin-bottom:14px;font-size:12px;color:#5b21b6;">Escolha o setor e a receita, ajuste os ingredientes e <strong>solicite a alteração</strong>. O admin aprova ou nega.</div>
+      <button class="mc-sector-card" style="border-left:3px solid var(--mc-roxo);margin-bottom:10px;" onclick="altPickTipo('massa')">
+        <div class="mc-sector-icon purple">⚖️</div><div class="mc-sector-info"><div class="mc-sector-title">Confeitaria — Massas</div><div class="mc-sector-desc">Fichas de massa</div></div><span class="mc-sector-arrow">›</span>
+      </button>
+      <button class="mc-sector-card" style="border-left:3px solid var(--mc-roxo);margin-bottom:10px;" onclick="altPickTipo('recheio')">
+        <div class="mc-sector-icon purple">🥄</div><div class="mc-sector-info"><div class="mc-sector-title">Confeitaria — Recheios</div><div class="mc-sector-desc">Fichas de recheio</div></div><span class="mc-sector-arrow">›</span>
+      </button>
+      <button class="mc-sector-card" style="border-left:3px solid var(--mc-dourado);margin-bottom:10px;" onclick="altPickTipo('kit')">
+        <div class="mc-sector-icon" style="background:var(--mc-dourado-claro);">🍞</div><div class="mc-sector-info"><div class="mc-sector-title">Quadra — Kits (massa)</div><div class="mc-sector-desc">Receitas dos kits</div></div><span class="mc-sector-arrow">›</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ALTERAÇÕES: LISTA DE RECEITAS -->
+  <div class="screen" id="s-alt-lista">
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="goTo('s-alt-home')">‹</button>
+      <div class="mc-brand"><div class="mc-brand-logo">MC</div><div class="mc-brand-text"><div class="mc-brand-name">Monte Castelo</div><div class="mc-brand-sub">Alterações</div></div></div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info"><div class="mc-page-title" id="alt-lista-titulo">Receitas</div><div class="mc-page-sub">Escolha a receita</div></div>
+    </div>
+    <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;">
+      <input type="text" id="alt-lista-busca" placeholder="Buscar receita..." oninput="renderAltLista()" style="width:100%;margin-bottom:12px;font-size:14px;padding:10px;border-radius:8px;border:1px solid var(--border-md,#d1d5db);box-sizing:border-box;" />
+      <div id="alt-lista-content"></div>
+    </div>
+  </div>
+
+  <!-- ALTERAÇÕES: EDITOR -->
+  <div class="screen" id="s-alt-editor">
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="goTo('s-alt-lista')">‹</button>
+      <div class="mc-brand"><div class="mc-brand-logo">MC</div><div class="mc-brand-text"><div class="mc-brand-name">Monte Castelo</div><div class="mc-brand-sub">Alterações</div></div></div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info"><div class="mc-page-title">✏️ Editar receita</div><div class="mc-page-sub">Ajuste e solicite</div></div>
+    </div>
+    <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;" id="alt-editor-content"></div>
+  </div>
+
+  <!-- ALTERAÇÕES: ADMIN (aprovar/negar + histórico) -->
+  <div class="screen" id="s-alt-admin">
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="goTo('s-adm-hub')">‹</button>
+      <div class="mc-brand"><div class="mc-brand-logo">MC</div><div class="mc-brand-text"><div class="mc-brand-name">Monte Castelo</div><div class="mc-brand-sub">Administrativo</div></div></div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info"><div class="mc-page-title">✏️ Solicitações de Receita</div><div class="mc-page-sub">Aprovar, negar e histórico</div></div>
+    </div>
+    <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;" id="alt-admin-content"></div>
+  </div>
+
   <!-- CONTAGEM HOME -->
   <div class="screen" id="s-contagem-home">
     <div class="mc-header">
@@ -3914,10 +3988,10 @@ let QUADRA_PRODUTOS = [];
 let QUADRA_KITS_RECEITAS = {};
   let QUADRA_KITS = []; // Lista de nomes de kits da Quadra
 let QUADRA_KIT_MAPPING = {"Kit Massa Especial Mini Sonho": "KIT MASSA ESPECIAL MINI SONHO", "Kit Pão Sovado": "KIT PÃO SOVADO", "Kit Pao De Milho Salgado Cacetinho": "KIT PAO DE MILHO SALGADO CACETINHO", "Kit Cuca Alemã": "KIT CUCA ALEMÃ", "Kit Rosca De Polvilho": "KIT ROSCA DE POLVILHO", "Kit Massa Especial Donuts E Cueca Grande": "KIT MASSA ESPECIAL DONUTS E CUECA GRANDE", "Kit Pão Preto": "KIT PÃO PRETO", "Kit Massa Sonho": "KIT MASSA SONHO", "Kit Massa Especial": "KIT MASSA ESPECIAL", "Kit Massa Doce": "KIT MASSA DOCE", "Kit Pão De Cenoura": "KIT PÃO DE CENOURA", "Kit Cueca Virada": "KIT CUECA VIRADA", "Kit Pão De Leite": "KIT PÃO DE LEITE", "Kit Cuca Colonial": "KIT CUCA COLONIAL", "Kit Pão De Aipim": "KIT PÃO DE AIPIM", "Kit Cuca Frutas": "KIT CUCA FRUTAS", "Kit Cuca Chocolate": "KIT CUCA CHOCOLATE", "Kit Vovo/Gajeta": "KIT VOVO/GAJETA", "Kit Pão De Milho Doce": "KIT PÃO DE MILHO DOCE", "Kit Pão De Batata": "KIT PÃO DE BATATA", "Kit Pão Caseiro": "KIT PÃO CASEIRO", "Kit Raminho": "KIT RAMINHO", "Kit Pão De Milho Salgado": "KIT PÃO DE MILHO SALGADO", "Kit Pão Folhado": "KIT PÃO FOLHADO", "Kit Pão Brioche": "KIT PÃO BRIOCHE", "Kit Pão Integral": "KIT PÃO INTEGRAL", "Kit Grande Premium 6/8": "KIT GRANDE PREMIUM 6/8", "Kit Pão 7 Grãos": "KIT PÃO 7 GRÃOS"};
-let PINS = { confeitaria:'1234', cozinha:'5678', embalagem:'9101', expedicao:'1314', admin:'2504', contagem:'0000', container:'0001', quadra:'2020', testes:'7070', simone:'5050' }; // Será carregado do Firebase
-const CORES = { confeitaria:'', cozinha:'verde', embalagem:'', expedicao:'laranja', admin:'roxo', contagem:'roxo', container:'', quadra:'', testes:'', simone:'' };
-const NOMES = { confeitaria:'Confeitaria 🥐', cozinha:'Cozinha 🍳', embalagem:'Embalagem 📦', expedicao:'Expedição 🚚', admin:'Administrativo 📊', contagem:'Contagem 📋', container:'Rafael 📦', quadra:'Quadra 🍞', testes:'Testes MP 🔬', simone:'Simone - Financeiro 💼' };
-const DESTINOS = { confeitaria:'s-conf-home', cozinha:'s-coz-home', embalagem:'s-emb-sel-data', expedicao:'s-exp-sel-data', admin:'s-adm-hub', contagem:'s-contagem-home', container:'s-rafael-home', quadra:'s-quadra-home', testes:'s-testes-home', simone:'s-simone-home' };
+let PINS = { confeitaria:'1234', cozinha:'5678', embalagem:'9101', expedicao:'1314', admin:'2504', contagem:'0000', container:'0001', quadra:'2020', testes:'7070', simone:'5050', alteracoes:'4321' }; // Será carregado do Firebase
+const CORES = { confeitaria:'', cozinha:'verde', embalagem:'', expedicao:'laranja', admin:'roxo', contagem:'roxo', container:'', quadra:'', testes:'', simone:'', alteracoes:'roxo' };
+const NOMES = { confeitaria:'Confeitaria 🥐', cozinha:'Cozinha 🍳', embalagem:'Embalagem 📦', expedicao:'Expedição 🚚', admin:'Administrativo 📊', contagem:'Contagem 📋', container:'Rafael 📦', quadra:'Quadra 🍞', testes:'Testes MP 🔬', simone:'Simone - Financeiro 💼', alteracoes:'Alterações de Receita ✏️' };
+const DESTINOS = { confeitaria:'s-conf-home', cozinha:'s-coz-home', embalagem:'s-emb-sel-data', expedicao:'s-exp-sel-data', admin:'s-adm-hub', contagem:'s-contagem-home', container:'s-rafael-home', quadra:'s-quadra-home', testes:'s-testes-home', simone:'s-simone-home', alteracoes:'s-alt-home' };
 
 let pinAtual = '';
 let setorAtivo = '';
@@ -3973,6 +4047,10 @@ function atualizarTela(){
   if(tela==='s-painel-proto') renderPainelProto();
   if(tela==='s-painel') renderPainel();
   if(tela==='s-sim') renderSim();
+  if(tela==='s-alt-lista') renderAltLista();
+  if(tela==='s-alt-editor') renderAltEditor();
+  if(tela==='s-alt-admin') renderAltAdmin();
+  if(tela==='s-adm-hub' && typeof _altAtualizarBadges==='function') _altAtualizarBadges();
   if(tela==='s-coz-home') renderCozHome();
   if(tela==='s-emb-home') renderEmbalagem(); // embManual listener triggers this
   if(tela==='s-emb-sel-data') renderSelDataEmb();
@@ -4085,6 +4163,10 @@ function goTo(id){
   if(id==='s-painel-proto') renderPainelProto();
   if(id==='s-painel') renderPainel();
   if(id==='s-sim') renderSim();
+  if(id==='s-alt-lista') renderAltLista();
+  if(id==='s-alt-editor') renderAltEditor();
+  if(id==='s-alt-admin') renderAltAdmin();
+  if(id==='s-adm-hub' && typeof _altAtualizarBadges==='function') _altAtualizarBadges();
   if(id==='s-rastreio'){
     popularSelectMPRastreio();
     if(!document.getElementById('rastreio-ini').value){ rastreioPeriodoRapido('mes'); }
@@ -9211,7 +9293,7 @@ function renderAdmStatus(elId){
   const sub=document.getElementById('adm-status-sub');
   if(sub) sub.textContent=criticos.length+' crítico(s) · '+avisos.length+' aviso(s)';
 
-  el.innerHTML=html;
+  el.innerHTML=(typeof _altBannerPendentes==='function'?_altBannerPendentes():'')+html;
 }
 
 
@@ -11460,6 +11542,193 @@ async function simExportarExcel(){
 window.setSimModo=setSimModo; window.setSimDia=setSimDia; window.simAddItem=simAddItem; window.simRemoveItem=simRemoveItem;
 window.simLimpar=simLimpar; window.simCalcularAvulso=simCalcularAvulso; window.simCalcularPlano=simCalcularPlano;
 window.simExportarExcel=simExportarExcel; window.renderSim=renderSim;
+
+// ===== SETOR: ALTERAÇÕES DE RECEITA (solicitação + aprovação) =====
+let solicitacoesReceita=[];
+let _altTipo='massa', _altFicha=null, _altIngs=[];
+
+onSnapshot(collection(db,'solicitacoesReceita'), snap=>{
+  try{
+    solicitacoesReceita=snap.docs.map(d=>({firestoreId:d.id,...d.data()})).sort((a,b)=>(b.timestamp||0)-(a.timestamp||0));
+    const t=document.querySelector('.screen.active')?.id;
+    if(t==='s-alt-admin') renderAltAdmin();
+    if(t==='s-adm-status') renderAdmStatus();
+    if(t==='s-painel' && typeof renderPainel==='function' && typeof _pgTab!=='undefined' && _pgTab==='pend') renderPainel();
+    _altAtualizarBadges();
+  }catch(e){ console.error('solicitacoesReceita snap',e); }
+});
+
+function _altTipoLabel(t){ return t==='massa'?'Massa (Confeitaria)':(t==='recheio'?'Recheio (Confeitaria)':'Kit / Massa (Quadra)'); }
+function _altColecao(t){ return t==='massa'?'massasList':(t==='recheio'?'recheiosList':'quadraKitsCustom'); }
+function _altFichasDoTipo(t){ return t==='massa'?massasFirebase:(t==='recheio'?recheiosFirebase:kitsCustom); }
+function _altIngsFromFicha(f){
+  return (f&&f.ingredientes?f.ingredientes:[]).map(i=>({
+    mpCodigo:String(i.mpCodigo||''), mpNome:i.mpNome||i.nome||'', mpUnidade:i.mpUnidade||'KG',
+    kg:parseFloat(i.kg!=null?i.kg:i.qtd)||0
+  }));
+}
+function _altPendentesCount(){ return solicitacoesReceita.filter(s=>s.status==='pendente').length; }
+function _altAtualizarBadges(){
+  const n=_altPendentesCount();
+  document.querySelectorAll('.alt-badge').forEach(b=>{ b.textContent=n; b.style.display=n>0?'inline-flex':'none'; });
+}
+function _altBannerPendentes(){
+  const n=_altPendentesCount(); if(!n) return '';
+  return '<div class="card" style="border-left:3px solid var(--mc-dourado);margin-bottom:12px;cursor:pointer;" onclick="goTo(\'s-alt-admin\')">'+
+    '<div style="display:flex;justify-content:space-between;align-items:center;"><div><div style="font-size:14px;font-weight:700;">✏️ '+n+' solicitação(ões) de receita pendente(s)</div>'+
+    '<div style="font-size:12px;color:var(--text-secondary);">Toque para revisar e aprovar/negar</div></div><span style="font-size:20px;color:var(--mc-dourado);">›</span></div></div>';
+}
+window._altBannerPendentes=_altBannerPendentes;
+
+function altPickTipo(t){ _altTipo=t; goTo('s-alt-lista'); }
+function altPickFicha(fid){ const f=_altFichasDoTipo(_altTipo).find(x=>x.firestoreId===fid); if(!f){ alert('Receita não encontrada.'); return; } _altFicha=f; _altIngs=_altIngsFromFicha(f); goTo('s-alt-editor'); }
+
+function renderAltLista(){
+  const el=document.getElementById('alt-lista-content'); if(!el) return;
+  const tl=document.getElementById('alt-lista-titulo'); if(tl) tl.textContent=_altTipoLabel(_altTipo);
+  const lista=_altFichasDoTipo(_altTipo).slice().sort((a,b)=>(a.nome||'').localeCompare(b.nome||'','pt-BR'));
+  const q=(document.getElementById('alt-lista-busca')||{}).value||'';
+  const qn=_normNome(q);
+  const filt = qn? lista.filter(f=>_normNome(f.nome||'').includes(qn)) : lista;
+  if(!filt.length){ el.innerHTML='<div class="empty">Nenhuma receita encontrada.</div>'; return; }
+  el.innerHTML=filt.map(f=>{
+    const ings=_altIngsFromFicha(f); const tot=ings.reduce((s,i)=>s+i.kg,0);
+    return '<button onclick="altPickFicha(\''+f.firestoreId+'\')" style="width:100%;text-align:left;background:var(--bg-primary);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:8px;cursor:pointer;font-family:inherit;display:flex;justify-content:space-between;align-items:center;gap:8px;">'+
+      '<div style="flex:1;min-width:0;"><div style="font-size:14px;font-weight:600;">'+f.nome+'</div><div style="font-size:11px;color:var(--text-secondary);">'+ings.length+' ingredientes · '+_fmtKg(tot)+' kg</div></div><span style="color:var(--mc-roxo);font-size:18px;">›</span></button>';
+  }).join('');
+}
+
+function altUpdIng(i,val){ if(_altIngs[i]) _altIngs[i].kg=val; const t=_altIngs.reduce((s,x)=>s+(parseFloat(x.kg)||0),0); const el=document.getElementById('alt-novo-total'); if(el) el.textContent=_fmtKg(t)+' kg'; }
+function altRemoveIng(i){ _altIngs.splice(i,1); renderAltEditor(); }
+function altAddIng(){
+  const cod=(document.getElementById('alt-add-mp')||{}).value||'';
+  const kg=parseFloat((document.getElementById('alt-add-kg')||{}).value)||0;
+  if(!cod){ alert('Selecione a matéria-prima.'); return; }
+  if(kg<=0){ alert('Informe o kg.'); return; }
+  const mp=materiasPrimas.find(m=>String(m.codigo)===String(cod));
+  if(!mp){ alert('Matéria-prima não encontrada.'); return; }
+  const ex=_altIngs.find(i=>String(i.mpCodigo)===String(cod));
+  if(ex){ ex.kg=(parseFloat(ex.kg)||0)+kg; } else _altIngs.push({mpCodigo:String(mp.codigo),mpNome:mp.nome,mpUnidade:mp.unidade||'KG',kg});
+  renderAltEditor();
+}
+function renderAltEditor(){
+  const el=document.getElementById('alt-editor-content'); if(!el||!_altFicha) return;
+  const totalAtual=_altIngsFromFicha(_altFicha).reduce((s,i)=>s+i.kg,0);
+  const novoTotal=_altIngs.reduce((s,i)=>s+(parseFloat(i.kg)||0),0);
+  const mpOpts='<option value="">— matéria-prima —</option>'+materiasPrimas.slice().sort((a,b)=>(a.nome||'').localeCompare(b.nome||'','pt-BR')).map(m=>'<option value="'+m.codigo+'">'+m.nome+' ('+m.codigo+')</option>').join('');
+  el.innerHTML=
+    '<div class="card" style="border-left:3px solid var(--mc-roxo);margin-bottom:12px;">'+
+      '<div style="font-size:16px;font-weight:700;">'+_altFicha.nome+'</div>'+
+      '<div style="font-size:12px;color:var(--text-secondary);">'+_altTipoLabel(_altTipo)+(_altFicha.codigo?(' · cód '+_altFicha.codigo):'')+' · receita atual '+_fmtKg(totalAtual)+' kg</div>'+
+    '</div>'+
+    '<div class="card">'+
+      '<div style="font-size:13px;font-weight:700;margin-bottom:10px;">Ingredientes</div>'+
+      _altIngs.map((ing,i)=>(
+        '<div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;">'+
+        '<div style="flex:1;min-width:0;"><div style="font-size:13px;font-weight:600;">'+ing.mpNome+'</div><div style="font-size:11px;color:var(--text-secondary);">'+(ing.mpCodigo||'')+'</div></div>'+
+        '<input type="number" step="0.001" min="0" value="'+ing.kg+'" oninput="altUpdIng('+i+',this.value)" style="width:88px;font-size:14px;padding:8px;border-radius:8px;border:1px solid var(--border-md,#d1d5db);" />'+
+        '<span style="font-size:11px;color:var(--text-secondary);">'+(ing.mpUnidade||'kg')+'</span>'+
+        '<button onclick="altRemoveIng('+i+')" style="background:none;border:1px solid #ef9a9a;color:#c62828;font-size:13px;padding:5px 9px;border-radius:6px;cursor:pointer;font-family:inherit;">✕</button>'+
+        '</div>'
+      )).join('')+
+      '<div style="margin-top:8px;padding-top:10px;border-top:1px dashed var(--border);font-size:11px;font-weight:700;color:var(--text-secondary);text-transform:uppercase;margin-bottom:6px;">Adicionar ingrediente</div>'+
+      '<select id="alt-add-mp" style="width:100%;font-size:14px;padding:9px;border-radius:8px;border:1px solid var(--border-md,#d1d5db);">'+mpOpts+'</select>'+
+      '<div style="display:flex;gap:8px;margin-top:6px;"><input type="number" id="alt-add-kg" step="0.001" min="0" placeholder="kg" style="flex:1;font-size:14px;padding:9px;border-radius:8px;border:1px solid var(--border-md,#d1d5db);" /><button class="btn btn-secondary" style="white-space:nowrap;" onclick="altAddIng()">+ Add</button></div>'+
+      '<div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--border);display:flex;justify-content:space-between;font-size:14px;"><span style="font-weight:600;">Novo total</span><strong id="alt-novo-total">'+_fmtKg(novoTotal)+' kg</strong></div>'+
+      '<button class="btn btn-primary" style="width:100%;margin-top:12px;" onclick="altSolicitar()">📨 Solicitar alteração</button>'+
+    '</div>';
+}
+
+async function altSolicitar(){
+  const depois=_altIngs.filter(i=>(parseFloat(i.kg)||0)>0).map(i=>({mpCodigo:String(i.mpCodigo),mpNome:i.mpNome,mpUnidade:i.mpUnidade||'KG',kg:parseFloat(i.kg)||0}));
+  if(!depois.length){ alert('A receita precisa de pelo menos 1 ingrediente.'); return; }
+  const antes=_altIngsFromFicha(_altFicha);
+  if(JSON.stringify(antes)===JSON.stringify(depois)){ alert('Nenhuma alteração detectada.'); return; }
+  const jaPend=solicitacoesReceita.find(s=>s.status==='pendente'&&s.fichaId===_altFicha.firestoreId);
+  if(jaPend && !confirm('Já existe uma solicitação pendente para essa receita. Enviar mesmo assim?')) return;
+  try{
+    await addDoc(collection(db,'solicitacoesReceita'),{
+      tipo:_altTipo, colecao:_altColecao(_altTipo),
+      fichaId:_altFicha.firestoreId, fichaNome:_altFicha.nome, codigo:_altFicha.codigo||'',
+      ingredientesAntes:antes, ingredientesDepois:depois,
+      totalAntes:antes.reduce((s,i)=>s+i.kg,0), totalDepois:depois.reduce((s,i)=>s+i.kg,0),
+      status:'pendente', data:hoje(), hora:agora(), timestamp:Date.now()
+    });
+    alert('📨 Solicitação enviada para o admin!');
+    goTo('s-alt-home');
+  }catch(e){ alert('Erro: '+e.message); }
+}
+
+async function altAprovar(fid){
+  if(!window.adminMode){ alert('Apenas o administrador pode aprovar.'); return; }
+  const s=solicitacoesReceita.find(x=>x.firestoreId===fid); if(!s) return;
+  if(!confirm('Aceitar e aplicar a alteração em "'+s.fichaNome+'"?\n\nA receita será atualizada automaticamente.')) return;
+  try{
+    const total=(s.ingredientesDepois||[]).reduce((a,i)=>a+(parseFloat(i.kg)||0),0);
+    if(s.tipo==='kit'){
+      const ings=(s.ingredientesDepois||[]).map(i=>{ const kg=parseFloat(i.kg)||0; return {mpCodigo:String(i.mpCodigo),mpNome:i.mpNome,mpUnidade:i.mpUnidade||'KG',kg:kg,nome:i.mpNome,qtd:kg}; });
+      await updateDoc(doc(db,'quadraKitsCustom',s.fichaId),{ingredientes:ings,totalKg:total,atualizadoEm:agora()});
+    } else {
+      const ings=(s.ingredientesDepois||[]).map(i=>({mpCodigo:String(i.mpCodigo),mpNome:i.mpNome,mpUnidade:i.mpUnidade||'KG',kg:parseFloat(i.kg)||0}));
+      await updateDoc(doc(db,s.colecao,s.fichaId),{ingredientes:ings,rendimentoKg:total,atualizadoEm:agora()});
+    }
+    await updateDoc(doc(db,'solicitacoesReceita',fid),{status:'aprovado',decididoData:hoje(),decididoHora:agora(),decididoTs:Date.now()});
+    alert('✓ Alteração aplicada na receita!');
+  }catch(e){ alert('Erro: '+e.message); }
+}
+async function altNegar(fid){
+  if(!window.adminMode){ alert('Apenas o administrador pode negar.'); return; }
+  const s=solicitacoesReceita.find(x=>x.firestoreId===fid); if(!s) return;
+  if(!confirm('Negar a solicitação de "'+s.fichaNome+'"?\n\nA receita permanece igual.')) return;
+  try{ await updateDoc(doc(db,'solicitacoesReceita',fid),{status:'negado',decididoData:hoje(),decididoHora:agora(),decididoTs:Date.now()}); }catch(e){ alert('Erro: '+e.message); }
+}
+
+function _altDiffHtml(antes,depois){
+  const mapA={},mapD={};
+  (antes||[]).forEach(i=>mapA[String(i.mpCodigo)]=i);
+  (depois||[]).forEach(i=>mapD[String(i.mpCodigo)]=i);
+  const cods=[...new Set([...Object.keys(mapA),...Object.keys(mapD)])];
+  const linhas=[];
+  cods.forEach(c=>{
+    const a=mapA[c],d=mapD[c]; const nome=((d||a).mpNome)||c;
+    if(a&&!d) linhas.push('<div style="font-size:12px;color:var(--mc-vermelho);">− '+nome+': removido ('+_fmtKg(a.kg)+' kg)</div>');
+    else if(!a&&d) linhas.push('<div style="font-size:12px;color:var(--mc-verde);">+ '+nome+': '+_fmtKg(d.kg)+' kg (novo)</div>');
+    else if(a&&d&&Math.abs((parseFloat(a.kg)||0)-(parseFloat(d.kg)||0))>0.0001) linhas.push('<div style="font-size:12px;color:var(--mc-azul);">~ '+nome+': '+_fmtKg(a.kg)+' → <strong>'+_fmtKg(d.kg)+'</strong> kg</div>');
+  });
+  if(!linhas.length) linhas.push('<div style="font-size:12px;color:var(--text-secondary);">Sem mudança nos ingredientes.</div>');
+  return '<div style="background:var(--bg-page);border-radius:8px;padding:8px 10px;">'+linhas.join('')+'</div>';
+}
+function renderAltAdmin(){
+  const el=document.getElementById('alt-admin-content'); if(!el) return;
+  const pend=solicitacoesReceita.filter(s=>s.status==='pendente');
+  const hist=solicitacoesReceita.filter(s=>s.status!=='pendente').slice(0,40);
+  let html='<div class="mc-section-header">Pendentes ('+pend.length+')</div>';
+  html+= pend.length? pend.map(s=>(
+    '<div class="card" style="margin-bottom:10px;border-left:3px solid var(--mc-dourado);">'+
+    '<div style="font-size:15px;font-weight:700;">'+s.fichaNome+'</div>'+
+    '<div style="font-size:11px;color:var(--text-secondary);margin-bottom:8px;">'+_altTipoLabel(s.tipo)+' · solicitado '+(s.data||'')+' '+(s.hora||'')+' · total '+_fmtKg(s.totalAntes)+' → '+_fmtKg(s.totalDepois)+' kg</div>'+
+    _altDiffHtml(s.ingredientesAntes,s.ingredientesDepois)+
+    '<div style="display:flex;gap:8px;margin-top:10px;"><button class="btn btn-verde" style="flex:1;" onclick="altAprovar(\''+s.firestoreId+'\')">✓ Aceitar</button><button class="btn btn-laranja" style="flex:1;" onclick="altNegar(\''+s.firestoreId+'\')">✕ Negar</button></div>'+
+    '</div>'
+  )).join('') : '<div class="empty">Nenhuma solicitação pendente. 🎉</div>';
+  if(hist.length){
+    html+='<div class="mc-section-header" style="margin-top:16px;">Histórico</div>';
+    html+=hist.map(s=>{
+      const cor=s.status==='aprovado'?'var(--mc-verde)':'var(--mc-vermelho)';
+      const tag=s.status==='aprovado'?'✓ Aprovado':'✕ Negado';
+      return '<div class="card" style="margin-bottom:8px;border-left:3px solid '+cor+';">'+
+        '<div style="display:flex;justify-content:space-between;align-items:center;"><strong style="font-size:14px;">'+s.fichaNome+'</strong><span style="font-size:12px;font-weight:700;color:'+cor+';white-space:nowrap;">'+tag+'</span></div>'+
+        '<div style="font-size:11px;color:var(--text-secondary);margin:2px 0 6px;">'+_altTipoLabel(s.tipo)+' · '+(s.decididoData||s.data||'')+' '+(s.decididoHora||'')+'</div>'+
+        _altDiffHtml(s.ingredientesAntes,s.ingredientesDepois)+
+        '</div>';
+    }).join('');
+  }
+  el.innerHTML=html;
+}
+
+window.altPickTipo=altPickTipo; window.altPickFicha=altPickFicha; window.renderAltLista=renderAltLista; window.renderAltEditor=renderAltEditor; window.renderAltAdmin=renderAltAdmin;
+window.altUpdIng=altUpdIng; window.altRemoveIng=altRemoveIng; window.altAddIng=altAddIng; window.altSolicitar=altSolicitar; window.altAprovar=altAprovar; window.altNegar=altNegar;
+
 
 
 
