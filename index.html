@@ -11777,15 +11777,18 @@ function _acProducaoProdutoDia(nomeNorm,dateBR){
 }
 function _acStatusInfo(s){
   if(s==='verde') return {emoji:'🟢',cor:'#16a34a',bg:'rgba(22,163,74,.10)',label:'Feito no dia'};
-  if(s==='laranja') return {emoji:'🟠',cor:'#d97706',bg:'rgba(217,119,6,.12)',label:'Fora do dia'};
-  if(s==='vermelho') return {emoji:'🔴',cor:'#dc2626',bg:'rgba(220,38,38,.10)',label:'Atrasado'};
+  if(s==='adiantado') return {emoji:'🔵',cor:'#2563eb',bg:'rgba(37,99,235,.10)',label:'⏩ Adiantado'};
+  if(s==='parcial') return {emoji:'🔹',cor:'#2563eb',bg:'rgba(37,99,235,.07)',label:'⏩ Adiantado parcial'};
+  if(s==='atrasado') return {emoji:'🟠',cor:'#d97706',bg:'rgba(217,119,6,.12)',label:'⏰ Feito atrasado'};
+  if(s==='vermelho') return {emoji:'🔴',cor:'#dc2626',bg:'rgba(220,38,38,.10)',label:'Pendente (atrasado)'};
+  if(s==='extra') return {emoji:'➕',cor:'#7c3aed',bg:'rgba(124,58,237,.10)',label:'Fora do plano'};
   return {emoji:'⚪',cor:'#6b7280',bg:'rgba(107,114,128,.08)',label:'Aguardando'};
 }
 function _acCalcular(){
   const sem=semanaAtual();
   let plano=planos.find(p=>p.semana===sem && (!p.setor||p.setor==='conf'));
   if(!plano){ const confs=planos.filter(p=>!p.setor||p.setor==='conf'); plano=confs.sort((a,b)=>String(b.semana||'').localeCompare(String(a.semana||'')))[0]; }
-  if(!plano) return {semana:null, produtos:[]};
+  if(!plano) return {semana:null, produtos:[], extras:[], excessos:[]};
   const semStr=plano.semana||sem;
   const DIAS=['Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
   const mon=_acMondayOfWeek(semStr);
@@ -11795,31 +11798,56 @@ function _acCalcular(){
   const prodMap={};
   DIAS.forEach(d=>{ (itens[d]||[]).forEach(it=>{ const nome=it.nome||it.produtoNome||''; if(!nome) return; const q=parseInt(it.qtdPacotes||it.qtd)||0; if(q<=0) return; if(!prodMap[nome]) prodMap[nome]={nome,plano:{}}; prodMap[nome].plano[d]=(prodMap[nome].plano[d]||0)+q; }); });
 
+  const excessos=[];
   const produtos=Object.values(prodMap).map(p=>{
     const nomeNorm=_normNome(p.nome);
     const prodDia={}; diasInfo.forEach(di=>{ prodDia[di.dia]=_acProducaoProdutoDia(nomeNorm,di.dateBR); });
     const totalProduzido=Object.values(prodDia).reduce((s,v)=>s+v,0);
     const plannedDays=diasInfo.filter(di=>(p.plano[di.dia]||0)>0);
+    // FIFO: aloca a produção total nos dias planejados, do mais antigo p/ o mais novo
     let restante=totalProduzido; const aloc={};
     plannedDays.forEach(di=>{ const need=p.plano[di.dia]; const give=Math.min(restante,need); aloc[di.dia]=give; restante-=give; });
     const dias=plannedDays.map(di=>{
       const qtdPlan=p.plano[di.dia], prodNoDia=prodDia[di.dia]||0, a=aloc[di.dia]||0;
-      const pctDia=qtdPlan>0?prodNoDia/qtdPlan:0;
+      const pctDia=qtdPlan>0?prodNoDia/qtdPlan:0;       // % produzido NO dia
+      const pctAloc=qtdPlan>0?a/qtdPlan:0;              // % coberto (FIFO)
       const feito=a>=0.8*qtdPlan;
       let status;
-      if(pctDia>=0.8) status='verde';
-      else if(feito) status='laranja';
-      else if(di.date<hoje0) status='vermelho';
-      else status='cinza';
-      return {dia:di.dia,abrev:di.abrev,dateBR:di.dateBR,qtdPlan,prodNoDia,aloc:a,status};
+      if(pctDia>=0.8) status='verde';                  // produzido no próprio dia
+      else if(feito){                                  // coberto, mas não no dia
+        status = di.date>hoje0 ? 'adiantado' : 'atrasado';
+      }
+      else if(di.date<hoje0) status='vermelho';        // passou e não cobriu
+      else status = a>0 ? 'parcial' : 'cinza';         // futuro: parcial (adiantou um pouco) ou aguardando
+      return {dia:di.dia,abrev:di.abrev,dateBR:di.dateBR,qtdPlan,prodNoDia,aloc:a,pctAloc:Math.round(pctAloc*100),status};
     });
     const totalPlan=plannedDays.reduce((s,di)=>s+p.plano[di.dia],0);
     const totalAloc=plannedDays.reduce((s,di)=>s+(aloc[di.dia]||0),0);
     const pendente=dias.some(d=>d.status==='vermelho');
+    // excesso: produziu >150% do total planejado da semana
+    if(totalPlan>0 && totalProduzido>totalPlan*1.5){
+      excessos.push({nome:p.nome, totalPlan, totalProduzido, pct:Math.round(totalProduzido/totalPlan*100)});
+    }
     return {nome:p.nome,dias,totalPlan,totalProduzido,totalAloc,pendente};
   }).sort((a,b)=>{ if(a.pendente!==b.pendente) return a.pendente?-1:1; return a.nome.localeCompare(b.nome,'pt-BR'); });
 
-  return {semana:semStr, semanaLabel:semanaLabel(semStr), produtos};
+  // EXTRAS: produtos produzidos na semana que NÃO estão no plano daquele dia
+  const planejadosNorm=new Set(Object.keys(prodMap).map(n=>_normNome(n)));
+  const extras=[]; // {dia, dateBR, produto, qtd}
+  diasInfo.forEach(di=>{
+    const agg={};
+    registros.forEach(r=>{ if(r.origem==='quadra') return; if(r.data!==di.dateBR) return; const nome=r.produto||''; if(!nome) return;
+      const nn=_normNome(nome);
+      const planejadoNesseDia = (prodMap[Object.keys(prodMap).find(k=>_normNome(k)===nn)]||{}).plano?.[di.dia]>0;
+      if(planejadoNesseDia) return; // já tratado como dia planejado
+      // se o produto está no plano em OUTRO dia, o FIFO já considera (adiantado/atrasado) — não duplicar como extra
+      if(planejadosNorm.has(nn)) return;
+      agg[nome]=(agg[nome]||0)+(parseInt(r.qtd)||0);
+    });
+    Object.entries(agg).forEach(([nome,qtd])=>{ if(qtd>0) extras.push({dia:di.dia,abrev:di.abrev,dateBR:di.dateBR,produto:nome,qtd}); });
+  });
+
+  return {semana:semStr, semanaLabel:semanaLabel(semStr), produtos, extras, excessos, diasInfo};
 }
 
 function setAcBusca(v){ _acBusca=v; renderAcomp(); }
@@ -11840,6 +11868,8 @@ function renderAcomp(){
       datasDia[d.dia]=d.dateBR;
     });
   });
+  const extrasDia={}; DIAS.forEach(d=>extrasDia[d]=[]);
+  (dados.extras||[]).forEach(e=>{ (extrasDia[e.dia]=extrasDia[e.dia]||[]).push(e); datasDia[e.dia]=datasDia[e.dia]||e.dateBR; });
 
   // Resumo geral
   const totP=dados.produtos.reduce((s,p)=>s+p.totalPlan,0);
@@ -11848,14 +11878,20 @@ function renderAcomp(){
   const nPend=dados.produtos.filter(p=>p.pendente).length;
 
   let html='<div style="font-size:12px;color:var(--text-secondary);margin-bottom:8px;">📅 '+dados.semanaLabel+'</div>';
+  if((dados.excessos||[]).length){
+    html+='<div class="card" style="border-left:3px solid #d97706;background:rgba(217,119,6,.06);margin-bottom:12px;">'+
+      '<div style="font-size:14px;font-weight:700;color:#b45309;margin-bottom:6px;">⚠️ Produzido muito acima do plano (+50%)</div>'+
+      dados.excessos.slice().sort((a,b)=>b.pct-a.pct).map(e=>'<div style="display:flex;justify-content:space-between;font-size:13px;padding:3px 0;border-bottom:1px dashed var(--border);"><span>'+e.nome+'</span><strong style="color:#b45309;white-space:nowrap;">'+e.totalProduzido.toLocaleString('pt-BR')+' / '+e.totalPlan.toLocaleString('pt-BR')+' ('+e.pct+'%)</strong></div>').join('')+
+      '</div>';
+  }
   html+='<div class="card" style="margin-bottom:12px;">'+
     '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;"><div style="font-size:14px;font-weight:700;">Progresso da semana</div><div style="font-size:18px;font-weight:800;color:'+(pctGeral>=100?'#16a34a':'var(--mc-azul)')+';">'+pctGeral+'%</div></div>'+
     '<div style="height:10px;background:var(--bg-page);border-radius:5px;overflow:hidden;"><div style="height:100%;width:'+Math.max(pctGeral,2)+'%;background:'+(pctGeral>=100?'#16a34a':'var(--mc-azul)')+';border-radius:5px;"></div></div>'+
     '<div style="font-size:11px;color:var(--text-secondary);margin-top:4px;">'+totF.toLocaleString('pt-BR')+' de '+totP.toLocaleString('pt-BR')+' pacotes · '+(nPend?('<strong style="color:var(--mc-vermelho);">'+nPend+' produto(s) com atraso</strong>'):'sem atrasos 🎉')+'</div>'+
     '</div>';
 
-  html+='<div style="display:flex;flex-wrap:wrap;gap:8px;font-size:11px;color:var(--text-secondary);margin-bottom:10px;">'+
-    '<span>🟢 no dia</span><span>🟠 fora do dia</span><span>🔴 atrasado</span><span>⚪ aguardando</span></div>';
+  html+='<div style="display:flex;flex-wrap:wrap;gap:8px 12px;font-size:11px;color:var(--text-secondary);margin-bottom:10px;">'+
+    '<span>🟢 no dia</span><span>🔵 adiantado</span><span>🟠 atrasado</span><span>🔴 pendente</span><span>➕ fora do plano</span><span>⚪ aguardando</span></div>';
   html+='<div style="display:flex;gap:8px;margin-bottom:12px;">'+
     '<input type="text" value="'+(_acBusca||'').replace(/"/g,'&quot;')+'" oninput="setAcBusca(this.value)" placeholder="Buscar produto..." style="flex:1;font-size:14px;padding:9px;border-radius:8px;border:1px solid var(--border-md,#d1d5db);box-sizing:border-box;" />'+
     '<button onclick="toggleAcPend()" style="white-space:nowrap;padding:9px 12px;border-radius:8px;border:1px solid '+(_acSoPend?'var(--mc-vermelho)':'var(--border-md,#d1d5db)')+';background:'+(_acSoPend?'var(--mc-vermelho)':'var(--bg-primary)')+';color:'+(_acSoPend?'#fff':'var(--text-primary)')+';font-size:12px;font-weight:600;font-family:inherit;cursor:pointer;">🔴 Só atrasados</button>'+
@@ -11867,36 +11903,44 @@ function renderAcomp(){
   let algumDia=false;
 
   DIAS.forEach(dia=>{
-    let itens=porDia[dia];
-    if(!itens.length) return;
-    if(qn) itens=itens.filter(it=>_normNome(it.produto).includes(qn));
-    if(_acSoPend) itens=itens.filter(it=>it.status==='vermelho');
-    if(!itens.length) return;
+    let itens=(porDia[dia]||[]).slice();
+    let extras=(extrasDia[dia]||[]).slice();
+    if(qn){ itens=itens.filter(it=>_normNome(it.produto).includes(qn)); extras=extras.filter(e=>_normNome(e.produto).includes(qn)); }
+    if(_acSoPend){ itens=itens.filter(it=>it.status==='vermelho'); extras=[]; }
+    if(!itens.length && !extras.length) return;
     algumDia=true;
 
-    // ordenar: pendentes (vermelho) primeiro, depois laranja, cinza, verde
-    const ordem={vermelho:0,laranja:1,cinza:2,verde:3};
-    itens.sort((a,b)=>(ordem[a.status]-ordem[b.status])||a.produto.localeCompare(b.produto,'pt-BR'));
+    const ordem={vermelho:0,atrasado:1,parcial:2,cinza:3,adiantado:4,verde:5};
+    itens.sort((a,b)=>(((ordem[a.status]??9)-(ordem[b.status]??9))||a.produto.localeCompare(b.produto,'pt-BR')));
 
     const totDiaPlan=itens.reduce((s,i)=>s+i.qtdPlan,0);
     const totDiaFeito=itens.reduce((s,i)=>s+i.aloc,0);
     const pctDiaGeral=totDiaPlan>0?Math.round(totDiaFeito/totDiaPlan*100):0;
-    const feitosN=itens.filter(i=>i.status==='verde'||i.status==='laranja').length;
+    const feitosN=itens.filter(i=>i.status==='verde'||i.status==='atrasado'||i.status==='adiantado').length;
     const isHoje=datasDia[dia]===hojeBR;
 
     html+='<div style="margin-top:14px;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center;">'+
       '<div style="font-size:15px;font-weight:800;">'+dia+' <span style="font-size:12px;font-weight:500;color:var(--text-secondary);">'+(datasDia[dia]||'').slice(0,5)+(isHoje?' · hoje':'')+'</span></div>'+
-      '<div style="font-size:12px;font-weight:700;color:'+(pctDiaGeral>=100?'#16a34a':'var(--mc-azul)')+';">'+feitosN+'/'+itens.length+' · '+pctDiaGeral+'%</div>'+
+      (itens.length?'<div style="font-size:12px;font-weight:700;color:'+(pctDiaGeral>=100?'#16a34a':'var(--mc-azul)')+';">'+feitosN+'/'+itens.length+' · '+pctDiaGeral+'%</div>':'')+
       '</div>';
 
     html+=itens.map(it=>{
       const si=_acStatusInfo(it.status);
-      const pct=it.qtdPlan>0?Math.round(it.prodNoDia/it.qtdPlan*100):0;
+      const pct=it.qtdPlan>0?Math.round(it.aloc/it.qtdPlan*100):0;
       return '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;background:'+si.bg+';border:1px solid '+si.cor+';border-radius:10px;padding:10px 12px;margin-bottom:6px;">'+
         '<div style="flex:1;min-width:0;"><div style="font-size:14px;font-weight:600;">'+si.emoji+' '+it.produto+'</div>'+
         '<div style="font-size:11px;color:var(--text-secondary);margin-top:2px;">'+si.label+'</div></div>'+
         '<div style="text-align:right;white-space:nowrap;"><div style="font-size:12px;color:var(--text-secondary);">Plano: <strong>'+it.qtdPlan.toLocaleString('pt-BR')+'</strong></div>'+
-        '<div style="font-size:13px;font-weight:700;color:'+si.cor+';">Feito: '+it.prodNoDia.toLocaleString('pt-BR')+' ('+pct+'%)</div></div>'+
+        '<div style="font-size:13px;font-weight:700;color:'+si.cor+';">Feito: '+it.aloc.toLocaleString('pt-BR')+' ('+pct+'%)</div></div>'+
+        '</div>';
+    }).join('');
+
+    html+=extras.map(e=>{
+      const si=_acStatusInfo('extra');
+      return '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;background:'+si.bg+';border:1px dashed '+si.cor+';border-radius:10px;padding:10px 12px;margin-bottom:6px;">'+
+        '<div style="flex:1;min-width:0;"><div style="font-size:14px;font-weight:600;">'+si.emoji+' '+e.produto+'</div>'+
+        '<div style="font-size:11px;color:'+si.cor+';margin-top:2px;">Fora do plano (acrescentado)</div></div>'+
+        '<div style="text-align:right;white-space:nowrap;"><div style="font-size:13px;font-weight:700;color:'+si.cor+';">Feito: '+e.qtd.toLocaleString('pt-BR')+'</div></div>'+
         '</div>';
     }).join('');
   });
