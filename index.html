@@ -11804,31 +11804,44 @@ function _acCalcular(){
     const prodDia={}; diasInfo.forEach(di=>{ prodDia[di.dia]=_acProducaoProdutoDia(nomeNorm,di.dateBR); });
     const totalProduzido=Object.values(prodDia).reduce((s,v)=>s+v,0);
     const plannedDays=diasInfo.filter(di=>(p.plano[di.dia]||0)>0);
-    // FIFO: aloca a produção total nos dias planejados, do mais antigo p/ o mais novo
-    let restante=totalProduzido; const aloc={};
-    plannedDays.forEach(di=>{ const need=p.plano[di.dia]; const give=Math.min(restante,need); aloc[di.dia]=give; restante-=give; });
-    // produção acumulada por dia (índice Seg=0..Sáb=5)
-    const prodCumAte=[]; let acc=0; diasInfo.forEach((di,idx)=>{ acc+=prodDia[di.dia]||0; prodCumAte[idx]=acc; });
     const idxDe={}; diasInfo.forEach((di,idx)=>idxDe[di.dia]=idx);
+    const prodCumAte=[]; let acc=0; diasInfo.forEach((di,idx)=>{ acc+=prodDia[di.dia]||0; prodCumAte[idx]=acc; });
+    // FIFO com ORIGEM: consome a produção (mais antiga primeiro) para cobrir os dias planejados, registrando de qual dia veio
+    const events=diasInfo.filter(di=>(prodDia[di.dia]||0)>0).map(di=>({dia:di.dia,abrev:di.abrev,rest:prodDia[di.dia]||0}));
+    const aloc={}, fontesDe={};
+    plannedDays.forEach(di=>{
+      let need=p.plano[di.dia]; const fontes=[];
+      for(const ev of events){ if(need<=0) break; if(ev.rest<=0) continue; const take=Math.min(ev.rest,need); ev.rest-=take; need-=take; fontes.push({dia:ev.dia,qtd:take}); }
+      aloc[di.dia]=p.plano[di.dia]-need;
+      fontesDe[di.dia]=fontes;
+    });
+    const leftover=events.reduce((s,e)=>s+e.rest,0);              // sobra produzida sem dia planejado p/ alocar
+    const leftoverFontes=events.filter(e=>e.rest>0).map(e=>e.dia);
+    const lastPlanDia = plannedDays.length? plannedDays[plannedDays.length-1].dia : null;
     let cumPlan=0;
     const dias=plannedDays.map(di=>{
       const qtdPlan=p.plano[di.dia], prodNoDia=prodDia[di.dia]||0, a=aloc[di.dia]||0;
       cumPlan+=qtdPlan;
       const idx=idxDe[di.dia];
-      const cumProdAte=prodCumAte[idx]||0;          // produzido até o fim deste dia
-      const cumProdAntes=idx>0?(prodCumAte[idx-1]||0):0; // produzido ANTES deste dia
-      const feito=a>=0.8*qtdPlan;                    // cobertura do dia atingiu 80%?
+      const cumProdAte=prodCumAte[idx]||0;
+      const cumProdAntes=idx>0?(prodCumAte[idx-1]||0):0;
+      const feito=a>=0.8*qtdPlan;
       let status;
       if(feito){
-        if(cumProdAntes>=cumPlan) status='adiantado';     // já estava coberto antes do dia chegar
-        else if(cumProdAte>=cumPlan) status='verde';      // coberto até o fim do próprio dia
-        else status='atrasado';                           // só completou com produção posterior
+        if(cumProdAntes>=cumPlan) status='adiantado';
+        else if(cumProdAte>=cumPlan) status='verde';
+        else status='atrasado';
       } else {
-        if(di.date<hoje0) status='vermelho';              // dia já passou e não cobriu
-        else status = a>0 ? 'parcial' : 'cinza';          // hoje/futuro: parcial (adiantou) ou aguardando
+        if(di.date<hoje0) status='vermelho';
+        else status = a>0 ? 'parcial' : 'cinza';
       }
-      const mostrado=Math.max(prodNoDia, a);              // exibe a produção real do dia ou o que foi coberto
-      return {dia:di.dia,abrev:di.abrev,dateBR:di.dateBR,qtdPlan,prodNoDia,aloc:a,mostrado,status};
+      let mostrado=Math.max(prodNoDia, a);
+      const fontes=(fontesDe[di.dia]||[]).map(f=>f.dia);
+      if(di.dia===lastPlanDia){ mostrado+=leftover; leftoverFontes.forEach(d=>fontes.push(d)); } // sobra entra no último dia
+      // dias de ORIGEM (onde foi produzido), exceto o próprio dia
+      const origem=[...new Set(fontes.filter(d=>d!==di.dia))];
+      const fonteLabel=origem.map(d=>d.toLowerCase()).join(', ');
+      return {dia:di.dia,abrev:di.abrev,dateBR:di.dateBR,qtdPlan,prodNoDia,aloc:a,mostrado,status,fonteLabel};
     });
     const totalPlan=plannedDays.reduce((s,di)=>s+p.plano[di.dia],0);
     const totalAloc=plannedDays.reduce((s,di)=>s+(aloc[di.dia]||0),0);
@@ -11873,7 +11886,7 @@ function renderAcomp(){
   let datasDia={};
   dados.produtos.forEach(p=>{
     p.dias.forEach(d=>{
-      porDia[d.dia].push({produto:p.nome, status:d.status, qtdPlan:d.qtdPlan, prodNoDia:d.prodNoDia, aloc:d.aloc, mostrado:d.mostrado});
+      porDia[d.dia].push({produto:p.nome, status:d.status, qtdPlan:d.qtdPlan, prodNoDia:d.prodNoDia, aloc:d.aloc, mostrado:d.mostrado, fonteLabel:d.fonteLabel});
       datasDia[d.dia]=d.dateBR;
     });
   });
@@ -11936,9 +11949,15 @@ function renderAcomp(){
     html+=itens.map(it=>{
       const si=_acStatusInfo(it.status);
       const pct=it.qtdPlan>0?Math.round(it.mostrado/it.qtdPlan*100):0;
+      let label=si.label;
+      if(it.fonteLabel){
+        if(it.status==='adiantado') label='⏩ Adiantado na produção de '+it.fonteLabel;
+        else if(it.status==='parcial') label='⏩ Adiantado parcial — produção de '+it.fonteLabel;
+        else if(it.status==='atrasado') label='⏰ Feito atrasado — produção de '+it.fonteLabel;
+      }
       return '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;background:'+si.bg+';border:1px solid '+si.cor+';border-radius:10px;padding:10px 12px;margin-bottom:6px;">'+
         '<div style="flex:1;min-width:0;"><div style="font-size:14px;font-weight:600;">'+si.emoji+' '+it.produto+'</div>'+
-        '<div style="font-size:11px;color:var(--text-secondary);margin-top:2px;">'+si.label+'</div></div>'+
+        '<div style="font-size:11px;color:var(--text-secondary);margin-top:2px;">'+label+'</div></div>'+
         '<div style="text-align:right;white-space:nowrap;"><div style="font-size:12px;color:var(--text-secondary);">Plano: <strong>'+it.qtdPlan.toLocaleString('pt-BR')+'</strong></div>'+
         '<div style="font-size:13px;font-weight:700;color:'+si.cor+';">Feito: '+it.mostrado.toLocaleString('pt-BR')+' ('+pct+'%)</div></div>'+
         '</div>';
