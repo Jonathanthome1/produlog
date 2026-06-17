@@ -1077,6 +1077,14 @@
 
       <div class="mc-section-header">Consultas</div>
       <div class="mc-sector-grid">
+        <button class="mc-sector-card" onclick="goTo('s-acomp')">
+          <div class="mc-sector-icon green">📋</div>
+          <div class="mc-sector-info">
+            <div class="mc-sector-title">Acompanhamento do Plano</div>
+            <div class="mc-sector-desc">O que já foi feito × pendente (status colorido)</div>
+          </div>
+          <span class="mc-sector-arrow">›</span>
+        </button>
         <button class="mc-sector-card" onclick="goTo('s-estoque-conf')">
           <div class="mc-sector-icon green">📦</div>
           <div class="mc-sector-info">
@@ -2805,6 +2813,14 @@
         </div>
         <span class="mc-sector-arrow">›</span>
       </button>
+      <button class="mc-sector-card" style="border-left:3px solid var(--mc-verde);margin-bottom:10px;" onclick="goTo('s-acomp')">
+        <div class="mc-sector-icon green">📋</div>
+        <div class="mc-sector-info">
+          <div class="mc-sector-title">Acompanhamento do Plano</div>
+          <div class="mc-sector-desc">Cumprimento do plano por produto/dia</div>
+        </div>
+        <span class="mc-sector-arrow">›</span>
+      </button>
       <button class="mc-sector-card" style="border-left:3px solid var(--mc-roxo);margin-bottom:10px;" onclick="goTo('s-sim')">
         <div class="mc-sector-icon purple">🧮</div>
         <div class="mc-sector-info">
@@ -3694,6 +3710,18 @@
     <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;" id="alt-admin-content"></div>
   </div>
 
+  <!-- ACOMPANHAMENTO DO PLANO -->
+  <div class="screen" id="s-acomp">
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="window.adminMode?goTo('s-adm-hub'):goTo('s-conf-home')">‹</button>
+      <div class="mc-brand"><div class="mc-brand-logo">MC</div><div class="mc-brand-text"><div class="mc-brand-name">Monte Castelo</div><div class="mc-brand-sub">Plano</div></div></div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info"><div class="mc-page-title">📋 Acompanhamento do Plano</div><div class="mc-page-sub">O que já foi feito × pendente</div></div>
+      <div class="mc-header-actions"><button class="mc-act-btn-secondary" onclick="renderAcomp()">↻ Atualizar</button></div>
+    </div>
+    <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;" id="acomp-content"></div>
+  </div>
+
   <!-- CONTAGEM HOME -->
   <div class="screen" id="s-contagem-home">
     <div class="mc-header">
@@ -4050,6 +4078,7 @@ function atualizarTela(){
   if(tela==='s-alt-lista') renderAltLista();
   if(tela==='s-alt-editor') renderAltEditor();
   if(tela==='s-alt-admin') renderAltAdmin();
+  if(tela==='s-acomp') renderAcomp();
   if(tela==='s-adm-hub' && typeof _altAtualizarBadges==='function') _altAtualizarBadges();
   if(tela==='s-coz-home') renderCozHome();
   if(tela==='s-emb-home') renderEmbalagem(); // embManual listener triggers this
@@ -4166,6 +4195,7 @@ function goTo(id){
   if(id==='s-alt-lista') renderAltLista();
   if(id==='s-alt-editor') renderAltEditor();
   if(id==='s-alt-admin') renderAltAdmin();
+  if(id==='s-acomp') renderAcomp();
   if(id==='s-adm-hub' && typeof _altAtualizarBadges==='function') _altAtualizarBadges();
   if(id==='s-rastreio'){
     popularSelectMPRastreio();
@@ -11728,6 +11758,129 @@ function renderAltAdmin(){
 
 window.altPickTipo=altPickTipo; window.altPickFicha=altPickFicha; window.renderAltLista=renderAltLista; window.renderAltEditor=renderAltEditor; window.renderAltAdmin=renderAltAdmin;
 window.altUpdIng=altUpdIng; window.altRemoveIng=altRemoveIng; window.altAddIng=altAddIng; window.altSolicitar=altSolicitar; window.altAprovar=altAprovar; window.altNegar=altNegar;
+
+// ===== ACOMPANHAMENTO DO PLANO (status colorido FIFO + 80%) =====
+let _acBusca='', _acSoPend=false;
+
+function _acMondayOfWeek(semStr){
+  const [yr,wk]=String(semStr).split('-W');
+  const jan1=new Date(parseInt(yr),0,1);
+  const days=(parseInt(wk)-1)*7-jan1.getDay()+1;
+  const mon=new Date(jan1); mon.setDate(jan1.getDate()+days); mon.setHours(0,0,0,0);
+  return mon;
+}
+function _acFmtBR(d){ return d.toLocaleDateString('pt-BR'); }
+function _acProducaoProdutoDia(nomeNorm,dateBR){
+  let t=0;
+  registros.forEach(r=>{ if(r.origem==='quadra') return; if(r.data!==dateBR) return; if(_normNome(r.produto||'')!==nomeNorm) return; t+=parseInt(r.qtd)||0; });
+  return t;
+}
+function _acStatusInfo(s){
+  if(s==='verde') return {emoji:'🟢',cor:'#16a34a',bg:'rgba(22,163,74,.10)',label:'Feito no dia'};
+  if(s==='laranja') return {emoji:'🟠',cor:'#d97706',bg:'rgba(217,119,6,.12)',label:'Fora do dia'};
+  if(s==='vermelho') return {emoji:'🔴',cor:'#dc2626',bg:'rgba(220,38,38,.10)',label:'Atrasado'};
+  return {emoji:'⚪',cor:'#6b7280',bg:'rgba(107,114,128,.08)',label:'Aguardando'};
+}
+function _acCalcular(){
+  const sem=semanaAtual();
+  let plano=planos.find(p=>p.semana===sem && (!p.setor||p.setor==='conf'));
+  if(!plano){ const confs=planos.filter(p=>!p.setor||p.setor==='conf'); plano=confs.sort((a,b)=>String(b.semana||'').localeCompare(String(a.semana||'')))[0]; }
+  if(!plano) return {semana:null, produtos:[]};
+  const semStr=plano.semana||sem;
+  const DIAS=['Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
+  const mon=_acMondayOfWeek(semStr);
+  const diasInfo=DIAS.map((d,i)=>{ const dt=new Date(mon); dt.setDate(mon.getDate()+i); dt.setHours(0,0,0,0); return {dia:d,date:dt,dateBR:_acFmtBR(dt),abrev:d.slice(0,3)}; });
+  const hoje0=new Date(); hoje0.setHours(0,0,0,0);
+  const itens=plano.itens||{};
+  const prodMap={};
+  DIAS.forEach(d=>{ (itens[d]||[]).forEach(it=>{ const nome=it.nome||it.produtoNome||''; if(!nome) return; const q=parseInt(it.qtdPacotes||it.qtd)||0; if(q<=0) return; if(!prodMap[nome]) prodMap[nome]={nome,plano:{}}; prodMap[nome].plano[d]=(prodMap[nome].plano[d]||0)+q; }); });
+
+  const produtos=Object.values(prodMap).map(p=>{
+    const nomeNorm=_normNome(p.nome);
+    const prodDia={}; diasInfo.forEach(di=>{ prodDia[di.dia]=_acProducaoProdutoDia(nomeNorm,di.dateBR); });
+    const totalProduzido=Object.values(prodDia).reduce((s,v)=>s+v,0);
+    const plannedDays=diasInfo.filter(di=>(p.plano[di.dia]||0)>0);
+    let restante=totalProduzido; const aloc={};
+    plannedDays.forEach(di=>{ const need=p.plano[di.dia]; const give=Math.min(restante,need); aloc[di.dia]=give; restante-=give; });
+    const dias=plannedDays.map(di=>{
+      const qtdPlan=p.plano[di.dia], prodNoDia=prodDia[di.dia]||0, a=aloc[di.dia]||0;
+      const pctDia=qtdPlan>0?prodNoDia/qtdPlan:0;
+      const feito=a>=0.8*qtdPlan;
+      let status;
+      if(pctDia>=0.8) status='verde';
+      else if(feito) status='laranja';
+      else if(di.date<hoje0) status='vermelho';
+      else status='cinza';
+      return {dia:di.dia,abrev:di.abrev,dateBR:di.dateBR,qtdPlan,prodNoDia,aloc:a,status};
+    });
+    const totalPlan=plannedDays.reduce((s,di)=>s+p.plano[di.dia],0);
+    const totalAloc=plannedDays.reduce((s,di)=>s+(aloc[di.dia]||0),0);
+    const pendente=dias.some(d=>d.status==='vermelho');
+    return {nome:p.nome,dias,totalPlan,totalProduzido,totalAloc,pendente};
+  }).sort((a,b)=>{ if(a.pendente!==b.pendente) return a.pendente?-1:1; return a.nome.localeCompare(b.nome,'pt-BR'); });
+
+  return {semana:semStr, semanaLabel:semanaLabel(semStr), produtos};
+}
+
+function setAcBusca(v){ _acBusca=v; renderAcomp(); }
+function toggleAcPend(){ _acSoPend=!_acSoPend; renderAcomp(); }
+
+function renderAcomp(){
+  const el=document.getElementById('acomp-content'); if(!el) return;
+  const dados=_acCalcular();
+  if(!dados.semana){ el.innerHTML='<div class="empty" style="padding:30px;">Nenhum plano de Confeitaria encontrado.</div>'; return; }
+
+  let produtos=dados.produtos;
+  if(_acBusca){ const qn=_normNome(_acBusca); produtos=produtos.filter(p=>_normNome(p.nome).includes(qn)); }
+  if(_acSoPend) produtos=produtos.filter(p=>p.pendente);
+
+  // Resumo geral
+  const totP=dados.produtos.reduce((s,p)=>s+p.totalPlan,0);
+  const totF=dados.produtos.reduce((s,p)=>s+p.totalAloc,0);
+  const pctGeral=totP>0?Math.round(totF/totP*100):0;
+  const nPend=dados.produtos.filter(p=>p.pendente).length;
+
+  let html='<div style="font-size:12px;color:var(--text-secondary);margin-bottom:8px;">📅 '+dados.semanaLabel+'</div>';
+  html+='<div class="card" style="margin-bottom:12px;">'+
+    '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;"><div style="font-size:14px;font-weight:700;">Progresso da semana</div><div style="font-size:18px;font-weight:800;color:'+(pctGeral>=100?'#16a34a':'var(--mc-azul)')+';">'+pctGeral+'%</div></div>'+
+    '<div style="height:10px;background:var(--bg-page);border-radius:5px;overflow:hidden;"><div style="height:100%;width:'+Math.max(pctGeral,2)+'%;background:'+(pctGeral>=100?'#16a34a':'var(--mc-azul)')+';border-radius:5px;"></div></div>'+
+    '<div style="font-size:11px;color:var(--text-secondary);margin-top:4px;">'+totF.toLocaleString('pt-BR')+' de '+totP.toLocaleString('pt-BR')+' pacotes · '+(nPend?('<strong style="color:var(--mc-vermelho);">'+nPend+' produto(s) com atraso</strong>'):'sem atrasos 🎉')+'</div>'+
+    '</div>';
+
+  // Legenda + filtros
+  html+='<div style="display:flex;flex-wrap:wrap;gap:8px;font-size:11px;color:var(--text-secondary);margin-bottom:10px;">'+
+    '<span>🟢 no dia</span><span>🟠 fora do dia</span><span>🔴 atrasado</span><span>⚪ aguardando</span></div>';
+  html+='<div style="display:flex;gap:8px;margin-bottom:12px;">'+
+    '<input type="text" value="'+(_acBusca||'').replace(/"/g,'&quot;')+'" oninput="setAcBusca(this.value)" placeholder="Buscar produto..." style="flex:1;font-size:14px;padding:9px;border-radius:8px;border:1px solid var(--border-md,#d1d5db);box-sizing:border-box;" />'+
+    '<button onclick="toggleAcPend()" style="white-space:nowrap;padding:9px 12px;border-radius:8px;border:1px solid '+(_acSoPend?'var(--mc-vermelho)':'var(--border-md,#d1d5db)')+';background:'+(_acSoPend?'var(--mc-vermelho)':'var(--bg-primary)')+';color:'+(_acSoPend?'#fff':'var(--text-primary)')+';font-size:12px;font-weight:600;font-family:inherit;cursor:pointer;">🔴 Só atrasados</button>'+
+    '</div>';
+
+  if(!produtos.length){ el.innerHTML=html+'<div class="empty">Nenhum produto nesse filtro.</div>'; return; }
+
+  html+=produtos.map(p=>{
+    const pct=p.totalPlan>0?Math.round(p.totalAloc/p.totalPlan*100):0;
+    const diasHtml=p.dias.map(d=>{
+      const si=_acStatusInfo(d.status);
+      return '<div style="flex:1;min-width:70px;border:1px solid '+si.cor+';background:'+si.bg+';border-radius:8px;padding:6px 4px;text-align:center;">'+
+        '<div style="font-size:11px;font-weight:700;">'+si.emoji+' '+d.abrev+'</div>'+
+        '<div style="font-size:10px;color:var(--text-secondary);">'+d.dateBR.slice(0,5)+'</div>'+
+        '<div style="font-size:11px;margin-top:3px;">Plano <strong>'+d.qtdPlan.toLocaleString('pt-BR')+'</strong></div>'+
+        '<div style="font-size:11px;color:'+si.cor+';font-weight:700;">Feito '+d.prodNoDia.toLocaleString('pt-BR')+'</div>'+
+        '</div>';
+    }).join('');
+    return '<div class="card" style="margin-bottom:10px;">'+
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;gap:8px;">'+
+      '<div style="flex:1;min-width:0;font-size:14px;font-weight:700;">'+p.nome+'</div>'+
+      '<div style="font-size:13px;font-weight:700;color:'+(pct>=100?'#16a34a':(p.pendente?'var(--mc-vermelho)':'var(--mc-azul)'))+';white-space:nowrap;">'+p.totalProduzido.toLocaleString('pt-BR')+'/'+p.totalPlan.toLocaleString('pt-BR')+' · '+pct+'%</div>'+
+      '</div>'+
+      '<div style="display:flex;gap:6px;flex-wrap:wrap;">'+diasHtml+'</div>'+
+      '</div>';
+  }).join('');
+
+  el.innerHTML=html;
+}
+window.renderAcomp=renderAcomp; window.setAcBusca=setAcBusca; window.toggleAcPend=toggleAcPend;
+
 
 
 
