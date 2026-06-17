@@ -11807,19 +11807,28 @@ function _acCalcular(){
     // FIFO: aloca a produção total nos dias planejados, do mais antigo p/ o mais novo
     let restante=totalProduzido; const aloc={};
     plannedDays.forEach(di=>{ const need=p.plano[di.dia]; const give=Math.min(restante,need); aloc[di.dia]=give; restante-=give; });
+    // produção acumulada por dia (índice Seg=0..Sáb=5)
+    const prodCumAte=[]; let acc=0; diasInfo.forEach((di,idx)=>{ acc+=prodDia[di.dia]||0; prodCumAte[idx]=acc; });
+    const idxDe={}; diasInfo.forEach((di,idx)=>idxDe[di.dia]=idx);
+    let cumPlan=0;
     const dias=plannedDays.map(di=>{
       const qtdPlan=p.plano[di.dia], prodNoDia=prodDia[di.dia]||0, a=aloc[di.dia]||0;
-      const pctDia=qtdPlan>0?prodNoDia/qtdPlan:0;       // % produzido NO dia
-      const pctAloc=qtdPlan>0?a/qtdPlan:0;              // % coberto (FIFO)
-      const feito=a>=0.8*qtdPlan;
+      cumPlan+=qtdPlan;
+      const idx=idxDe[di.dia];
+      const cumProdAte=prodCumAte[idx]||0;          // produzido até o fim deste dia
+      const cumProdAntes=idx>0?(prodCumAte[idx-1]||0):0; // produzido ANTES deste dia
+      const feito=a>=0.8*qtdPlan;                    // cobertura do dia atingiu 80%?
       let status;
-      if(pctDia>=0.8) status='verde';                  // produzido no próprio dia
-      else if(feito){                                  // coberto, mas não no dia
-        status = di.date>hoje0 ? 'adiantado' : 'atrasado';
+      if(feito){
+        if(cumProdAntes>=cumPlan) status='adiantado';     // já estava coberto antes do dia chegar
+        else if(cumProdAte>=cumPlan) status='verde';      // coberto até o fim do próprio dia
+        else status='atrasado';                           // só completou com produção posterior
+      } else {
+        if(di.date<hoje0) status='vermelho';              // dia já passou e não cobriu
+        else status = a>0 ? 'parcial' : 'cinza';          // hoje/futuro: parcial (adiantou) ou aguardando
       }
-      else if(di.date<hoje0) status='vermelho';        // passou e não cobriu
-      else status = a>0 ? 'parcial' : 'cinza';         // futuro: parcial (adiantou um pouco) ou aguardando
-      return {dia:di.dia,abrev:di.abrev,dateBR:di.dateBR,qtdPlan,prodNoDia,aloc:a,pctAloc:Math.round(pctAloc*100),status};
+      const mostrado=Math.max(prodNoDia, a);              // exibe a produção real do dia ou o que foi coberto
+      return {dia:di.dia,abrev:di.abrev,dateBR:di.dateBR,qtdPlan,prodNoDia,aloc:a,mostrado,status};
     });
     const totalPlan=plannedDays.reduce((s,di)=>s+p.plano[di.dia],0);
     const totalAloc=plannedDays.reduce((s,di)=>s+(aloc[di.dia]||0),0);
@@ -11864,7 +11873,7 @@ function renderAcomp(){
   let datasDia={};
   dados.produtos.forEach(p=>{
     p.dias.forEach(d=>{
-      porDia[d.dia].push({produto:p.nome, status:d.status, qtdPlan:d.qtdPlan, prodNoDia:d.prodNoDia, aloc:d.aloc});
+      porDia[d.dia].push({produto:p.nome, status:d.status, qtdPlan:d.qtdPlan, prodNoDia:d.prodNoDia, aloc:d.aloc, mostrado:d.mostrado});
       datasDia[d.dia]=d.dateBR;
     });
   });
@@ -11926,12 +11935,12 @@ function renderAcomp(){
 
     html+=itens.map(it=>{
       const si=_acStatusInfo(it.status);
-      const pct=it.qtdPlan>0?Math.round(it.aloc/it.qtdPlan*100):0;
+      const pct=it.qtdPlan>0?Math.round(it.mostrado/it.qtdPlan*100):0;
       return '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;background:'+si.bg+';border:1px solid '+si.cor+';border-radius:10px;padding:10px 12px;margin-bottom:6px;">'+
         '<div style="flex:1;min-width:0;"><div style="font-size:14px;font-weight:600;">'+si.emoji+' '+it.produto+'</div>'+
         '<div style="font-size:11px;color:var(--text-secondary);margin-top:2px;">'+si.label+'</div></div>'+
         '<div style="text-align:right;white-space:nowrap;"><div style="font-size:12px;color:var(--text-secondary);">Plano: <strong>'+it.qtdPlan.toLocaleString('pt-BR')+'</strong></div>'+
-        '<div style="font-size:13px;font-weight:700;color:'+si.cor+';">Feito: '+it.aloc.toLocaleString('pt-BR')+' ('+pct+'%)</div></div>'+
+        '<div style="font-size:13px;font-weight:700;color:'+si.cor+';">Feito: '+it.mostrado.toLocaleString('pt-BR')+' ('+pct+'%)</div></div>'+
         '</div>';
     }).join('');
 
