@@ -3192,6 +3192,8 @@
         <div class="mc-page-sub">Cadastrar produtos com gramatura</div>
       </div>
       <div class="mc-header-actions">
+        <input type="file" id="cls-import-file" accept=".xlsx,.xls" style="display:none" onchange="importarClassesPlanilha(this)" />
+        <button class="mc-act-btn-secondary" onclick="document.getElementById('cls-import-file').click()">📥 Classes</button>
         <button class="mc-act-btn-primary" onclick="abrirNovoProdConf()">+ Novo</button>
       </div>
     </div>
@@ -8841,6 +8843,77 @@ onSnapshot(collection(db,'produtosConfeitaria'), snap=>{
   }catch(e){ console.error('produtosConfeitaria snap:',e); }
 });
 
+// ===== CLASSES DE PRODUÇÃO (Mesa, Fritos, Usifood, ...) =====
+let classesProducao=['Mesa','Fritos','Usifood'];
+onSnapshot(doc(db,'configuracoes','classesProducao'), snap=>{
+  try{
+    const d=snap.data();
+    if(d && Array.isArray(d.lista) && d.lista.length) classesProducao=d.lista.slice();
+    const ativa=document.querySelector('.screen.active');
+    if(ativa && ativa.id==='s-adm-prod-conf-form' && typeof renderProdConfForm==='function') renderProdConfForm();
+  }catch(e){ console.error('classesProducao snap',e); }
+});
+async function salvarClassesProducao(lista){
+  try{ await setDoc(doc(db,'configuracoes','classesProducao'),{lista, atualizadoEm:agora()}); }catch(e){ alert('Erro ao salvar classes: '+e.message); }
+}
+async function novaClasseProducao(){
+  const nome=(prompt('Nome da nova classe (ex: Mesa, Fritos, Usifood):')||'').trim();
+  if(!nome) return;
+  if(classesProducao.some(c=>c.toLowerCase()===nome.toLowerCase())){ alert('Essa classe já existe.'); return; }
+  classesProducao.push(nome);
+  await salvarClassesProducao(classesProducao);
+  const sel=document.getElementById('pc-classe');
+  if(sel){ const opt=document.createElement('option'); opt.value=nome; opt.textContent=nome; opt.selected=true; sel.appendChild(opt); }
+}
+async function importarClassesPlanilha(input){
+  const file=input.files&&input.files[0]; if(!file) return;
+  try{
+    await new Promise((res,rej)=>{ if(window.XLSX){res();return;} const s=document.createElement('script'); s.src='https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js'; s.onload=res; s.onerror=rej; document.head.appendChild(s); });
+    const buf=await file.arrayBuffer();
+    const wb=XLSX.read(buf,{type:'array'});
+    const ws=wb.Sheets[wb.SheetNames[0]];
+    const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:''}).filter(r=>r&&r.some(c=>String(c).trim()!==''));
+    if(!rows.length){ alert('Planilha vazia.'); input.value=''; return; }
+    const norm=s=>String(s).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
+    const headN=(rows[0]||[]).map(norm);
+    // tenta achar cabeçalho; se não houver, assume formato: coluna0=código, coluna1=classe
+    let cCod=headN.findIndex(h=>h==='codigo'||h==='cod');
+    let cNome=headN.findIndex(h=>h==='nome'||h==='produto'||h==='descricao');
+    let cClasse=headN.findIndex(h=>h==='classe'||h==='setor'||h==='categoria'||h==='maquina'||h==='tipo');
+    let temCabecalho = (cCod>=0 || cNome>=0 || cClasse>=0);
+    if(!temCabecalho){ cCod=0; cNome=-1; cClasse=1; }   // sem cabeçalho: código | classe
+    if(cClasse<0){ alert('Não encontrei a coluna de classe. Use 2 colunas (código | classe) ou cabeçalho "classe".'); input.value=''; return; }
+    const ini = temCabecalho?1:0;
+    let atualizados=0; const naoEncontrados=[]; const classesNovas=new Set(); const atingidos=new Set();
+    for(let i=ini;i<rows.length;i++){
+      const r=rows[i]; if(!r) continue;
+      const cod=cCod>=0?String(r[cCod]).trim():'';
+      const nome=cNome>=0?String(r[cNome]).trim():'';
+      const classe=String(r[cClasse]||'').trim();
+      if(!classe || (!cod && !nome)) continue;
+      let prod=null;
+      if(cod) prod=produtosConfFirebase.find(p=>String(p.cod||'').trim()===cod);
+      if(!prod && nome) prod=produtosConfFirebase.find(p=>_normNome(p.nome||'')===_normNome(nome));
+      if(!prod){ naoEncontrados.push(cod||nome); continue; }
+      if(!classesProducao.some(c=>c.toLowerCase()===classe.toLowerCase())){ classesProducao.push(classe); classesNovas.add(classe); }
+      await updateDoc(doc(db,'produtosConfeitaria',prod.firestoreId),{classe});
+      atingidos.add(prod.firestoreId);
+      atualizados++;
+    }
+    if(classesNovas.size) await salvarClassesProducao(classesProducao);
+    // produtos do cadastro que continuam SEM classe (garantia de cobertura)
+    const semClasse=produtosConfFirebase.filter(p=>!atingidos.has(p.firestoreId) && !(p.classe&&p.classe.trim())).map(p=>(p.cod||'?')+' '+(p.nome||''));
+    let msg='✓ '+atualizados+' produto(s) atualizados com a classe.';
+    if(classesNovas.size) msg+='\nNovas classes criadas: '+[...classesNovas].join(', ')+'.';
+    if(naoEncontrados.length) msg+='\n\n⚠️ '+naoEncontrados.length+' código(s) da planilha sem produto no cadastro: '+naoEncontrados.slice(0,20).join(', ')+(naoEncontrados.length>20?'…':'');
+    if(semClasse.length) msg+='\n\n📋 '+semClasse.length+' produto(s) do cadastro ainda SEM classe: '+semClasse.slice(0,20).join(' | ')+(semClasse.length>20?' …':'');
+    else msg+='\n\n✅ Todos os produtos do cadastro têm classe.';
+    alert(msg);
+  }catch(e){ alert('Erro ao importar: '+e.message); }
+  finally{ input.value=''; }
+}
+window.novaClasseProducao=novaClasseProducao; window.importarClassesPlanilha=importarClassesPlanilha; window.salvarClassesProducao=salvarClassesProducao;
+
 // Migração já concluída — sem backup necessário
 const _PRODUTOS_ORIGINAIS=[];
 
@@ -10080,7 +10153,7 @@ function renderAdmProdConfList(){
     const isFB=p._origem==='firebase';
     html+='<div style="background:var(--bg-primary);border:1px solid var(--border);border-left:3px solid '+(isFB?'var(--mc-azul)':'var(--text-muted)')+';border-radius:var(--r-md);padding:10px 12px;margin-bottom:6px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">';
     html+='<div style="flex:1;min-width:180px;">';
-    html+='<div style="font-size:13px;font-weight:600;color:var(--text-primary);">'+(p.nome||'')+'</div>';
+    html+='<div style="font-size:13px;font-weight:600;color:var(--text-primary);">'+(p.nome||'')+(p.classe?' <span style="font-size:10px;font-weight:700;color:var(--mc-azul);background:var(--mc-azul-claro);border-radius:99px;padding:1px 7px;margin-left:4px;">'+p.classe+'</span>':'')+'</div>';
     html+='<div style="font-size:11px;color:var(--text-secondary);margin-top:2px;">cod '+(p.cod||'-')+' · '+(p.qtdPct||0)+' un/pct · '+(p.pesoPct||0)+'g/pct</div>';
     const detalhes=[];
     if(p.grMassa>0) detalhes.push((p.tipoMassa||'Massa')+': '+p.grMassa+'gr/un');
@@ -10130,6 +10203,18 @@ function renderProdConfForm(){
   html+='<div class="card-label">Nome do produto</div>';
   html+='<input type="text" id="pc-nome" value="'+(p.nome||'').replace(/"/g,'&quot;')+'" placeholder="Ex: EMPADA FRANGO" style="font-size:15px;width:100%;margin-top:6px;" />';
   html+='<div style="font-size:11px;color:var(--text-secondary);margin-top:4px;">Sempre em maiúsculas</div>';
+  html+='</div>';
+
+  // Classe de produção
+  html+='<div class="card" style="padding:14px;margin-bottom:10px;border-left:3px solid var(--mc-azul);">';
+  html+='<div class="card-label" style="color:var(--mc-azul);">🏷️ Classe de produção</div>';
+  html+='<div style="display:flex;gap:8px;margin-top:6px;">';
+  html+='<select id="pc-classe" style="flex:1;font-size:14px;padding:9px;border-radius:6px;border:1px solid var(--border-md);"><option value="">— Sem classe —</option>';
+  classesProducao.forEach(c=>{ html+='<option value="'+c.replace(/"/g,'&quot;')+'"'+(p.classe===c?' selected':'')+'>'+c+'</option>'; });
+  html+='</select>';
+  html+='<button type="button" class="btn btn-secondary" style="white-space:nowrap;" onclick="novaClasseProducao()">+ Nova</button>';
+  html+='</div>';
+  html+='<div style="font-size:11px;color:var(--text-secondary);margin-top:4px;">Ex: Mesa, Fritos, Usifood — usado para filtrar e ordenar o plano</div>';
   html+='</div>';
 
   html+='<div class="card" style="padding:14px;margin-bottom:10px;">';
@@ -10183,6 +10268,7 @@ async function salvarProdConf(){
 
   const dados={
     cod, nome,
+    classe:(document.getElementById('pc-classe')&&document.getElementById('pc-classe').value)||'',
     pesoPct:parseFloat(document.getElementById('pc-pesopct').value)||0,
     qtdPct:parseFloat(document.getElementById('pc-qtdpct').value)||0,
     tipoMassa:document.getElementById('pc-tipomassa').value||'',
