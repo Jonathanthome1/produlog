@@ -107,7 +107,7 @@ textarea{width:100%;height:300px;padding:12px;border:1px solid var(--border);bor
 </div>
 
 <div class="title-bar">
-  <div class="page-title">📊 Planejamento de Produção <span style="font-size:11px;font-weight:600;color:#fff;background:var(--mc-verde);border-radius:99px;padding:2px 9px;vertical-align:middle;margin-left:6px;">v11/06 ✓</span></div>
+  <div class="page-title">📊 Planejamento de Produção <span style="font-size:11px;font-weight:600;color:#fff;background:var(--mc-verde);border-radius:99px;padding:2px 9px;vertical-align:middle;margin-left:6px;">v18/06 ✓</span></div>
   <div id="status" style="font-size:13px;color:var(--text-sec);margin-top:4px;">Carregando...</div>
 </div>
 
@@ -130,6 +130,9 @@ textarea{width:100%;height:300px;padding:12px;border:1px solid var(--border);bor
     <option value="ativos">Só com venda</option>
     <option value="todos">Todos</option>
     <option value="falta">🔴 Em falta (simulação)</option>
+  </select>
+  <select id="filtroClasse" class="control-input" title="Filtrar por classe de produção">
+    <option value="todas">🏷️ Todas as classes</option>
   </select>
   <select id="filtroDia" class="control-input" title="Mostrar só produtos planejados nesse dia">
     <option value="todos">📆 Todos os dias</option>
@@ -365,6 +368,35 @@ onSnapshot(collection(db, 'planejProdutos'), snap => {
   render();
 });
 
+// ===== CLASSE DE PRODUÇÃO (lida do cadastro do Produlog: produtosConfeitaria) =====
+let classePorCod = {};
+let classesProducaoOrdem = ['Mesa','Fritos','Usifood'];
+onSnapshot(collection(db, 'produtosConfeitaria'), snap => {
+  classePorCod = {};
+  snap.docs.forEach(d => { const x = d.data(); if(x && x.cod != null){ classePorCod[String(x.cod).trim()] = (x.classe||'').trim(); } });
+  preencherFiltroClasse();
+  render();
+});
+onSnapshot(doc(db, 'configuracoes', 'classesProducao'), snap => {
+  const d = snap.data();
+  if(d && Array.isArray(d.lista) && d.lista.length) classesProducaoOrdem = d.lista.slice();
+  preencherFiltroClasse();
+});
+function classeDe(cod){ return classePorCod[String(cod).trim()] || ''; }
+function ordemClasse(classe){ const i = classesProducaoOrdem.findIndex(c => c.toLowerCase() === String(classe).toLowerCase()); return i < 0 ? 999 : i; }
+function preencherFiltroClasse(){
+  const sel = document.getElementById('filtroClasse'); if(!sel) return;
+  const atual = sel.value || 'todas';
+  const presentes = new Set(Object.values(classePorCod).filter(Boolean));
+  const naOrdem = classesProducaoOrdem.filter(c => presentes.has(c));
+  const extras = [...presentes].filter(c => !classesProducaoOrdem.some(o => o.toLowerCase() === c.toLowerCase()));
+  const ordenadas = [...naOrdem, ...extras];
+  sel.innerHTML = '<option value="todas">🏷️ Todas as classes</option>' +
+    ordenadas.map(c => '<option value="'+c+'">'+c+'</option>').join('') +
+    '<option value="__sem">— Sem classe —</option>';
+  sel.value = atual;
+}
+
 window.trocarTab = (s) => {
   setorAtivo = s;
   document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.setor===s));
@@ -420,11 +452,17 @@ async function render(){
   // NOVO: filtro por dia da semana — só produtos com quantidade planejada nesse dia
   const filtroDia = document.getElementById('filtroDia')?.value || 'todos';
   if(filtroDia!=='todos') lista = lista.filter(p => ((plano[p.cod]||{})[filtroDia]||0) > 0);
+  // NOVO: filtro por classe de produção (Mesa/Fritos/Usifood/...)
+  const filtroClasse = document.getElementById('filtroClasse')?.value || 'todas';
+  if(filtroClasse==='__sem') lista = lista.filter(p => !classeDe(p.cod));
+  else if(filtroClasse!=='todas') lista = lista.filter(p => classeDe(p.cod).toLowerCase() === filtroClasse.toLowerCase());
   if(busca) lista = lista.filter(p => String(p.cod).includes(busca) || (p.desc||'').toLowerCase().includes(busca));
   
   if(ordem==='urg') lista.sort((a,b) => calcCob(a) - calcCob(b));
   if(ordem==='vend') lista.sort((a,b) => (b.totalPeriodo||0) - (a.totalPeriodo||0));
   if(ordem==='cod') lista.sort((a,b) => parseInt(a.cod) - parseInt(b.cod));
+  // NOVO: agrupar por classe (Mesa→Fritos→Usifood→…→sem classe), mantendo o critério acima dentro de cada classe
+  lista.sort((a,b) => ordemClasse(classeDe(a.cod)) - ordemClasse(classeDe(b.cod)));
   
   // Atualizar badges e status
   document.getElementById('badge-quadra').textContent = produtos.filter(p => p.setor==='quadra').length;
@@ -466,7 +504,7 @@ async function render(){
     
     return '<tr>'+
       '<td class="cod" data-cod="'+p.cod+'">'+p.cod+' '+(temFaltaEstoque(p.cod)?'<span style="color:var(--mc-vermelho);cursor:pointer;font-weight:700" title="Clique para ver simulação" onclick="abrirSimulacao(\''+p.cod+'\')">🔴</span>':'<span style="color:var(--mc-verde);cursor:pointer;font-weight:700" title="Clique para ver simulação" onclick="abrirSimulacao(\''+p.cod+'\')">🟢</span>')+' </td>'+
-      '<td><span class="prod-name" onclick="abrirDetalhe(\''+p.cod+'\')">'+p.desc+'</span> <button class="btn-mover" title="Mover para '+(setorAtivo==='quadra'?'Confeitaria':'Quadra')+'" onclick="moverProduto(\''+p.cod+'\')">→ '+(setorAtivo==='quadra'?'Conf':'Quadra')+'</button></td>'+
+      '<td><span class="prod-name" onclick="abrirDetalhe(\''+p.cod+'\')">'+p.desc+'</span>'+(classeDe(p.cod)?' <span class="badge b-azul">'+classeDe(p.cod)+'</span>':'')+' <button class="btn-mover" title="Mover para '+(setorAtivo==='quadra'?'Confeitaria':'Quadra')+'" onclick="moverProduto(\''+p.cod+'\')">→ '+(setorAtivo==='quadra'?'Conf':'Quadra')+'</button></td>'+
       '<td class="num">'+p.estoque+'</td>'+
       '<td class="num" id="desc-venda-'+p.cod+'" style="font-weight:700;color:'+(calcDescontoVenda(p)>0?'var(--mc-vermelho)':'var(--text-mut)')+'">'+(calcDescontoVenda(p)>0?'-'+calcDescontoVenda(p):'0')+'</td>'+
       '<td class="num">'+Math.round((p.totalPeriodo||0)/4)+'</td>'+
@@ -925,10 +963,19 @@ td.num{text-align:center}
       const produtosDia = lista.filter(p => (plano[p.cod] || {})[dia] > 0);
       if(produtosDia.length === 0) return;
       
+      // ordenar por classe (Mesa→Fritos→Usifood→…), depois por código
+      produtosDia.sort((a,b) => { const ca=ordemClasse(classeDe(a.cod)), cb=ordemClasse(classeDe(b.cod)); if(ca!==cb) return ca-cb; return parseInt(a.cod)-parseInt(b.cod); });
+      const temClasses = produtosDia.some(p => classeDe(p.cod));
+      
       out += `<h3>${dia}</h3><table><tr><th>Código</th><th>Produto</th><th class="num">Quantidade</th></tr>`;
       
       let totalDia = 0;
+      let classeAtual = null;
       produtosDia.forEach(p => {
+        if(temClasses){
+          const cl = classeDe(p.cod) || 'Sem classe';
+          if(cl !== classeAtual){ classeAtual = cl; out += `<tr style="background:#eef2ff"><td colspan="3" style="font-weight:700;color:#3730a3;font-size:11px;text-transform:uppercase">🏷️ ${cl}</td></tr>`; }
+        }
         const qtd = plano[p.cod][dia];
         totalDia += qtd;
         out += `<tr><td>${p.cod}</td><td>${p.desc}</td><td class="num">${qtd}</td></tr>`;
@@ -1586,7 +1633,7 @@ window.limparTudo = async () => {
   alert('✓ Dados removidos!');
 };
 
-['mult','order','filtro','filtroDia','busca'].forEach(id => {
+['mult','order','filtro','filtroClasse','filtroDia','busca'].forEach(id => {
   document.getElementById(id)?.addEventListener('change', render);
   document.getElementById(id)?.addEventListener('input', render);
 });
