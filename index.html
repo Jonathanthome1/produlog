@@ -11621,6 +11621,8 @@ function _demAtualizarBadge(){
   document.querySelectorAll('.dem-badge').forEach(b=>{ b.textContent=n; b.style.display=n>0?'inline-flex':'none'; });
 }
 
+function demSet(campo,val){ if(_demEditando) _demEditando[campo]=val; }
+window.demSet=demSet;
 function novaDemanda(){
   _demEditando={titulo:'',descricao:'',categoria:demandaCategorias[0]||'Tarefa do dia',status:'afazer',prioridade:'media',dataEntrega:'',comentarios:[]};
   goTo('s-demanda-det'); renderDemandaDet();
@@ -11718,22 +11720,22 @@ function renderDemandaDet(){
   let html='';
   html+='<div class="card">';
   html+='<div class="card-label">Título</div>';
-  html+='<input type="text" value="'+(d.titulo||'').replace(/"/g,'&quot;')+'" oninput="_demEditando.titulo=this.value" placeholder="Ex: Revisar layout do container" style="width:100%;font-size:15px;padding:10px;border-radius:8px;border:1px solid var(--border-md,#d1d5db);box-sizing:border-box;" />';
+  html+='<input type="text" value="'+(d.titulo||'').replace(/"/g,'&quot;')+'" oninput="demSet(\'titulo\',this.value)" placeholder="Ex: Revisar layout do container" style="width:100%;font-size:15px;padding:10px;border-radius:8px;border:1px solid var(--border-md,#d1d5db);box-sizing:border-box;" />';
   html+='<div class="card-label" style="margin-top:10px;">Descrição</div>';
-  html+='<textarea oninput="_demEditando.descricao=this.value" placeholder="Detalhes da demanda..." style="width:100%;min-height:80px;font-size:14px;padding:10px;border-radius:8px;border:1px solid var(--border-md,#d1d5db);box-sizing:border-box;font-family:inherit;resize:vertical;">'+(d.descricao||'')+'</textarea>';
+  html+='<textarea oninput="demSet(\'descricao\',this.value)" placeholder="Detalhes da demanda..." style="width:100%;min-height:80px;font-size:14px;padding:10px;border-radius:8px;border:1px solid var(--border-md,#d1d5db);box-sizing:border-box;font-family:inherit;resize:vertical;">'+(d.descricao||'')+'</textarea>';
   // categoria
   html+='<div class="card-label" style="margin-top:10px;">Categoria</div>';
-  html+='<div style="display:flex;gap:8px;"><select onchange="_demEditando.categoria=this.value" style="flex:1;font-size:14px;padding:9px;border-radius:8px;border:1px solid var(--border-md,#d1d5db);">'+catOpts+'</select><button class="btn btn-secondary" style="white-space:nowrap;" onclick="novaCategoriaDemanda()">+ Nova</button></div>';
+  html+='<div style="display:flex;gap:8px;"><select onchange="demSet(\'categoria\',this.value)" style="flex:1;font-size:14px;padding:9px;border-radius:8px;border:1px solid var(--border-md,#d1d5db);">'+catOpts+'</select><button class="btn btn-secondary" style="white-space:nowrap;" onclick="novaCategoriaDemanda()">+ Nova</button></div>';
   // status + prioridade
   html+='<div style="display:flex;gap:10px;margin-top:10px;">';
-  html+='<div style="flex:1;"><div class="card-label">Status</div><select onchange="_demEditando.status=this.value" style="width:100%;font-size:14px;padding:9px;border-radius:8px;border:1px solid var(--border-md,#d1d5db);">'+
+  html+='<div style="flex:1;"><div class="card-label">Status</div><select onchange="demSet(\'status\',this.value)" style="width:100%;font-size:14px;padding:9px;border-radius:8px;border:1px solid var(--border-md,#d1d5db);">'+
     [['afazer','A fazer'],['fazendo','Fazendo'],['concluido','Concluído']].map(([v,l])=>'<option value="'+v+'"'+((d.status||'afazer')===v?' selected':'')+'>'+l+'</option>').join('')+'</select></div>';
-  html+='<div style="flex:1;"><div class="card-label">Prioridade</div><select onchange="_demEditando.prioridade=this.value" style="width:100%;font-size:14px;padding:9px;border-radius:8px;border:1px solid var(--border-md,#d1d5db);">'+
+  html+='<div style="flex:1;"><div class="card-label">Prioridade</div><select onchange="demSet(\'prioridade\',this.value)" style="width:100%;font-size:14px;padding:9px;border-radius:8px;border:1px solid var(--border-md,#d1d5db);">'+
     [['alta','Alta'],['media','Média'],['baixa','Baixa']].map(([v,l])=>'<option value="'+v+'"'+((d.prioridade||'media')===v?' selected':'')+'>'+l+'</option>').join('')+'</select></div>';
   html+='</div>';
   // data entrega
   html+='<div class="card-label" style="margin-top:10px;">Data de entrega <span style="font-weight:400;color:var(--text-secondary);">(opcional)</span></div>';
-  html+='<input type="date" value="'+(d.dataEntrega||'')+'" onchange="_demEditando.dataEntrega=this.value" style="width:100%;font-size:14px;padding:9px;border-radius:8px;border:1px solid var(--border-md,#d1d5db);box-sizing:border-box;" />';
+  html+='<input type="date" value="'+(d.dataEntrega||'')+'" onchange="demSet(\'dataEntrega\',this.value)" style="width:100%;font-size:14px;padding:9px;border-radius:8px;border:1px solid var(--border-md,#d1d5db);box-sizing:border-box;" />';
   html+='<button class="btn btn-primary" style="width:100%;margin-top:14px;" onclick="salvarDemanda()">💾 '+(novo?'Criar demanda':'Salvar alterações')+'</button>';
   if(!novo) html+='<button class="btn btn-secondary" style="width:100%;margin-top:8px;border-color:#ef9a9a;color:#c62828;" onclick="excluirDemanda(\''+d.firestoreId+'\')">🗑 Excluir demanda</button>';
   html+='</div>';
