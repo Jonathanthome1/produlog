@@ -2805,6 +2805,14 @@
         </div>
         <span class="mc-sector-arrow" style="color:var(--mc-verde);">›</span>
       </button>
+      <button class="mc-sector-card" style="border-left:3px solid var(--mc-azul);margin-bottom:10px;" onclick="goTo('s-demandas')">
+        <div class="mc-sector-icon blue">🗂️</div>
+        <div class="mc-sector-info">
+          <div class="mc-sector-title">Demandas <span class="dem-badge" style="display:none;background:var(--mc-azul);color:#fff;font-size:11px;font-weight:700;border-radius:99px;padding:1px 8px;margin-left:4px;align-items:center;">0</span></div>
+          <div class="mc-sector-desc">Tarefas do dia, assuntos e projetos · com prazos e atualizações</div>
+        </div>
+        <span class="mc-sector-arrow">›</span>
+      </button>
       <button class="mc-sector-card" style="border-left:3px solid var(--mc-dourado);margin-bottom:10px;" onclick="goTo('s-alt-admin')">
         <div class="mc-sector-icon" style="background:var(--mc-dourado-claro);">✏️</div>
         <div class="mc-sector-info">
@@ -3724,6 +3732,29 @@
     <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;" id="acomp-content"></div>
   </div>
 
+  <!-- GERENCIADOR DE DEMANDAS -->
+  <div class="screen" id="s-demandas">
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="goTo('s-adm-hub')">‹</button>
+      <div class="mc-brand"><div class="mc-brand-logo">MC</div><div class="mc-brand-text"><div class="mc-brand-name">Monte Castelo</div><div class="mc-brand-sub">Administrativo</div></div></div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info"><div class="mc-page-title">🗂️ Demandas</div><div class="mc-page-sub">Tarefas, assuntos e projetos</div></div>
+      <div class="mc-header-actions"><button class="mc-act-btn-primary" onclick="novaDemanda()">+ Nova</button></div>
+    </div>
+    <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;" id="demandas-content"></div>
+  </div>
+
+  <!-- DEMANDA: DETALHE/EDIÇÃO -->
+  <div class="screen" id="s-demanda-det">
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="goTo('s-demandas')">‹</button>
+      <div class="mc-brand"><div class="mc-brand-logo">MC</div><div class="mc-brand-text"><div class="mc-brand-name">Monte Castelo</div><div class="mc-brand-sub">Demanda</div></div></div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info"><div class="mc-page-title">📝 Demanda</div><div class="mc-page-sub">Editar e acompanhar</div></div>
+    </div>
+    <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;" id="demanda-det-content"></div>
+  </div>
+
   <!-- CONTAGEM HOME -->
   <div class="screen" id="s-contagem-home">
     <div class="mc-header">
@@ -4081,6 +4112,8 @@ function atualizarTela(){
   if(tela==='s-alt-editor') renderAltEditor();
   if(tela==='s-alt-admin') renderAltAdmin();
   if(tela==='s-acomp') renderAcomp();
+  if(tela==='s-demandas') renderDemandas();
+  if(tela==='s-demanda-det') renderDemandaDet();
   if(tela==='s-adm-hub' && typeof _altAtualizarBadges==='function') _altAtualizarBadges();
   if(tela==='s-coz-home') renderCozHome();
   if(tela==='s-emb-home') renderEmbalagem(); // embManual listener triggers this
@@ -4198,6 +4231,8 @@ function goTo(id){
   if(id==='s-alt-editor') renderAltEditor();
   if(id==='s-alt-admin') renderAltAdmin();
   if(id==='s-acomp') renderAcomp();
+  if(id==='s-demandas') renderDemandas();
+  if(id==='s-demanda-det') renderDemandaDet();
   if(id==='s-adm-hub' && typeof _altAtualizarBadges==='function') _altAtualizarBadges();
   if(id==='s-rastreio'){
     popularSelectMPRastreio();
@@ -11531,6 +11566,240 @@ function _simPlanoConfAtual(){
 }
 function setSimSemana(v){ _simSemana=v||null; _simResData=null; renderSim(); }
 window.setSimSemana=setSimSemana;
+
+// ===== GERENCIADOR DE DEMANDAS (Admin) =====
+let demandas=[];
+let demandaCategorias=['Tarefa do dia','Assunto p/ conversar','Projeto'];
+let _demEditando=null;
+let _demFiltroCat='todas', _demFiltroStatus='ativas', _demFiltroPrio='todas', _demBusca='';
+
+onSnapshot(collection(db,'demandas'), snap=>{
+  try{
+    demandas=snap.docs.map(d=>({firestoreId:d.id,...d.data()}));
+    const t=document.querySelector('.screen.active')?.id;
+    if(t==='s-demandas') renderDemandas();
+    _demAtualizarBadge();
+  }catch(e){ console.error('demandas snap',e); }
+});
+onSnapshot(doc(db,'configuracoes','demandaCategorias'), snap=>{
+  const d=snap.data(); if(d&&Array.isArray(d.lista)&&d.lista.length) demandaCategorias=d.lista.slice();
+});
+
+function _demAutor(){
+  try{ let a=localStorage.getItem('mc_demanda_autor'); if(!a){ a=(prompt('Seu nome (para identificar quem escreve nas demandas):')||'').trim(); if(a) localStorage.setItem('mc_demanda_autor',a); } return a||'—'; }
+  catch(e){ return (prompt('Seu nome:')||'').trim()||'—'; }
+}
+function trocarAutorDemanda(){ try{ const a=(prompt('Seu nome:', localStorage.getItem('mc_demanda_autor')||'')||'').trim(); if(a){ localStorage.setItem('mc_demanda_autor',a); const t=document.querySelector('.screen.active')?.id; if(t==='s-demandas')renderDemandas(); if(t==='s-demanda-det')renderDemandaDet(); } }catch(e){} }
+
+function _demStatusInfo(s){
+  if(s==='fazendo') return {label:'Fazendo',cor:'#2563eb',bg:'rgba(37,99,235,.10)'};
+  if(s==='concluido') return {label:'Concluído',cor:'#16a34a',bg:'rgba(22,163,74,.10)'};
+  return {label:'A fazer',cor:'#6b7280',bg:'rgba(107,114,128,.10)'};
+}
+function _demPrioInfo(p){
+  if(p==='alta') return {label:'Alta',cor:'#dc2626',bg:'rgba(220,38,38,.10)'};
+  if(p==='baixa') return {label:'Baixa',cor:'#2563eb',bg:'rgba(37,99,235,.10)'};
+  return {label:'Média',cor:'#d97706',bg:'rgba(217,119,6,.12)'};
+}
+function _demEntregaInfo(iso, concluido){
+  if(!iso) return null;
+  const p=iso.split('-'); if(p.length!==3) return {txt:iso,cor:'var(--text-secondary)'};
+  const d=new Date(parseInt(p[0]),parseInt(p[1])-1,parseInt(p[2])); d.setHours(0,0,0,0);
+  const hoje0=new Date(); hoje0.setHours(0,0,0,0);
+  const br=d.toLocaleDateString('pt-BR');
+  if(concluido) return {txt:br,cor:'var(--text-secondary)'};
+  const difDias=Math.round((d-hoje0)/86400000);
+  if(difDias<0) return {txt:br+' · atrasada '+(-difDias)+'d',cor:'var(--mc-vermelho)',forte:true};
+  if(difDias===0) return {txt:br+' · hoje',cor:'var(--mc-vermelho)',forte:true};
+  if(difDias===1) return {txt:br+' · amanhã',cor:'#d97706',forte:true};
+  if(difDias<=3) return {txt:br+' · em '+difDias+'d',cor:'#d97706'};
+  return {txt:br+' · em '+difDias+'d',cor:'var(--text-secondary)'};
+}
+function _demPendentes(){ return demandas.filter(d=>d.status!=='concluido'); }
+function _demAtualizarBadge(){
+  const n=_demPendentes().length;
+  document.querySelectorAll('.dem-badge').forEach(b=>{ b.textContent=n; b.style.display=n>0?'inline-flex':'none'; });
+}
+
+function novaDemanda(){
+  _demEditando={titulo:'',descricao:'',categoria:demandaCategorias[0]||'Tarefa do dia',status:'afazer',prioridade:'media',dataEntrega:'',comentarios:[]};
+  goTo('s-demanda-det'); renderDemandaDet();
+}
+function abrirDemanda(id){
+  const d=demandas.find(x=>x.firestoreId===id); if(!d){ alert('Demanda não encontrada.'); return; }
+  _demEditando=JSON.parse(JSON.stringify(d));
+  goTo('s-demanda-det'); renderDemandaDet();
+}
+function setDemFiltroCat(v){ _demFiltroCat=v; renderDemandas(); }
+function setDemFiltroStatus(v){ _demFiltroStatus=v; renderDemandas(); }
+function setDemFiltroPrio(v){ _demFiltroPrio=v; renderDemandas(); }
+function setDemBusca(v){ _demBusca=v; renderDemandas(); }
+
+async function novaCategoriaDemanda(){
+  const nome=(prompt('Nome da nova categoria:')||'').trim(); if(!nome) return;
+  if(demandaCategorias.some(c=>c.toLowerCase()===nome.toLowerCase())){ alert('Categoria já existe.'); return; }
+  demandaCategorias.push(nome);
+  try{ await setDoc(doc(db,'configuracoes','demandaCategorias'),{lista:demandaCategorias,atualizadoEm:agora()}); }catch(e){ alert('Erro: '+e.message); }
+  if(_demEditando){ _demEditando.categoria=nome; renderDemandaDet(); }
+}
+
+function renderDemandas(){
+  const el=document.getElementById('demandas-content'); if(!el) return;
+  const prioOrd={alta:0,media:1,baixa:2};
+  let lista=demandas.slice();
+  // filtros
+  if(_demFiltroCat!=='todas') lista=lista.filter(d=>(d.categoria||'')===_demFiltroCat);
+  if(_demFiltroPrio!=='todas') lista=lista.filter(d=>(d.prioridade||'media')===_demFiltroPrio);
+  if(_demFiltroStatus==='ativas') lista=lista.filter(d=>d.status!=='concluido');
+  else if(_demFiltroStatus!=='todas') lista=lista.filter(d=>(d.status||'afazer')===_demFiltroStatus);
+  if(_demBusca){ const q=_normNome(_demBusca); lista=lista.filter(d=>_normNome((d.titulo||'')+' '+(d.descricao||'')).includes(q)); }
+  // ordenar: ativas primeiro, prioridade, entrega mais próxima, mais recente
+  lista.sort((a,b)=>{
+    const ca=a.status==='concluido'?1:0, cb=b.status==='concluido'?1:0; if(ca!==cb) return ca-cb;
+    const pa=prioOrd[a.prioridade||'media'], pb=prioOrd[b.prioridade||'media']; if(pa!==pb) return pa-pb;
+    const da=a.dataEntrega||'9999', db_=b.dataEntrega||'9999'; if(da!==db_) return da<db_?-1:1;
+    return (b.timestamp||0)-(a.timestamp||0);
+  });
+
+  const cats=['todas',...demandaCategorias];
+  let html='';
+  // resumo
+  const pend=_demPendentes().length;
+  const concl=demandas.filter(d=>d.status==='concluido').length;
+  html+='<div style="display:flex;gap:8px;margin-bottom:12px;">'+
+    '<div class="card" style="flex:1;text-align:center;padding:10px;"><div style="font-size:20px;font-weight:800;color:var(--mc-azul);">'+pend+'</div><div style="font-size:11px;color:var(--text-secondary);">Pendentes</div></div>'+
+    '<div class="card" style="flex:1;text-align:center;padding:10px;"><div style="font-size:20px;font-weight:800;color:var(--mc-verde);">'+concl+'</div><div style="font-size:11px;color:var(--text-secondary);">Concluídas</div></div>'+
+    '</div>';
+  // filtros
+  html+='<input type="text" value="'+(_demBusca||'').replace(/"/g,'&quot;')+'" oninput="setDemBusca(this.value)" placeholder="🔍 Buscar..." style="width:100%;font-size:14px;padding:10px;border-radius:8px;border:1px solid var(--border-md,#d1d5db);box-sizing:border-box;margin-bottom:8px;" />';
+  html+='<div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap;">';
+  html+='<select onchange="setDemFiltroStatus(this.value)" style="flex:1;min-width:110px;font-size:13px;padding:8px;border-radius:8px;border:1px solid var(--border-md,#d1d5db);">'+
+    [['ativas','Ativas'],['afazer','A fazer'],['fazendo','Fazendo'],['concluido','Concluídas'],['todas','Todas']].map(([v,l])=>'<option value="'+v+'"'+(_demFiltroStatus===v?' selected':'')+'>'+l+'</option>').join('')+'</select>';
+  html+='<select onchange="setDemFiltroPrio(this.value)" style="flex:1;min-width:110px;font-size:13px;padding:8px;border-radius:8px;border:1px solid var(--border-md,#d1d5db);">'+
+    [['todas','Toda prioridade'],['alta','Alta'],['media','Média'],['baixa','Baixa']].map(([v,l])=>'<option value="'+v+'"'+(_demFiltroPrio===v?' selected':'')+'>'+l+'</option>').join('')+'</select>';
+  html+='</div>';
+  html+='<select onchange="setDemFiltroCat(this.value)" style="width:100%;font-size:13px;padding:8px;border-radius:8px;border:1px solid var(--border-md,#d1d5db);margin-bottom:12px;">'+
+    cats.map(c=>'<option value="'+c+'"'+(_demFiltroCat===c?' selected':'')+'>'+(c==='todas'?'🏷️ Todas as categorias':c)+'</option>').join('')+'</select>';
+
+  if(!lista.length){ el.innerHTML=html+'<div class="empty" style="padding:24px;">Nenhuma demanda nesse filtro.</div>'; return; }
+
+  html+=lista.map(d=>{
+    const si=_demStatusInfo(d.status||'afazer');
+    const pi=_demPrioInfo(d.prioridade||'media');
+    const ei=_demEntregaInfo(d.dataEntrega, d.status==='concluido');
+    const nC=(d.comentarios||[]).length;
+    const concl=d.status==='concluido';
+    return '<div class="card" style="margin-bottom:8px;border-left:3px solid '+pi.cor+';'+(concl?'opacity:.6;':'')+'">'+
+      '<div style="display:flex;gap:10px;align-items:flex-start;">'+
+        '<button onclick="demToggleConcluido(\''+d.firestoreId+'\')" title="Marcar concluído" style="margin-top:1px;width:22px;height:22px;border-radius:6px;border:2px solid '+(concl?'var(--mc-verde)':'var(--border-md,#d1d5db)')+';background:'+(concl?'var(--mc-verde)':'transparent')+';color:#fff;font-size:13px;cursor:pointer;flex-shrink:0;line-height:1;font-family:inherit;">'+(concl?'✓':'')+'</button>'+
+        '<div style="flex:1;min-width:0;cursor:pointer;" onclick="abrirDemanda(\''+d.firestoreId+'\')">'+
+          '<div style="font-size:15px;font-weight:700;'+(concl?'text-decoration:line-through;':'')+'">'+(d.titulo||'(sem título)')+'</div>'+
+          (d.descricao?'<div style="font-size:12px;color:var(--text-secondary);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+d.descricao+'</div>':'')+
+          '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;align-items:center;">'+
+            '<span style="font-size:10px;font-weight:700;color:'+si.cor+';background:'+si.bg+';border-radius:99px;padding:2px 8px;">'+si.label+'</span>'+
+            '<span style="font-size:10px;font-weight:700;color:'+pi.cor+';background:'+pi.bg+';border-radius:99px;padding:2px 8px;">⚑ '+pi.label+'</span>'+
+            (d.categoria?'<span style="font-size:10px;color:var(--mc-azul);background:var(--mc-azul-claro);border-radius:99px;padding:2px 8px;">'+d.categoria+'</span>':'')+
+            (ei?'<span style="font-size:10px;font-weight:'+(ei.forte?'700':'500')+';color:'+ei.cor+';">📅 '+ei.txt+'</span>':'')+
+            (nC?'<span style="font-size:10px;color:var(--text-secondary);">💬 '+nC+'</span>':'')+
+          '</div>'+
+        '</div>'+
+        '<span style="color:var(--text-muted);font-size:18px;cursor:pointer;" onclick="abrirDemanda(\''+d.firestoreId+'\')">›</span>'+
+      '</div>'+
+    '</div>';
+  }).join('');
+  el.innerHTML=html;
+}
+
+function renderDemandaDet(){
+  const el=document.getElementById('demanda-det-content'); if(!el||!_demEditando) return;
+  const d=_demEditando;
+  const novo=!d.firestoreId;
+  const catOpts=demandaCategorias.map(c=>'<option value="'+c.replace(/"/g,'&quot;')+'"'+(d.categoria===c?' selected':'')+'>'+c+'</option>').join('');
+  let html='';
+  html+='<div class="card">';
+  html+='<div class="card-label">Título</div>';
+  html+='<input type="text" value="'+(d.titulo||'').replace(/"/g,'&quot;')+'" oninput="_demEditando.titulo=this.value" placeholder="Ex: Revisar layout do container" style="width:100%;font-size:15px;padding:10px;border-radius:8px;border:1px solid var(--border-md,#d1d5db);box-sizing:border-box;" />';
+  html+='<div class="card-label" style="margin-top:10px;">Descrição</div>';
+  html+='<textarea oninput="_demEditando.descricao=this.value" placeholder="Detalhes da demanda..." style="width:100%;min-height:80px;font-size:14px;padding:10px;border-radius:8px;border:1px solid var(--border-md,#d1d5db);box-sizing:border-box;font-family:inherit;resize:vertical;">'+(d.descricao||'')+'</textarea>';
+  // categoria
+  html+='<div class="card-label" style="margin-top:10px;">Categoria</div>';
+  html+='<div style="display:flex;gap:8px;"><select onchange="_demEditando.categoria=this.value" style="flex:1;font-size:14px;padding:9px;border-radius:8px;border:1px solid var(--border-md,#d1d5db);">'+catOpts+'</select><button class="btn btn-secondary" style="white-space:nowrap;" onclick="novaCategoriaDemanda()">+ Nova</button></div>';
+  // status + prioridade
+  html+='<div style="display:flex;gap:10px;margin-top:10px;">';
+  html+='<div style="flex:1;"><div class="card-label">Status</div><select onchange="_demEditando.status=this.value" style="width:100%;font-size:14px;padding:9px;border-radius:8px;border:1px solid var(--border-md,#d1d5db);">'+
+    [['afazer','A fazer'],['fazendo','Fazendo'],['concluido','Concluído']].map(([v,l])=>'<option value="'+v+'"'+((d.status||'afazer')===v?' selected':'')+'>'+l+'</option>').join('')+'</select></div>';
+  html+='<div style="flex:1;"><div class="card-label">Prioridade</div><select onchange="_demEditando.prioridade=this.value" style="width:100%;font-size:14px;padding:9px;border-radius:8px;border:1px solid var(--border-md,#d1d5db);">'+
+    [['alta','Alta'],['media','Média'],['baixa','Baixa']].map(([v,l])=>'<option value="'+v+'"'+((d.prioridade||'media')===v?' selected':'')+'>'+l+'</option>').join('')+'</select></div>';
+  html+='</div>';
+  // data entrega
+  html+='<div class="card-label" style="margin-top:10px;">Data de entrega <span style="font-weight:400;color:var(--text-secondary);">(opcional)</span></div>';
+  html+='<input type="date" value="'+(d.dataEntrega||'')+'" onchange="_demEditando.dataEntrega=this.value" style="width:100%;font-size:14px;padding:9px;border-radius:8px;border:1px solid var(--border-md,#d1d5db);box-sizing:border-box;" />';
+  html+='<button class="btn btn-primary" style="width:100%;margin-top:14px;" onclick="salvarDemanda()">💾 '+(novo?'Criar demanda':'Salvar alterações')+'</button>';
+  if(!novo) html+='<button class="btn btn-secondary" style="width:100%;margin-top:8px;border-color:#ef9a9a;color:#c62828;" onclick="excluirDemanda(\''+d.firestoreId+'\')">🗑 Excluir demanda</button>';
+  html+='</div>';
+
+  // comentários / atualizações
+  html+='<div class="card" style="margin-top:12px;">';
+  html+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;"><div style="font-size:13px;font-weight:700;">💬 Atualizações</div><button onclick="trocarAutorDemanda()" style="font-size:11px;color:var(--mc-azul);background:none;border:none;cursor:pointer;font-family:inherit;text-decoration:underline;">eu sou: '+_demAutorLabel()+'</button></div>';
+  const coms=(d.comentarios||[]).slice().sort((a,b)=>(a.ts||0)-(b.ts||0));
+  html+= coms.length? coms.map(c=>(
+    '<div style="background:var(--bg-page);border-radius:8px;padding:8px 10px;margin-bottom:6px;">'+
+    '<div style="font-size:13px;">'+(c.texto||'')+'</div>'+
+    '<div style="font-size:10px;color:var(--text-secondary);margin-top:3px;">— '+(c.autor||'—')+' · '+(c.data||'')+' '+(c.hora||'')+'</div>'+
+    '</div>'
+  )).join('') : '<div style="font-size:12px;color:var(--text-secondary);margin-bottom:6px;">Nenhuma atualização ainda.</div>';
+  html+='<textarea id="dem-novo-coment" placeholder="Escreva uma atualização/comentário..." style="width:100%;min-height:60px;font-size:14px;padding:9px;border-radius:8px;border:1px solid var(--border-md,#d1d5db);box-sizing:border-box;font-family:inherit;resize:vertical;margin-top:4px;"></textarea>';
+  html+='<button class="btn btn-secondary" style="width:100%;margin-top:6px;" onclick="demAddComentario()">+ Adicionar atualização</button>';
+  if(novo) html+='<div style="font-size:11px;color:var(--text-secondary);margin-top:6px;">Dica: você pode adicionar atualizações e elas serão salvas junto ao criar a demanda.</div>';
+  html+='</div>';
+
+  el.innerHTML=html;
+}
+function _demAutorLabel(){ try{ return localStorage.getItem('mc_demanda_autor')||'definir'; }catch(e){ return 'definir'; } }
+
+async function demAddComentario(){
+  if(!_demEditando) return;
+  const ta=document.getElementById('dem-novo-coment'); const txt=(ta&&ta.value||'').trim();
+  if(!txt) return;
+  const c={texto:txt, autor:_demAutor(), data:hoje(), hora:agora(), ts:Date.now()};
+  if(!_demEditando.comentarios) _demEditando.comentarios=[];
+  _demEditando.comentarios.push(c);
+  if(_demEditando.firestoreId){
+    try{ await updateDoc(doc(db,'demandas',_demEditando.firestoreId),{comentarios:_demEditando.comentarios, atualizadoEm:agora()}); }catch(e){ alert('Erro: '+e.message); }
+  }
+  if(ta) ta.value='';
+  renderDemandaDet();
+}
+
+async function salvarDemanda(){
+  const d=_demEditando; if(!d) return;
+  if(!(d.titulo||'').trim()){ alert('Informe um título.'); return; }
+  const dados={
+    titulo:d.titulo.trim(), descricao:d.descricao||'', categoria:d.categoria||demandaCategorias[0]||'Tarefa do dia',
+    status:d.status||'afazer', prioridade:d.prioridade||'media', dataEntrega:d.dataEntrega||'',
+    comentarios:d.comentarios||[], atualizadoEm:agora()
+  };
+  try{
+    if(d.firestoreId){ await updateDoc(doc(db,'demandas',d.firestoreId),dados); }
+    else{ dados.criadoPor=_demAutor(); dados.criadoEm=agora(); dados.timestamp=Date.now(); const ref=doc(collection(db,'demandas')); await setDoc(ref,dados); d.firestoreId=ref.id; }
+    goTo('s-demandas');
+  }catch(e){ alert('Erro ao salvar: '+e.message); }
+}
+async function demToggleConcluido(id){
+  const d=demandas.find(x=>x.firestoreId===id); if(!d) return;
+  const novo=d.status==='concluido'?'afazer':'concluido';
+  try{ await updateDoc(doc(db,'demandas',id),{status:novo,atualizadoEm:agora()}); }catch(e){ alert('Erro: '+e.message); }
+}
+async function excluirDemanda(id){
+  if(!confirm('Excluir esta demanda? Não dá pra desfazer.')) return;
+  try{ await deleteDoc(doc(db,'demandas',id)); goTo('s-demandas'); }catch(e){ alert('Erro: '+e.message); }
+}
+
+window.novaDemanda=novaDemanda; window.abrirDemanda=abrirDemanda; window.renderDemandas=renderDemandas; window.renderDemandaDet=renderDemandaDet;
+window.salvarDemanda=salvarDemanda; window.demToggleConcluido=demToggleConcluido; window.excluirDemanda=excluirDemanda; window.demAddComentario=demAddComentario;
+window.setDemFiltroCat=setDemFiltroCat; window.setDemFiltroStatus=setDemFiltroStatus; window.setDemFiltroPrio=setDemFiltroPrio; window.setDemBusca=setDemBusca;
+window.novaCategoriaDemanda=novaCategoriaDemanda; window.trocarAutorDemanda=trocarAutorDemanda;
+
 function _simItensDoPlano(dia){
   const rec=_simPlanoConfAtual();
   const itensPlano=(rec&&rec.itens)||{};
