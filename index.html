@@ -7404,23 +7404,35 @@ onSnapshot(collection(db,'planos'), snap=>{
   }catch(e){ console.error('planos snap:',e); }
 });
 
-function semanaAtual(){
-  const d=new Date();
+function semanaDeData(d){
   const jan1=new Date(d.getFullYear(),0,1);
   const w=Math.ceil(((d-jan1)/86400000+jan1.getDay()+1)/7);
   return d.getFullYear()+'-W'+String(w).padStart(2,'0');
 }
+function semanaAtual(){ return semanaDeData(new Date()); }
 
-function semanaLabel(semStr){
-  if(!semStr)return'';
-  // Get Monday of that week
-  const [yr,wk]=semStr.split('-W');
+function _segundaDaSemana(semStr){
+  const [yr,wk]=String(semStr).split('-W');
   const jan1=new Date(parseInt(yr),0,1);
   const days=(parseInt(wk)-1)*7-jan1.getDay()+1;
-  const mon=new Date(jan1);mon.setDate(jan1.getDate()+days);
-  const fri=new Date(mon);fri.setDate(mon.getDate()+4);
+  const mon=new Date(jan1);mon.setDate(jan1.getDate()+days);mon.setHours(0,0,0,0);
+  return mon;
+}
+function semanaLabel(semStr){
+  if(!semStr)return'';
+  const [yr,wk]=String(semStr).split('-W');
+  const mon=_segundaDaSemana(semStr);
+  const sab=new Date(mon);sab.setDate(mon.getDate()+5);
   const fmt=d=>d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});
-  return `Semana ${wk}/${yr} (${fmt(mon)} – ${fmt(fri)})`;
+  return `Semana ${wk}/${yr} (${fmt(mon)} – ${fmt(sab)})`;
+}
+// Lista de semanas para os seletores: passadas/futuras (±) + todas que já têm plano
+function _semanasOpcoes(){
+  const set=new Set();
+  const hoje=new Date();
+  for(let off=-10; off<=5; off++){ const d=new Date(hoje); d.setDate(hoje.getDate()+off*7); set.add(semanaDeData(d)); }
+  (planos||[]).forEach(p=>{ if(p.semana) set.add(p.semana); });
+  return [...set].sort();
 }
 
 function voltarPlano(){
@@ -7433,18 +7445,20 @@ function voltarPlano(){
 
 function abrirPlano(){
   window._planoOrigin=document.querySelector('.screen.active')?.id||'s-conf-home';
-  const semAtual=semanaAtual();
-  // Filtra apenas planos da Confeitaria (sem setor ou setor='conf')
-  const recExist=planos.find(p=>p.semana===semAtual&&(!p.setor||p.setor==='conf'));
-  if(recExist){
-    planoAtual={semana:semAtual, firestoreId:recExist.firestoreId, itens:JSON.parse(JSON.stringify(recExist.itens||{}))};
-  } else {
-    planoAtual={semana:semAtual, firestoreId:null, itens:{}};
-  }
-  document.getElementById('plano-sub').textContent=semanaLabel(semAtual);
-  renderPlano();
+  abrirPlanoSemana(semanaAtual());
   goTo('s-plano');
 }
+function abrirPlanoSemana(sem){
+  const recExist=planos.find(p=>p.semana===sem&&(!p.setor||p.setor==='conf'));
+  if(recExist){
+    planoAtual={semana:sem, firestoreId:recExist.firestoreId, itens:JSON.parse(JSON.stringify(recExist.itens||{})), feriados:JSON.parse(JSON.stringify(recExist.feriados||{}))};
+  } else {
+    planoAtual={semana:sem, firestoreId:null, itens:{}, feriados:{}};
+  }
+  const sub=document.getElementById('plano-sub'); if(sub) sub.textContent=semanaLabel(sem);
+  renderPlano();
+}
+window.abrirPlanoSemana=abrirPlanoSemana;
 
 function renderPlano(){
   const el=document.getElementById('plano-content');
@@ -7454,6 +7468,13 @@ function renderPlano(){
   const semsDisp=[semanaAtual(),...planos.map(p=>p.semana)].filter((v,i,a)=>a.indexOf(v)===i).slice(0,8);
   
   let html=`
+    <div class="card" style="margin-bottom:10px;border-left:3px solid var(--mc-azul);">
+      <div class="card-label" style="color:var(--mc-azul);">📅 Semana do plano</div>
+      <select id="plano-semana-sel" onchange="abrirPlanoSemana(this.value)" style="width:100%;font-size:14px;padding:9px;border-radius:8px;border:1px solid var(--border-md,#d1d5db);">
+        ${_semanasOpcoes().map(s=>{ const tem=planos.some(p=>p.semana===s&&(!p.setor||p.setor==='conf')); return '<option value="'+s+'"'+(s===planoAtual.semana?' selected':'')+'>'+semanaLabel(s)+(tem?' ✓':'')+'</option>'; }).join('')}
+      </select>
+      <div style="font-size:11px;color:var(--text-secondary);margin-top:4px;">Segunda a sábado · dá pra montar semanas futuras com antecedência (✓ = já tem plano)</div>
+    </div>
     <div class="card" style="margin-bottom:10px;border-left:3px solid var(--mc-roxo);display:${window.adminMode?'block':'none'}">
       <div style="font-size:13px;font-weight:600;color:var(--mc-roxo);margin-bottom:10px;">📥 Importar do Excel</div>
       <div class="card-label">Dia da semana</div>
@@ -11473,7 +11494,7 @@ function _pgRelatoriosHTML(){
 window.renderPainel=renderPainel; window.setPgPeriodo=setPgPeriodo; window.setPgSetor=setPgSetor; window.setPgTab=setPgTab;
 
 // ===== SIMULADOR DE NECESSIDADE DE MATÉRIA-PRIMA =====
-let _simModo='avulso', _simItens=[], _simDia='todos', _simResData=null;
+let _simModo='avulso', _simItens=[], _simDia='todos', _simResData=null, _simSemana=null;
 
 function _simExplodir(itens){
   const massas={}, recheios={}, mp={}, semFicha=new Set();
@@ -11503,11 +11524,13 @@ function _simExplodir(itens){
 }
 
 function _simPlanoConfAtual(){
-  const sem=(typeof semanaAtual==='function')?semanaAtual():'';
-  let rec=planos.find(p=>p.semana===sem && (!p.setor||p.setor==='conf'));
-  if(!rec){ const confs=planos.filter(p=>!p.setor||p.setor==='conf'); rec=confs.sort((a,b)=>String(b.semana||'').localeCompare(String(a.semana||'')))[0]; }
+  const semAlvo=_simSemana||((typeof semanaAtual==='function')?semanaAtual():'');
+  let rec=planos.find(p=>p.semana===semAlvo && (!p.setor||p.setor==='conf'));
+  if(!rec && !_simSemana){ const confs=planos.filter(p=>!p.setor||p.setor==='conf'); rec=confs.sort((a,b)=>String(b.semana||'').localeCompare(String(a.semana||'')))[0]; }
   return rec;
 }
+function setSimSemana(v){ _simSemana=v||null; _simResData=null; renderSim(); }
+window.setSimSemana=setSimSemana;
 function _simItensDoPlano(dia){
   const rec=_simPlanoConfAtual();
   const itensPlano=(rec&&rec.itens)||{};
@@ -11625,9 +11648,15 @@ function renderSim(){
         const on=_simDia===v;
         return '<button onclick="setSimDia(\''+v+'\')" style="padding:7px 12px;border-radius:8px;border:1px solid '+(on?'var(--mc-roxo)':'var(--border-md,#d1d5db)')+';background:'+(on?'var(--mc-roxo)':'var(--bg-primary)')+';color:'+(on?'#fff':'var(--text-primary)')+';font-size:12px;font-weight:600;font-family:inherit;cursor:pointer;">'+l+'</button>';
       }).join('')+'</div>';
+    const semSel='<div class="card-label">Semana do plano</div>'+
+      '<select onchange="setSimSemana(this.value)" style="width:100%;margin:6px 0 12px;font-size:14px;padding:9px;border-radius:8px;border:1px solid var(--border-md,#d1d5db);font-family:inherit;">'+
+      '<option value=""'+(_simSemana?'':' selected')+'>📍 Semana atual (cobre hoje)</option>'+
+      _semanasOpcoes().filter(s=>planos.some(p=>p.semana===s&&(!p.setor||p.setor==='conf'))).sort().reverse().map(s=>'<option value="'+s+'"'+(_simSemana===s?' selected':'')+'>'+semanaLabel(s)+'</option>').join('')+
+      '</select>';
     const prev=_simItensDoPlano(_simDia);
     const prevHtml=prev.length? prev.map(it=>'<div style="display:flex;justify-content:space-between;font-size:13px;padding:4px 0;border-bottom:1px dashed var(--border);"><span>'+it.nome+(it.produto?'':' <span style=\"color:var(--mc-vermelho);font-size:11px;\">(sem cadastro)</span>')+'</span><strong>'+it.pacotes+' pct</strong></div>').join('') : '<div class="empty">Sem produtos no plano para essa seleção.</div>';
     corpo='<div class="card">'+
+      semSel+
       '<div class="card-label">Dia do plano (Confeitaria)</div>'+chips+
       '<div style="font-size:11px;font-weight:700;color:var(--text-secondary);text-transform:uppercase;margin-bottom:4px;">Produtos no plano</div>'+prevHtml+
       (prev.length?'<button class="btn btn-primary" style="width:100%;margin-top:12px;" onclick="simCalcularPlano()">Calcular 🧮</button>':'')+
@@ -11846,7 +11875,7 @@ window.altPickTipo=altPickTipo; window.altPickFicha=altPickFicha; window.renderA
 window.altUpdIng=altUpdIng; window.altRemoveIng=altRemoveIng; window.altAddIng=altAddIng; window.altSolicitar=altSolicitar; window.altAprovar=altAprovar; window.altNegar=altNegar;
 
 // ===== ACOMPANHAMENTO DO PLANO (status colorido FIFO + 80%) =====
-let _acBusca='', _acSoPend=false;
+let _acBusca='', _acSoPend=false, _acSemanaSel=null;
 
 function _acMondayOfWeek(semStr){
   const [yr,wk]=String(semStr).split('-W');
@@ -11871,11 +11900,11 @@ function _acStatusInfo(s){
   return {emoji:'⚪',cor:'#6b7280',bg:'rgba(107,114,128,.08)',label:'Aguardando'};
 }
 function _acCalcular(){
-  const sem=semanaAtual();
-  let plano=planos.find(p=>p.semana===sem && (!p.setor||p.setor==='conf'));
-  if(!plano){ const confs=planos.filter(p=>!p.setor||p.setor==='conf'); plano=confs.sort((a,b)=>String(b.semana||'').localeCompare(String(a.semana||'')))[0]; }
-  if(!plano) return {semana:null, produtos:[], extras:[], excessos:[]};
-  const semStr=plano.semana||sem;
+  const semAlvo=_acSemanaSel||semanaAtual();
+  let plano=planos.find(p=>p.semana===semAlvo && (!p.setor||p.setor==='conf'));
+  if(!plano && !_acSemanaSel){ const confs=planos.filter(p=>!p.setor||p.setor==='conf'); plano=confs.sort((a,b)=>String(b.semana||'').localeCompare(String(a.semana||'')))[0]; }
+  if(!plano) return {semana:null, semanaSel:semAlvo, produtos:[], extras:[], excessos:[]};
+  const semStr=plano.semana||semAlvo;
   const DIAS=['Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
   const mon=_acMondayOfWeek(semStr);
   const diasInfo=DIAS.map((d,i)=>{ const dt=new Date(mon); dt.setDate(mon.getDate()+i); dt.setHours(0,0,0,0); return {dia:d,date:dt,dateBR:_acFmtBR(dt),abrev:d.slice(0,3)}; });
@@ -11960,11 +11989,26 @@ function _acCalcular(){
 
 function setAcBusca(v){ _acBusca=v; renderAcomp(); }
 function toggleAcPend(){ _acSoPend=!_acSoPend; renderAcomp(); }
+function setAcSemana(v){ _acSemanaSel=v||null; renderAcomp(); }
+function _acSemanasComPlano(){
+  const set=new Set();
+  (planos||[]).forEach(p=>{ if((!p.setor||p.setor==='conf') && p.semana) set.add(p.semana); });
+  set.add(semanaAtual());
+  return [...set].sort().reverse();
+}
+function _acSeletorSemanaHtml(){
+  const opts=_acSemanasComPlano();
+  return '<div style="margin-bottom:10px;"><select onchange="setAcSemana(this.value)" style="width:100%;font-size:13px;padding:9px;border-radius:8px;border:1px solid var(--border-md,#d1d5db);font-family:inherit;">'+
+    '<option value=""'+(_acSemanaSel?'':' selected')+'>📍 Semana atual (cobre hoje)</option>'+
+    opts.map(s=>'<option value="'+s+'"'+(_acSemanaSel===s?' selected':'')+'>'+semanaLabel(s)+'</option>').join('')+
+    '</select></div>';
+}
+window.setAcSemana=setAcSemana;
 
 function renderAcomp(){
   const el=document.getElementById('acomp-content'); if(!el) return;
   const dados=_acCalcular();
-  if(!dados.semana){ el.innerHTML='<div class="empty" style="padding:30px;">Nenhum plano de Confeitaria encontrado.</div>'; return; }
+  if(!dados.semana){ el.innerHTML=_acSeletorSemanaHtml()+'<div class="empty" style="padding:30px;">Nenhum plano de Confeitaria para esta semana.</div>'; return; }
 
   // Reorganizar por DIA: { dia -> [{produto, status, qtdPlan, prodNoDia, dateBR}] }
   const DIAS=['Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
@@ -11985,7 +12029,7 @@ function renderAcomp(){
   const pctGeral=totP>0?Math.round(totF/totP*100):0;
   const nPend=dados.produtos.filter(p=>p.pendente).length;
 
-  let html='<div style="font-size:12px;color:var(--text-secondary);margin-bottom:8px;">📅 '+dados.semanaLabel+'</div>';
+  let html=_acSeletorSemanaHtml()+'<div style="font-size:12px;color:var(--text-secondary);margin-bottom:8px;">📅 '+dados.semanaLabel+'</div>';
   if((dados.excessos||[]).length){
     html+='<div class="card" style="border-left:3px solid #d97706;background:rgba(217,119,6,.06);margin-bottom:12px;">'+
       '<div style="font-size:14px;font-weight:700;color:#b45309;margin-bottom:6px;">⚠️ Produzido muito acima do plano (+50%)</div>'+
