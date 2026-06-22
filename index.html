@@ -12049,7 +12049,7 @@ function renderAltEditor(){
       )).join('')+
       '<div style="margin-top:8px;padding-top:10px;border-top:1px dashed var(--border);font-size:11px;font-weight:700;color:var(--text-secondary);text-transform:uppercase;margin-bottom:6px;">Adicionar ingrediente</div>'+
       '<select id="alt-add-mp" style="width:100%;font-size:14px;padding:9px;border-radius:8px;border:1px solid var(--border-md,#d1d5db);">'+mpOpts+'</select>'+
-      '<div style="display:flex;gap:8px;margin-top:6px;"><input type="number" id="alt-add-kg" step="0.001" min="0" placeholder="kg" style="flex:1;font-size:14px;padding:9px;border-radius:8px;border:1px solid var(--border-md,#d1d5db);" /><button class="btn btn-secondary" style="white-space:nowrap;" onclick="altAddIng()">+ Add</button></div>'+
+      '<div style="display:flex;gap:8px;margin-top:6px;align-items:center;"><input type="number" id="alt-add-kg" step="0.001" min="0" placeholder="qtd (kg)" style="flex:1 1 auto;min-width:120px;font-size:14px;padding:9px;border-radius:8px;border:1px solid var(--border-md,#d1d5db);box-sizing:border-box;" /><button class="btn btn-secondary" style="flex:0 0 auto;width:auto;white-space:nowrap;" onclick="altAddIng()">+ Add</button></div>'+
       '<div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--border);display:flex;justify-content:space-between;font-size:14px;"><span style="font-weight:600;">Novo total</span><strong id="alt-novo-total">'+_fmtKg(novoTotal)+' kg</strong></div>'+
       '<button class="btn btn-primary" style="width:100%;margin-top:12px;" onclick="altSolicitar()">📨 Solicitar alteração</button>'+
     '</div>';
