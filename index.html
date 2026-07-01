@@ -12167,6 +12167,32 @@ window.altUpdIng=altUpdIng; window.altRemoveIng=altRemoveIng; window.altAddIng=a
 
 // ===== ACOMPANHAMENTO DO PLANO (status colorido FIFO + 80%) =====
 let _acBusca='', _acSoPend=false, _acSemanaSel=null;
+let acompObsList=[];
+onSnapshot(collection(db,'acompObs'), snap=>{
+  try{
+    acompObsList=snap.docs.map(d=>({firestoreId:d.id,...d.data()}));
+    if(document.querySelector('.screen.active')?.id==='s-acomp') renderAcomp();
+  }catch(e){ console.error('acompObs snap',e); }
+});
+function _acObsDoc(semana,dia,produto){
+  const pn=_normNome(produto);
+  return acompObsList.find(o=>o.semana===semana && o.dia===dia && (o.produtoNorm||_normNome(o.produto||''))===pn)||null;
+}
+async function acEditarObs(semana,dia,produto){
+  const existente=_acObsDoc(semana,dia,produto);
+  const raw=prompt('Observação para "'+produto+'" ('+dia+'):\n(deixe vazio para remover)', existente?existente.texto:'');
+  if(raw===null) return;
+  const txt=raw.trim();
+  try{
+    if(existente){
+      if(!txt){ await deleteDoc(doc(db,'acompObs',existente.firestoreId)); }
+      else { await updateDoc(doc(db,'acompObs',existente.firestoreId),{texto:txt, autor:_demAutor(), atualizadoEm:agora()}); }
+    } else if(txt){
+      await addDoc(collection(db,'acompObs'),{semana, dia, produto, produtoNorm:_normNome(produto), texto:txt, autor:_demAutor(), data:hoje(), hora:agora(), ts:Date.now()});
+    }
+  }catch(e){ alert('Erro ao salvar observação: '+e.message); }
+}
+window.acEditarObs=acEditarObs;
 
 function _acMondayOfWeek(semStr){
   const [yr,wk]=String(semStr).split('-W');
@@ -12224,29 +12250,26 @@ function _acCalcular(){
     const leftover=events.reduce((s,e)=>s+e.rest,0);              // sobra produzida sem dia planejado p/ alocar
     const leftoverFontes=events.filter(e=>e.rest>0).map(e=>e.dia);
     const lastPlanDia = plannedDays.length? plannedDays[plannedDays.length-1].dia : null;
-    let cumPlan=0;
     const dias=plannedDays.map(di=>{
       const qtdPlan=p.plano[di.dia], prodNoDia=prodDia[di.dia]||0, a=aloc[di.dia]||0;
-      cumPlan+=qtdPlan;
       const idx=idxDe[di.dia];
-      const cumProdAte=prodCumAte[idx]||0;
-      const cumProdAntes=idx>0?(prodCumAte[idx-1]||0):0;
       const feito=a>=0.8*qtdPlan;
-      let status;
+      const origDias=[...new Set((fontesDe[di.dia]||[]).map(f=>f.dia))];
+      const laterDays=origDias.filter(d=>idxDe[d]>idx);
+      const earlierDays=origDias.filter(d=>idxDe[d]<idx);
+      const ownDay=origDias.includes(di.dia);
+      let status, fonteLabel='';
       if(feito){
-        if(cumProdAntes>=cumPlan) status='adiantado';
-        else if(cumProdAte>=cumPlan) status='verde';
-        else status='atrasado';
+        if(laterDays.length){ status='atrasado'; fonteLabel=laterDays.map(d=>d.toLowerCase()).join(', '); }
+        else if(ownDay){ status='verde'; }
+        else if(earlierDays.length){ status='adiantado'; fonteLabel=earlierDays.map(d=>d.toLowerCase()).join(', '); }
+        else { status='verde'; }
       } else {
         if(di.date<hoje0) status='vermelho';
-        else status = a>0 ? 'parcial' : 'cinza';
+        else { status = a>0 ? 'parcial' : 'cinza'; if(status==='parcial' && earlierDays.length) fonteLabel=earlierDays.map(d=>d.toLowerCase()).join(', '); }
       }
       let mostrado=Math.max(prodNoDia, a);
-      const fontes=(fontesDe[di.dia]||[]).map(f=>f.dia);
-      if(di.dia===lastPlanDia){ mostrado+=leftover; leftoverFontes.forEach(d=>fontes.push(d)); } // sobra entra no último dia
-      // dias de ORIGEM (onde foi produzido), exceto o próprio dia
-      const origem=[...new Set(fontes.filter(d=>d!==di.dia))];
-      const fonteLabel=origem.map(d=>d.toLowerCase()).join(', ');
+      if(di.dia===lastPlanDia){ mostrado+=leftover; } // sobra sem dia planejado entra no último dia (exibição)
       return {dia:di.dia,abrev:di.abrev,dateBR:di.dateBR,qtdPlan,prodNoDia,aloc:a,mostrado,status,fonteLabel};
     });
     const totalPlan=plannedDays.reduce((s,di)=>s+p.plano[di.dia],0);
@@ -12300,6 +12323,7 @@ function renderAcomp(){
   const el=document.getElementById('acomp-content'); if(!el) return;
   const dados=_acCalcular();
   if(!dados.semana){ el.innerHTML=_acSeletorSemanaHtml()+'<div class="empty" style="padding:30px;">Nenhum plano de Confeitaria para esta semana.</div>'; return; }
+  const semana=dados.semana;
 
   // Reorganizar por DIA: { dia -> [{produto, status, qtdPlan, prodNoDia, dateBR}] }
   const DIAS=['Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
@@ -12333,6 +12357,23 @@ function renderAcomp(){
     '<div style="font-size:11px;color:var(--text-secondary);margin-top:4px;">'+totF.toLocaleString('pt-BR')+' de '+totP.toLocaleString('pt-BR')+' pacotes · '+(nPend?('<strong style="color:var(--mc-vermelho);">'+nPend+' produto(s) com atraso</strong>'):'sem atrasos 🎉')+'</div>'+
     '</div>';
 
+  // Produção TOTAL da semana (real: inclui acima do plano e fora do plano) + por classe de produção
+  (function(){
+    const monW=_acMondayOfWeek(semana); const weekBR=new Set();
+    for(let i=0;i<6;i++){ const d=new Date(monW); d.setDate(monW.getDate()+i); weekBR.add(d.toLocaleDateString('pt-BR')); }
+    const clsCod={}, clsNome={};
+    produtosConfFirebase.forEach(p=>{ const c=(p.classe||'').trim(); if(!c) return; if(p.cod) clsCod[String(p.cod).trim()]=c; if(p.nome) clsNome[_normNome(p.nome)]=c; });
+    let tot=0; const porClasse={};
+    registros.forEach(r=>{ if(r.origem==='quadra') return; if(!weekBR.has(r.data)) return; const q=parseInt(r.qtd)||0; if(q<=0) return; tot+=q; const cls=clsCod[String(r.cod||'').trim()]||clsNome[_normNome(r.produto||'')]||'Sem classe'; porClasse[cls]=(porClasse[cls]||0)+q; });
+    const ordem=[...classesProducao,'Sem classe'];
+    const chaves=Object.keys(porClasse).sort((a,b)=>{ const ia=ordem.indexOf(a), ib=ordem.indexOf(b); return (ia<0?99:ia)-(ib<0?99:ib); });
+    const chips=chaves.map(c=>{ const pc=tot>0?Math.round(porClasse[c]/tot*100):0; return '<div style="flex:1;min-width:90px;background:var(--bg-page);border-radius:8px;padding:8px 10px;text-align:center;"><div style="font-size:16px;font-weight:800;color:var(--mc-azul);">'+porClasse[c].toLocaleString('pt-BR')+'</div><div style="font-size:11px;color:var(--text-secondary);">'+c+' · '+pc+'%</div></div>'; }).join('');
+    html+='<div class="card" style="margin-bottom:12px;">'+
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;"><div style="font-size:14px;font-weight:700;">📦 Produção total da semana</div><div style="font-size:18px;font-weight:800;color:var(--mc-verde);">'+tot.toLocaleString('pt-BR')+' <span style="font-size:12px;font-weight:600;color:var(--text-secondary);">pct</span></div></div>'+
+      (chips?('<div style="display:flex;flex-wrap:wrap;gap:8px;">'+chips+'</div>'):'<div style="font-size:12px;color:var(--text-secondary);">Sem produção lançada nesta semana.</div>')+
+      '<div style="font-size:10px;color:var(--text-muted);margin-top:6px;">Total real produzido (inclui acima do plano e fora do plano). Classes vêm do cadastro do produto.</div>'+
+      '</div>';
+  })();
   html+='<div style="display:flex;flex-wrap:wrap;gap:8px 12px;font-size:11px;color:var(--text-secondary);margin-bottom:10px;">'+
     '<span>🟢 no dia</span><span>🔵 adiantado</span><span>🟠 atrasado</span><span>🔴 pendente</span><span>➕ fora do plano</span><span>⚪ aguardando</span></div>';
   html+='<div style="display:flex;gap:8px;margin-bottom:12px;">'+
@@ -12376,11 +12417,17 @@ function renderAcomp(){
         else if(it.status==='parcial') label='⏩ Adiantado parcial — produção de '+it.fonteLabel;
         else if(it.status==='atrasado') label='⏰ Feito atrasado — produção de '+it.fonteLabel;
       }
-      return '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;background:'+si.bg+';border:1px solid '+si.cor+';border-radius:10px;padding:10px 12px;margin-bottom:6px;">'+
+      const obsDoc=_acObsDoc(semana,dia,it.produto);
+      const obsHtml = obsDoc
+        ? '<div style="font-size:11px;color:var(--mc-roxo);margin-top:4px;background:rgba(124,58,237,.08);border-radius:6px;padding:4px 7px;">📝 '+obsDoc.texto+' <span style="color:var(--text-muted);">— '+(obsDoc.autor||'')+'</span></div>'
+        : '<div style="font-size:10px;color:var(--text-muted);margin-top:3px;">📝 toque para adicionar observação</div>';
+      return '<div onclick="acEditarObs(\''+semana+'\',\''+dia+'\',\''+escapeJsStr(it.produto)+'\')" style="cursor:pointer;background:'+si.bg+';border:1px solid '+si.cor+';border-radius:10px;padding:10px 12px;margin-bottom:6px;">'+
+        '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">'+
         '<div style="flex:1;min-width:0;"><div style="font-size:14px;font-weight:600;">'+si.emoji+' '+it.produto+'</div>'+
         '<div style="font-size:11px;color:var(--text-secondary);margin-top:2px;">'+label+'</div></div>'+
         '<div style="text-align:right;white-space:nowrap;"><div style="font-size:12px;color:var(--text-secondary);">Plano: <strong>'+it.qtdPlan.toLocaleString('pt-BR')+'</strong></div>'+
         '<div style="font-size:13px;font-weight:700;color:'+si.cor+';">Feito: '+it.mostrado.toLocaleString('pt-BR')+' ('+pct+'%)</div></div>'+
+        '</div>'+obsHtml+
         '</div>';
     }).join('');
 
