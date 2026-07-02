@@ -2795,6 +2795,14 @@
         </div>
         <span class="mc-sector-arrow" style="color:var(--mc-verde);">›</span>
       </button>
+      <button class="mc-sector-card" style="border-left:3px solid var(--mc-verde);margin-bottom:10px;" onclick="goTo('s-compras')">
+        <div class="mc-sector-icon green">🛒</div>
+        <div class="mc-sector-info">
+          <div class="mc-sector-title">Pedidos de Matéria-Prima <span class="comp-badge" style="display:none;background:var(--mc-azul);color:#fff;font-size:11px;font-weight:700;border-radius:99px;padding:1px 8px;margin-left:4px;align-items:center;">0</span></div>
+          <div class="mc-sector-desc">Montar pedidos por fornecedor, requisição e histórico</div>
+        </div>
+        <span class="mc-sector-arrow">›</span>
+      </button>
       <button class="mc-sector-card" style="border-left:3px solid var(--mc-azul);margin-bottom:10px;" onclick="goTo('s-demandas')">
         <div class="mc-sector-icon blue">🗂️</div>
         <div class="mc-sector-info">
@@ -3509,6 +3517,14 @@
     <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;">
       <div class="mc-section-header">Áreas de acesso</div>
       <div class="mc-sector-grid">
+        <button class="mc-sector-card" style="border-left:3px solid var(--mc-verde);" onclick="goTo('s-compras')">
+          <div class="mc-sector-icon green">🛒</div>
+          <div class="mc-sector-info">
+            <div class="mc-sector-title">Pedidos de Matéria-Prima <span class="comp-badge" style="display:none;background:var(--mc-azul);color:#fff;font-size:11px;font-weight:700;border-radius:99px;padding:1px 8px;margin-left:4px;align-items:center;">0</span></div>
+            <div class="mc-sector-desc">Montar pedidos por fornecedor, requisição e histórico</div>
+          </div>
+          <span class="mc-sector-arrow">›</span>
+        </button>
         <button class="mc-sector-card" onclick="goTo('s-devolucoes')">
           <div class="mc-sector-icon red">↩️</div>
           <div class="mc-sector-info">
@@ -3527,6 +3543,61 @@
         </button>
       </div>
     </div>
+  </div>
+
+  <!-- COMPRAS: HUB -->
+  <div class="screen" id="s-compras">
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="goTo(window.setorAtual==='simone'?'s-simone-home':'s-adm-hub')">‹</button>
+      <div class="mc-brand"><div class="mc-brand-logo">MC</div><div class="mc-brand-text"><div class="mc-brand-name">Monte Castelo</div><div class="mc-brand-sub">Compras</div></div></div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info"><div class="mc-page-title">🛒 Pedidos de Matéria-Prima</div><div class="mc-page-sub">Por fornecedor</div></div>
+    </div>
+    <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;" id="comp-hub-content"></div>
+  </div>
+
+  <!-- COMPRAS: PEDIDO POR FORNECEDOR -->
+  <div class="screen" id="s-compra-forn">
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="goTo('s-compras')">‹</button>
+      <div class="mc-brand"><div class="mc-brand-logo">MC</div><div class="mc-brand-text"><div class="mc-brand-name">Monte Castelo</div><div class="mc-brand-sub">Pedido</div></div></div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info"><div class="mc-page-title">📝 Montar pedido</div><div class="mc-page-sub">Quantidade · kg · preço</div></div>
+    </div>
+    <div style="flex:1;padding:16px;background:var(--bg-page);overflow-y:auto;display:flex;flex-direction:column;" id="comp-forn-content"></div>
+  </div>
+
+  <!-- COMPRAS: LISTA DE FORNECEDORES -->
+  <div class="screen" id="s-compras-fornlist">
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="goTo('s-compras')">‹</button>
+      <div class="mc-brand"><div class="mc-brand-logo">MC</div><div class="mc-brand-text"><div class="mc-brand-name">Monte Castelo</div><div class="mc-brand-sub">Fornecedores</div></div></div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info"><div class="mc-page-title">🏢 Fornecedores</div><div class="mc-page-sub">Contato e dados</div></div>
+    </div>
+    <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;" id="comp-fornlist-content"></div>
+  </div>
+
+  <!-- COMPRAS: CADASTRO FORNECEDOR -->
+  <div class="screen" id="s-compra-forncad">
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="goTo('s-compras-fornlist')">‹</button>
+      <div class="mc-brand"><div class="mc-brand-logo">MC</div><div class="mc-brand-text"><div class="mc-brand-name">Monte Castelo</div><div class="mc-brand-sub">Fornecedor</div></div></div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info"><div class="mc-page-title">🏢 Dados do fornecedor</div><div class="mc-page-sub">Contato, vendedor, entrega</div></div>
+    </div>
+    <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;" id="comp-forncad-content"></div>
+  </div>
+
+  <!-- COMPRAS: HISTÓRICO -->
+  <div class="screen" id="s-compras-hist">
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="goTo('s-compras')">‹</button>
+      <div class="mc-brand"><div class="mc-brand-logo">MC</div><div class="mc-brand-text"><div class="mc-brand-name">Monte Castelo</div><div class="mc-brand-sub">Histórico</div></div></div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info"><div class="mc-page-title">📋 Histórico de pedidos</div><div class="mc-page-sub">Todos os fornecedores</div></div>
+    </div>
+    <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;" id="comp-hist-content"></div>
   </div>
 
   <!-- ESTOQUE EMBALAGEM -->
@@ -4108,6 +4179,11 @@ function atualizarTela(){
   if(tela==='s-alt-admin') renderAltAdmin();
   if(tela==='s-acomp') renderAcomp();
   if(tela==='s-demandas') renderDemandas();
+  if(tela==='s-compras') renderCompras();
+  if(tela==='s-compra-forn') renderCompraForn();
+  if(tela==='s-compras-fornlist') renderCompFornList();
+  if(tela==='s-compra-forncad') renderCompFornCad();
+  if(tela==='s-compras-hist') renderComprasHist();
   if(tela==='s-demanda-det') renderDemandaDet();
   if(tela==='s-adm-hub' && typeof _altAtualizarBadges==='function') _altAtualizarBadges();
   if(tela==='s-coz-home') renderCozHome();
@@ -4219,6 +4295,11 @@ function goTo(id){
   if(id==='s-alt-admin') renderAltAdmin();
   if(id==='s-acomp') renderAcomp();
   if(id==='s-demandas') renderDemandas();
+  if(id==='s-compras') renderCompras();
+  if(id==='s-compra-forn') renderCompraForn();
+  if(id==='s-compras-fornlist') renderCompFornList();
+  if(id==='s-compra-forncad') renderCompFornCad();
+  if(id==='s-compras-hist') renderComprasHist();
   if(id==='s-demanda-det') renderDemandaDet();
   if(id==='s-adm-hub' && typeof _altAtualizarBadges==='function') _altAtualizarBadges();
   if(id==='s-rastreio'){
@@ -11569,7 +11650,7 @@ window.setSimSemana=setSimSemana;
 let demandas=[];
 let demandaCategorias=['Tarefa do dia','Assunto p/ conversar','Projeto'];
 let _demEditando=null;
-let _demFiltroCat='todas', _demFiltroStatus='ativas', _demFiltroPrio='todas', _demBusca='';
+let _demFiltroCat='todas', _demFiltroStatus='ativas', _demFiltroPrio='todas', _demBusca='', _demAgrupar='prazo';
 
 onSnapshot(collection(db,'demandas'), snap=>{
   try{
@@ -11634,6 +11715,8 @@ function setDemFiltroCat(v){ _demFiltroCat=v; renderDemandas(); }
 function setDemFiltroStatus(v){ _demFiltroStatus=v; renderDemandas(); }
 function setDemFiltroPrio(v){ _demFiltroPrio=v; renderDemandas(); }
 function setDemBusca(v){ _demBusca=v; renderDemandas(); }
+function setDemAgrupar(v){ _demAgrupar=v; renderDemandas(); }
+window.setDemAgrupar=setDemAgrupar;
 
 async function novaCategoriaDemanda(){
   const nome=(prompt('Nome da nova categoria:')||'').trim(); if(!nome) return;
@@ -11643,70 +11726,140 @@ async function novaCategoriaDemanda(){
   if(_demEditando){ _demEditando.categoria=nome; renderDemandaDet(); }
 }
 
+function _demChip(label,active,onclick,cor){
+  const c=cor||'var(--mc-azul)';
+  return '<button onclick="'+onclick+'" style="border:1px solid '+(active?c:'var(--border-md,#d1d5db)')+';background:'+(active?c:'var(--bg-primary)')+';color:'+(active?'#fff':'var(--text-primary)')+';font-size:12px;font-weight:600;border-radius:99px;padding:6px 12px;cursor:pointer;font-family:inherit;white-space:nowrap;">'+label+'</button>';
+}
+function _demPrazoBucket(d){
+  if(d.status==='concluido') return 'concluidas';
+  const iso=d.dataEntrega; if(!iso) return 'semprazo';
+  const p=String(iso).split('-'); if(p.length!==3) return 'semprazo';
+  const dt=new Date(+p[0],+p[1]-1,+p[2]); dt.setHours(0,0,0,0);
+  const h=new Date(); h.setHours(0,0,0,0);
+  const dif=Math.round((dt-h)/86400000);
+  if(dif<0) return 'atrasadas'; if(dif===0) return 'hoje'; if(dif===1) return 'amanha'; if(dif<=7) return 'semana'; return 'depois';
+}
+function _demCardHtml(d){
+  const si=_demStatusInfo(d.status||'afazer');
+  const pi=_demPrioInfo(d.prioridade||'media');
+  const ei=_demEntregaInfo(d.dataEntrega, d.status==='concluido');
+  const nC=(d.comentarios||[]).length;
+  const concl=d.status==='concluido';
+  return '<div class="card" style="margin-bottom:8px;border-left:3px solid '+pi.cor+';'+(concl?'opacity:.55;':'')+'padding:11px 13px;">'+
+    '<div style="display:flex;gap:11px;align-items:flex-start;">'+
+      '<button onclick="demToggleConcluido(\''+d.firestoreId+'\')" title="Concluir" style="margin-top:1px;width:24px;height:24px;border-radius:7px;border:2px solid '+(concl?'var(--mc-verde)':'var(--border-md,#d1d5db)')+';background:'+(concl?'var(--mc-verde)':'transparent')+';color:#fff;font-size:14px;cursor:pointer;flex-shrink:0;line-height:1;font-family:inherit;">'+(concl?'✓':'')+'</button>'+
+      '<div style="flex:1;min-width:0;cursor:pointer;" onclick="abrirDemanda(\''+d.firestoreId+'\')">'+
+        '<div style="font-size:15px;font-weight:700;'+(concl?'text-decoration:line-through;color:var(--text-secondary);':'')+'">'+(d.titulo||'(sem título)')+'</div>'+
+        (d.descricao?'<div style="font-size:12px;color:var(--text-secondary);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+d.descricao+'</div>':'')+
+        '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:7px;align-items:center;">'+
+          '<span style="font-size:10px;font-weight:700;color:'+si.cor+';background:'+si.bg+';border-radius:99px;padding:2px 8px;">'+si.label+'</span>'+
+          '<span style="font-size:10px;font-weight:700;color:'+pi.cor+';background:'+pi.bg+';border-radius:99px;padding:2px 8px;">⚑ '+pi.label+'</span>'+
+          (d.categoria?'<span style="font-size:10px;color:var(--mc-azul);background:var(--mc-azul-claro);border-radius:99px;padding:2px 8px;">'+d.categoria+'</span>':'')+
+          (ei?'<span style="font-size:10px;font-weight:'+(ei.forte?'700':'500')+';color:'+ei.cor+';">📅 '+ei.txt+'</span>':'')+
+          (nC?'<span style="font-size:10px;color:var(--text-secondary);">💬 '+nC+'</span>':'')+
+        '</div>'+
+      '</div>'+
+      '<span style="color:var(--text-muted);font-size:18px;cursor:pointer;align-self:center;" onclick="abrirDemanda(\''+d.firestoreId+'\')">›</span>'+
+    '</div>'+
+  '</div>';
+}
 function renderDemandas(){
   const el=document.getElementById('demandas-content'); if(!el) return;
   const prioOrd={alta:0,media:1,baixa:2};
-  let lista=demandas.slice();
-  // filtros
-  if(_demFiltroCat!=='todas') lista=lista.filter(d=>(d.categoria||'')===_demFiltroCat);
-  if(_demFiltroPrio!=='todas') lista=lista.filter(d=>(d.prioridade||'media')===_demFiltroPrio);
-  if(_demFiltroStatus==='ativas') lista=lista.filter(d=>d.status!=='concluido');
-  else if(_demFiltroStatus!=='todas') lista=lista.filter(d=>(d.status||'afazer')===_demFiltroStatus);
-  if(_demBusca){ const q=_normNome(_demBusca); lista=lista.filter(d=>_normNome((d.titulo||'')+' '+(d.descricao||'')).includes(q)); }
-  // ordenar: ativas primeiro, prioridade, entrega mais próxima, mais recente
-  lista.sort((a,b)=>{
+  const q=_demBusca?_normNome(_demBusca):'';
+  const passCat=d=>_demFiltroCat==='todas'||(d.categoria||'')===_demFiltroCat;
+  const passPrio=d=>_demFiltroPrio==='todas'||(d.prioridade||'media')===_demFiltroPrio;
+  const passStatus=d=>{ if(_demFiltroStatus==='todas')return true; if(_demFiltroStatus==='ativas')return d.status!=='concluido'; return (d.status||'afazer')===_demFiltroStatus; };
+  const passBusca=d=>!q||_normNome((d.titulo||'')+' '+(d.descricao||'')).includes(q);
+
+  // contadores (para os chips) — cada dimensão conta ignorando ela mesma
+  const baseS=demandas.filter(d=>passCat(d)&&passPrio(d)&&passBusca(d));
+  const cntStatus={ ativas:baseS.filter(d=>d.status!=='concluido').length, afazer:baseS.filter(d=>(d.status||'afazer')==='afazer').length, fazendo:baseS.filter(d=>d.status==='fazendo').length, concluido:baseS.filter(d=>d.status==='concluido').length, todas:baseS.length };
+  const baseC=demandas.filter(d=>passStatus(d)&&passPrio(d)&&passBusca(d));
+  const cntCat={}; demandaCategorias.forEach(c=>cntCat[c]=baseC.filter(d=>(d.categoria||'')===c).length); cntCat['todas']=baseC.length;
+
+  let lista=demandas.filter(d=>passCat(d)&&passPrio(d)&&passStatus(d)&&passBusca(d));
+
+  let html='';
+  // resumo rápido (clicável)
+  const hoje0=new Date(); hoje0.setHours(0,0,0,0);
+  const atrasadas=demandas.filter(d=>d.status!=='concluido'&&_demPrazoBucket(d)==='atrasadas').length;
+  const hojeN=demandas.filter(d=>d.status!=='concluido'&&_demPrazoBucket(d)==='hoje').length;
+  const pend=_demPendentes().length;
+  html+='<div style="display:flex;gap:8px;margin-bottom:12px;">'+
+    '<div style="flex:1;text-align:center;padding:9px;border-radius:10px;background:'+(atrasadas?'rgba(220,38,38,.08)':'var(--bg-primary)')+';border:1px solid '+(atrasadas?'var(--mc-vermelho)':'var(--border)')+';"><div style="font-size:19px;font-weight:800;color:var(--mc-vermelho);">'+atrasadas+'</div><div style="font-size:10px;color:var(--text-secondary);">Atrasadas</div></div>'+
+    '<div style="flex:1;text-align:center;padding:9px;border-radius:10px;background:'+(hojeN?'rgba(217,119,6,.08)':'var(--bg-primary)')+';border:1px solid '+(hojeN?'#d97706':'var(--border)')+';"><div style="font-size:19px;font-weight:800;color:#d97706;">'+hojeN+'</div><div style="font-size:10px;color:var(--text-secondary);">Para hoje</div></div>'+
+    '<div style="flex:1;text-align:center;padding:9px;border-radius:10px;background:var(--bg-primary);border:1px solid var(--border);"><div style="font-size:19px;font-weight:800;color:var(--mc-azul);">'+pend+'</div><div style="font-size:10px;color:var(--text-secondary);">Pendentes</div></div>'+
+    '</div>';
+  // busca
+  html+='<input type="text" value="'+(_demBusca||'').replace(/"/g,'&quot;')+'" oninput="setDemBusca(this.value)" placeholder="🔍 Buscar demanda..." style="width:100%;font-size:14px;padding:10px;border-radius:10px;border:1px solid var(--border-md,#d1d5db);box-sizing:border-box;margin-bottom:10px;" />';
+  // chips de status
+  html+='<div style="display:flex;gap:7px;overflow-x:auto;padding-bottom:4px;margin-bottom:8px;-webkit-overflow-scrolling:touch;">'+
+    _demChip('Ativas '+cntStatus.ativas, _demFiltroStatus==='ativas', "setDemFiltroStatus('ativas')")+
+    _demChip('📋 A fazer '+cntStatus.afazer, _demFiltroStatus==='afazer', "setDemFiltroStatus('afazer')", '#6b7280')+
+    _demChip('⏳ Fazendo '+cntStatus.fazendo, _demFiltroStatus==='fazendo', "setDemFiltroStatus('fazendo')", '#2563eb')+
+    _demChip('✓ Concluídas '+cntStatus.concluido, _demFiltroStatus==='concluido', "setDemFiltroStatus('concluido')", 'var(--mc-verde)')+
+    _demChip('Todas '+cntStatus.todas, _demFiltroStatus==='todas', "setDemFiltroStatus('todas')")+
+    '</div>';
+  // chips de categoria
+  html+='<div style="display:flex;gap:7px;overflow-x:auto;padding-bottom:4px;margin-bottom:8px;-webkit-overflow-scrolling:touch;">'+
+    _demChip('🏷️ Todas', _demFiltroCat==='todas', "setDemFiltroCat('todas')")+
+    demandaCategorias.map(c=>_demChip(c+' '+(cntCat[c]||0), _demFiltroCat===c, "setDemFiltroCat('"+escapeJsStr(c)+"')")).join('')+
+    '</div>';
+  // chips de prioridade
+  html+='<div style="display:flex;gap:7px;overflow-x:auto;padding-bottom:4px;margin-bottom:12px;-webkit-overflow-scrolling:touch;">'+
+    _demChip('Toda prioridade', _demFiltroPrio==='todas', "setDemFiltroPrio('todas')")+
+    _demChip('⚑ Alta', _demFiltroPrio==='alta', "setDemFiltroPrio('alta')", '#dc2626')+
+    _demChip('⚑ Média', _demFiltroPrio==='media', "setDemFiltroPrio('media')", '#d97706')+
+    _demChip('⚑ Baixa', _demFiltroPrio==='baixa', "setDemFiltroPrio('baixa')", '#2563eb')+
+    '</div>';
+  // agrupar por
+  html+='<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">'+
+    '<span style="font-size:11px;color:var(--text-secondary);font-weight:600;white-space:nowrap;">Agrupar:</span>'+
+    '<div style="display:flex;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;">'+
+    _demChip('Prazo', _demAgrupar==='prazo', "setDemAgrupar('prazo')", 'var(--mc-roxo)')+
+    _demChip('Categoria', _demAgrupar==='categoria', "setDemAgrupar('categoria')", 'var(--mc-roxo)')+
+    _demChip('Status', _demAgrupar==='status', "setDemAgrupar('status')", 'var(--mc-roxo)')+
+    _demChip('Prioridade', _demAgrupar==='prioridade', "setDemAgrupar('prioridade')", 'var(--mc-roxo)')+
+    '</div></div>';
+
+  if(!lista.length){ el.innerHTML=html+'<div class="empty" style="padding:24px;">Nenhuma demanda nesse filtro. 🎉</div>'; return; }
+
+  // definição dos grupos conforme o modo
+  let grupos; // [{key,label,cor}]
+  let keyDe;
+  if(_demAgrupar==='prazo'){
+    grupos=[['atrasadas','⚠️ Atrasadas','var(--mc-vermelho)'],['hoje','📅 Hoje','#d97706'],['amanha','🔜 Amanhã','#d97706'],['semana','Esta semana','var(--mc-azul)'],['depois','Mais tarde','var(--text-secondary)'],['semprazo','Sem prazo','var(--text-secondary)'],['concluidas','✓ Concluídas','var(--mc-verde)']];
+    keyDe=d=>_demPrazoBucket(d);
+  } else if(_demAgrupar==='categoria'){
+    grupos=demandaCategorias.map(c=>[c,c,'var(--mc-azul)']); grupos.push(['__sem','Sem categoria','var(--text-secondary)']);
+    keyDe=d=>demandaCategorias.includes(d.categoria)?d.categoria:'__sem';
+  } else if(_demAgrupar==='status'){
+    grupos=[['afazer','📋 A fazer','#6b7280'],['fazendo','⏳ Fazendo','#2563eb'],['concluido','✓ Concluídas','var(--mc-verde)']];
+    keyDe=d=>d.status||'afazer';
+  } else {
+    grupos=[['alta','⚑ Alta prioridade','#dc2626'],['media','⚑ Média prioridade','#d97706'],['baixa','⚑ Baixa prioridade','#2563eb']];
+    keyDe=d=>d.prioridade||'media';
+  }
+  const porGrupo={}; grupos.forEach(g=>porGrupo[g[0]]=[]);
+  lista.forEach(d=>{ const k=keyDe(d); if(!porGrupo[k]) porGrupo[k]=[]; porGrupo[k].push(d); });
+  const sortIn=(arr)=>arr.sort((a,b)=>{
     const ca=a.status==='concluido'?1:0, cb=b.status==='concluido'?1:0; if(ca!==cb) return ca-cb;
     const pa=prioOrd[a.prioridade||'media'], pb=prioOrd[b.prioridade||'media']; if(pa!==pb) return pa-pb;
     const da=a.dataEntrega||'9999', db_=b.dataEntrega||'9999'; if(da!==db_) return da<db_?-1:1;
     return (b.timestamp||0)-(a.timestamp||0);
   });
 
-  const cats=['todas',...demandaCategorias];
-  let html='';
-  // resumo
-  const pend=_demPendentes().length;
-  const concl=demandas.filter(d=>d.status==='concluido').length;
-  html+='<div style="display:flex;gap:8px;margin-bottom:12px;">'+
-    '<div class="card" style="flex:1;text-align:center;padding:10px;"><div style="font-size:20px;font-weight:800;color:var(--mc-azul);">'+pend+'</div><div style="font-size:11px;color:var(--text-secondary);">Pendentes</div></div>'+
-    '<div class="card" style="flex:1;text-align:center;padding:10px;"><div style="font-size:20px;font-weight:800;color:var(--mc-verde);">'+concl+'</div><div style="font-size:11px;color:var(--text-secondary);">Concluídas</div></div>'+
-    '</div>';
-  // filtros
-  html+='<input type="text" value="'+(_demBusca||'').replace(/"/g,'&quot;')+'" oninput="setDemBusca(this.value)" placeholder="🔍 Buscar..." style="width:100%;font-size:14px;padding:10px;border-radius:8px;border:1px solid var(--border-md,#d1d5db);box-sizing:border-box;margin-bottom:8px;" />';
-  html+='<div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap;">';
-  html+='<select onchange="setDemFiltroStatus(this.value)" style="flex:1;min-width:110px;font-size:13px;padding:8px;border-radius:8px;border:1px solid var(--border-md,#d1d5db);">'+
-    [['ativas','Ativas'],['afazer','A fazer'],['fazendo','Fazendo'],['concluido','Concluídas'],['todas','Todas']].map(([v,l])=>'<option value="'+v+'"'+(_demFiltroStatus===v?' selected':'')+'>'+l+'</option>').join('')+'</select>';
-  html+='<select onchange="setDemFiltroPrio(this.value)" style="flex:1;min-width:110px;font-size:13px;padding:8px;border-radius:8px;border:1px solid var(--border-md,#d1d5db);">'+
-    [['todas','Toda prioridade'],['alta','Alta'],['media','Média'],['baixa','Baixa']].map(([v,l])=>'<option value="'+v+'"'+(_demFiltroPrio===v?' selected':'')+'>'+l+'</option>').join('')+'</select>';
-  html+='</div>';
-  html+='<select onchange="setDemFiltroCat(this.value)" style="width:100%;font-size:13px;padding:8px;border-radius:8px;border:1px solid var(--border-md,#d1d5db);margin-bottom:12px;">'+
-    cats.map(c=>'<option value="'+c+'"'+(_demFiltroCat===c?' selected':'')+'>'+(c==='todas'?'🏷️ Todas as categorias':c)+'</option>').join('')+'</select>';
-
-  if(!lista.length){ el.innerHTML=html+'<div class="empty" style="padding:24px;">Nenhuma demanda nesse filtro.</div>'; return; }
-
-  html+=lista.map(d=>{
-    const si=_demStatusInfo(d.status||'afazer');
-    const pi=_demPrioInfo(d.prioridade||'media');
-    const ei=_demEntregaInfo(d.dataEntrega, d.status==='concluido');
-    const nC=(d.comentarios||[]).length;
-    const concl=d.status==='concluido';
-    return '<div class="card" style="margin-bottom:8px;border-left:3px solid '+pi.cor+';'+(concl?'opacity:.6;':'')+'">'+
-      '<div style="display:flex;gap:10px;align-items:flex-start;">'+
-        '<button onclick="demToggleConcluido(\''+d.firestoreId+'\')" title="Marcar concluído" style="margin-top:1px;width:22px;height:22px;border-radius:6px;border:2px solid '+(concl?'var(--mc-verde)':'var(--border-md,#d1d5db)')+';background:'+(concl?'var(--mc-verde)':'transparent')+';color:#fff;font-size:13px;cursor:pointer;flex-shrink:0;line-height:1;font-family:inherit;">'+(concl?'✓':'')+'</button>'+
-        '<div style="flex:1;min-width:0;cursor:pointer;" onclick="abrirDemanda(\''+d.firestoreId+'\')">'+
-          '<div style="font-size:15px;font-weight:700;'+(concl?'text-decoration:line-through;':'')+'">'+(d.titulo||'(sem título)')+'</div>'+
-          (d.descricao?'<div style="font-size:12px;color:var(--text-secondary);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+d.descricao+'</div>':'')+
-          '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;align-items:center;">'+
-            '<span style="font-size:10px;font-weight:700;color:'+si.cor+';background:'+si.bg+';border-radius:99px;padding:2px 8px;">'+si.label+'</span>'+
-            '<span style="font-size:10px;font-weight:700;color:'+pi.cor+';background:'+pi.bg+';border-radius:99px;padding:2px 8px;">⚑ '+pi.label+'</span>'+
-            (d.categoria?'<span style="font-size:10px;color:var(--mc-azul);background:var(--mc-azul-claro);border-radius:99px;padding:2px 8px;">'+d.categoria+'</span>':'')+
-            (ei?'<span style="font-size:10px;font-weight:'+(ei.forte?'700':'500')+';color:'+ei.cor+';">📅 '+ei.txt+'</span>':'')+
-            (nC?'<span style="font-size:10px;color:var(--text-secondary);">💬 '+nC+'</span>':'')+
-          '</div>'+
-        '</div>'+
-        '<span style="color:var(--text-muted);font-size:18px;cursor:pointer;" onclick="abrirDemanda(\''+d.firestoreId+'\')">›</span>'+
-      '</div>'+
-    '</div>';
-  }).join('');
+  grupos.forEach(([key,label,cor])=>{
+    const arr=porGrupo[key]; if(!arr||!arr.length) return;
+    sortIn(arr);
+    html+='<div style="display:flex;align-items:center;gap:8px;margin:14px 0 8px;">'+
+      '<div style="width:4px;height:16px;border-radius:2px;background:'+cor+';"></div>'+
+      '<div style="font-size:13px;font-weight:800;color:'+cor+';">'+label+'</div>'+
+      '<div style="font-size:11px;color:var(--text-secondary);background:var(--bg-page);border-radius:99px;padding:1px 8px;">'+arr.length+'</div>'+
+      '</div>';
+    html+=arr.map(_demCardHtml).join('');
+  });
   el.innerHTML=html;
 }
 
@@ -11799,6 +11952,581 @@ window.novaDemanda=novaDemanda; window.abrirDemanda=abrirDemanda; window.renderD
 window.salvarDemanda=salvarDemanda; window.demToggleConcluido=demToggleConcluido; window.excluirDemanda=excluirDemanda; window.demAddComentario=demAddComentario;
 window.setDemFiltroCat=setDemFiltroCat; window.setDemFiltroStatus=setDemFiltroStatus; window.setDemFiltroPrio=setDemFiltroPrio; window.setDemBusca=setDemBusca;
 window.novaCategoriaDemanda=novaCategoriaDemanda; window.trocarAutorDemanda=trocarAutorDemanda;
+
+// ===================== PEDIDOS DE MATÉRIA-PRIMA (Simone/Admin) =====================
+let comprasFornecedores=[], comprasMP=[], comprasPedidos=[];
+let _compFornSel=null, _compPedido=null, _compBusca='', _compHubBusca='';
+let _compQtd={}, _compPreco={}, _compObs={}, _compHistItem=null, _compFornEdit=null;
+let _compHistFiltroForn='todos', _compHistFiltroStatus='todos';
+
+onSnapshot(collection(db,'comprasFornecedores'), snap=>{ try{ comprasFornecedores=snap.docs.map(d=>({firestoreId:d.id,...d.data()})); const t=document.querySelector('.screen.active')?.id; if(t==='s-compras')renderCompras(); if(t==='s-compras-fornlist')renderCompFornList(); }catch(e){console.error(e);} });
+onSnapshot(collection(db,'comprasMP'), snap=>{ try{ comprasMP=snap.docs.map(d=>({firestoreId:d.id,...d.data()})); const t=document.querySelector('.screen.active')?.id; if(t==='s-compras')renderCompras(); if(t==='s-compra-forn')compRenderLista(); }catch(e){console.error(e);} });
+onSnapshot(collection(db,'comprasPedidos'), snap=>{ try{ comprasPedidos=snap.docs.map(d=>({firestoreId:d.id,...d.data()})); const t=document.querySelector('.screen.active')?.id; if(t==='s-compras')renderCompras(); if(t==='s-compras-hist')renderComprasHist(); _compAtualizarBadge(); }catch(e){console.error(e);} });
+
+function _fmtRS(n){ return 'R$ '+(Number(n)||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+const _compSeedFornecedores=[{"id": "f_MASTEREGGS", "nome": "MASTEREGGS", "codigo": "6437"}, {"id": "f_CINDREIA", "nome": "CINDREIA", "codigo": "412"}, {"id": "f_ITAIQUARA", "nome": "ITAIQUARA", "codigo": "4922"}, {"id": "f_ALIBEM", "nome": "ALIBEM", "codigo": "409"}, {"id": "f_AURORA", "nome": "AURORA", "codigo": "6695"}, {"id": "f_EXCELSIOR_ALIMENTOS_S_A", "nome": "EXCELSIOR ALIMENTOS S/A", "codigo": "4432"}, {"id": "f_NUTRIFRANGO", "nome": "NUTRIFRANGO", "codigo": "3071"}, {"id": "f_LATICINIOS_KIFORMAGGIO", "nome": "LATICINIOS KIFORMAGGIO", "codigo": "4748"}, {"id": "f_PETRY", "nome": "PETRY", "codigo": "24"}, {"id": "f_LATCO", "nome": "LATCO", "codigo": "1620"}, {"id": "f_ENTREMINAS", "nome": "ENTREMINAS", "codigo": "6817"}, {"id": "f_VALE_DO_PARDO", "nome": "VALE DO PARDO", "codigo": "6167"}, {"id": "f_SANTA_CLARA", "nome": "SANTA CLARA", "codigo": "438"}, {"id": "f_VIGOR", "nome": "VIGOR", "codigo": "4108"}, {"id": "f_SEARA_ALIMENTOS", "nome": "SEARA ALIMENTOS", "codigo": "5107"}, {"id": "f_COAMO", "nome": "COAMO", "codigo": "1775"}, {"id": "f_PAO_FORTE", "nome": "PÃO FORTE", "codigo": "431"}, {"id": "f_NATURAOVOS", "nome": "NATURAOVOS", "codigo": "435"}, {"id": "f_CISBRA", "nome": "CISBRA", "codigo": "1309"}, {"id": "f_MULTISOY", "nome": "MULTISOY", "codigo": "6666"}, {"id": "f_NUTRIMENTAL", "nome": "NUTRIMENTAL", "codigo": "2053"}, {"id": "f_DAXIA", "nome": "DAXIA", "codigo": "8036"}, {"id": "f_SOORO_RENNER", "nome": "SOORO RENNER", "codigo": "3772"}, {"id": "f_PODIUM_ANHUMAI", "nome": "PODIUM (ANHUMAI)", "codigo": "1332"}, {"id": "f_FECULARIA_DO_VALE", "nome": "FECULARIA DO VALE", "codigo": "1346"}, {"id": "f_G_MANFIO_CIA_LTDA", "nome": "G. MANFIO & CIA. LTDA.", "codigo": "6921"}, {"id": "f_CRISTIANE_ALMEIDA_ESPINDOLA", "nome": "CRISTIANE ALMEIDA ESPINDOLA", "codigo": ""}, {"id": "f_KEM_DISTRIBUIDORA", "nome": "KEM DISTRIBUIDORA", "codigo": "8219"}, {"id": "f_REFORPAN", "nome": "REFORPAN", "codigo": "2130"}, {"id": "f_EMULZINT", "nome": "EMULZINT", "codigo": "2583"}, {"id": "f_FRIMESA", "nome": "FRIMESA", "codigo": "2743"}, {"id": "f_LUNARDI", "nome": "LUNARDI", "codigo": "5013"}, {"id": "f_AGRA", "nome": "AGRA", "codigo": "410"}, {"id": "f_CALLEGARO", "nome": "CALLEGARO", "codigo": "5505"}, {"id": "f_MINERVA_FOODS", "nome": "MINERVA FOODS", "codigo": "8142"}, {"id": "f_MB_FOODS_PORCIONADO", "nome": "MB FOODS PORCIONADO", "codigo": "8222"}, {"id": "f_FORTUNCERES_MINERVA", "nome": "FORTUNCERES MINERVA", "codigo": "8142"}, {"id": "f_PEZZI", "nome": "PEZZI", "codigo": "2715"}, {"id": "f_FRITZ_E_FRIDA", "nome": "FRITZ E FRIDA", "codigo": "5768"}];
+const _compSeedItens=[{"mpid": "f_MASTEREGGS__14132", "codigo": "14132", "nome": "OVO EM GALÃO", "fornecedorId": "f_MASTEREGGS", "fornecedorNome": "MASTEREGGS", "unidade": "Bg", "kgPorUnidade": 5.0, "infoUM": "Bag c/ 5 Kg", "precoKg": 10.05}, {"mpid": "f_CINDREIA__14068", "codigo": "14068", "nome": "MARGARINA (COAMO)", "fornecedorId": "f_CINDREIA", "fornecedorNome": "CINDREIA", "unidade": "Bd", "kgPorUnidade": 14.5, "infoUM": "Balde c/ 14,5 kg", "precoKg": 10.0}, {"mpid": "f_CINDREIA__14029", "codigo": "14029", "nome": "CORANTE AMARELO GEMA", "fornecedorId": "f_CINDREIA", "fornecedorNome": "CINDREIA", "unidade": "Pct", "kgPorUnidade": 1.0, "infoUM": "Pacote c/ 500 gr", "precoKg": 25.8}, {"mpid": "f_CINDREIA__14055", "codigo": "14055", "nome": "FERMENTO EM PÓ", "fornecedorId": "f_CINDREIA", "fornecedorNome": "CINDREIA", "unidade": "Pct", "kgPorUnidade": 2.0, "infoUM": "Pacote c/ 2 kg", "precoKg": 30.0}, {"mpid": "f_CINDREIA__14030", "codigo": "14030", "nome": "CORANTE CARAMELO", "fornecedorId": "f_CINDREIA", "fornecedorNome": "CINDREIA", "unidade": "Gl", "kgPorUnidade": 25.0, "infoUM": "Galao c/ 25 Lt", "precoKg": 10.7}, {"mpid": "f_CINDREIA__14120", "codigo": "14120", "nome": "COLORAU", "fornecedorId": "f_CINDREIA", "fornecedorNome": "CINDREIA", "unidade": "Pct", "kgPorUnidade": 1.0, "infoUM": "Pacote c/ 1,03 Kg", "precoKg": 14.02}, {"mpid": "f_CINDREIA__14135", "codigo": "14135", "nome": "RECHEIO DOCE DE LEITE", "fornecedorId": "f_CINDREIA", "fornecedorNome": "CINDREIA", "unidade": "Bd", "kgPorUnidade": 4.0, "infoUM": "Balde c/ 4 kg", "precoKg": 23.44}, {"mpid": "f_CINDREIA__14075", "codigo": "14075", "nome": "MISTURA PRA CUCA ALEMA", "fornecedorId": "f_CINDREIA", "fornecedorNome": "CINDREIA", "unidade": "Pct", "kgPorUnidade": 5.0, "infoUM": "Pct c/ 5 Kg", "precoKg": 5.76}, {"mpid": "f_CINDREIA__14001", "codigo": "14001", "nome": "AMIDO DE MILHO PILAO SACO 25KG", "fornecedorId": "f_CINDREIA", "fornecedorNome": "CINDREIA", "unidade": "Sc", "kgPorUnidade": 25.0, "infoUM": "Fardo c/ 25 Kg", "precoKg": 4.49}, {"mpid": "f_CINDREIA__14103", "codigo": "14103", "nome": "REFORÇADOR (MELHORADOR)", "fornecedorId": "f_CINDREIA", "fornecedorNome": "CINDREIA", "unidade": "Pct", "kgPorUnidade": 5.0, "infoUM": "Pct c/ 5 Kg", "precoKg": 8.14}, {"mpid": "f_CINDREIA__14060", "codigo": "14060", "nome": "FRUTAS CRISTALIZADAS", "fornecedorId": "f_CINDREIA", "fornecedorNome": "CINDREIA", "unidade": "Cx", "kgPorUnidade": 10.0, "infoUM": "Caixa c/ 10 Kg", "precoKg": 12.6}, {"mpid": "f_CINDREIA__14021", "codigo": "14021", "nome": "CANELA", "fornecedorId": "f_CINDREIA", "fornecedorNome": "CINDREIA", "unidade": "Pct", "kgPorUnidade": 0.5, "infoUM": "Pacote c/ 500 Gr", "precoKg": 24.7}, {"mpid": "f_CINDREIA__14038", "codigo": "14038", "nome": "ERVA DOCE", "fornecedorId": "f_CINDREIA", "fornecedorNome": "CINDREIA", "unidade": "Kg", "kgPorUnidade": 1.0, "infoUM": "1 Kg", "precoKg": 32.61}, {"mpid": "f_CINDREIA__14042", "codigo": "14042", "nome": "ESSENCIA MANTEIGA", "fornecedorId": "f_CINDREIA", "fornecedorNome": "CINDREIA", "unidade": "Gl", "kgPorUnidade": 0.96, "infoUM": "Gl c/ 0,96 Lt", "precoKg": 23.77}, {"mpid": "f_CINDREIA__14081", "codigo": "14081", "nome": "NOZ MOSCADA", "fornecedorId": "f_CINDREIA", "fornecedorNome": "CINDREIA", "unidade": "Pct", "kgPorUnidade": 0.25, "infoUM": "Pacote c/ 250 Gr", "precoKg": 74.28}, {"mpid": "f_CINDREIA__14054", "codigo": "14054", "nome": "FERMENTO DOCE", "fornecedorId": "f_CINDREIA", "fornecedorNome": "CINDREIA", "unidade": "Cx", "kgPorUnidade": 25.0, "infoUM": "Caixa c/ 25 Kg (Pacote c/ 500 Gr)", "precoKg": 14.32}, {"mpid": "f_CINDREIA__14056", "codigo": "14056", "nome": "FERMENTO FLASHMANN", "fornecedorId": "f_CINDREIA", "fornecedorNome": "CINDREIA", "unidade": "Cx", "kgPorUnidade": 25.0, "infoUM": "Caixa c/ 25 Kg (Pacote c/ 500 Gr)", "precoKg": 14.34}, {"mpid": "f_CINDREIA__14040", "codigo": "14040", "nome": "ESSENCIA DE BAUNILHA", "fornecedorId": "f_CINDREIA", "fornecedorNome": "CINDREIA", "unidade": "Gl", "kgPorUnidade": 0.96, "infoUM": "Gl c/ 0,96 Lt", "precoKg": 16.05}, {"mpid": "f_CINDREIA__14059", "codigo": "14059", "nome": "FLOCOS DE BATATA", "fornecedorId": "f_CINDREIA", "fornecedorNome": "CINDREIA", "unidade": "SC", "kgPorUnidade": 25.0, "infoUM": "Saco c/ 25 Kg", "precoKg": 31.21}, {"mpid": "f_ITAIQUARA__14057", "codigo": "14057", "nome": "FERMENTO DOCE ITAIQUARA", "fornecedorId": "f_ITAIQUARA", "fornecedorNome": "ITAIQUARA", "unidade": "Cx", "kgPorUnidade": 25.0, "infoUM": "Caixa c/ 25 Kg", "precoKg": 13.52}, {"mpid": "f_ITAIQUARA__14077", "codigo": "14077", "nome": "MOLHO REFOGADO", "fornecedorId": "f_ITAIQUARA", "fornecedorNome": "ITAIQUARA", "unidade": "Cx", "kgPorUnidade": 16.4, "infoUM": "Caixa c/ 16,40 kg", "precoKg": 6.38}, {"mpid": "f_ITAIQUARA__14141", "codigo": "14141", "nome": "MOLHO BARBECUE LIZA", "fornecedorId": "f_ITAIQUARA", "fornecedorNome": "ITAIQUARA", "unidade": "pcts", "kgPorUnidade": 1.02, "infoUM": "Pacote com 1,02 kg", "precoKg": 11.5}, {"mpid": "f_ITAIQUARA__14088", "codigo": "14088", "nome": "PAPRICA DOCE", "fornecedorId": "f_ITAIQUARA", "fornecedorNome": "ITAIQUARA", "unidade": "Pct", "kgPorUnidade": 0.5, "infoUM": "Pacote com 0,5 kg", "precoKg": 29.44}, {"mpid": "f_ITAIQUARA__14001", "codigo": "14001", "nome": "AMIDO SACO 25KG", "fornecedorId": "f_ITAIQUARA", "fornecedorNome": "ITAIQUARA", "unidade": "SC", "kgPorUnidade": 25.0, "infoUM": "Saco c/ 25 kg", "precoKg": 4.68}, {"mpid": "f_ITAIQUARA__14019", "codigo": "14019", "nome": "CALDO DE GALINHA KNOR", "fornecedorId": "f_ITAIQUARA", "fornecedorNome": "ITAIQUARA", "unidade": "Cx", "kgPorUnidade": 10.0, "infoUM": "Caixa c/ 10 Kg", "precoKg": 19.0}, {"mpid": "f_ITAIQUARA__14018", "codigo": "14018", "nome": "CALDO DE CARNE KNOR", "fornecedorId": "f_ITAIQUARA", "fornecedorNome": "ITAIQUARA", "unidade": "Cx", "kgPorUnidade": 10.0, "infoUM": "Caixa c/ 10 Kg", "precoKg": 16.55}, {"mpid": "f_ITAIQUARA__14021", "codigo": "14021", "nome": "CANELA", "fornecedorId": "f_ITAIQUARA", "fornecedorNome": "ITAIQUARA", "unidade": "Sc", "kgPorUnidade": 25.0, "infoUM": "Fardo c/ 25 Kg", "precoKg": 95.0}, {"mpid": "f_ITAIQUARA__14004", "codigo": "14004", "nome": "AÇUCAR CRISTAL", "fornecedorId": "f_ITAIQUARA", "fornecedorNome": "ITAIQUARA", "unidade": "Cx", "kgPorUnidade": 25.0, "infoUM": "Caixa c/ 25 Kg", "precoKg": 3.5}, {"mpid": "f_ALIBEM__14067", "codigo": "14067", "nome": "LINGÜIÇA CALABRESA", "fornecedorId": "f_ALIBEM", "fornecedorNome": "ALIBEM", "unidade": "Kg", "kgPorUnidade": 1.0, "infoUM": "Pct de 2,5kgs", "precoKg": 16.0}, {"mpid": "f_ALIBEM__14139", "codigo": "14139", "nome": "LINGÜIÇA CALABRESA FINA", "fornecedorId": "f_ALIBEM", "fornecedorNome": "ALIBEM", "unidade": "Kg", "kgPorUnidade": 1.0, "infoUM": "Pct de 2kgs", "precoKg": 18.5}, {"mpid": "f_ALIBEM__14093", "codigo": "14093", "nome": "PRESUNTO", "fornecedorId": "f_ALIBEM", "fornecedorNome": "ALIBEM", "unidade": "Kg", "kgPorUnidade": 1.0, "infoUM": "", "precoKg": 16.8}, {"mpid": "f_ALIBEM__14113", "codigo": "14113", "nome": "SOBREPALETA SUINA", "fornecedorId": "f_ALIBEM", "fornecedorNome": "ALIBEM", "unidade": "Cx", "kgPorUnidade": 10.0, "infoUM": "Caixa c/ 10 Kg", "precoKg": 17.9}, {"mpid": "f_AURORA__14148", "codigo": "14148", "nome": "SALSICHA NOBRE", "fornecedorId": "f_AURORA", "fornecedorNome": "AURORA", "unidade": "CX", "kgPorUnidade": 12.0, "infoUM": "Caixa c/ 3kgs", "precoKg": 9.14}, {"mpid": "f_EXCELSIOR_ALIMENTOS_S_A__14093", "codigo": "14093", "nome": "PRESUNTO", "fornecedorId": "f_EXCELSIOR_ALIMENTOS_S_A", "fornecedorNome": "EXCELSIOR ALIMENTOS S/A", "unidade": "Kg", "kgPorUnidade": 1.0, "infoUM": "1 Kg", "precoKg": 16.56}, {"mpid": "f_EXCELSIOR_ALIMENTOS_S_A__14111", "codigo": "14111", "nome": "SALSICHA", "fornecedorId": "f_EXCELSIOR_ALIMENTOS_S_A", "fornecedorNome": "EXCELSIOR ALIMENTOS S/A", "unidade": "Cx", "kgPorUnidade": 12.0, "infoUM": "Caixa c/ 12 kg", "precoKg": 7.14}, {"mpid": "f_NUTRIFRANGO__14058", "codigo": "14058", "nome": "FILÉ DE PEITO DE FRANGO", "fornecedorId": "f_NUTRIFRANGO", "fornecedorNome": "NUTRIFRANGO", "unidade": "Cx", "kgPorUnidade": 18.0, "infoUM": "Caixa c/ 18 Kg", "precoKg": 13.1}, {"mpid": "f_NUTRIFRANGO__14034", "codigo": "14034", "nome": "SOBRECOXA", "fornecedorId": "f_NUTRIFRANGO", "fornecedorNome": "NUTRIFRANGO", "unidade": "Cx", "kgPorUnidade": 18.0, "infoUM": "Caixa c/ 18 Kg", "precoKg": 10.3}, {"mpid": "f_LATICINIOS_KIFORMAGGIO__14100", "codigo": "14100", "nome": "QUEIJO TROPICAL", "fornecedorId": "f_LATICINIOS_KIFORMAGGIO", "fornecedorNome": "LATICINIOS KIFORMAGGIO", "unidade": "Kg", "kgPorUnidade": 1.0, "infoUM": "1 Kg", "precoKg": 54.0}, {"mpid": "f_PETRY__14099", "codigo": "14099", "nome": "QUEIJO MUSSARELA", "fornecedorId": "f_PETRY", "fornecedorNome": "PETRY", "unidade": "Kg", "kgPorUnidade": 1.0, "infoUM": "1 Kg", "precoKg": 31.0}, {"mpid": "f_LATCO__14098", "codigo": "14098", "nome": "QUEIJO MINAS (MEIA CURA) - CRIOLO", "fornecedorId": "f_LATCO", "fornecedorNome": "LATCO", "unidade": "Kg", "kgPorUnidade": 1.0, "infoUM": "1 Kg", "precoKg": 48.95}, {"mpid": "f_ENTREMINAS__14153", "codigo": "14153", "nome": "REQUEIJÃO AMARILIS", "fornecedorId": "f_ENTREMINAS", "fornecedorNome": "ENTREMINAS", "unidade": "Bis", "kgPorUnidade": 1.8, "infoUM": "Bisnaga c/ 1,8 Kg", "precoKg": 5.55}, {"mpid": "f_VALE_DO_PARDO__14105", "codigo": "14105", "nome": "REQUEIJÃO VALE DO PARDO", "fornecedorId": "f_VALE_DO_PARDO", "fornecedorNome": "VALE DO PARDO", "unidade": "Cx", "kgPorUnidade": 14.4, "infoUM": "Caixa c/ 8x bags (1,8 Kg cada)", "precoKg": 6.1}, {"mpid": "f_SANTA_CLARA__14025", "codigo": "14025", "nome": "CHEDDAR", "fornecedorId": "f_SANTA_CLARA", "fornecedorNome": "SANTA CLARA", "unidade": "Pct", "kgPorUnidade": 1.8, "infoUM": "Bisnaga c/ 1,8 Kg", "precoKg": 18.02}, {"mpid": "f_SANTA_CLARA__14065", "codigo": "14065", "nome": "LEITE", "fornecedorId": "f_SANTA_CLARA", "fornecedorNome": "SANTA CLARA", "unidade": "Cx", "kgPorUnidade": 12.0, "infoUM": "Caixa c/ 12 Lt", "precoKg": 4.7}, {"mpid": "f_SANTA_CLARA__14121", "codigo": "14121", "nome": "NATA( CREME DE LEITE)", "fornecedorId": "f_SANTA_CLARA", "fornecedorNome": "SANTA CLARA", "unidade": "balde", "kgPorUnidade": 3.5, "infoUM": "Caixa c/ 12x Pote 300 Gr", "precoKg": 19.11}, {"mpid": "f_VIGOR__14147", "codigo": "14147", "nome": "MARGARINA  AMÉLIA 80% GORDURA", "fornecedorId": "f_VIGOR", "fornecedorNome": "VIGOR", "unidade": "Bd", "kgPorUnidade": 14.5, "infoUM": "Balde c/ 14,5 kg", "precoKg": 8.76}, {"mpid": "f_SEARA_ALIMENTOS__14069", "codigo": "14069", "nome": "MARGARINA FOLHADA", "fornecedorId": "f_SEARA_ALIMENTOS", "fornecedorNome": "SEARA ALIMENTOS", "unidade": "Cx", "kgPorUnidade": 12.0, "infoUM": "Caixa c/ 12 kg", "precoKg": 16.04}, {"mpid": "f_COAMO__14068", "codigo": "14068", "nome": "MARGARINA COAMO 80% PÃO DE QUEIJO", "fornecedorId": "f_COAMO", "fornecedorNome": "COAMO", "unidade": "Bd", "kgPorUnidade": 14.5, "infoUM": "Balde c/ 14,5 kg", "precoKg": 9.14}, {"mpid": "f_COAMO__14149", "codigo": "14149", "nome": "MARGARINA CREMOSA 60% GORDURA REFEITORIO", "fornecedorId": "f_COAMO", "fornecedorNome": "COAMO", "unidade": "Cx", "kgPorUnidade": 6.0, "infoUM": "Caixa com 12un de 500gr", "precoKg": 9.66}, {"mpid": "f_COAMO__14082", "codigo": "14082", "nome": "OLEO DE SOJA", "fornecedorId": "f_COAMO", "fornecedorNome": "COAMO", "unidade": "Cx", "kgPorUnidade": 18.0, "infoUM": "Caixa c/ 18 Lt (0,9 ml cada)", "precoKg": 8.8}, {"mpid": "f_PAO_FORTE__14003", "codigo": "14003", "nome": "AÇUCAR CONCENTRADO", "fornecedorId": "f_PAO_FORTE", "fornecedorNome": "PÃO FORTE", "unidade": "Kg", "kgPorUnidade": 1.0, "infoUM": "1 Kg", "precoKg": 169.0}, {"mpid": "f_PAO_FORTE__14083", "codigo": "14083", "nome": "OLEO EMULSIFICANTE", "fornecedorId": "f_PAO_FORTE", "fornecedorNome": "PÃO FORTE", "unidade": "Gl", "kgPorUnidade": 5.0, "infoUM": "Garrafa c/ 5 Lt", "precoKg": 31.8}, {"mpid": "f_PAO_FORTE__14107", "codigo": "14107", "nome": "RETARDADOR", "fornecedorId": "f_PAO_FORTE", "fornecedorNome": "PÃO FORTE", "unidade": "Cx", "kgPorUnidade": 5.0, "infoUM": "Caixa c/ 5 Kg cada", "precoKg": 22.0}, {"mpid": "f_NATURAOVOS__14085", "codigo": "14085", "nome": "OVO EM PÓ (DESIDRATADO)", "fornecedorId": "f_NATURAOVOS", "fornecedorNome": "NATURAOVOS", "unidade": "Kg", "kgPorUnidade": 1.0, "infoUM": "1 Kg", "precoKg": 50.5}, {"mpid": "f_CISBRA__14112", "codigo": "14112", "nome": "SEMENTE DE LINHAÇA", "fornecedorId": "f_CISBRA", "fornecedorNome": "CISBRA", "unidade": "Sc", "kgPorUnidade": 25.0, "infoUM": "Saco c/ 25 Kg", "precoKg": 9.5}, {"mpid": "f_CISBRA__14063", "codigo": "14063", "nome": "GRANOLA 7 CEREAIS", "fornecedorId": "f_CISBRA", "fornecedorNome": "CISBRA", "unidade": "Sc", "kgPorUnidade": 25.0, "infoUM": "Saco c/ 25 Kg", "precoKg": 9.15}, {"mpid": "f_MULTISOY__14096", "codigo": "14096", "nome": "PROTEINA TEXTURIZADA CARAMELO (CL4000-12)", "fornecedorId": "f_MULTISOY", "fornecedorNome": "MULTISOY", "unidade": "Sc", "kgPorUnidade": 12.0, "infoUM": "Saco c/ 20kg", "precoKg": 14.0}, {"mpid": "f_MULTISOY__14094", "codigo": "14094", "nome": "PROTEINA SABOR CEBOLA E SALSA (CLCS4000-10)", "fornecedorId": "f_MULTISOY", "fornecedorNome": "MULTISOY", "unidade": "Sc", "kgPorUnidade": 10.0, "infoUM": "Saco c/ 10 Kg", "precoKg": 18.9}, {"mpid": "f_MULTISOY__14095", "codigo": "14095", "nome": "PROTEINA SABOR PICANHA", "fornecedorId": "f_MULTISOY", "fornecedorNome": "MULTISOY", "unidade": "Sc", "kgPorUnidade": 10.0, "infoUM": "Saco c/ 10 Kg", "precoKg": 24.9}, {"mpid": "f_MULTISOY__14133", "codigo": "14133", "nome": "PROTEINA TEXTURIZADA NATURAL FRANGO (FNLG3000-10)", "fornecedorId": "f_MULTISOY", "fornecedorNome": "MULTISOY", "unidade": "Sc", "kgPorUnidade": 10.0, "infoUM": "Saco c/ 10 Kg", "precoKg": 20.9}, {"mpid": "f_MULTISOY__14097", "codigo": "14097", "nome": "PROTEINA SABOR PRESUNTO ( codigo FPPE3000-10 )", "fornecedorId": "f_MULTISOY", "fornecedorNome": "MULTISOY", "unidade": "Sc", "kgPorUnidade": 10.0, "infoUM": "Saco c/ 10 Kg", "precoKg": 22.0}, {"mpid": "f_MULTISOY__14134", "codigo": "14134", "nome": "PROTEINA TEXTURIZADA NATURAL RED BORDO", "fornecedorId": "f_MULTISOY", "fornecedorNome": "MULTISOY", "unidade": "Sc", "kgPorUnidade": 7.0, "infoUM": "Saco c/ 15 Kg", "precoKg": 17.85}, {"mpid": "f_NUTRIMENTAL__14059", "codigo": "14059", "nome": "FLOCOS DE BATATA", "fornecedorId": "f_NUTRIMENTAL", "fornecedorNome": "NUTRIMENTAL", "unidade": "Sc", "kgPorUnidade": 20.0, "infoUM": "Saco c/ 20 Kg", "precoKg": 23.69}, {"mpid": "f_DAXIA__14114", "codigo": "14114", "nome": "SORO DE LEITE EM PO", "fornecedorId": "f_DAXIA", "fornecedorNome": "DAXIA", "unidade": "Sc", "kgPorUnidade": 25.0, "infoUM": "Saco c/ 25 Kg", "precoKg": 12.5}, {"mpid": "f_SOORO_RENNER__14114", "codigo": "14114", "nome": "SORO DE LEITE EM PO", "fornecedorId": "f_SOORO_RENNER", "fornecedorNome": "SOORO RENNER", "unidade": "Sc", "kgPorUnidade": 25.0, "infoUM": "Saco c/ 25 Kg", "precoKg": 12.5}, {"mpid": "f_PODIUM_ANHUMAI__14073", "codigo": "14073", "nome": "MISTURA DE PÃO DE QUEIJO RECHEADO (6520)", "fornecedorId": "f_PODIUM_ANHUMAI", "fornecedorNome": "PODIUM (ANHUMAI)", "unidade": "Sc", "kgPorUnidade": 20.0, "infoUM": "Saco c/ 20 Kg", "precoKg": 7.6}, {"mpid": "f_PODIUM_ANHUMAI__14074", "codigo": "14074", "nome": "MISTURA PARA PÃO DE QUEIJO NORMAL (651)", "fornecedorId": "f_PODIUM_ANHUMAI", "fornecedorNome": "PODIUM (ANHUMAI)", "unidade": "Sc", "kgPorUnidade": 25.0, "infoUM": "Saco c/ 25 Kg", "precoKg": 6.38}, {"mpid": "f_PODIUM_ANHUMAI__14154", "codigo": "14154", "nome": "AMIDO NOVO PSE560", "fornecedorId": "f_PODIUM_ANHUMAI", "fornecedorNome": "PODIUM (ANHUMAI)", "unidade": "Kg", "kgPorUnidade": 1.0, "infoUM": "1 Kg", "precoKg": 6.39}, {"mpid": "f_PODIUM_ANHUMAI__3968", "codigo": "3968", "nome": "AMIDO ESPECIAL PODIUM 100", "fornecedorId": "f_PODIUM_ANHUMAI", "fornecedorNome": "PODIUM (ANHUMAI)", "unidade": "Sc", "kgPorUnidade": 25.0, "infoUM": "Saco c/ 25 Kg", "precoKg": 7.39}, {"mpid": "f_FECULARIA_DO_VALE__14092", "codigo": "14092", "nome": "POLVILHO", "fornecedorId": "f_FECULARIA_DO_VALE", "fornecedorNome": "FECULARIA DO VALE", "unidade": "Sc", "kgPorUnidade": 25.0, "infoUM": "Saco c/ 25 Kg", "precoKg": 7.2}, {"mpid": "f_G_MANFIO_CIA_LTDA__14019", "codigo": "14019", "nome": "CALDO DE GALINHA", "fornecedorId": "f_G_MANFIO_CIA_LTDA", "fornecedorNome": "G. MANFIO & CIA. LTDA.", "unidade": "Cx", "kgPorUnidade": 10.5, "infoUM": "Caixa c/ 10,5 kg"}, {"mpid": "f_CRISTIANE_ALMEIDA_ESPINDOLA__14046", "codigo": "14046", "nome": "FARINHA DE ROSCA", "fornecedorId": "f_CRISTIANE_ALMEIDA_ESPINDOLA", "fornecedorNome": "CRISTIANE ALMEIDA ESPINDOLA", "unidade": "Kg", "kgPorUnidade": 1.0, "infoUM": "1 Kg", "precoKg": 7.0}, {"mpid": "f_KEM_DISTRIBUIDORA__14155", "codigo": "14155", "nome": "SABOR A MI COM PIMENTA", "fornecedorId": "f_KEM_DISTRIBUIDORA", "fornecedorNome": "KEM DISTRIBUIDORA", "unidade": "Bd", "kgPorUnidade": 5.0, "infoUM": ""}, {"mpid": "f_REFORPAN__14062", "codigo": "14062", "nome": "GOTAS PINGO CHOCOLATE", "fornecedorId": "f_REFORPAN", "fornecedorNome": "REFORPAN", "unidade": "Cx", "kgPorUnidade": 10.0, "infoUM": "Caixa c/ 10kg", "precoKg": 20.83}, {"mpid": "f_REFORPAN__14630", "codigo": "14630", "nome": "CHOCOLATE EM BARRA 6gr", "fornecedorId": "f_REFORPAN", "fornecedorNome": "REFORPAN", "unidade": "Cx", "kgPorUnidade": 10.0, "infoUM": "Caixa c/ 10kg", "precoKg": 28.2}, {"mpid": "f_REFORPAN__14026", "codigo": "14026", "nome": "CHOCOLATE AO LEITE EM BARRA 24gr", "fornecedorId": "f_REFORPAN", "fornecedorNome": "REFORPAN", "unidade": "Cx", "kgPorUnidade": 10.0, "infoUM": "Caixa c/ 10kg", "precoKg": 21.49}, {"mpid": "f_EMULZINT__14150", "codigo": "14150", "nome": "OVAM25 Lubrificante para fins alimenticios (608419)", "fornecedorId": "f_EMULZINT", "fornecedorNome": "EMULZINT", "unidade": "Cx", "kgPorUnidade": 9.2, "infoUM": "Caixa com 9,2L", "precoKg": 32.96}, {"mpid": "f_EMULZINT__14061", "codigo": "14061", "nome": "GOIABADA", "fornecedorId": "f_EMULZINT", "fornecedorNome": "EMULZINT", "unidade": "Bd", "kgPorUnidade": 25.0, "infoUM": "Balde c/ 25 Kg", "precoKg": 17.66}, {"mpid": "f_FRIMESA__14035", "codigo": "14035", "nome": "DOCE DE LEITE", "fornecedorId": "f_FRIMESA", "fornecedorNome": "FRIMESA", "unidade": "Bd", "kgPorUnidade": 4.8, "infoUM": "Balde c/ 4,8 kg", "precoKg": 15.25}, {"mpid": "f_LUNARDI__14006", "codigo": "14006", "nome": "AIPIM", "fornecedorId": "f_LUNARDI", "fornecedorNome": "LUNARDI", "unidade": "Kg", "kgPorUnidade": 1.0, "infoUM": "1 Kg", "precoKg": 6.0}, {"mpid": "f_AGRA__14125", "codigo": "14125", "nome": "COXÃO DURO", "fornecedorId": "f_AGRA", "fornecedorNome": "AGRA", "unidade": "Kg", "kgPorUnidade": 1.0, "infoUM": "", "precoKg": 36.4}, {"mpid": "f_AGRA__14033", "codigo": "14033", "nome": "ACEM", "fornecedorId": "f_AGRA", "fornecedorNome": "AGRA", "unidade": "Kg", "kgPorUnidade": 1.0, "infoUM": "", "precoKg": 32.5}, {"mpid": "f_CALLEGARO__14125", "codigo": "14125", "nome": "COXÃO DURO", "fornecedorId": "f_CALLEGARO", "fornecedorNome": "CALLEGARO", "unidade": "Kg", "kgPorUnidade": 1.0, "infoUM": "1 Kg", "precoKg": 36.5}, {"mpid": "f_CALLEGARO__14033", "codigo": "14033", "nome": "ACEM", "fornecedorId": "f_CALLEGARO", "fornecedorNome": "CALLEGARO", "unidade": "Kg", "kgPorUnidade": 1.0, "infoUM": "1 Kg", "precoKg": 32.5}, {"mpid": "f_MINERVA_FOODS__14125", "codigo": "14125", "nome": "COXÃO DURO", "fornecedorId": "f_MINERVA_FOODS", "fornecedorNome": "MINERVA FOODS", "unidade": "Kg", "kgPorUnidade": 1.0, "infoUM": "1 Kg", "precoKg": 34.7}, {"mpid": "f_MINERVA_FOODS__14033", "codigo": "14033", "nome": "ACEM", "fornecedorId": "f_MINERVA_FOODS", "fornecedorNome": "MINERVA FOODS", "unidade": "Kg", "kgPorUnidade": 1.0, "infoUM": "1 Kg", "precoKg": 30.49}, {"mpid": "f_MB_FOODS_PORCIONADO__14125", "codigo": "14125", "nome": "COXÃO DURO", "fornecedorId": "f_MB_FOODS_PORCIONADO", "fornecedorNome": "MB FOODS PORCIONADO", "unidade": "Kg", "kgPorUnidade": 1.0, "infoUM": "1 Kg", "precoKg": 26.5}, {"mpid": "f_MB_FOODS_PORCIONADO__14033", "codigo": "14033", "nome": "ACEM EM CUBOS", "fornecedorId": "f_MB_FOODS_PORCIONADO", "fornecedorNome": "MB FOODS PORCIONADO", "unidade": "Kg", "kgPorUnidade": 1.0, "infoUM": "1 Kg", "precoKg": 32.5}, {"mpid": "f_FORTUNCERES_MINERVA__14125", "codigo": "14125", "nome": "COXÃO DURO", "fornecedorId": "f_FORTUNCERES_MINERVA", "fornecedorNome": "FORTUNCERES MINERVA", "unidade": "Kg", "kgPorUnidade": 1.0, "infoUM": "1 Kg", "precoKg": 33.99}, {"mpid": "f_FORTUNCERES_MINERVA__14033", "codigo": "14033", "nome": "ACEM", "fornecedorId": "f_FORTUNCERES_MINERVA", "fornecedorNome": "FORTUNCERES MINERVA", "unidade": "Kg", "kgPorUnidade": 1.0, "infoUM": "1 Kg", "precoKg": 28.99}, {"mpid": "f_PEZZI__14017", "codigo": "14017", "nome": "CAFÉ", "fornecedorId": "f_PEZZI", "fornecedorNome": "PEZZI", "unidade": "Cx", "kgPorUnidade": 10.0, "infoUM": "Caixa c/ 10 Kg", "precoKg": 69.98}, {"mpid": "f_PEZZI__14082", "codigo": "14082", "nome": "OLEO DE SOJA", "fornecedorId": "f_PEZZI", "fornecedorNome": "PEZZI", "unidade": "Cx", "kgPorUnidade": 18.0, "infoUM": "Caixa c/ 18 Lt (0,9 ml cada)", "precoKg": 7.21}, {"mpid": "f_PEZZI__14119", "codigo": "14119", "nome": "VINAGRE ALCOOL 750ML", "fornecedorId": "f_PEZZI", "fornecedorNome": "PEZZI", "unidade": "Gl", "kgPorUnidade": 0.75, "infoUM": "Gl c/ 750ml", "precoKg": 3.32}, {"mpid": "f_PEZZI__14005", "codigo": "14005", "nome": "AÇUCAR REFINADO", "fornecedorId": "f_PEZZI", "fornecedorNome": "PEZZI", "unidade": "Kg", "kgPorUnidade": 1.0, "infoUM": "1 Kg", "precoKg": 4.79}, {"mpid": "f_FRITZ_E_FRIDA__14109", "codigo": "14109", "nome": "SAL", "fornecedorId": "f_FRITZ_E_FRIDA", "fornecedorNome": "FRITZ E FRIDA", "unidade": "Kg", "kgPorUnidade": 1.0, "infoUM": "1 Kg", "precoKg": 2.19}, {"mpid": "f_FRITZ_E_FRIDA__14122", "codigo": "14122", "nome": "MASSA ESPAGUETE", "fornecedorId": "f_FRITZ_E_FRIDA", "fornecedorNome": "FRITZ E FRIDA", "unidade": "Fd", "kgPorUnidade": 10.0, "infoUM": "Fardo c/ 10 Kg", "precoKg": 5.48}, {"mpid": "f_FRITZ_E_FRIDA__14009", "codigo": "14009", "nome": "AMACIANTE DE CARNE", "fornecedorId": "f_FRITZ_E_FRIDA", "fornecedorNome": "FRITZ E FRIDA", "unidade": "Cx", "kgPorUnidade": 1.1, "infoUM": "Caixa c/ 10,1 Kg", "precoKg": 11.67}, {"mpid": "f_FRITZ_E_FRIDA__14110", "codigo": "14110", "nome": "SAL GROSSO", "fornecedorId": "f_FRITZ_E_FRIDA", "fornecedorNome": "FRITZ E FRIDA", "unidade": "Fd", "kgPorUnidade": 15.0, "infoUM": "Fardo c/ 15 Kg", "precoKg": 2.39}, {"mpid": "f_FRITZ_E_FRIDA__14122__2", "codigo": "14122", "nome": "MASSA PENNE", "fornecedorId": "f_FRITZ_E_FRIDA", "fornecedorNome": "FRITZ E FRIDA", "unidade": "Fd", "kgPorUnidade": 10.0, "infoUM": "Fardo c/ 10 Kg", "precoKg": 6.58}, {"mpid": "f_FRITZ_E_FRIDA__14010", "codigo": "14010", "nome": "ARROZ", "fornecedorId": "f_FRITZ_E_FRIDA", "fornecedorNome": "FRITZ E FRIDA", "unidade": "Fd", "kgPorUnidade": 10.0, "infoUM": "Fardo c/ 10 Kg", "precoKg": 3.89}, {"mpid": "f_FRITZ_E_FRIDA__14053", "codigo": "14053", "nome": "FEIJÃO PRETO", "fornecedorId": "f_FRITZ_E_FRIDA", "fornecedorNome": "FRITZ E FRIDA", "unidade": "Fd", "kgPorUnidade": 10.0, "infoUM": "Fardo c/ 10 Kg", "precoKg": 6.49}, {"mpid": "f_FRITZ_E_FRIDA__14004", "codigo": "14004", "nome": "AÇUCAR CRISTAL", "fornecedorId": "f_FRITZ_E_FRIDA", "fornecedorNome": "FRITZ E FRIDA", "unidade": "Fd", "kgPorUnidade": 10.0, "infoUM": "Fardo c/ 10 Kg", "precoKg": 3.39}, {"mpid": "f_FRITZ_E_FRIDA__14066", "codigo": "14066", "nome": "LENTILHA", "fornecedorId": "f_FRITZ_E_FRIDA", "fornecedorNome": "FRITZ E FRIDA", "unidade": "KG", "kgPorUnidade": 1.0, "infoUM": ""}, {"mpid": "f_FRITZ_E_FRIDA__14152", "codigo": "14152", "nome": "PIMENTA PRETA", "fornecedorId": "f_FRITZ_E_FRIDA", "fornecedorNome": "FRITZ E FRIDA", "unidade": "KG", "kgPorUnidade": 1.0, "infoUM": "", "precoKg": 69.98}, {"mpid": "f_FRITZ_E_FRIDA__14088", "codigo": "14088", "nome": "PAPRICA DOCE", "fornecedorId": "f_FRITZ_E_FRIDA", "fornecedorNome": "FRITZ E FRIDA", "unidade": "KG", "kgPorUnidade": 1.0, "infoUM": "", "precoKg": 34.76}, {"mpid": "f_FRITZ_E_FRIDA__14016", "codigo": "14016", "nome": "CACHAÇA", "fornecedorId": "f_FRITZ_E_FRIDA", "fornecedorNome": "FRITZ E FRIDA", "unidade": "L", "kgPorUnidade": 0.81, "infoUM": "Garrafa", "precoKg": 9.77}, {"mpid": "f_FRITZ_E_FRIDA__14020", "codigo": "14020", "nome": "CALDO DE LEGUMES", "fornecedorId": "f_FRITZ_E_FRIDA", "fornecedorNome": "FRITZ E FRIDA", "unidade": "CX", "kgPorUnidade": 10.1, "infoUM": "", "precoKg": 14.94}, {"mpid": "f_FRITZ_E_FRIDA__14076", "codigo": "14076", "nome": "MOLHO INGLES", "fornecedorId": "f_FRITZ_E_FRIDA", "fornecedorNome": "FRITZ E FRIDA", "unidade": "BALDE", "kgPorUnidade": 1.0, "infoUM": "", "precoKg": 6.88}, {"mpid": "f_FRITZ_E_FRIDA__14022", "codigo": "14022", "nome": "CATCHUP", "fornecedorId": "f_FRITZ_E_FRIDA", "fornecedorNome": "FRITZ E FRIDA", "unidade": "BALDE", "kgPorUnidade": 3.0, "infoUM": "", "precoKg": 11.96}, {"mpid": "f_FRITZ_E_FRIDA__14080", "codigo": "14080", "nome": "MOSTARDA", "fornecedorId": "f_FRITZ_E_FRIDA", "fornecedorNome": "FRITZ E FRIDA", "unidade": "BALDE", "kgPorUnidade": 3.0, "infoUM": "", "precoKg": 10.29}, {"mpid": "f_FRITZ_E_FRIDA__14119", "codigo": "14119", "nome": "VINAGRE ALCOOL 750ML", "fornecedorId": "f_FRITZ_E_FRIDA", "fornecedorNome": "FRITZ E FRIDA", "unidade": "UN", "kgPorUnidade": 0.75, "infoUM": "", "precoKg": 2.79}, {"mpid": "f_FRITZ_E_FRIDA__14021", "codigo": "14021", "nome": "CANELA", "fornecedorId": "f_FRITZ_E_FRIDA", "fornecedorNome": "FRITZ E FRIDA", "unidade": "KG", "kgPorUnidade": 1.0, "infoUM": "", "precoKg": 90.98}, {"mpid": "f_FRITZ_E_FRIDA__14001", "codigo": "14001", "nome": "AMIDO DE MILHO SACO 25KG", "fornecedorId": "f_FRITZ_E_FRIDA", "fornecedorNome": "FRITZ E FRIDA", "unidade": "SC", "kgPorUnidade": 25.0, "infoUM": "", "precoKg": 5.4}, {"mpid": "f_FRITZ_E_FRIDA__14045", "codigo": "14045", "nome": "FARINHA DE MILHO MEDIA", "fornecedorId": "f_FRITZ_E_FRIDA", "fornecedorNome": "FRITZ E FRIDA", "unidade": "Kg", "kgPorUnidade": 1.0, "infoUM": "", "precoKg": 3.39}, {"mpid": "f_FRITZ_E_FRIDA__14050", "codigo": "14050", "nome": "FARINHA MANDIOCA", "fornecedorId": "f_FRITZ_E_FRIDA", "fornecedorNome": "FRITZ E FRIDA", "unidade": "KG", "kgPorUnidade": 0.5, "infoUM": "", "precoKg": 3.39}];
+async function compCarregarCatalogo(){
+  if(!confirm('Carregar o catálogo padrão? Isso cadastra/atualiza '+_compSeedFornecedores.length+' fornecedores e '+_compSeedItens.length+' itens. Dados de contato já preenchidos são mantidos.')) return;
+  try{
+    const ws=[];
+    _compSeedFornecedores.forEach(f=>{ ws.push(setDoc(doc(db,'comprasFornecedores',f.id),{nome:f.nome, codigo:f.codigo||'', atualizadoEm:agora()},{merge:true})); });
+    _compSeedItens.forEach(it=>{ const dd={ codigo:it.codigo, nome:it.nome, fornecedorId:it.fornecedorId, fornecedorNome:it.fornecedorNome, unidade:it.unidade||'un', kgPorUnidade:it.kgPorUnidade||1, infoUM:it.infoUM||'', ativo:true, atualizadoEm:agora() }; if(it.precoKg>0) dd.precoKg=it.precoKg; ws.push(setDoc(doc(db,'comprasMP',it.mpid),dd,{merge:true})); });
+    // processa em lotes para não estourar
+    for(let i=0;i<ws.length;i+=40){ await Promise.all(ws.slice(i,i+40)); }
+    alert('✅ Catálogo carregado!\n\n'+_compSeedFornecedores.length+' fornecedores e '+_compSeedItens.length+' itens cadastrados.');
+  }catch(e){ alert('Erro ao carregar catálogo: '+e.message); }
+}
+window.compCarregarCatalogo=compCarregarCatalogo;
+
+function _numIn(v){ if(v==null)return 0; return parseFloat(String(v).replace(/\s/g,'').replace(/\./g,match=> '' ).replace(',','.'))||0; }
+function _slug(s){ return _normNome(s).replace(/[^A-Z0-9]+/g,'_').replace(/^_|_$/g,'')||'x'; }
+function _compForn(id){ return comprasFornecedores.find(f=>f.firestoreId===id)||null; }
+function _compCatalogoDo(fornId){ return comprasMP.filter(m=>m.fornecedorId===fornId && m.ativo!==false).sort((a,b)=>_normNome(a.nome).localeCompare(_normNome(b.nome))); }
+function _compStatusInfo(s){
+  if(s==='confirmado') return {label:'Confirmado p/ gerar OC',cor:'#2563eb',bg:'rgba(37,99,235,.10)',emoji:'✅'};
+  if(s==='oc_gerada'||s==='recebido') return {label:'OC gerada',cor:'#16a34a',bg:'rgba(22,163,74,.10)',emoji:'📄'};
+  return {label:'Solicitado',cor:'#d97706',bg:'rgba(217,119,6,.10)',emoji:'📝'}; // solicitado / rascunho / pronto (legado)
+}
+function _compPedidoAberto(fornId){ return comprasPedidos.filter(p=>p.fornecedorId===fornId && p.status!=='oc_gerada' && p.status!=='recebido' && p.status!=='cancelado').sort((a,b)=>(b.criadoEm2||0)-(a.criadoEm2||0))[0]||null; }
+function _compPendentesReq(){ return comprasPedidos.filter(p=>p.status!=='oc_gerada' && p.status!=='recebido' && p.status!=='cancelado' && (p.itens||[]).length>0).length; }
+function _compAtualizarBadge(){ const n=_compPendentesReq(); document.querySelectorAll('.comp-badge').forEach(b=>{ b.textContent=n; b.style.display=n>0?'inline-flex':'none'; }); }
+function _comprasHistItem(cod){
+  const out=[]; const c=String(cod).trim();
+  comprasPedidos.forEach(p=>{ (p.itens||[]).forEach(it=>{ if(String(it.codigo).trim()===c){ out.push({data:p.criadoEm||'', fornecedor:p.fornecedorNome||'', qtd:it.qtd, unidade:it.unidade, kg:it.kg, precoKg:it.precoKg, total:it.total, status:p.status}); } }); });
+  return out.sort((a,b)=>(b.data||'').localeCompare(a.data||'')).slice(0,12);
+}
+
+// ---------- HUB ----------
+function _compFornCardHtml(f){
+  const ped=_compPedidoAberto(f.firestoreId);
+  const si=ped?_compStatusInfo(ped.status):null;
+  const nItens=_compCatalogoDo(f.firestoreId).length;
+  return '<div class="card" style="margin-bottom:8px;cursor:pointer;" onclick="compAbrirPedido(\''+f.firestoreId+'\')">'+
+    '<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;">'+
+      '<div style="flex:1;min-width:0;">'+
+        '<div style="font-size:15px;font-weight:700;">'+f.nome+(f.codigo?' <span style="font-size:11px;color:var(--text-secondary);font-weight:500;">('+f.codigo+')</span>':'')+'</div>'+
+        '<div style="font-size:11px;color:var(--text-secondary);margin-top:2px;">'+(f.diaEntrega?'📅 '+f.diaEntrega+' · ':'')+nItens+' item(ns)'+(f.vendedor?' · 👤 '+f.vendedor:'')+'</div>'+
+      '</div>'+
+      (si? '<span style="font-size:10px;font-weight:700;color:'+si.cor+';background:'+si.bg+';border-radius:99px;padding:3px 9px;white-space:nowrap;">'+si.emoji+' '+si.label+(ped.totalRS?' · '+_fmtRS(ped.totalRS):'')+'</span>' : '<span style="font-size:11px;color:var(--mc-azul);white-space:nowrap;">+ novo pedido</span>')+
+      '<span style="color:var(--text-muted);font-size:18px;">›</span>'+
+    '</div>'+
+  '</div>';
+}
+function setCompHubBusca(v){ _compHubBusca=v; renderCompras(); const inp=document.getElementById('comp-hub-busca'); if(inp){ inp.focus(); const n=inp.value.length; try{inp.setSelectionRange(n,n);}catch(e){} } }
+window.setCompHubBusca=setCompHubBusca;
+function renderCompras(){
+  const el=document.getElementById('comp-hub-content'); if(!el) return;
+  let html='';
+  html+='<div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;">'+
+    '<button class="btn btn-secondary" style="flex:1;min-width:130px;" onclick="goTo(\'s-compras-fornlist\')">🏢 Fornecedores</button>'+
+    '<button class="btn btn-secondary" style="flex:1;min-width:130px;" onclick="goTo(\'s-compras-hist\')">📋 Histórico</button>'+
+    '<button class="btn btn-secondary" style="flex:1;min-width:130px;" onclick="compCarregarCatalogo()">📦 Carregar catálogo</button>'+
+    '<label class="btn btn-secondary" style="flex:1;min-width:130px;text-align:center;cursor:pointer;">📥 Importar planilha<input type="file" accept=".xlsx,.xls" style="display:none" onchange="importarComprasPlanilha(this)"></label>'+
+    '</div>';
+
+  if(!comprasFornecedores.length){
+    el.innerHTML=html+'<div class="card" style="text-align:center;padding:24px;"><div style="font-size:15px;font-weight:700;margin-bottom:6px;">Nenhum fornecedor ainda</div><div style="font-size:13px;color:var(--text-secondary);margin-bottom:12px;">Clique em "📦 Carregar catálogo" para cadastrar os fornecedores e produtos, ou importe sua planilha.</div><button class="btn btn-primary" onclick="compCarregarCatalogo()">📦 Carregar catálogo</button></div>';
+    return;
+  }
+
+  // busca por fornecedor OU produto
+  html+='<input type="text" id="comp-hub-busca" value="'+(_compHubBusca||'').replace(/"/g,'&quot;')+'" oninput="setCompHubBusca(this.value)" placeholder="🔍 Buscar fornecedor ou produto..." style="width:100%;font-size:15px;padding:12px 14px;border-radius:10px;border:1px solid var(--border-md,#d1d5db);box-sizing:border-box;margin-bottom:12px;">';
+
+  const q=_compHubBusca?_normNome(_compHubBusca):'';
+  if(q){
+    // Fornecedores que batem no nome
+    const fornMatch=comprasFornecedores.filter(f=>_normNome(f.nome+' '+(f.codigo||'')).includes(q)).sort((a,b)=>_normNome(a.nome).localeCompare(_normNome(b.nome)));
+    // Produtos que batem — mostra todos os fornecedores que têm aquele produto
+    const itMatch=comprasMP.filter(m=>m.ativo!==false && _normNome(m.nome+' '+m.codigo).includes(q))
+      .sort((a,b)=>_normNome(a.nome).localeCompare(_normNome(b.nome))||_normNome(a.fornecedorNome).localeCompare(_normNome(b.fornecedorNome)));
+    if(fornMatch.length){
+      html+='<div style="font-size:12px;font-weight:800;color:var(--mc-azul);margin:6px 0 6px;">🏢 Fornecedores ('+fornMatch.length+')</div>';
+      html+=fornMatch.map(_compFornCardHtml).join('');
+    }
+    if(itMatch.length){
+      html+='<div style="font-size:12px;font-weight:800;color:var(--mc-verde);margin:14px 0 6px;">📦 Produtos ('+itMatch.length+') — toque para pedir no fornecedor</div>';
+      html+=itMatch.slice(0,60).map(m=>{
+        const f=_compForn(m.fornecedorId)||{};
+        return '<div class="card" style="margin-bottom:6px;cursor:pointer;padding:10px 12px;" onclick="compAbrirPedido(\''+m.fornecedorId+'\')">'+
+          '<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;">'+
+          '<div style="flex:1;min-width:0;"><div style="font-size:14px;font-weight:600;">'+m.nome+'</div>'+
+          '<div style="font-size:11px;color:var(--text-secondary);margin-top:1px;">🏢 '+(m.fornecedorNome||f.nome||'')+' · cód '+m.codigo+(m.unidade?' · '+m.unidade:'')+'</div></div>'+
+          (m.precoKg?'<div style="text-align:right;white-space:nowrap;"><div style="font-size:13px;font-weight:700;color:var(--mc-verde);">'+_fmtRS(m.precoKg)+'</div><div style="font-size:9px;color:var(--text-muted);">por kg</div></div>':'')+
+          '<span style="color:var(--text-muted);font-size:18px;">›</span>'+
+          '</div></div>';
+      }).join('');
+      if(itMatch.length>60) html+='<div style="font-size:11px;color:var(--text-secondary);text-align:center;padding:6px;">Mostrando 60 de '+itMatch.length+'. Refine a busca.</div>';
+    }
+    if(!fornMatch.length && !itMatch.length) html+='<div class="empty" style="padding:24px;">Nada encontrado para "'+_compHubBusca+'".</div>';
+    el.innerHTML=html;
+    return;
+  }
+
+  // sem busca: avisos + lista de fornecedores
+  const diaSemana=['domingo','segunda','terça','quarta','quinta','sexta','sábado'];
+  const hojeDia=diaSemana[new Date().getDay()];
+  const amanhaDia=diaSemana[(new Date().getDay()+1)%7];
+  const avisos=comprasFornecedores.filter(f=>{ const d=_normNome(f.diaEntrega||''); return d.includes(_normNome(hojeDia))||d.includes(_normNome(amanhaDia)); });
+  if(avisos.length){
+    html+='<div class="card" style="border-left:3px solid var(--mc-dourado);background:rgba(217,119,6,.06);margin-bottom:12px;"><div style="font-size:12px;font-weight:700;color:#d97706;">🔔 Entrega próxima</div><div style="font-size:12px;color:var(--text-secondary);margin-top:3px;">'+avisos.map(f=>f.nome+' ('+(f.diaEntrega||'')+')').join(' · ')+'</div></div>';
+  }
+  const nPronto=_compPendentesReq();
+  if(nPronto) html+='<div class="card" style="border-left:3px solid var(--mc-azul);margin-bottom:12px;"><div style="font-size:13px;font-weight:700;color:var(--mc-azul);">📝 '+nPronto+' pedido(s) em andamento nesta semana</div></div>';
+
+  html+=comprasFornecedores.slice().sort((a,b)=>_normNome(a.nome).localeCompare(_normNome(b.nome))).map(_compFornCardHtml).join('');
+  el.innerHTML=html;
+}
+
+// ---------- FORNECEDORES (cadastro) ----------
+function renderCompFornList(){
+  const el=document.getElementById('comp-fornlist-content'); if(!el) return;
+  let html='<button class="btn btn-primary" style="width:100%;margin-bottom:12px;" onclick="novoCompForn()">+ Novo fornecedor</button>';
+  if(!comprasFornecedores.length){ el.innerHTML=html+'<div class="empty" style="padding:20px;">Nenhum fornecedor cadastrado.</div>'; return; }
+  html+=comprasFornecedores.slice().sort((a,b)=>_normNome(a.nome).localeCompare(_normNome(b.nome))).map(f=>
+    '<div class="card" style="margin-bottom:8px;cursor:pointer;" onclick="editarCompForn(\''+f.firestoreId+'\')">'+
+      '<div style="display:flex;justify-content:space-between;align-items:center;">'+
+      '<div><div style="font-size:15px;font-weight:700;">'+f.nome+(f.codigo?' <span style="font-size:11px;color:var(--text-secondary);">('+f.codigo+')</span>':'')+'</div>'+
+      '<div style="font-size:11px;color:var(--text-secondary);margin-top:2px;">'+[f.diaEntrega?'📅 '+f.diaEntrega:'', f.vendedor?'👤 '+f.vendedor:'', f.contato?'📞 '+f.contato:'', f.tempoMedioEntrega?'⏱ '+f.tempoMedioEntrega:''].filter(Boolean).join(' · ')||'sem dados de contato'+'</div></div>'+
+      '<span style="color:var(--text-muted);font-size:18px;">›</span></div></div>'
+  ).join('');
+  el.innerHTML=html;
+}
+function novoCompForn(){ _compFornEdit={nome:'',codigo:'',contato:'',vendedor:'',tempoMedioEntrega:'',diaEntrega:'',obs:''}; goTo('s-compra-forncad'); renderCompFornCad(); }
+function editarCompForn(id){ const f=_compForn(id); if(!f) return; _compFornEdit=JSON.parse(JSON.stringify(f)); goTo('s-compra-forncad'); renderCompFornCad(); }
+function compFornSet(campo,val){ if(_compFornEdit) _compFornEdit[campo]=val; }
+window.compFornSet=compFornSet;
+function renderCompFornCad(){
+  const el=document.getElementById('comp-forncad-content'); if(!el||!_compFornEdit) return;
+  const f=_compFornEdit; const novo=!f.firestoreId;
+  const campo=(lbl,campo,val,ph,tipo)=>'<div style="margin-top:10px;"><div class="card-label">'+lbl+'</div><input type="'+(tipo||'text')+'" value="'+String(val||'').replace(/"/g,'&quot;')+'" oninput="compFornSet(\''+campo+'\',this.value)" placeholder="'+(ph||'')+'" style="width:100%;font-size:14px;padding:9px;border-radius:8px;border:1px solid var(--border-md,#d1d5db);box-sizing:border-box;"></div>';
+  let html='<div class="card">';
+  html+=campo('Nome do fornecedor','nome',f.nome,'Ex: CINDREIA');
+  html+=campo('Código','codigo',f.codigo,'Ex: 412');
+  html+=campo('Dia fixo de entrega','diaEntrega',f.diaEntrega,'Ex: Segunda / Segunda ou quarta');
+  html+=campo('Nome do vendedor','vendedor',f.vendedor,'Ex: João');
+  html+=campo('Contato (telefone)','contato',f.contato,'Ex: 51 99999-9999','tel');
+  html+=campo('Tempo médio de entrega','tempoMedioEntrega',f.tempoMedioEntrega,'Ex: 2 dias');
+  html+='<div style="margin-top:10px;"><div class="card-label">Observações</div><textarea oninput="compFornSet(\'obs\',this.value)" placeholder="Anotações sobre o fornecedor..." style="width:100%;min-height:60px;font-size:14px;padding:9px;border-radius:8px;border:1px solid var(--border-md,#d1d5db);box-sizing:border-box;font-family:inherit;resize:vertical;">'+(f.obs||'')+'</textarea></div>';
+  html+='<button class="btn btn-primary" style="width:100%;margin-top:14px;" onclick="salvarCompForn()">💾 '+(novo?'Cadastrar':'Salvar')+'</button>';
+  if(!novo) html+='<button class="btn btn-secondary" style="width:100%;margin-top:8px;border-color:#ef9a9a;color:#c62828;" onclick="excluirCompForn(\''+f.firestoreId+'\')">🗑 Excluir fornecedor</button>';
+  html+='</div>';
+  el.innerHTML=html;
+}
+async function salvarCompForn(){
+  const f=_compFornEdit; if(!f) return;
+  if(!(f.nome||'').trim()){ alert('Informe o nome do fornecedor.'); return; }
+  const dados={ nome:f.nome.trim(), codigo:(f.codigo||'').trim(), contato:f.contato||'', vendedor:f.vendedor||'', tempoMedioEntrega:f.tempoMedioEntrega||'', diaEntrega:f.diaEntrega||'', obs:f.obs||'', atualizadoEm:agora() };
+  try{
+    if(f.firestoreId){ await updateDoc(doc(db,'comprasFornecedores',f.firestoreId),dados); }
+    else{ const fid='f_'+_slug(f.nome); dados.criadoEm=agora(); await setDoc(doc(db,'comprasFornecedores',fid),dados,{merge:true}); }
+    goTo('s-compras-fornlist');
+  }catch(e){ alert('Erro: '+e.message); }
+}
+async function excluirCompForn(id){ if(!confirm('Excluir este fornecedor? Os itens e pedidos ligados a ele NÃO são apagados.')) return; try{ await deleteDoc(doc(db,'comprasFornecedores',id)); goTo('s-compras-fornlist'); }catch(e){ alert('Erro: '+e.message); } }
+
+// ---------- IMPORTAÇÃO ----------
+async function importarComprasPlanilha(input){
+  const file=input.files&&input.files[0]; if(!file) return;
+  try{
+    await new Promise((res,rej)=>{ if(window.XLSX){res();return;} const s=document.createElement('script'); s.src='https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js'; s.onload=res; s.onerror=rej; document.head.appendChild(s); });
+    const buf=await file.arrayBuffer();
+    const wb=XLSX.read(buf,{type:'array'});
+    const ws=wb.Sheets[wb.SheetNames[0]];
+    const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
+    if(!rows.length){ alert('Planilha vazia.'); input.value=''; return; }
+    const norm=s=>String(s).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
+    const head=(rows[0]||[]).map(norm);
+    const acha=(...alts)=>{ for(const a of alts){ const i=head.findIndex(h=>h===a||h.includes(a)); if(i>=0)return i; } return -1; };
+    const cForn=acha('fornecedor'), cCod=acha('cod','codigo'), cProd=acha('produto','nome','descricao'), cUM=acha('u.m','um','unidade'), cFator=acha('kg por unidade','kg/un','fator','kg por un'), cConv=acha('conv','conv.kg'), cQtd=acha('qtd','quantidade'), cPreco=acha('preco','preço','valor'), cDia=acha('datas fixas','dia','entrega');
+    if(cCod<0||cProd<0){ alert('Não encontrei as colunas de Código e Produto. A planilha precisa ter pelo menos: Fornecedor, Código, Produto, U.M, Kg por unidade, Preço Kg.'); input.value=''; return; }
+    let curForn=null, curFid=null, curDia='';
+    const fornWrites=[], mpWrites=[]; const fornVistos=new Set(); let nItens=0, nForn=0;
+    for(let i=1;i<rows.length;i++){
+      const r=rows[i]; if(!r) continue;
+      const fornCell=cForn>=0?String(r[cForn]||'').trim():'';
+      if(fornCell){ // novo bloco de fornecedor
+        let nome=fornCell, codf='';
+        const m=fornCell.match(/^(.*?)[\s]*\((\d+)\)\s*$/); if(m){ nome=m[1].trim(); codf=m[2]; }
+        curForn=nome; curFid='f_'+_slug(nome);
+        if(!fornVistos.has(curFid)){ fornVistos.add(curFid); nForn++; fornWrites.push(setDoc(doc(db,'comprasFornecedores',curFid),{nome:nome, codigo:codf, atualizadoEm:agora()},{merge:true})); }
+      }
+      const diaCell=cDia>=0?String(r[cDia]||'').trim():''; if(diaCell) curDia=diaCell;
+      const cod=String(r[cCod]||'').trim(); const prod=String(r[cProd]||'').trim();
+      if(!cod||!prod||!curFid) continue;
+      const unidade=cUM>=0?String(r[cUM]||'').trim():'';
+      let fator=cFator>=0?_numIn(r[cFator]):0;
+      if(!fator && cConv>=0 && cQtd>=0){ const cv=_numIn(r[cConv]), q=_numIn(r[cQtd]); if(q>0) fator=cv/q; }
+      if(!fator) fator=1;
+      const preco=cPreco>=0?_numIn(r[cPreco]):0;
+      const mpid=curFid+'__'+cod;
+      const dd={ codigo:cod, nome:prod, fornecedorId:curFid, fornecedorNome:curForn, unidade:unidade||'un', kgPorUnidade:fator, diaEntrega:curDia, ativo:true, atualizadoEm:agora() };
+      if(preco>0) dd.precoKg=preco;
+      mpWrites.push(setDoc(doc(db,'comprasMP',mpid),dd,{merge:true}));
+      nItens++;
+    }
+    await Promise.all([...fornWrites,...mpWrites]);
+    // grava dia de entrega nos fornecedores (do último visto por fornecedor) — opcional: pega o primeiro dia de cada
+    alert('✅ Importado!\n\nFornecedores: '+nForn+'\nItens de matéria-prima: '+nItens+'\n\nRevise os dados de contato de cada fornecedor em "Fornecedores".');
+  }catch(e){ alert('Erro ao importar: '+e.message); }
+  finally{ input.value=''; }
+}
+
+// ---------- PEDIDO POR FORNECEDOR ----------
+function compAbrirPedido(fornId){
+  _compFornSel=fornId; _compBusca=''; _compHistItem=null;
+  const ped=_compPedidoAberto(fornId);
+  _compPedido = ped || {fornecedorId:fornId, fornecedorNome:(_compForn(fornId)||{}).nome||'', status:'solicitado', itens:[], semana:(typeof semanaAtual==='function'?semanaAtual():'')};
+  _compQtd={}; _compPreco={}; _compObs={};
+  (_compPedido.itens||[]).forEach(it=>{ const k=it.mpKey||it.codigo; _compQtd[k]=it.qtd; _compPreco[k]=it.precoKg; _compObs[k]=it.obs||''; });
+  // preço padrão do catálogo quando não há no pedido
+  _compCatalogoDo(fornId).forEach(m=>{ const k=m.firestoreId; if(_compPreco[k]===undefined && m.precoKg) _compPreco[k]=m.precoKg; });
+  goTo('s-compra-forn'); renderCompraForn();
+}
+function compCopiarUltimo(){
+  const ant=comprasPedidos.filter(p=>p.fornecedorId===_compFornSel && p.firestoreId!==_compPedido.firestoreId && (p.itens||[]).length>0).sort((a,b)=>(b.criadoEm2||0)-(a.criadoEm2||0))[0];
+  if(!ant){ alert('Não há pedido anterior deste fornecedor para copiar.'); return; }
+  if(!confirm('Copiar as quantidades e preços do último pedido ('+(ant.criadoEm||'')+')?')) return;
+  (ant.itens||[]).forEach(it=>{ const k=it.mpKey||it.codigo; _compQtd[k]=it.qtd; if(it.precoKg) _compPreco[k]=it.precoKg; if(it.obs) _compObs[k]=it.obs; });
+  renderCompraForn();
+}
+window.compCopiarUltimo=compCopiarUltimo;
+function compFornEditarAtual(){ if(_compFornSel) editarCompForn(_compFornSel); }
+function renderCompraForn(){
+  const el=document.getElementById('comp-forn-content'); if(!el) return;
+  const f=_compForn(_compFornSel); if(!f){ el.innerHTML='<div class="empty">Fornecedor não encontrado.</div>'; return; }
+  const st=_compPedido.status||'solicitado'; const si=_compStatusInfo(st);
+  const bloqueado = (st==='oc_gerada'||st==='recebido');
+  const semLbl = (_compPedido.semana && typeof semanaLabel==='function')?semanaLabel(_compPedido.semana):'';
+  let html='';
+  // cabeçalho do fornecedor
+  html+='<div class="card" style="margin-bottom:10px;border-left:3px solid var(--mc-azul);">'+
+    '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">'+
+    '<div><div style="font-size:16px;font-weight:800;">'+f.nome+(f.codigo?' <span style="font-size:12px;color:var(--text-secondary);font-weight:500;">('+f.codigo+')</span>':'')+'</div>'+
+    '<div style="font-size:11px;color:var(--text-secondary);margin-top:3px;">'+[f.diaEntrega?'📅 '+f.diaEntrega:'', f.vendedor?'👤 '+f.vendedor:'', f.contato?'📞 '+f.contato:'', f.tempoMedioEntrega?'⏱ '+f.tempoMedioEntrega:''].filter(Boolean).join(' · ')||'sem dados de contato'+'</div></div>'+
+    '<button class="btn btn-secondary" style="font-size:12px;padding:6px 10px;white-space:nowrap;" onclick="compFornEditarAtual()">✏️ Editar</button>'+
+    '</div></div>';
+  // status + linha do tempo
+  html+='<div style="margin-bottom:10px;padding:8px 12px;border-radius:10px;background:'+si.bg+';border:1px solid '+si.cor+';">'+
+    '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">'+
+    '<span style="font-size:13px;font-weight:700;color:'+si.cor+';">'+si.emoji+' '+si.label+'</span>'+
+    (semLbl?'<span style="font-size:10px;color:var(--text-secondary);">· '+semLbl+'</span>':'')+
+    '</div>'+
+    '<div style="font-size:10px;color:var(--text-secondary);margin-top:3px;">'+
+    (_compPedido.solicitadoPor?'📝 Solicitado por '+_compPedido.solicitadoPor+(_compPedido.criadoEm?' em '+_compPedido.criadoEm:''):'')+
+    (_compPedido.confirmadoEm?' · ✅ Confirmado '+_compPedido.confirmadoEm+(_compPedido.confirmadoPor?' por '+_compPedido.confirmadoPor:''):'')+
+    (_compPedido.ocEm?' · 📄 OC gerada '+_compPedido.ocEm+(_compPedido.ocPor?' por '+_compPedido.ocPor:''):'')+
+    '</div>'+
+    ((_compPedido.previsaoEntrega||st==='confirmado'||st==='oc_gerada')?'<div style="font-size:12px;font-weight:700;color:var(--mc-verde);margin-top:5px;">🚚 Previsão de entrega: '+(_compPedido.previsaoEntrega||'— não definida')+(st!=='oc_gerada'?' <span onclick="compEditarPrevisao()" style="color:var(--mc-azul);font-weight:500;cursor:pointer;text-decoration:underline;font-size:11px;">editar</span>':'')+'</div>':'')+
+    (st==='confirmado'?'<div style="font-size:11px;color:var(--mc-azul);font-weight:600;margin-top:4px;">👉 Comprador deu OK. Gere a ordem de compra e confirme abaixo.</div>':'')+
+    (st==='solicitado'?'<div style="font-size:11px;color:#d97706;font-weight:600;margin-top:4px;">👉 Aguardando o comprador confirmar com o vendedor.</div>':'')+
+    '</div>';
+  // copiar último (quando pedido novo/vazio)
+  if(!bloqueado && !_compPedido.firestoreId){
+    html+='<button class="btn btn-secondary" style="width:100%;margin-bottom:10px;" onclick="compCopiarUltimo()">📋 Copiar quantidades do último pedido</button>';
+  }
+  // busca + novo item
+  if(!bloqueado){
+    html+='<input type="text" value="'+(_compBusca||'').replace(/"/g,'&quot;')+'" oninput="compBuscaSet(this.value)" placeholder="🔍 Buscar produto pelo nome ou código..." style="width:100%;font-size:15px;padding:12px 14px;border-radius:10px;border:1px solid var(--border-md,#d1d5db);box-sizing:border-box;margin-bottom:8px;">';
+    html+='<div style="display:flex;justify-content:flex-end;margin-bottom:8px;"><button class="btn btn-secondary" style="font-size:12px;padding:6px 12px;" onclick="compNovoItem()">+ Novo item</button></div>';
+  }
+  html+='<div id="comp-lista"></div>';
+  // rodapé fixo (subtotais + ações)
+  html+='<div id="comp-footer" style="position:sticky;bottom:0;background:var(--bg-page);padding-top:8px;margin-top:8px;border-top:1px solid var(--border);"></div>';
+  el.innerHTML=html;
+  compRenderLista();
+  compRenderFooter();
+}
+function compBuscaSet(v){ _compBusca=v; compRenderLista(); }
+window.compBuscaSet=compBuscaSet;
+function compRenderLista(){
+  const cont=document.getElementById('comp-lista'); if(!cont) return;
+  const st=_compPedido.status||'solicitado'; const bloqueado=(st==='oc_gerada'||st==='recebido');
+  let cat=_compCatalogoDo(_compFornSel);
+  if(bloqueado){ cat=cat.filter(m=>(parseFloat(_compQtd[m.firestoreId])||0)>0); } // requisição mostra só o pedido
+  if(_compBusca){ const q=_normNome(_compBusca); cat=cat.filter(m=>_normNome(m.nome+' '+m.codigo).includes(q)); }
+  if(!cat.length){ cont.innerHTML='<div class="empty" style="padding:18px;">'+(bloqueado?'Sem itens neste pedido.':'Nenhum item. Carregue o catálogo ou verifique o fornecedor.')+'</div>'; return; }
+  cont.innerHTML=cat.map((m,i)=>{
+    const k=m.firestoreId; const cod=m.codigo; const qtd=parseFloat(_compQtd[k])||0; const preco=parseFloat(_compPreco[k])||0;
+    const kg=qtd*(parseFloat(m.kgPorUnidade)||0); const total=kg*preco;
+    const temObs=(_compObs[k]||'').trim();
+    const ativoRow=qtd>0;
+    return '<div class="card" style="margin-bottom:6px;padding:9px 11px;'+(ativoRow?'border-left:3px solid var(--mc-verde);':'')+'">'+
+      '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">'+
+        '<div style="flex:1;min-width:0;"><div style="font-size:14px;font-weight:600;">'+m.nome+'</div>'+
+        '<div style="font-size:10px;color:var(--text-secondary);">cód '+cod+' · 1 '+(m.unidade||'un')+' = '+_fmtKg(m.kgPorUnidade)+' kg'+(m.infoUM?' · '+m.infoUM:'')+'</div></div>'+
+        '<button onclick="compToggleHist(\''+escapeJsStr(cod)+'\')" title="Histórico de compra" style="background:none;border:none;font-size:16px;cursor:pointer;">📊</button>'+
+        (bloqueado?'':'<button onclick="compEditarItem(\''+escapeJsStr(cod)+'\')" title="Editar item" style="background:none;border:none;font-size:15px;cursor:pointer;">✏️</button>')+
+      '</div>'+
+      (bloqueado?
+        '<div style="display:flex;gap:10px;margin-top:6px;font-size:13px;flex-wrap:wrap;"><span>Qtd: <strong>'+qtd+' '+(m.unidade||'')+'</strong></span><span>Kg: <strong>'+_fmtKg(kg)+'</strong></span><span>Preço: '+_fmtRS(preco)+'/kg</span><span style="margin-left:auto;font-weight:700;color:var(--mc-verde);">'+_fmtRS(total)+'</span></div>'+(temObs?'<div style="font-size:11px;color:var(--text-secondary);margin-top:3px;">📝 '+temObs+'</div>':'')
+        :
+        '<div style="display:flex;gap:6px;align-items:center;margin-top:7px;flex-wrap:wrap;">'+
+          '<div style="flex:1;min-width:80px;"><div style="font-size:9px;color:var(--text-muted);">Qtd ('+(m.unidade||'un')+')</div><input type="number" min="0" step="any" value="'+(qtd||'')+'" oninput="compSetQtd(\''+escapeJsStr(k)+'\',this.value)" placeholder="0" style="width:100%;font-size:14px;padding:7px;border-radius:7px;border:1px solid var(--border-md,#d1d5db);box-sizing:border-box;"></div>'+
+          '<div style="flex:0 0 auto;text-align:center;min-width:66px;"><div style="font-size:9px;color:var(--text-muted);">Kg</div><div id="ck-'+i+'" style="font-size:14px;font-weight:700;padding:7px 0;">'+_fmtKg(kg)+'</div></div>'+
+          '<div style="flex:1;min-width:80px;"><div style="font-size:9px;color:var(--text-muted);">Preço/kg</div><input type="number" min="0" step="0.01" value="'+(preco||'')+'" oninput="compSetPreco(\''+escapeJsStr(k)+'\',this.value)" placeholder="0,00" style="width:100%;font-size:14px;padding:7px;border-radius:7px;border:1px solid var(--border-md,#d1d5db);box-sizing:border-box;"></div>'+
+          '<div style="flex:0 0 auto;text-align:right;min-width:78px;"><div style="font-size:9px;color:var(--text-muted);">Total</div><div id="ct-'+i+'" style="font-size:14px;font-weight:700;color:var(--mc-verde);padding:7px 0;">'+_fmtRS(total)+'</div></div>'+
+        '</div>'+
+        '<button onclick="compEditarObs(\''+escapeJsStr(k)+'\')" style="background:none;border:none;color:var(--mc-azul);font-size:11px;cursor:pointer;padding:2px 0;margin-top:2px;">'+(temObs?'📝 '+temObs:'+ observação')+'</button>'
+      )+
+      (_compHistItem===cod? _compHistPanel(cod) : '')+
+    '</div>';
+  }).join('');
+}
+function _compHistPanel(cod){
+  const h=_comprasHistItem(cod);
+  if(!h.length) return '<div style="margin-top:6px;background:var(--bg-page);border-radius:8px;padding:8px;font-size:11px;color:var(--text-secondary);">Sem histórico de compra deste item ainda.</div>';
+  return '<div style="margin-top:6px;background:var(--bg-page);border-radius:8px;padding:8px;">'+
+    '<div style="font-size:11px;font-weight:700;color:var(--mc-azul);margin-bottom:4px;">📊 Histórico de compra</div>'+
+    h.map(x=>'<div style="display:flex;justify-content:space-between;font-size:11px;padding:2px 0;border-bottom:1px dashed var(--border);"><span>'+(x.data||'—')+' · '+x.fornecedor+'</span><span>'+x.qtd+' '+(x.unidade||'')+' · '+_fmtRS(x.precoKg)+'/kg · '+_fmtRS(x.total)+'</span></div>').join('')+
+    '</div>';
+}
+function compToggleHist(cod){ _compHistItem=(_compHistItem===cod)?null:cod; compRenderLista(); }
+window.compToggleHist=compToggleHist;
+function compSetQtd(k,val){ _compQtd[k]=val; _compAtualizarRow(k); compRenderFooter(); }
+function compSetPreco(k,val){ _compPreco[k]=val; _compAtualizarRow(k); compRenderFooter(); }
+window.compSetQtd=compSetQtd; window.compSetPreco=compSetPreco;
+function compEditarObs(k){ const raw=prompt('Observação do item:', _compObs[k]||''); if(raw===null)return; _compObs[k]=raw.trim(); compRenderLista(); }
+window.compEditarObs=compEditarObs;
+function _compAtualizarRow(k){
+  const cat=_compCatalogoDo(_compFornSel);
+  let visiveis=cat; if(_compBusca){ const q=_normNome(_compBusca); visiveis=cat.filter(x=>_normNome(x.nome+' '+x.codigo).includes(q)); }
+  const i=visiveis.findIndex(x=>x.firestoreId===k); const m=visiveis[i];
+  if(!m) return;
+  const qtd=parseFloat(_compQtd[k])||0, preco=parseFloat(_compPreco[k])||0;
+  const kg=qtd*(parseFloat(m.kgPorUnidade)||0), total=kg*preco;
+  const ck=document.getElementById('ck-'+i); if(ck) ck.textContent=_fmtKg(kg);
+  const ct=document.getElementById('ct-'+i); if(ct) ct.textContent=_fmtRS(total);
+}
+function _compTotais(){
+  let kg=0, rs=0, n=0;
+  _compCatalogoDo(_compFornSel).forEach(m=>{ const k=m.firestoreId; const q=parseFloat(_compQtd[k])||0; if(q<=0)return; const kk=q*(parseFloat(m.kgPorUnidade)||0); kg+=kk; rs+=kk*(parseFloat(_compPreco[k])||0); n++; });
+  return {kg,rs,n};
+}
+function compRenderFooter(){
+  const el=document.getElementById('comp-footer'); if(!el) return;
+  const st=_compPedido.status||'solicitado'; const t=_compTotais();
+  let linha1='', linha2='';
+  if(st==='solicitado'){
+    linha1='<button class="btn btn-primary" style="flex:1;" onclick="compSalvarPedido()">📝 Fazer solicitação</button>'+
+           '<button class="btn btn-secondary" style="flex:1;" onclick="compExportar()">📲 Enviar ao vendedor</button>';
+    linha2='<button class="btn btn-secondary" style="width:100%;margin-top:6px;border-color:var(--mc-azul);color:var(--mc-azul);" onclick="compConfirmarComprador()">✅ Confirmar compra (comprador)</button>';
+  } else if(st==='confirmado'){
+    linha1='<button class="btn btn-secondary" style="flex:1;" onclick="compExportar()">📄 Gerar/enviar OC</button>'+
+           '<button class="btn btn-primary" style="flex:1;background:var(--mc-verde);" onclick="compConcluirOC()">✅ OC gerada</button>';
+    linha2='<button class="btn btn-secondary" style="width:100%;margin-top:6px;font-size:12px;" onclick="compReabrir()">↩️ Voltar p/ solicitado</button>';
+  } else {
+    linha1='<button class="btn btn-secondary" style="flex:1;" onclick="compExportar()">📲 Exportar OC</button>'+
+           '<button class="btn btn-secondary" style="flex:1;" onclick="compReabrir()">↩️ Reabrir</button>';
+  }
+  el.innerHTML='<div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:8px;padding:0 2px;"><span style="color:var(--text-secondary);">'+t.n+' item(ns) · '+_fmtKg(t.kg)+' kg</span><strong style="font-size:16px;color:var(--mc-verde);">'+_fmtRS(t.rs)+'</strong></div>'+
+    '<div style="display:flex;gap:8px;">'+linha1+'</div>'+linha2+'<div style="height:6px;"></div>';
+}
+function _compMontarItens(){
+  const itens=[];
+  _compCatalogoDo(_compFornSel).forEach(m=>{ const k=m.firestoreId; const q=parseFloat(_compQtd[k])||0; if(q<=0)return; const preco=parseFloat(_compPreco[k])||0; const kg=q*(parseFloat(m.kgPorUnidade)||0); itens.push({mpKey:k, codigo:m.codigo, nome:m.nome, unidade:m.unidade||'un', kgPorUnidade:parseFloat(m.kgPorUnidade)||0, qtd:q, kg:kg, precoKg:preco, total:kg*preco, obs:(_compObs[k]||'').trim(), infoUM:m.infoUM||''}); });
+  return itens;
+}
+async function _compPersistir(extra){
+  const itens=_compMontarItens();
+  const t=_compTotais();
+  const dados=Object.assign({ fornecedorId:_compFornSel, fornecedorNome:(_compForn(_compFornSel)||{}).nome||'', itens, totalKg:t.kg, totalRS:t.rs, atualizadoEm:agora() }, extra||{});
+  if(_compPedido.firestoreId){ await updateDoc(doc(db,'comprasPedidos',_compPedido.firestoreId),dados); _compPedido={..._compPedido,...dados}; }
+  else{ dados.criadoEm=hoje(); dados.criadoEm2=Date.now(); dados.solicitadoPor=dados.solicitadoPor||_demAutor(); dados.semana=_compPedido.semana||(typeof semanaAtual==='function'?semanaAtual():''); const ref=doc(collection(db,'comprasPedidos')); await setDoc(ref,dados); _compPedido={firestoreId:ref.id,..._compPedido,...dados}; }
+  // salva preços no catálogo
+  for(const it of itens){ if(it.precoKg>0 && it.mpKey){ updateDoc(doc(db,'comprasMP',it.mpKey),{precoKg:it.precoKg}).catch(()=>{}); } }
+  return itens;
+}
+async function compSalvarPedido(){
+  const itens=_compMontarItens();
+  if(!itens.length){ alert('Adicione ao menos um item (quantidade > 0).'); return; }
+  try{ await _compPersistir({status:(_compPedido.status||'solicitado')}); alert('📝 Solicitação registrada!'); renderCompraForn(); }catch(e){ alert('Erro ao salvar: '+e.message); }
+}
+function _compDiaSemanaIdx(txt){
+  const t=_normNome(txt);
+  const map={'SEGUNDA':1,'TERCA':2,'QUARTA':3,'QUINTA':4,'SEXTA':5,'SABADO':6,'DOMINGO':0};
+  for(const k in map){ if(t.includes(k)) return map[k]; }
+  return -1;
+}
+function _compProximaEntrega(diaEntregaTxt){
+  const idx=_compDiaSemanaIdx(diaEntregaTxt); if(idx<0) return '';
+  const h=new Date(); h.setHours(0,0,0,0);
+  const add=(idx - h.getDay() + 7)%7;
+  const d=new Date(h); d.setDate(h.getDate()+add);
+  return d.toLocaleDateString('pt-BR');
+}
+async function compConfirmarComprador(){
+  const itens=_compMontarItens();
+  if(!itens.length){ alert('Adicione ao menos um item.'); return; }
+  const f=_compForn(_compFornSel)||{};
+  const sug = _compPedido.previsaoEntrega || _compProximaEntrega(f.diaEntrega) || '';
+  const prev = prompt('📦 Previsão de entrega\n\nPode ser um dia (ex: 08/06/2026) ou um intervalo (ex: 10/06 - 12/06).'+(f.diaEntrega?'\n\nEntrega fixa do fornecedor: '+f.diaEntrega:''), sug);
+  if(prev===null) return; // cancelou
+  if(!confirm('Confirmar a compra? Isso registra que você (comprador) já falou com o vendedor e ajustou o preço. O responsável poderá gerar a ordem de compra.')) return;
+  try{ await _compPersistir({status:'confirmado', confirmadoEm:hoje(), confirmadoPor:_demAutor(), previsaoEntrega:(prev||'').trim()}); alert('✅ Compra confirmada! Liberado para gerar a OC.'); renderCompraForn(); }catch(e){ alert('Erro: '+e.message); }
+}
+async function compConcluirOC(){
+  if(!_compPedido.firestoreId){ alert('Salve o pedido primeiro.'); return; }
+  if(!confirm('Confirmar que a ORDEM DE COMPRA foi gerada? O pedido será concluído e arquivado no histórico da semana.')) return;
+  try{ await updateDoc(doc(db,'comprasPedidos',_compPedido.firestoreId),{status:'oc_gerada', ocEm:hoje(), ocPor:_demAutor(), atualizadoEm:agora()}); alert('📄 Ordem de compra registrada! Processo concluído e arquivado.'); goTo('s-compras'); }catch(e){ alert('Erro: '+e.message); }
+}
+async function compReabrir(){
+  if(!_compPedido.firestoreId)return;
+  const novo = (_compPedido.status==='confirmado')?'solicitado':'solicitado';
+  try{ await updateDoc(doc(db,'comprasPedidos',_compPedido.firestoreId),{status:novo,atualizadoEm:agora()}); _compPedido.status=novo; renderCompraForn(); }catch(e){ alert('Erro: '+e.message); }
+}
+async function compEditarPrevisao(){
+  const f=_compForn(_compFornSel)||{};
+  const sug=_compPedido.previsaoEntrega || _compProximaEntrega(f.diaEntrega) || '';
+  const prev=prompt('📦 Previsão de entrega (um dia ou intervalo, ex: 10/06 - 12/06):', sug);
+  if(prev===null) return;
+  try{ if(_compPedido.firestoreId){ await updateDoc(doc(db,'comprasPedidos',_compPedido.firestoreId),{previsaoEntrega:(prev||'').trim(),atualizadoEm:agora()}); } _compPedido.previsaoEntrega=(prev||'').trim(); renderCompraForn(); }catch(e){ alert('Erro: '+e.message); }
+}
+window.compEditarPrevisao=compEditarPrevisao;
+window.compSalvarPedido=compSalvarPedido; window.compConfirmarComprador=compConfirmarComprador; window.compConcluirOC=compConcluirOC; window.compReabrir=compReabrir;
+function compNovoItem(){ _compItemModal(null); }
+function compEditarItem(cod){ const m=comprasMP.find(x=>x.fornecedorId===_compFornSel && x.codigo===cod); _compItemModal(m||null); }
+window.compNovoItem=compNovoItem; window.compEditarItem=compEditarItem;
+function _compItemModal(item){
+  const f=_compForn(_compFornSel)||{};
+  const editando=!!item;
+  let ov=document.getElementById('comp-item-modal'); if(ov) ov.remove();
+  ov=document.createElement('div'); ov.id='comp-item-modal';
+  ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;';
+  const inp=(id,val,ph,tipo)=>'<input id="'+id+'" type="'+(tipo||'text')+'" value="'+String(val||'').replace(/"/g,'&quot;')+'" placeholder="'+(ph||'')+'" style="width:100%;font-size:14px;padding:9px;border-radius:8px;border:1px solid var(--border-md,#d1d5db);box-sizing:border-box;">';
+  ov.innerHTML='<div style="background:var(--bg-primary);border-radius:14px;max-width:420px;width:100%;padding:16px;max-height:85vh;overflow:auto;">'+
+    '<div style="font-size:15px;font-weight:800;margin-bottom:2px;">'+(editando?'✏️ Editar item':'+ Novo item')+'</div>'+
+    '<div style="font-size:12px;color:var(--text-secondary);margin-bottom:12px;">Fornecedor: '+(f.nome||'')+'</div>'+
+    '<div class="card-label">Código</div>'+inp('ci-cod', item?item.codigo:'', 'Ex: 14132')+(editando?'<div style="font-size:10px;color:var(--text-muted);margin-top:2px;">O código não pode ser alterado.</div>':'')+
+    '<div class="card-label" style="margin-top:10px;">Produto</div>'+inp('ci-nome', item?item.nome:'', 'Ex: OVO EM GALÃO')+
+    '<div style="display:flex;gap:10px;margin-top:10px;">'+
+      '<div style="flex:1;"><div class="card-label">Unidade (U.M)</div>'+inp('ci-um', item?item.unidade:'', 'Ex: Cx, Sc, Pct, Kg')+'</div>'+
+      '<div style="flex:1;"><div class="card-label">Kg por unidade</div>'+inp('ci-fator', item?item.kgPorUnidade:'', 'Ex: 25', 'number')+'</div>'+
+    '</div>'+
+    '<div style="font-size:10px;color:var(--text-muted);margin-top:3px;">Quantos kg tem 1 unidade de compra (ex.: 1 Sc = 25 kg). Se pedir por kg, use 1.</div>'+
+    '<div class="card-label" style="margin-top:10px;">Preço por kg</div>'+inp('ci-preco', item&&item.precoKg?item.precoKg:'', 'Ex: 10.05', 'number')+
+    '<button class="btn btn-primary" style="width:100%;margin-top:14px;" onclick="compSalvarItem('+(editando?'true':'false')+')">💾 '+(editando?'Salvar':'Adicionar')+'</button>'+
+    (editando?'<button class="btn btn-secondary" style="width:100%;margin-top:8px;border-color:#ef9a9a;color:#c62828;" onclick="compExcluirItem(\''+escapeJsStr(item.codigo)+'\')">🗑 Excluir item</button>':'')+
+    '<button class="btn btn-secondary" style="width:100%;margin-top:8px;" onclick="document.getElementById(\'comp-item-modal\').remove()">Cancelar</button>'+
+    '</div>';
+  document.body.appendChild(ov);
+  setTimeout(()=>{ const el=document.getElementById(editando?'ci-nome':'ci-cod'); if(el) el.focus(); },100);
+}
+async function compSalvarItem(editando){
+  const cod=(document.getElementById('ci-cod')?.value||'').trim();
+  const nome=(document.getElementById('ci-nome')?.value||'').trim();
+  const um=(document.getElementById('ci-um')?.value||'').trim();
+  const fator=parseFloat(document.getElementById('ci-fator')?.value)||0;
+  const preco=parseFloat(document.getElementById('ci-preco')?.value)||0;
+  if(!cod){ alert('Informe o código.'); return; }
+  if(!nome){ alert('Informe o nome do produto.'); return; }
+  if(!editando && comprasMP.some(m=>m.fornecedorId===_compFornSel && m.codigo===cod)){ alert('Já existe um item com esse código neste fornecedor.'); return; }
+  const mpid=_compFornSel+'__'+cod;
+  const dd={ codigo:cod, nome:nome, fornecedorId:_compFornSel, fornecedorNome:(_compForn(_compFornSel)||{}).nome||'', unidade:um||'un', kgPorUnidade:fator||1, ativo:true, atualizadoEm:agora() };
+  if(preco>0) dd.precoKg=preco;
+  try{
+    await setDoc(doc(db,'comprasMP',mpid),dd,{merge:true});
+    if(preco>0) _compPreco[cod]=preco;
+    const ov=document.getElementById('comp-item-modal'); if(ov) ov.remove();
+    compRenderLista();
+  }catch(e){ alert('Erro: '+e.message); }
+}
+async function compExcluirItem(cod){
+  if(!confirm('Excluir este item do catálogo do fornecedor? (o histórico de pedidos é mantido)')) return;
+  try{ await deleteDoc(doc(db,'comprasMP',_compFornSel+'__'+cod)); const ov=document.getElementById('comp-item-modal'); if(ov) ov.remove(); compRenderLista(); }catch(e){ alert('Erro: '+e.message); }
+}
+window.compSalvarItem=compSalvarItem; window.compExcluirItem=compExcluirItem;
+function compExportar(){
+  const f=_compForn(_compFornSel)||{}; const itens=_compPedido.itens&&_compPedido.itens.length?_compPedido.itens:_compMontarItens();
+  const semLbl=(_compPedido.semana && typeof semanaLabel==='function')?semanaLabel(_compPedido.semana):'';
+  const t=itens.reduce((s,i)=>s+(i.total||0),0); const tk=itens.reduce((s,i)=>s+(i.kg||0),0);
+  let txt='━━━━━━━━━━━━━━━━━━━━━━\n';
+  txt+='*PEDIDO DA SEMANA*\n*PANIFICADORA MONTE CASTELO*\n';
+  txt+='━━━━━━━━━━━━━━━━━━━━━━\n\n';
+  txt+='📅 '+(semLbl||hoje())+'\n';
+  txt+='🏢 Fornecedor: '+(f.nome||'')+(f.codigo?' ('+f.codigo+')':'')+'\n';
+  if(f.vendedor) txt+='👤 Vendedor: '+f.vendedor+'\n';
+  if(f.diaEntrega) txt+='🚚 Entrega: '+f.diaEntrega+'\n';
+  if(_compPedido.previsaoEntrega) txt+='📦 Previsão de entrega: '+_compPedido.previsaoEntrega+'\n';
+  txt+='\n*ITENS:*\n';
+  itens.forEach((it,idx)=>{ txt+=(idx+1)+'. '+it.nome+'\n   '+it.qtd+' '+(it.unidade||'')+' = '+_fmtKg(it.kg)+' kg'+(it.precoKg?'  ·  '+_fmtRS(it.precoKg)+'/kg  ·  '+_fmtRS(it.total):'')+(it.obs?'\n   📝 '+it.obs:'')+'\n'; });
+  txt+='\n━━━━━━━━━━━━━━━━━━━━━━\n';
+  txt+='*TOTAL: '+_fmtKg(tk)+' kg';
+  if(t>0) txt+='  ·  '+_fmtRS(t);
+  txt+='*\n━━━━━━━━━━━━━━━━━━━━━━\n';
+  txt+='\nPedido gerado via sistema Monte Castelo em '+hoje()+'.';
+  _compMostrarModal(txt, f.contato);
+}
+function _compMostrarModal(txt, contato){
+  let ov=document.getElementById('comp-modal'); if(ov) ov.remove();
+  ov=document.createElement('div'); ov.id='comp-modal';
+  ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;';
+  const wa=contato?('https://wa.me/55'+String(contato).replace(/\D/g,'')+'?text='+encodeURIComponent(txt)):'';
+  ov.innerHTML='<div style="background:var(--bg-primary);border-radius:14px;max-width:420px;width:100%;padding:16px;max-height:80vh;overflow:auto;">'+
+    '<div style="font-size:15px;font-weight:700;margin-bottom:8px;">📲 Exportar pedido</div>'+
+    '<textarea id="comp-modal-txt" style="width:100%;min-height:220px;font-size:12px;padding:10px;border-radius:8px;border:1px solid var(--border-md,#d1d5db);box-sizing:border-box;font-family:inherit;">'+txt.replace(/</g,'&lt;')+'</textarea>'+
+    '<div style="display:flex;gap:8px;margin-top:10px;">'+
+    '<button class="btn btn-secondary" style="flex:1;" onclick="(function(){var t=document.getElementById(\'comp-modal-txt\');t.select();try{document.execCommand(\'copy\');}catch(e){} })()">📋 Copiar</button>'+
+    (wa?'<a class="btn btn-primary" style="flex:1;text-align:center;text-decoration:none;background:#25D366;" href="'+wa+'" target="_blank">WhatsApp</a>':'')+
+    '</div>'+
+    '<button class="btn btn-secondary" style="width:100%;margin-top:8px;" onclick="document.getElementById(\'comp-modal\').remove()">Fechar</button>'+
+    '</div>';
+  document.body.appendChild(ov);
+}
+window.compExportar=compExportar;
+
+// ---------- HISTÓRICO ----------
+let _compHistFiltroSem='todas';
+function setCompHistForn(v){ _compHistFiltroForn=v; renderComprasHist(); }
+function setCompHistStatus(v){ _compHistFiltroStatus=v; renderComprasHist(); }
+function setCompHistSem(v){ _compHistFiltroSem=v; renderComprasHist(); }
+window.setCompHistForn=setCompHistForn; window.setCompHistStatus=setCompHistStatus; window.setCompHistSem=setCompHistSem;
+async function compExcluirPedido(id){
+  if(window.adminMode!==true){ alert('Apenas o Admin pode excluir itens do histórico.'); return; }
+  const p=comprasPedidos.find(x=>x.firestoreId===id);
+  if(!confirm('Excluir este pedido do histórico'+(p?' ('+(p.fornecedorNome||'')+' · '+(p.criadoEm||'')+')':'')+'? Esta ação não pode ser desfeita.')) return;
+  try{ await deleteDoc(doc(db,'comprasPedidos',id)); }catch(e){ alert('Erro: '+e.message); }
+}
+window.compExcluirPedido=compExcluirPedido;
+function renderComprasHist(){
+  const el=document.getElementById('comp-hist-content'); if(!el) return;
+  let lista=comprasPedidos.slice();
+  if(_compHistFiltroForn!=='todos') lista=lista.filter(p=>p.fornecedorId===_compHistFiltroForn);
+  if(_compHistFiltroStatus!=='todos') lista=lista.filter(p=>(p.status||'')===_compHistFiltroStatus);
+  if(_compHistFiltroSem!=='todas') lista=lista.filter(p=>(p.semana||'')===_compHistFiltroSem);
+  lista.sort((a,b)=>(b.criadoEm2||0)-(a.criadoEm2||0));
+  const semanas=[...new Set(comprasPedidos.map(p=>p.semana).filter(Boolean))].sort().reverse();
+  let html='<div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap;">'+
+    '<select onchange="setCompHistSem(this.value)" style="flex:1;min-width:130px;font-size:13px;padding:8px;border-radius:8px;border:1px solid var(--border-md,#d1d5db);"><option value="todas">Todas as semanas</option>'+semanas.map(s=>'<option value="'+s+'"'+(_compHistFiltroSem===s?' selected':'')+'>'+(typeof semanaLabel==='function'?semanaLabel(s):s)+'</option>').join('')+'</select>'+
+    '<select onchange="setCompHistForn(this.value)" style="flex:1;min-width:130px;font-size:13px;padding:8px;border-radius:8px;border:1px solid var(--border-md,#d1d5db);"><option value="todos">Todos fornecedores</option>'+comprasFornecedores.map(f=>'<option value="'+f.firestoreId+'"'+(_compHistFiltroForn===f.firestoreId?' selected':'')+'>'+f.nome+'</option>').join('')+'</select>'+
+    '<select onchange="setCompHistStatus(this.value)" style="flex:1;min-width:130px;font-size:13px;padding:8px;border-radius:8px;border:1px solid var(--border-md,#d1d5db);">'+[['todos','Todos status'],['solicitado','Solicitado'],['confirmado','Confirmado'],['oc_gerada','OC gerada']].map(([v,l])=>'<option value="'+v+'"'+(_compHistFiltroStatus===v?' selected':'')+'>'+l+'</option>').join('')+'</select>'+
+    '</div>';
+  if(!lista.length){ el.innerHTML=html+'<div class="empty" style="padding:20px;">Nenhum pedido.</div>'; return; }
+  // agrupar por semana
+  const porSem={}; lista.forEach(p=>{ const k=p.semana||'(sem semana)'; (porSem[k]=porSem[k]||[]).push(p); });
+  const chavesSem=Object.keys(porSem).sort().reverse();
+  chavesSem.forEach(sem=>{
+    const arr=porSem[sem]; const totSem=arr.reduce((s,p)=>s+(p.totalRS||0),0);
+    html+='<div style="display:flex;justify-content:space-between;align-items:center;margin:14px 0 8px;">'+
+      '<div style="font-size:13px;font-weight:800;color:var(--mc-roxo);">📅 '+(sem!=='(sem semana)'&&typeof semanaLabel==='function'?semanaLabel(sem):sem)+'</div>'+
+      '<div style="font-size:12px;font-weight:700;color:var(--mc-verde);">'+_fmtRS(totSem)+'</div></div>';
+    html+=arr.map(p=>{ const si=_compStatusInfo(p.status); const podeExcluir=(window.adminMode===true); return '<div class="card" style="margin-bottom:8px;">'+
+      '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">'+
+      '<div style="flex:1;min-width:0;cursor:pointer;" onclick="compAbrirPedido(\''+p.fornecedorId+'\')"><div style="font-size:14px;font-weight:700;">'+(p.fornecedorNome||'')+'</div>'+
+      '<div style="font-size:11px;color:var(--text-secondary);">'+(p.criadoEm||'')+' · '+(p.itens||[]).length+' itens · '+_fmtKg(p.totalKg||0)+' kg</div></div>'+
+      '<div style="text-align:right;cursor:pointer;" onclick="compAbrirPedido(\''+p.fornecedorId+'\')"><span style="font-size:10px;font-weight:700;color:'+si.cor+';background:'+si.bg+';border-radius:99px;padding:2px 8px;">'+si.emoji+' '+si.label+'</span><div style="font-size:14px;font-weight:700;color:var(--mc-verde);margin-top:3px;">'+_fmtRS(p.totalRS||0)+'</div></div>'+
+      (podeExcluir?'<button onclick="compExcluirPedido(\''+p.firestoreId+'\')" title="Excluir (admin)" style="background:none;border:none;color:var(--mc-vermelho);font-size:16px;cursor:pointer;flex-shrink:0;">🗑</button>':'')+
+      '</div></div>'; }).join('');
+  });
+  el.innerHTML=html;
+}
+
+window.renderCompras=renderCompras; window.renderCompFornList=renderCompFornList; window.renderCompFornCad=renderCompFornCad;
+window.renderCompraForn=renderCompraForn; window.renderComprasHist=renderComprasHist;
+window.novoCompForn=novoCompForn; window.editarCompForn=editarCompForn; window.salvarCompForn=salvarCompForn; window.excluirCompForn=excluirCompForn;
+window.importarComprasPlanilha=importarComprasPlanilha; window.compAbrirPedido=compAbrirPedido; window.compFornEditarAtual=compFornEditarAtual;
+window.compSalvarPedido=compSalvarPedido; window.compReabrir=compReabrir;
+
 
 function _simItensDoPlano(dia){
   const rec=_simPlanoConfAtual();
