@@ -414,24 +414,31 @@ function aplicarFiltroColunasDia(){
 
 // NOVO: calcula a Prod. Ant. (AUTO) de TODOS os produtos ANTES de filtrar/renderizar
 // (garante que filtros e cálculos que dependem dela — ex: "Em falta" — usem o valor correto)
+function _normNomePlan(s){ return (s||'').toString().trim().toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\s+/g,' '); }
 async function atualizarProdAntAutoMap(){
   const datasSelecionadas = Object.keys(producoesAnteriores);
-  if(datasSelecionadas.length === 0){
-    produtos.forEach(p => { prodAntAutoMap[p.cod] = 0; });
-    return;
-  }
+  produtos.forEach(p => { prodAntAutoMap[p.cod] = 0; });
+  if(datasSelecionadas.length === 0) return;
   try {
     const snapshot = await getDocs(collection(db, 'registros'));
     const todosRegistros = snapshot.docs.map(d => ({id: d.id, ...d.data()}));
+    const datasSet = new Set(datasSelecionadas);
+    // Índices dos produtos do plano: por código (exato e numérico) e por nome normalizado (reforço)
+    const porCod = {}, porCodNum = {}, porNome = {};
     produtos.forEach(p => {
-      let prodAnterior = 0;
-      const codPlan = String(p.cod).trim();
-      todosRegistros.forEach(r => {
-        if(String(r.cod||'').trim() === codPlan && datasSelecionadas.includes(r.data)){
-          prodAnterior += r.qtd || 0;
-        }
-      });
-      prodAntAutoMap[p.cod] = prodAnterior;
+      const c = String(p.cod).trim(); if(c) porCod[c] = p;
+      const n = parseInt(c,10); if(!isNaN(n) && porCodNum[n]===undefined) porCodNum[n] = p;
+      const nn = _normNomePlan(p.desc); if(nn && porNome[nn]===undefined) porNome[nn] = p;
+    });
+    todosRegistros.forEach(r => {
+      if(!datasSet.has(r.data)) return;
+      const q = r.qtd || 0; if(!q) return;
+      const codR = String(r.cod||'').trim();
+      // 1) código exato → 2) código numérico (ignora zeros à esquerda) → 3) nome (reforço)
+      let p = codR && porCod[codR] ? porCod[codR] : null;
+      if(!p && codR){ const n = parseInt(codR,10); if(!isNaN(n) && porCodNum[n]) p = porCodNum[n]; }
+      if(!p){ const nn = _normNomePlan(r.produto||''); if(nn && porNome[nn]) p = porNome[nn]; }
+      if(p) prodAntAutoMap[p.cod] = (prodAntAutoMap[p.cod]||0) + q;
     });
   } catch(err){
     console.error('❌ Erro ao calcular Prod. Ant. (AUTO):', err);
