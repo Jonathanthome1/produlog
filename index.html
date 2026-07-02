@@ -3573,7 +3573,7 @@
       <button class="mc-header-back" onclick="goTo('s-compras')">‹</button>
       <div class="mc-brand"><div class="mc-brand-logo">MC</div><div class="mc-brand-text"><div class="mc-brand-name">Monte Castelo</div><div class="mc-brand-sub">Fornecedores</div></div></div>
       <div class="mc-divider-v"></div>
-      <div class="mc-page-info"><div class="mc-page-title">🏢 Fornecedores</div><div class="mc-page-sub">Contato e dados</div></div>
+      <div class="mc-page-info"><div class="mc-page-title">🏢 Fornecedores</div><div class="mc-page-sub">Contato e dados · v2</div></div>
     </div>
     <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;" id="comp-fornlist-content"></div>
   </div>
@@ -12099,7 +12099,7 @@ function renderCompFornList(){
   el.innerHTML=html;
 }
 function novoCompForn(){ _compFornEdit={nome:'',codigo:'',contato:'',vendedor:'',tempoMedioEntrega:'',diaEntrega:'',obs:''}; goTo('s-compra-forncad'); renderCompFornCad(); }
-function editarCompForn(id){ const f=_compForn(id); if(!f) return; _compFornEdit=JSON.parse(JSON.stringify(f)); goTo('s-compra-forncad'); renderCompFornCad(); }
+function editarCompForn(id){ const f=_compForn(id); if(!f){ alert('Fornecedor não encontrado (id: '+id+').'); return; } _compFornEdit=JSON.parse(JSON.stringify(f)); goTo('s-compra-forncad'); renderCompFornCad(); }
 function compFornSet(campo,val){ if(_compFornEdit) _compFornEdit[campo]=val; }
 window.compFornSet=compFornSet;
 function renderCompFornCad(){
