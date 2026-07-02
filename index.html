@@ -12093,7 +12093,7 @@ function renderCompFornList(){
     '<div class="card" style="margin-bottom:8px;cursor:pointer;" onclick="editarCompForn(\''+f.firestoreId+'\')">'+
       '<div style="display:flex;justify-content:space-between;align-items:center;">'+
       '<div><div style="font-size:15px;font-weight:700;">'+f.nome+(f.codigo?' <span style="font-size:11px;color:var(--text-secondary);">('+f.codigo+')</span>':'')+'</div>'+
-      '<div style="font-size:11px;color:var(--text-secondary);margin-top:2px;">'+[f.diaEntrega?'📅 '+f.diaEntrega:'', f.vendedor?'👤 '+f.vendedor:'', f.contato?'📞 '+f.contato:'', f.tempoMedioEntrega?'⏱ '+f.tempoMedioEntrega:''].filter(Boolean).join(' · ')||'sem dados de contato'+'</div></div>'+
+      '<div style="font-size:11px;color:var(--text-secondary);margin-top:2px;">'+([f.diaEntrega?'📅 '+f.diaEntrega:'', f.vendedor?'👤 '+f.vendedor:'', f.contato?'📞 '+f.contato:'', f.tempoMedioEntrega?'⏱ '+f.tempoMedioEntrega:''].filter(Boolean).join(' · ')||'sem dados de contato')+'</div></div>'+
       '<span style="color:var(--text-muted);font-size:18px;">›</span></div></div>'
   ).join('');
   el.innerHTML=html;
@@ -12225,7 +12225,7 @@ function renderCompraForn(){
   html+='<div class="card" style="margin-bottom:10px;border-left:3px solid var(--mc-azul);">'+
     '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">'+
     '<div><div style="font-size:16px;font-weight:800;">'+f.nome+(f.codigo?' <span style="font-size:12px;color:var(--text-secondary);font-weight:500;">('+f.codigo+')</span>':'')+'</div>'+
-    '<div style="font-size:11px;color:var(--text-secondary);margin-top:3px;">'+[f.diaEntrega?'📅 '+f.diaEntrega:'', f.vendedor?'👤 '+f.vendedor:'', f.contato?'📞 '+f.contato:'', f.tempoMedioEntrega?'⏱ '+f.tempoMedioEntrega:''].filter(Boolean).join(' · ')||'sem dados de contato'+'</div></div>'+
+    '<div style="font-size:11px;color:var(--text-secondary);margin-top:3px;">'+([f.diaEntrega?'📅 '+f.diaEntrega:'', f.vendedor?'👤 '+f.vendedor:'', f.contato?'📞 '+f.contato:'', f.tempoMedioEntrega?'⏱ '+f.tempoMedioEntrega:''].filter(Boolean).join(' · ')||'sem dados de contato')+'</div></div>'+
     '<button class="btn btn-secondary" style="font-size:12px;padding:6px 10px;white-space:nowrap;" onclick="compFornEditarAtual()">✏️ Editar</button>'+
     '</div></div>';
   // status + linha do tempo
