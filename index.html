@@ -12067,9 +12067,15 @@ function renderCompras(){
   const diaSemana=['domingo','segunda','terça','quarta','quinta','sexta','sábado'];
   const hojeDia=diaSemana[new Date().getDay()];
   const amanhaDia=diaSemana[(new Date().getDay()+1)%7];
-  const avisos=comprasFornecedores.filter(f=>{ const d=_normNome(f.diaEntrega||''); return d.includes(_normNome(hojeDia))||d.includes(_normNome(amanhaDia)); });
+  // Avisos: apenas pedidos EM ANDAMENTO (não concluídos) com entrega próxima (previsão ou dia fixo hoje/amanhã)
+  const abertos=comprasPedidos.filter(p=>p.status!=='oc_gerada'&&p.status!=='recebido'&&p.status!=='cancelado'&&(p.itens||[]).length>0);
+  const avisos=abertos.filter(p=>{
+    if(_compPrevisaoProxima(p.previsaoEntrega)) return true;
+    const f=_compForn(p.fornecedorId)||{}; const d=_normNome(f.diaEntrega||'');
+    return d && (d.includes(_normNome(hojeDia))||d.includes(_normNome(amanhaDia)));
+  });
   if(avisos.length){
-    html+='<div class="card" style="border-left:3px solid var(--mc-dourado);background:rgba(217,119,6,.06);margin-bottom:12px;"><div style="font-size:12px;font-weight:700;color:#d97706;">🔔 Entrega próxima</div><div style="font-size:12px;color:var(--text-secondary);margin-top:3px;">'+avisos.map(f=>f.nome+' ('+(f.diaEntrega||'')+')').join(' · ')+'</div></div>';
+    html+='<div class="card" style="border-left:3px solid var(--mc-dourado);background:rgba(217,119,6,.06);margin-bottom:12px;"><div style="font-size:12px;font-weight:700;color:#d97706;">🔔 Entrega próxima</div><div style="font-size:12px;color:var(--text-secondary);margin-top:3px;">'+avisos.map(p=>{ const f=_compForn(p.fornecedorId)||{}; return (p.fornecedorNome||f.nome||'')+' ('+(p.previsaoEntrega||f.diaEntrega||'')+')'; }).join(' · ')+'</div></div>';
   }
   const nPronto=_compPendentesReq();
   if(nPronto) html+='<div class="card" style="border-left:3px solid var(--mc-azul);margin-bottom:12px;"><div style="font-size:13px;font-weight:700;color:var(--mc-azul);">📝 '+nPronto+' pedido(s) em andamento nesta semana</div></div>';
@@ -12103,7 +12109,8 @@ function renderCompFornCad(){
   let html='<div class="card">';
   html+=campo('Nome do fornecedor','nome',f.nome,'Ex: CINDREIA');
   html+=campo('Código','codigo',f.codigo,'Ex: 412');
-  html+=campo('Dia fixo de entrega','diaEntrega',f.diaEntrega,'Ex: Segunda / Segunda ou quarta');
+  const diasSem=['Segunda','Terça','Quarta','Quinta','Sexta','Sábado','Domingo'];
+  html+='<div style="margin-top:10px;"><div class="card-label">Dia fixo de entrega</div><select onchange="compFornSet(\'diaEntrega\',this.value)" style="width:100%;font-size:14px;padding:10px;border-radius:8px;border:1px solid var(--border-md,#d1d5db);box-sizing:border-box;background:var(--bg-primary);"><option value="">— não definido —</option>'+diasSem.map(d=>'<option value="'+d+'"'+((f.diaEntrega||'')===d?' selected':'')+'>'+d+'</option>').join('')+'</select><div style="font-size:11px;color:var(--text-secondary);margin-top:4px;">Usado para sugerir automaticamente a previsão de entrega na confirmação.</div></div>';
   html+=campo('Nome do vendedor','vendedor',f.vendedor,'Ex: João');
   html+=campo('Contato (telefone)','contato',f.contato,'Ex: 51 99999-9999','tel');
   html+=campo('Tempo médio de entrega','tempoMedioEntrega',f.tempoMedioEntrega,'Ex: 2 dias');
@@ -12347,6 +12354,16 @@ function _compDiaSemanaIdx(txt){
   const map={'SEGUNDA':1,'TERCA':2,'QUARTA':3,'QUINTA':4,'SEXTA':5,'SABADO':6,'DOMINGO':0};
   for(const k in map){ if(t.includes(k)) return map[k]; }
   return -1;
+}
+function _compPrevisaoProxima(prev){
+  if(!prev) return false;
+  const m=String(prev).match(/(\d{1,2})\/(\d{1,2})(?:\/(\d{2,4}))?/);
+  if(!m) return false;
+  const dia=+m[1], mes=+m[2]-1; let ano=m[3]?+m[3]:(new Date().getFullYear()); if(ano<100)ano+=2000;
+  const d=new Date(ano,mes,dia); d.setHours(0,0,0,0);
+  const h=new Date(); h.setHours(0,0,0,0);
+  const dif=Math.round((d-h)/86400000);
+  return dif>=0 && dif<=2;
 }
 function _compProximaEntrega(diaEntregaTxt){
   const idx=_compDiaSemanaIdx(diaEntregaTxt); if(idx<0) return '';
