@@ -12130,7 +12130,22 @@ async function salvarCompForn(){
     goTo('s-compras-fornlist');
   }catch(e){ alert('Erro: '+e.message); }
 }
-async function excluirCompForn(id){ if(!confirm('Excluir este fornecedor? Os itens e pedidos ligados a ele NÃO são apagados.')) return; try{ await deleteDoc(doc(db,'comprasFornecedores',id)); goTo('s-compras-fornlist'); }catch(e){ alert('Erro: '+e.message); } }
+async function excluirCompForn(id){
+  if(!id){ alert('Fornecedor inválido.'); return; }
+  if(!confirm('Excluir este fornecedor? Os itens do catálogo dele também serão removidos. Pedidos no histórico são mantidos.')) return;
+  try{
+    await deleteDoc(doc(db,'comprasFornecedores',id));
+    // remove os itens (catálogo) desse fornecedor
+    const itens=comprasMP.filter(m=>m.fornecedorId===id);
+    for(let i=0;i<itens.length;i+=40){ await Promise.all(itens.slice(i,i+40).map(m=>deleteDoc(doc(db,'comprasMP',m.firestoreId)).catch(()=>{}))); }
+    // remoção otimista local (a tela some na hora, sem esperar o snapshot)
+    comprasFornecedores=comprasFornecedores.filter(f=>f.firestoreId!==id);
+    comprasMP=comprasMP.filter(m=>m.fornecedorId!==id);
+    _compFornEdit=null;
+    alert('✅ Fornecedor excluído.');
+    goTo('s-compras-fornlist'); renderCompFornList();
+  }catch(e){ alert('Erro ao excluir: '+e.message); }
+}
 
 // ---------- IMPORTAÇÃO ----------
 async function importarComprasPlanilha(input){
@@ -12226,7 +12241,8 @@ function renderCompraForn(){
     '</div>'+
     ((_compPedido.previsaoEntrega||st==='confirmado'||st==='oc_gerada')?'<div style="font-size:12px;font-weight:700;color:var(--mc-verde);margin-top:5px;">🚚 Previsão de entrega: '+(_compPedido.previsaoEntrega||'— não definida')+(st!=='oc_gerada'?' <span onclick="compEditarPrevisao()" style="color:var(--mc-azul);font-weight:500;cursor:pointer;text-decoration:underline;font-size:11px;">editar</span>':'')+'</div>':'')+
     (st==='confirmado'?'<div style="font-size:11px;color:var(--mc-azul);font-weight:600;margin-top:4px;">👉 Comprador deu OK. Gere a ordem de compra e confirme abaixo.</div>':'')+
-    (st==='solicitado'?'<div style="font-size:11px;color:#d97706;font-weight:600;margin-top:4px;">👉 Aguardando o comprador confirmar com o vendedor.</div>':'')+
+    (st==='solicitado'&&_compPedido.firestoreId?'<div style="font-size:12px;color:var(--mc-verde);font-weight:700;margin-top:5px;background:rgba(22,163,74,.10);border-radius:8px;padding:6px 10px;">✅ Solicitação feita! Aguardando o comprador confirmar com o vendedor.</div>':'')+
+    (st==='solicitado'&&!_compPedido.firestoreId?'<div style="font-size:11px;color:#d97706;font-weight:600;margin-top:4px;">👉 Monte o pedido e clique em "Fazer solicitação".</div>':'')+
     '</div>';
   // copiar último (quando pedido novo/vazio)
   if(!bloqueado && !_compPedido.firestoreId){
