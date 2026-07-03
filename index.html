@@ -13029,7 +13029,7 @@ function _acCalcular(){
         if(di.date<hoje0) status='vermelho';
         else { status = a>0 ? 'parcial' : 'cinza'; if(status==='parcial' && earlierDays.length) fonteLabel=earlierDays.map(d=>d.toLowerCase()).join(', '); }
       }
-      let mostrado=Math.max(prodNoDia, a);
+      let mostrado=a;  // usa o ALOCADO ao dia (evita contar em dobro produção que já foi para outro dia)
       if(di.dia===lastPlanDia){ mostrado+=leftover; } // sobra sem dia planejado entra no último dia (exibição)
       return {dia:di.dia,abrev:di.abrev,dateBR:di.dateBR,qtdPlan,prodNoDia,aloc:a,mostrado,status,fonteLabel};
     });
