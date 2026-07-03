@@ -290,6 +290,7 @@ const producoesAnteriores = {}; // Datas selecionadas do ProduLog
 const prodAntManual = {}; // NOVO: Produções anteriores MANUAIS por produto
 const diasDescontar = new Set(); // NOVO: dias da semana cuja venda média será descontada do estoque
 const prodAntAutoMap = {}; // NOVO: produção anterior AUTOMÁTICA por código (calculada do Produlog), usada na simulação
+let _registrosCache = null; // cache dos registros do Produlog (busca 1x; evita delay/race a cada filtro)
 const diasSimulIgnorar = new Set(); // NOVO: dias da semana a DESCONSIDERAR na simulação (estoque começa no 1º dia considerado)
 
 const DIAS = ['Seg','Ter','Qua','Qui','Sex','Sáb'];
@@ -415,34 +416,41 @@ function aplicarFiltroColunasDia(){
 // NOVO: calcula a Prod. Ant. (AUTO) de TODOS os produtos ANTES de filtrar/renderizar
 // (garante que filtros e cálculos que dependem dela — ex: "Em falta" — usem o valor correto)
 function _normNomePlan(s){ return (s||'').toString().trim().toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\s+/g,' '); }
-async function atualizarProdAntAutoMap(){
+async function carregarRegistros(){
+  try {
+    const snapshot = await getDocs(collection(db, 'registros'));
+    _registrosCache = snapshot.docs.map(d => ({id: d.id, ...d.data()}));
+  } catch(err){
+    console.error('❌ Erro ao carregar registros:', err);
+    if(!_registrosCache) _registrosCache = [];
+  }
+}
+
+// SÍNCRONA: calcula a partir do cache (sem rede) — chamada a cada render sem delay nem race condition
+function atualizarProdAntAutoMap(){
   const datasSelecionadas = Object.keys(producoesAnteriores);
   produtos.forEach(p => { prodAntAutoMap[p.cod] = 0; });
   if(datasSelecionadas.length === 0) return;
-  try {
-    const snapshot = await getDocs(collection(db, 'registros'));
-    const todosRegistros = snapshot.docs.map(d => ({id: d.id, ...d.data()}));
-    const datasSet = new Set(datasSelecionadas);
-    // Índices dos produtos do plano: por código (exato e numérico) e por nome normalizado (reforço)
-    const porCod = {}, porCodNum = {}, porNome = {};
-    produtos.forEach(p => {
-      const c = String(p.cod).trim(); if(c) porCod[c] = p;
-      const n = parseInt(c,10); if(!isNaN(n) && porCodNum[n]===undefined) porCodNum[n] = p;
-      const nn = _normNomePlan(p.desc); if(nn && porNome[nn]===undefined) porNome[nn] = p;
-    });
-    todosRegistros.forEach(r => {
-      if(!datasSet.has(r.data)) return;
-      const q = r.qtd || 0; if(!q) return;
-      const codR = String(r.cod||'').trim();
-      // 1) código exato → 2) código numérico (ignora zeros à esquerda) → 3) nome (reforço)
-      let p = codR && porCod[codR] ? porCod[codR] : null;
-      if(!p && codR){ const n = parseInt(codR,10); if(!isNaN(n) && porCodNum[n]) p = porCodNum[n]; }
-      if(!p){ const nn = _normNomePlan(r.produto||''); if(nn && porNome[nn]) p = porNome[nn]; }
-      if(p) prodAntAutoMap[p.cod] = (prodAntAutoMap[p.cod]||0) + q;
-    });
-  } catch(err){
-    console.error('❌ Erro ao calcular Prod. Ant. (AUTO):', err);
-  }
+  if(!_registrosCache) return; // cache ainda não carregou; será recalculado quando carregar
+  const todosRegistros = _registrosCache;
+  const datasSet = new Set(datasSelecionadas);
+  // Índices dos produtos do plano: por código (exato e numérico) e por nome normalizado (reforço)
+  const porCod = {}, porCodNum = {}, porNome = {};
+  produtos.forEach(p => {
+    const c = String(p.cod).trim(); if(c) porCod[c] = p;
+    const n = parseInt(c,10); if(!isNaN(n) && porCodNum[n]===undefined) porCodNum[n] = p;
+    const nn = _normNomePlan(p.desc); if(nn && porNome[nn]===undefined) porNome[nn] = p;
+  });
+  todosRegistros.forEach(r => {
+    if(!datasSet.has(r.data)) return;
+    const q = r.qtd || 0; if(!q) return;
+    const codR = String(r.cod||'').trim();
+    // 1) código exato → 2) código numérico (ignora zeros à esquerda) → 3) nome (reforço)
+    let p = codR && porCod[codR] ? porCod[codR] : null;
+    if(!p && codR){ const n = parseInt(codR,10); if(!isNaN(n) && porCodNum[n]) p = porCodNum[n]; }
+    if(!p){ const nn = _normNomePlan(r.produto||''); if(nn && porNome[nn]) p = porNome[nn]; }
+    if(p) prodAntAutoMap[p.cod] = (prodAntAutoMap[p.cod]||0) + q;
+  });
 }
 
 async function render(){
@@ -450,8 +458,8 @@ async function render(){
   const busca = document.getElementById('busca')?.value.toLowerCase() || '';
   const ordem = document.getElementById('order')?.value || 'urg';
   
-  // NOVO: calcular a Prod. Ant. (AUTO) ANTES de filtrar, para o filtro "Em falta" funcionar
-  await atualizarProdAntAutoMap();
+  // Prod. Ant. (AUTO) calculada do cache — instantânea, sem delay nem race condition
+  atualizarProdAntAutoMap();
   
   let lista = produtos.filter(p => p.setor === setorAtivo);
   if(filtro==='ativos') lista = lista.filter(p => (p.totalPeriodo||0) > 0);
@@ -793,8 +801,9 @@ window.selecionarDataProducao = async (data) => {
   document.getElementById('datas-selecionadas').textContent = datasLista.length > 0 ? datasLista.join(', ') : 'Nenhuma selecionada';
   
   console.log('🔄 Chamando render()...');
-  // Re-renderizar tabela
-  await render();
+  // Re-renderizar tabela (recarrega o cache de registros, pois pode ter novas produções)
+  await carregarRegistros();
+  render();
   console.log('✅ Render concluído');
   console.log('   producoesAnteriores FINAL:', producoesAnteriores);
 };
@@ -1074,7 +1083,8 @@ window.exportarParaExcel = async () => {
     const dados = [];
     
     // NOVO: garantir que a Prod. Ant. (AUTO) esteja calculada antes de exportar
-    await atualizarProdAntAutoMap();
+    await carregarRegistros();
+    atualizarProdAntAutoMap();
     
     // CABEÇALHO
     dados.push([
@@ -1645,7 +1655,8 @@ window.limparTudo = async () => {
   document.getElementById(id)?.addEventListener('input', render);
 });
 
-render();
+// Carrega os registros do Produlog uma vez e então renderiza
+carregarRegistros().then(render);
 </script>
 
 </body>
