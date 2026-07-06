@@ -13135,6 +13135,28 @@ function renderAcomp(){
       '<div style="font-size:10px;color:var(--text-muted);margin-top:6px;">Total real produzido (inclui acima do plano e fora do plano). Classes vêm do cadastro do produto.</div>'+
       '</div>';
   })();
+  // Presença da Confeitaria na semana (cruza com o desempenho do plano)
+  (function(){
+    const monW=_acMondayOfWeek(semana); const weekBR=new Set();
+    for(let i=0;i<6;i++){ const d=new Date(monW); d.setDate(monW.getDate()+i); weekBR.add(d.toLocaleDateString('pt-BR')); }
+    const arr=(Array.isArray(presencas)?presencas:Object.values(presencas||{})).filter(r=>r.setor_key==='conf' && weekBR.has(r.data));
+    if(!arr.length) return;
+    const parseBR=s=>{ const p=String(s).split('/'); return new Date(+p[2],+p[1]-1,+p[0]); };
+    arr.sort((a,b)=>parseBR(a.data)-parseBR(b.data));
+    const somaPres=arr.reduce((s,r)=>s+(parseInt(r.presentes)||0),0);
+    const somaEsc=arr.reduce((s,r)=>s+(parseInt(r.escalados)||0),0);
+    const nDias=arr.length;
+    const mediaPres=somaPres/nDias, mediaEsc=somaEsc/nDias;
+    const pct=somaEsc>0?Math.round(somaPres/somaEsc*100):0;
+    const diasSemNome=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+    const chips=arr.map(r=>{ const dt=parseBR(r.data); const pres=parseInt(r.presentes)||0, esc=parseInt(r.escalados)||0; const falta=esc-pres; return '<div style="flex:1;min-width:64px;text-align:center;background:var(--bg-page);border-radius:8px;padding:6px 8px;"><div style="font-size:10px;color:var(--text-secondary);">'+diasSemNome[dt.getDay()]+'</div><div style="font-size:15px;font-weight:800;color:'+(falta>0?'var(--mc-vermelho)':'var(--mc-verde)')+';">'+pres+'</div><div style="font-size:9px;color:var(--text-muted);">de '+esc+(falta>0?' · -'+falta:'')+'</div></div>'; }).join('');
+    const corPct=pct>=90?'var(--mc-verde)':(pct>=75?'#d97706':'var(--mc-vermelho)');
+    html+='<div class="card" style="margin-bottom:12px;">'+
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;"><div style="font-size:14px;font-weight:700;">👥 Presença — Confeitaria</div><div style="font-size:13px;font-weight:800;color:'+corPct+';">'+mediaPres.toLocaleString('pt-BR',{maximumFractionDigits:1})+'/dia · '+pct+'%</div></div>'+
+      '<div style="display:flex;flex-wrap:wrap;gap:6px;">'+chips+'</div>'+
+      '<div style="font-size:10px;color:var(--text-muted);margin-top:6px;">Média de '+mediaPres.toLocaleString('pt-BR',{maximumFractionDigits:1})+' presentes de '+mediaEsc.toLocaleString('pt-BR',{maximumFractionDigits:1})+' escalados nos '+nDias+' dia(s) com registro. Ajuda a entender se um plano não batido foi por falta de pessoal.</div>'+
+      '</div>';
+  })();
   html+='<div style="display:flex;flex-wrap:wrap;gap:8px 12px;font-size:11px;color:var(--text-secondary);margin-bottom:10px;">'+
     '<span>🟢 no dia</span><span>🔵 adiantado</span><span>🟠 atrasado</span><span>🔴 pendente</span><span>➕ fora do plano</span><span>⚪ aguardando</span></div>';
   html+='<div style="display:flex;gap:8px;margin-bottom:12px;">'+
