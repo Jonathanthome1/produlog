@@ -11742,6 +11742,10 @@ window.renderPainel=renderPainel; window.setPgPeriodo=setPgPeriodo; window.setPg
 
 // ===== SIMULADOR DE NECESSIDADE DE MATÉRIA-PRIMA =====
 let _simModo='avulso', _simItens=[], _simDia='todos', _simResData=null, _simSemana=null;
+// Matérias-primas acompanhadas mensalmente (aparecem também em tabela separada no simulador)
+const _SIM_MP_MENSAL=['14058','14132','14098','14125','14105','14099','14113','14093','14033','14153','14139','14067'];
+function simFiltrarMP(v){ const q=_normNome(v||''); document.querySelectorAll('.sim-mp-row').forEach(function(r){ const t=r.getAttribute('data-s')||''; r.style.display=(!q||t.indexOf(q)>=0)?'':'none'; }); }
+window.simFiltrarMP=simFiltrarMP;
 
 function _simExplodir(itens){
   const massas={}, recheios={}, mp={}, semFicha=new Set();
@@ -12907,7 +12911,7 @@ function _codEq(a,b){ if(a==null||b==null) return false; const sa=String(a).trim
 window._codEq=_codEq;
 let carregamentos=[], eanMap={}, eansList=[];
 let _carregEditando=null, _carregConf=null, _carregBipMode='auto', _carregBusca='', _carregHist=[], _carregUltimo=null, _carregEanPendente=null;
-let _carregBuf='', _carregLastKey=0, _carregTimer=null, _carregKeyBound=null;
+let _carregBuf='', _carregLastKey=0, _carregTimer=null, _carregKeyBound=null, _carregMult=1;
 function _carregSyncInput(){ const i=document.getElementById('carreg-bip'); if(i) i.value=_carregBuf; }
 function _carregKeyHandler(e){
   const active=document.querySelector('.screen.active'); if(!active||active.id!=='s-carreg-conf') return;
@@ -13114,7 +13118,7 @@ window.salvarCarreg=salvarCarreg; window.excluirCarreg=excluirCarreg;
 // ---------- CONFERÊNCIA (bipagem) ----------
 async function iniciarConferencia(id){
   const c=carregamentos.find(x=>x.firestoreId===id); if(!c) return;
-  _carregConf=JSON.parse(JSON.stringify(c)); _carregHist=[]; _carregUltimo=null; _carregBusca='';
+  _carregConf=JSON.parse(JSON.stringify(c)); _carregHist=[]; _carregUltimo=null; _carregBusca=''; _carregMult=1;
   if(_carregConf.status==='aberto'){ _carregConf.status='conferindo'; try{ await updateDoc(doc(db,'carregamentos',id),{status:'conferindo', iniciadoEm:agora()}); }catch(e){} }
   goTo('s-carreg-conf'); renderCarregConf(); _carregFocus();
 }
@@ -13122,6 +13126,9 @@ window.iniciarConferencia=iniciarConferencia;
 function _carregFocus(){ setTimeout(()=>{ const i=document.getElementById('carreg-bip'); if(i){ i.focus(); i.select&&i.select(); } },120); }
 function carregSetMode(m){ _carregBipMode=m; renderCarregConf(); _carregFocus(); }
 window.carregSetMode=carregSetMode;
+function carregSetMult(n){ _carregMult=Math.max(parseInt(n)||1,1); renderCarregConf(); _carregFocus(); }
+function carregMultOutro(){ const v=prompt('Multiplicador (quantos pacotes cada bipe conta):', String(_carregMult||1)); if(v===null) return; const n=parseInt(v)||1; _carregMult=Math.max(n,1); renderCarregConf(); _carregFocus(); }
+window.carregSetMult=carregSetMult; window.carregMultOutro=carregMultOutro;
 function carregBipEnter(ev){ if(ev.key==='Enter'){ ev.preventDefault(); const v=ev.target.value; ev.target.value=''; carregBip(v); } }
 window.carregBipEnter=carregBipEnter;
 
@@ -13135,7 +13142,7 @@ function _carregRegistrar(codigo, nome, ean){
   const it=_carregConf.itens.find(i=>_codEq(i.codigo,codigo));
   if(!it){ _carregToast('⚠️ '+(nome||'Produto')+' não faz parte deste carregamento!', '#ef4444'); _carregFocus(); return; }
   const cur=parseInt(it.qtdBipada)||0, sol=parseInt(it.qtdSolicitada)||0;
-  let add=1;
+  let add=_carregMult||1;
   if(_carregBipMode==='qtd'){ const q=prompt('Quantos pacotes de "'+it.nome+'"?','1'); if(q===null){ _carregFocus(); return; } add=parseInt(q)||0; if(add<=0){ _carregFocus(); return; } }
   // BLOQUEIO: não deixa passar do solicitado
   if(sol>0 && cur+add>sol){ _carregBloqueio(it, cur, sol, add); return; }
@@ -13237,7 +13244,18 @@ function renderCarregConf(){
         '<button onclick="carregSetMode(\'auto\')" style="flex:1;padding:9px;border-radius:9px;border:2px solid '+(_carregBipMode==='auto'?'var(--mc-azul)':'#d1d5db')+';background:'+(_carregBipMode==='auto'?'var(--mc-azul)':'#fff')+';color:'+(_carregBipMode==='auto'?'#fff':'#334155')+';font-weight:800;font-size:12px;cursor:pointer;">📡 1 bipe = 1 pacote</button>'+
         '<button onclick="carregSetMode(\'qtd\')" style="flex:1;padding:9px;border-radius:9px;border:2px solid '+(_carregBipMode==='qtd'?'var(--mc-azul)':'#d1d5db')+';background:'+(_carregBipMode==='qtd'?'var(--mc-azul)':'#fff')+';color:'+(_carregBipMode==='qtd'?'#fff':'#334155')+';font-weight:800;font-size:12px;cursor:pointer;">🔢 bipar + digitar</button>'+
       '</div>'+
-      '<input type="text" id="carreg-bip" readonly placeholder="📡 PODE BIPAR" autocomplete="off" style="width:100%;font-size:22px;padding:18px;border-radius:12px;border:2px solid var(--mc-azul);box-sizing:border-box;text-align:center;font-weight:800;background:#fff;">'+
+      // ===== MULTIPLICADOR =====
+      (function(){
+        const presets=[1,5,10,12,20,24];
+        const chips=presets.map(function(p){ const on=_carregMult===p; return '<button onclick="carregSetMult('+p+')" style="flex:1;min-width:42px;padding:8px 4px;border-radius:8px;border:2px solid '+(on?'#d97706':'#e2e8f0')+';background:'+(on?'#d97706':'#fff')+';color:'+(on?'#fff':'#334155')+';font-weight:800;font-size:14px;cursor:pointer;">×'+p+'</button>'; }).join('');
+        const outroOn=presets.indexOf(_carregMult)<0;
+        return '<div style="margin-bottom:8px;"><div style="font-size:11px;color:#64748b;font-weight:700;margin-bottom:4px;">MULTIPLICADOR — cada bipe conta esta quantidade</div>'+
+          '<div style="display:flex;gap:5px;flex-wrap:wrap;">'+chips+
+          '<button onclick="carregMultOutro()" style="flex:1;min-width:52px;padding:8px 4px;border-radius:8px;border:2px solid '+(outroOn?'#d97706':'#e2e8f0')+';background:'+(outroOn?'#d97706':'#fff')+';color:'+(outroOn?'#fff':'#334155')+';font-weight:800;font-size:13px;cursor:pointer;">'+(outroOn?'×'+_carregMult:'outro')+'</button>'+
+          '</div></div>';
+      })()+
+      (_carregMult>1?'<div style="background:#fff7ed;border:2px solid #d97706;border-radius:10px;padding:10px 12px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;gap:8px;"><div style="font-size:15px;font-weight:900;color:#c2410c;">⚡ ATIVO: cada bipe conta ×'+_carregMult+' pacotes</div><button onclick="carregSetMult(1)" style="background:#c2410c;color:#fff;border:none;border-radius:8px;padding:7px 12px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;">voltar p/ ×1</button></div>':'')+
+      '<input type="text" id="carreg-bip" readonly placeholder="📡 PODE BIPAR" autocomplete="off" style="width:100%;font-size:22px;padding:18px;border-radius:12px;border:2px solid '+(_carregMult>1?'#d97706':'var(--mc-azul)')+';box-sizing:border-box;text-align:center;font-weight:800;background:#fff;">'+
       '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;gap:8px;">'+
         '<div style="font-size:12px;color:#64748b;font-weight:600;">✅ Pode bipar direto — não precisa clicar em nada</div>'+
         '<button onclick="carregDigitarManual()" style="background:none;border:1px solid #d1d5db;border-radius:8px;padding:6px 10px;font-size:12px;color:#334155;cursor:pointer;white-space:nowrap;">⌨️ Digitar</button>'+
@@ -13352,12 +13370,14 @@ function renderEans(){
   const el=document.getElementById('eans-content'); if(!el) return;
   let html='';
   // ações de cadastro
-  html+='<div class="card"><div style="font-size:13px;font-weight:700;margin-bottom:8px;">Cadastrar códigos de barras</div>'+
-    '<button class="btn btn-primary" style="width:100%;margin-bottom:8px;background:var(--mc-verde);" onclick="eansCarregarSeed()">📦 Carregar lista padrão ('+(typeof _eansSeed!=='undefined'?_eansSeed.length:0)+' produtos)</button>'+
-    '<button class="btn btn-secondary" style="width:100%;margin-bottom:8px;" onclick="eansColarLista()">📋 Colar lista (Código + Nome + EAN)</button>'+
-    '<div class="card-label" style="margin-top:6px;">Ou adicionar manualmente</div>'+
-    '<input type="text" id="eans-busca-add" oninput="eansBuscaAdd(this.value)" placeholder="🔍 Buscar produto por nome ou código" style="width:100%;font-size:14px;padding:10px;border-radius:8px;border:1px solid var(--border-md,#d1d5db);box-sizing:border-box;">'+
-    '<div id="eans-add-res" style="border:1px solid var(--border);border-radius:8px;margin-top:6px;overflow:hidden;"></div>'+
+  html+='<div class="card"><div style="font-size:13px;font-weight:700;margin-bottom:8px;">Adicionar produto manualmente</div>'+
+    '<input type="text" id="ean-man-nome" placeholder="Nome do produto" style="width:100%;font-size:14px;padding:10px;border-radius:8px;border:1px solid var(--border-md,#d1d5db);box-sizing:border-box;margin-bottom:8px;">'+
+    '<div style="display:flex;gap:8px;margin-bottom:8px;">'+
+      '<input type="text" id="ean-man-cod" placeholder="Código" inputmode="numeric" style="flex:1;min-width:0;font-size:14px;padding:10px;border-radius:8px;border:1px solid var(--border-md,#d1d5db);box-sizing:border-box;">'+
+      '<input type="text" id="ean-man-ean" placeholder="Código de barras (EAN)" inputmode="numeric" style="flex:2;min-width:0;font-size:14px;padding:10px;border-radius:8px;border:1px solid var(--border-md,#d1d5db);box-sizing:border-box;">'+
+    '</div>'+
+    '<button class="btn btn-primary" style="width:100%;margin-bottom:8px;" onclick="eansAddNovo()">+ Adicionar produto</button>'+
+    '<button class="btn btn-secondary" style="width:100%;" onclick="eansColarLista()">📋 Colar lista (Código + Nome + EAN)</button>'+
     '</div>';
   // lista cadastrada
   const q=_normNome(_eansBusca);
@@ -13382,6 +13402,20 @@ function eansFiltrar(v){ _eansBusca=v; renderEans(); const i=document.getElement
 window.eansFiltrar=eansFiltrar;
 function eansBuscaAdd(v){ _eansBuscaAdd=v; const cont=document.getElementById('eans-add-res'); if(!cont) return; const q=_normNome(v); if(!q){ cont.innerHTML=''; return; } const res=produtosConfFirebase.filter(p=>_normNome((p.nome||'')+' '+(p.cod||'')).includes(q)).slice(0,8); cont.innerHTML=res.length? res.map(p=>{ const jaTem=eansList.find(e=>String(e.codigo)===String(p.cod)); return '<div onclick="eansAddManual(\''+escapeJsStr(String(p.cod))+'\')" style="padding:9px 11px;border-bottom:1px solid var(--border);cursor:pointer;font-size:14px;">'+(p.nome||'')+' <span style="color:var(--text-secondary);font-size:11px;">cód '+p.cod+'</span>'+(jaTem?' <span style="color:var(--mc-verde);font-size:10px;">🏷️ '+jaTem.ean+'</span>':'')+'</div>'; }).join('') : '<div style="padding:9px;color:var(--text-secondary);font-size:13px;">Nenhum produto encontrado.</div>'; }
 window.eansBuscaAdd=eansBuscaAdd;
+async function eansAddNovo(){
+  const nome=(document.getElementById('ean-man-nome').value||'').trim();
+  const cod=(document.getElementById('ean-man-cod').value||'').trim();
+  const ean=(document.getElementById('ean-man-ean').value||'').trim();
+  if(!nome||!cod||!ean){ alert('Preencha nome, código e código de barras (EAN).'); return; }
+  if(!/^\d{6,14}$/.test(ean)){ if(!confirm('"'+ean+'" não parece um EAN comum (6 a 14 dígitos). Cadastrar mesmo assim?')) return; }
+  const jaEan=eansList.find(e=>e.ean===ean);
+  if(jaEan && !_codEq(jaEan.codigo,cod)){ if(!confirm('Este EAN já está no produto "'+jaEan.nome+'" (cód '+jaEan.codigo+'). Reatribuir para "'+nome+'"?')) return; }
+  await _eansSalvar(cod, nome, ean, null);
+  document.getElementById('ean-man-nome').value=''; document.getElementById('ean-man-cod').value=''; document.getElementById('ean-man-ean').value='';
+  _carregToast&&null;
+  alert('✅ Produto adicionado!');
+}
+window.eansAddNovo=eansAddNovo;
 async function eansAddManual(cod){
   const p=produtosConfFirebase.find(x=>String(x.cod)===String(cod)); if(!p) return;
   const atual=eansList.find(e=>String(e.codigo)===String(cod));
@@ -13593,11 +13627,26 @@ function _simResultadoHTML(){
     recheios.map(([n,kg])=>'<div style="display:flex;justify-content:space-between;font-size:13px;padding:3px 0;border-bottom:1px dashed var(--border);"><span>🥄 '+n+'</span><strong>'+_fmtKg(kg)+' kg</strong></div>').join(''); }
   html+='</div>';
 
-  // Matérias-primas necessárias
+  // Matérias-primas de acompanhamento mensal (tabela separada)
+  const mpMensal=mp.filter(m=>_SIM_MP_MENSAL.some(c=>_codEq(c,m.mpCodigo)));
+  if(mpMensal.length){
+    const totMensal=mpMensal.reduce((s,m)=>s+m.kg,0);
+    html+='<div class="card" style="margin-top:10px;border-left:3px solid var(--mc-dourado);background:linear-gradient(135deg,var(--bg-primary),#fffbeb);">'+
+      '<div style="font-size:15px;font-weight:700;margin-bottom:2px;">📅 Análise mensal ('+mpMensal.length+')</div>'+
+      '<div style="font-size:11px;color:var(--text-secondary);margin-bottom:8px;">Itens que você acompanha mês a mês</div>'+
+      mpMensal.map(m=>'<div style="display:flex;justify-content:space-between;align-items:center;font-size:14px;padding:6px 0;border-bottom:1px dashed var(--border);"><div><strong>'+m.mpNome+'</strong>'+(m.mpCodigo?' <span style="font-size:11px;color:var(--text-secondary);">'+m.mpCodigo+'</span>':'')+'</div><strong style="color:#d97706;white-space:nowrap;">'+_fmtKg(m.kg)+' '+(m.mpUnidade||'kg')+'</strong></div>').join('')+
+      '<div style="display:flex;justify-content:space-between;font-size:13px;font-weight:800;padding-top:8px;"><span>Total</span><span style="color:#d97706;">'+_fmtKg(totMensal)+' kg</span></div>'+
+      '</div>';
+  }
+
+  // Matérias-primas necessárias (todas) — com busca
   html+='<div class="card" style="margin-top:10px;border-left:3px solid var(--mc-verde);">'+
     '<div style="font-size:15px;font-weight:700;margin-bottom:8px;">🧪 Matérias-primas necessárias ('+mp.length+')</div>';
   if(!mp.length) html+='<div class="empty">Nada a calcular.</div>';
-  else html+=mp.map(m=>'<div style="display:flex;justify-content:space-between;align-items:center;font-size:13px;padding:5px 0;border-bottom:1px dashed var(--border);"><div><strong>'+m.mpNome+'</strong>'+(m.mpCodigo?' <span style="font-size:11px;color:var(--text-secondary);">'+m.mpCodigo+'</span>':'')+'</div><strong style="color:var(--mc-verde);white-space:nowrap;">'+_fmtKg(m.kg)+' '+(m.mpUnidade||'kg')+'</strong></div>').join('');
+  else {
+    html+='<input type="text" oninput="simFiltrarMP(this.value)" placeholder="🔍 Buscar matéria-prima..." style="width:100%;font-size:14px;padding:10px;border-radius:8px;border:1px solid var(--border-md,#d1d5db);box-sizing:border-box;margin-bottom:8px;">';
+    html+=mp.map(m=>{ const mensal=_SIM_MP_MENSAL.some(c=>_codEq(c,m.mpCodigo)); return '<div class="sim-mp-row" data-s="'+_normNome((m.mpNome||'')+' '+(m.mpCodigo||''))+'" style="display:flex;justify-content:space-between;align-items:center;font-size:13px;padding:5px 0;border-bottom:1px dashed var(--border);"><div>'+(mensal?'📅 ':'')+'<strong>'+m.mpNome+'</strong>'+(m.mpCodigo?' <span style="font-size:11px;color:var(--text-secondary);">'+m.mpCodigo+'</span>':'')+'</div><strong style="color:var(--mc-verde);white-space:nowrap;">'+_fmtKg(m.kg)+' '+(m.mpUnidade||'kg')+'</strong></div>'; }).join('');
+  }
   html+='</div>';
   return html;
 }
