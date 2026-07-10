@@ -12918,6 +12918,7 @@ function _carregKeyHandler(e){
   if(!_carregConf || _carregConf.status==='concluido') return;
   if(document.getElementById('carreg-modal')) return; // modal de EAN aberto
   if(document.getElementById('carreg-bloqueio')) return; // alerta de bloqueio aberto (exige clique no OK)
+  if(e.target && e.target.id==='carreg-mult') return; // deixa digitar o multiplicador normalmente
   const k=e.key;
   if(k==='Enter'){ if(_carregBuf.length){ e.preventDefault(); const v=_carregBuf; _carregBuf=''; _carregSyncInput(); carregBip(v); } return; }
   if(k && k.length===1 && !e.ctrlKey && !e.metaKey && !e.altKey){
@@ -13126,9 +13127,9 @@ window.iniciarConferencia=iniciarConferencia;
 function _carregFocus(){ setTimeout(()=>{ const i=document.getElementById('carreg-bip'); if(i){ i.focus(); i.select&&i.select(); } },120); }
 function carregSetMode(m){ _carregBipMode=m; renderCarregConf(); _carregFocus(); }
 window.carregSetMode=carregSetMode;
-function carregSetMult(n){ _carregMult=Math.max(parseInt(n)||1,1); renderCarregConf(); _carregFocus(); }
-function carregMultOutro(){ const v=prompt('Multiplicador (quantos pacotes cada bipe conta):', String(_carregMult||1)); if(v===null) return; const n=parseInt(v)||1; _carregMult=Math.max(n,1); renderCarregConf(); _carregFocus(); }
-window.carregSetMult=carregSetMult; window.carregMultOutro=carregMultOutro;
+function carregAplicarMult(v){ const n=parseInt(v)||1; _carregMult=Math.max(n,1); renderCarregConf(); _carregFocus(); }
+function carregMultEnter(ev){ if(ev.key==='Enter'){ ev.preventDefault(); carregAplicarMult(ev.target.value); } }
+window.carregAplicarMult=carregAplicarMult; window.carregMultEnter=carregMultEnter;
 function carregBipEnter(ev){ if(ev.key==='Enter'){ ev.preventDefault(); const v=ev.target.value; ev.target.value=''; carregBip(v); } }
 window.carregBipEnter=carregBipEnter;
 
@@ -13143,9 +13144,10 @@ function _carregRegistrar(codigo, nome, ean){
   if(!it){ _carregToast('⚠️ '+(nome||'Produto')+' não faz parte deste carregamento!', '#ef4444'); _carregFocus(); return; }
   const cur=parseInt(it.qtdBipada)||0, sol=parseInt(it.qtdSolicitada)||0;
   let add=_carregMult||1;
+  if(_carregMult>1) _carregMult=1; // one-shot: volta ao padrão (1) após este bipe
   if(_carregBipMode==='qtd'){ const q=prompt('Quantos pacotes de "'+it.nome+'"?','1'); if(q===null){ _carregFocus(); return; } add=parseInt(q)||0; if(add<=0){ _carregFocus(); return; } }
   // BLOQUEIO: não deixa passar do solicitado
-  if(sol>0 && cur+add>sol){ _carregBloqueio(it, cur, sol, add); return; }
+  if(sol>0 && cur+add>sol){ renderCarregConf(); _carregBloqueio(it, cur, sol, add); return; }
   it.qtdBipada=cur+add;
   _carregHist.push({codigo:String(codigo), qtd:add});
   _carregUltimo={codigo:String(codigo), nome:it.nome, add, total:it.qtdBipada, sol:it.qtdSolicitada};
@@ -13244,17 +13246,14 @@ function renderCarregConf(){
         '<button onclick="carregSetMode(\'auto\')" style="flex:1;padding:9px;border-radius:9px;border:2px solid '+(_carregBipMode==='auto'?'var(--mc-azul)':'#d1d5db')+';background:'+(_carregBipMode==='auto'?'var(--mc-azul)':'#fff')+';color:'+(_carregBipMode==='auto'?'#fff':'#334155')+';font-weight:800;font-size:12px;cursor:pointer;">📡 1 bipe = 1 pacote</button>'+
         '<button onclick="carregSetMode(\'qtd\')" style="flex:1;padding:9px;border-radius:9px;border:2px solid '+(_carregBipMode==='qtd'?'var(--mc-azul)':'#d1d5db')+';background:'+(_carregBipMode==='qtd'?'var(--mc-azul)':'#fff')+';color:'+(_carregBipMode==='qtd'?'#fff':'#334155')+';font-weight:800;font-size:12px;cursor:pointer;">🔢 bipar + digitar</button>'+
       '</div>'+
-      // ===== MULTIPLICADOR =====
-      (function(){
-        const presets=[1,5,10,12,20,24];
-        const chips=presets.map(function(p){ const on=_carregMult===p; return '<button onclick="carregSetMult('+p+')" style="flex:1;min-width:42px;padding:8px 4px;border-radius:8px;border:2px solid '+(on?'#d97706':'#e2e8f0')+';background:'+(on?'#d97706':'#fff')+';color:'+(on?'#fff':'#334155')+';font-weight:800;font-size:14px;cursor:pointer;">×'+p+'</button>'; }).join('');
-        const outroOn=presets.indexOf(_carregMult)<0;
-        return '<div style="margin-bottom:8px;"><div style="font-size:11px;color:#64748b;font-weight:700;margin-bottom:4px;">MULTIPLICADOR — cada bipe conta esta quantidade</div>'+
-          '<div style="display:flex;gap:5px;flex-wrap:wrap;">'+chips+
-          '<button onclick="carregMultOutro()" style="flex:1;min-width:52px;padding:8px 4px;border-radius:8px;border:2px solid '+(outroOn?'#d97706':'#e2e8f0')+';background:'+(outroOn?'#d97706':'#fff')+';color:'+(outroOn?'#fff':'#334155')+';font-weight:800;font-size:13px;cursor:pointer;">'+(outroOn?'×'+_carregMult:'outro')+'</button>'+
-          '</div></div>';
-      })()+
-      (_carregMult>1?'<div style="background:#fff7ed;border:2px solid #d97706;border-radius:10px;padding:10px 12px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;gap:8px;"><div style="font-size:15px;font-weight:900;color:#c2410c;">⚡ ATIVO: cada bipe conta ×'+_carregMult+' pacotes</div><button onclick="carregSetMult(1)" style="background:#c2410c;color:#fff;border:none;border-radius:8px;padding:7px 12px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;">voltar p/ ×1</button></div>':'')+
+      // ===== MULTIPLICADOR (campo digitável, one-shot) =====
+      '<div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;">'+
+        '<div style="font-size:12px;font-weight:700;color:#64748b;white-space:nowrap;">Multiplicador:</div>'+
+        '<input type="text" id="carreg-mult" value="'+(_carregMult>1?_carregMult:'')+'" onkeydown="carregMultEnter(event)" inputmode="numeric" placeholder="1" style="width:80px;font-size:18px;font-weight:800;padding:8px;border-radius:8px;border:2px solid '+(_carregMult>1?'#d97706':'#d1d5db')+';text-align:center;box-sizing:border-box;">'+
+        '<button onclick="carregAplicarMult(document.getElementById(\'carreg-mult\').value)" style="background:#d97706;color:#fff;border:none;border-radius:8px;padding:9px 14px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;">Definir</button>'+
+        (_carregMult>1?'<button onclick="carregAplicarMult(1)" style="background:none;border:1px solid #d1d5db;border-radius:8px;padding:8px 10px;font-size:12px;color:#334155;cursor:pointer;white-space:nowrap;">×1</button>':'')+
+      '</div>'+
+      (_carregMult>1?'<div style="background:#fff7ed;border:2px solid #d97706;border-radius:10px;padding:10px 12px;margin-bottom:8px;text-align:center;"><div style="font-size:15px;font-weight:900;color:#c2410c;">⚡ PRÓXIMO BIPE = '+_carregMult+' pacotes</div><div style="font-size:11px;color:#9a3412;font-weight:600;">Depois volta automaticamente para 1</div></div>':'')+
       '<input type="text" id="carreg-bip" readonly placeholder="📡 PODE BIPAR" autocomplete="off" style="width:100%;font-size:22px;padding:18px;border-radius:12px;border:2px solid '+(_carregMult>1?'#d97706':'var(--mc-azul)')+';box-sizing:border-box;text-align:center;font-weight:800;background:#fff;">'+
       '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;gap:8px;">'+
         '<div style="font-size:12px;color:#64748b;font-weight:600;">✅ Pode bipar direto — não precisa clicar em nada</div>'+
@@ -13324,8 +13323,25 @@ async function carregFinalizar(){
   hist.push({tipo:'concluido', por:_demAutor(), em:agora(), bip:totBip, sol:totSol});
   _carregConf.status='concluido'; _carregConf.historico=hist;
   try{ await updateDoc(doc(db,'carregamentos',_carregConf.firestoreId),{status:'concluido', itens:_carregConf.itens, historico:hist, concluidoEm:agora(), conferidoPor:_demAutor()}); }catch(e){ alert('Erro: '+e.message); return; }
+  // Lança as faltas nas Demandas do Admin
+  if(faltando.length){ try{ await _carregLancarFaltas(_carregConf, faltando); }catch(e){ console.error('faltas->demanda',e); } }
   renderCarregConf();
 }
+async function _carregLancarFaltas(c, faltando){
+  const cat='Faltas de Carregamento';
+  if(!demandaCategorias.some(x=>x.toLowerCase()===cat.toLowerCase())){ demandaCategorias.push(cat); setDoc(doc(db,'configuracoes','demandaCategorias'),{lista:demandaCategorias,atualizadoEm:agora()}).catch(()=>{}); }
+  const linhas=faltando.map(i=>{ const sol=parseInt(i.qtdSolicitada)||0, bip=parseInt(i.qtdBipada)||0; return '• '+i.nome+' (cód '+i.codigo+') — faltou '+(sol-bip)+' de '+sol+' (conferido '+bip+')'; }).join('\n');
+  const totalFalta=faltando.reduce((s,i)=>s+Math.max((parseInt(i.qtdSolicitada)||0)-(parseInt(i.qtdBipada)||0),0),0);
+  const desc='📦 Carregamento: '+(c.nome||'')+'\n📅 Data: '+hoje()+'\n👤 Conferido por: '+_demAutor()+'\n⚠️ '+faltando.length+' produto(s) · '+totalFalta+' pacote(s) faltando\n\n'+linhas;
+  const existente=demandas.find(x=>x.origem==='carregamento' && x.carregamentoId===c.firestoreId);
+  if(existente){
+    await updateDoc(doc(db,'demandas',existente.firestoreId),{descricao:desc, status:'afazer', prioridade:'alta', atualizadoEm:agora()});
+  } else {
+    const dados={ titulo:'Faltas: '+(c.nome||'Carregamento'), descricao:desc, categoria:cat, status:'afazer', prioridade:'alta', dataEntrega:'', comentarios:[], origem:'carregamento', carregamentoId:c.firestoreId, criadoPor:_demAutor(), criadoEm:agora(), timestamp:Date.now() };
+    await setDoc(doc(collection(db,'demandas')),dados);
+  }
+}
+window._carregLancarFaltas=_carregLancarFaltas;
 async function carregReabrir(){
   if(!_carregConf) return;
   if(!confirm('Reabrir este carregamento para conferir/editar novamente?\n\nO histórico do que já foi feito fica salvo. As quantidades já bipadas são mantidas.')) return;
