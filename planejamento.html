@@ -466,7 +466,7 @@ async function render(){
   if(filtro==='falta') lista = lista.filter(p => temFaltaEstoque(p.cod));
   // NOVO: filtro por dia da semana — só produtos com quantidade planejada nesse dia
   const filtroDia = document.getElementById('filtroDia')?.value || 'todos';
-  if(filtroDia!=='todos') lista = lista.filter(p => ((plano[p.cod]||{})[filtroDia]||0) > 0);
+  if(filtroDia!=='todos') lista = lista.filter(p => ((plano[p.cod]||{})[filtroDia]||0) !== 0); // inclui negativos (simulações)
   // NOVO: filtro por classe de produção (Mesa/Fritos/Usifood/...)
   const filtroClasse = document.getElementById('filtroClasse')?.value || 'todas';
   if(filtroClasse==='__sem') lista = lista.filter(p => !classeDe(p.cod));
@@ -735,8 +735,9 @@ window.abrirProducoesAnteriores = async () => {
     const snapshot = await getDocs(collection(db, 'registros'));
     const registros = snapshot.docs.map(d => ({id: d.id, ...d.data()}));
     
-    // Agrupar datas únicas
-    const datasUnicas = [...new Set(registros.map(r => r.data))].sort().reverse();
+    // Datas únicas ordenadas CORRETAMENTE (por data real, não texto) e agrupadas por mês
+    const _toDate = (br) => { const p=String(br||'').split('/'); return (p.length===3)? new Date(+p[2], +p[1]-1, +p[0]) : new Date(0); };
+    const datasUnicas = [...new Set(registros.map(r => r.data))].filter(Boolean).sort((a,b)=> _toDate(b) - _toDate(a));
     
     console.log('Datas encontradas:', datasUnicas);
     
@@ -746,21 +747,41 @@ window.abrirProducoesAnteriores = async () => {
       return;
     }
     
-    // Montar checkboxes
+    // Agrupar por mês
+    const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+    const DIAS_SEM=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+    const grupos={};
+    datasUnicas.forEach(data=>{
+      const d=_toDate(data);
+      const chave=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+      (grupos[chave]=grupos[chave]||{label:MESES[d.getMonth()]+' / '+d.getFullYear(), datas:[]}).datas.push(data);
+    });
+    const chavesOrd=Object.keys(grupos).sort().reverse();
+    
     let html = '<div style="padding:12px;border-bottom:1px solid #ddd;margin-bottom:12px;">';
     html += '<strong>Selecione as datas com produções que faltam considerar:</strong>';
     html += '</div>';
     
-    html += '<div style="display:flex;flex-direction:column;gap:8px;">';
-    datasUnicas.forEach(data => {
-      const qtdRegistros = registros.filter(r => r.data === data).length;
-      const isSelected = producoesAnteriores[data];
-      html += '<label style="display:flex;align-items:center;padding:8px;border:1px solid #ddd;border-radius:6px;cursor:pointer;background:'+(isSelected?'#dbeafe':'#f9fafb')+'">';
-      html += '<input type="checkbox" id="data-'+data+'" '+( isSelected ? 'checked' : '')+' onchange="selecionarDataProducao(\''+data+'\')" style="margin-right:8px;width:18px;height:18px;cursor:pointer">';
-      html += '<div style="flex:1"><strong>'+data+'</strong> <span style="color:#666;font-size:12px">('+qtdRegistros+' registros)</span></div>';
-      html += '</label>';
+    chavesOrd.forEach(chave=>{
+      const g=grupos[chave];
+      const selNoMes=g.datas.filter(d=>producoesAnteriores[d]).length;
+      html += '<div style="margin-bottom:14px;">';
+      html += '<div style="display:flex;justify-content:space-between;align-items:center;background:#1e3a8a;color:#fff;padding:7px 12px;border-radius:6px;margin-bottom:8px;">'+
+              '<strong style="font-size:14px;">📅 '+g.label+'</strong>'+
+              '<span style="font-size:12px;opacity:.9;">'+g.datas.length+' dia(s)'+(selNoMes?' · '+selNoMes+' selecionado(s)':'')+'</span>'+
+              '</div>';
+      html += '<div style="display:flex;flex-direction:column;gap:6px;">';
+      g.datas.forEach(data => {
+        const qtdRegistros = registros.filter(r => r.data === data).length;
+        const isSelected = producoesAnteriores[data];
+        const dia=DIAS_SEM[_toDate(data).getDay()];
+        html += '<label style="display:flex;align-items:center;padding:8px;border:1px solid '+(isSelected?'#3b82f6':'#ddd')+';border-radius:6px;cursor:pointer;background:'+(isSelected?'#dbeafe':'#f9fafb')+'">';
+        html += '<input type="checkbox" id="data-'+data+'" '+( isSelected ? 'checked' : '')+' onchange="selecionarDataProducao(\''+data+'\')" style="margin-right:8px;width:18px;height:18px;cursor:pointer">';
+        html += '<div style="flex:1"><strong>'+data+'</strong> <span style="color:#888;font-size:12px;">'+dia+'</span> <span style="color:#666;font-size:12px">('+qtdRegistros+' registros)</span></div>';
+        html += '</label>';
+      });
+      html += '</div></div>';
     });
-    html += '</div>';
     
     html += '<div style="margin-top:16px;padding:12px;background:#dcfce7;border-radius:6px;">';
     html += '<strong style="color:#065f46">ℹ️ Datas selecionadas:</strong><br>';
