@@ -1624,9 +1624,9 @@
         <div style="flex:1;"><div class="hb-title">Plano de Produção</div><div class="hb-desc">Cronograma da semana</div></div>
         <span style="color:var(--text-secondary);font-size:20px;">›</span>
       </button>
-      <button class="home-btn" onclick="goTo('s-emb-cf')" style="border-left-color:#7c3aed;margin-bottom:4px;">
-        <div class="hb-icon" style="background:#ede9fe;">🤝</div>
-        <div style="flex:1;"><div class="hb-title">Cliente C&amp;F</div><div class="hb-desc" id="cf-emb-badge">Produção e abertura de pacotes</div></div>
+      <button class="home-btn" id="cf-emb-card" onclick="goTo('s-emb-cf')" style="border-left-color:#7c3aed;margin-bottom:4px;">
+        <div class="hb-icon" id="cf-emb-icon" style="background:#ede9fe;">🤝</div>
+        <div style="flex:1;"><div class="hb-title">Cliente C&amp;F <span id="cf-emb-pill" style="display:none;background:#d97706;color:#fff;font-size:12px;font-weight:800;border-radius:99px;padding:2px 10px;margin-left:6px;vertical-align:middle;">🔔 0</span></div><div class="hb-desc" id="cf-emb-badge">Produção e abertura de pacotes</div></div>
         <span style="color:var(--text-secondary);font-size:20px;">›</span>
       </button>
       <button class="home-btn" onclick="goTo('s-exp-manual')" style="border-left-color:var(--mc-laranja);margin-bottom:4px;">
@@ -4358,6 +4358,7 @@ function goTo(id){
   if(id==='s-coz-reg') renderCozReg();
   if(id==='s-emb-home') renderEmbalagem();
   if(id==='s-emb-cf'){ renderCFForm(); renderCF(); }
+  if(id==='s-emb-sel-data') _cfAtualizarBadge();
   if(id==='s-emb-manual'){ const b=document.getElementById('emb-manual-btn');if(b){b.textContent='Adicionar ao checklist ✓';b.disabled=false;} }
   if(id==='s-exp-home') renderExpedicao();
   if(id==='s-exp-manual') renderExpManual();
@@ -4933,14 +4934,27 @@ function cfUrgenciaBadge(br){
 onSnapshot(collection(db,'cfPedidos'), snap=>{
   try{
     cfPedidos = snap.docs.map(d=>({firestoreId:d.id,...d.data()})).sort((a,b)=>(b.timestamp||0)-(a.timestamp||0));
-    const badge=document.getElementById('cf-emb-badge');
-    if(badge){
-      const pend = cfPedidos.filter(p=>!cfPedidoCompleto(p)).length;
-      badge.textContent = pend>0 ? (pend+' pendente'+(pend>1?'s':'')) : 'Produção e abertura de pacotes';
-    }
+    _cfAtualizarBadge();
     atualizarTela();
   }catch(e){ console.error('cfPedidos snap:',e); }
 });
+function _cfInjectStyles(){ if(document.getElementById('cf-badge-anim'))return; const s=document.createElement('style'); s.id='cf-badge-anim'; s.textContent='@keyframes cfPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}} .cf-pill-pulse{animation:cfPulse 1.4s ease-in-out infinite;} @keyframes cfGlow{0%,100%{box-shadow:0 0 0 2px rgba(217,119,6,.25)}50%{box-shadow:0 0 14px 2px rgba(217,119,6,.45)}} .cf-card-alert{animation:cfGlow 2s ease-in-out infinite;}'; document.head.appendChild(s); }
+function _cfAtualizarBadge(){
+  _cfInjectStyles();
+  const pend = (cfPedidos||[]).filter(p=>!cfPedidoCompleto(p)).length;
+  const card=document.getElementById('cf-emb-card');
+  const desc=document.getElementById('cf-emb-badge');
+  const pill=document.getElementById('cf-emb-pill');
+  const icon=document.getElementById('cf-emb-icon');
+  if(pill){ pill.style.display = pend>0?'inline-block':'none'; pill.textContent='🔔 '+pend+' PENDENTE'+(pend>1?'S':''); pill.className = pend>0?'cf-pill-pulse':''; }
+  if(desc){ desc.textContent = pend>0 ? '⚠️ Tem C&F para resolver — toque para ver' : 'Produção e abertura de pacotes'; desc.style.color = pend>0?'#b45309':''; desc.style.fontWeight = pend>0?'700':''; }
+  if(icon){ icon.textContent = pend>0?'🔔':'🤝'; icon.style.background = pend>0?'#fef3c7':'#ede9fe'; }
+  if(card){
+    if(pend>0){ card.style.background='#fffbeb'; card.style.borderLeftColor='#d97706'; card.style.borderLeftWidth='6px'; card.classList.add('cf-card-alert'); }
+    else { card.style.background=''; card.style.borderLeftColor='#7c3aed'; card.style.borderLeftWidth=''; card.classList.remove('cf-card-alert'); }
+  }
+}
+window._cfAtualizarBadge=_cfAtualizarBadge;
 
 function cfPedidoCompleto(p){
   if(p.tipo==='abrir') return !!p.checkEmb && !!p.checkAdmin;
