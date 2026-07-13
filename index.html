@@ -2708,7 +2708,6 @@
         <div class="mc-page-sub">Selecione o dia</div>
       </div>
       <div class="mc-header-actions">
-        <button class="mc-act-btn-secondary" onclick="goTo('s-carreg')" title="Conferência de carregamento por bipagem">📦 Carregamentos</button>
         <button class="mc-act-btn-secondary" onclick="goTo('s-exp-manual')" title="Lançar produto já pego antes da embalagem">📥 Já peguei</button>
       </div>
     </div>
@@ -3686,7 +3685,7 @@
   <!-- CARREGAMENTO: HUB -->
   <div class="screen" id="s-carreg">
     <div class="mc-header">
-      <button class="mc-header-back" onclick="goTo(window.setorAtual==='carregamento'?'s-inicio':(window.setorAtual==='expedicao'?'s-exp-sel-data':'s-adm-g-log'))">‹</button>
+      <button class="mc-header-back" onclick="goTo(window.setorAtual==='carregamento'?'s-inicio':'s-adm-g-log')">‹</button>
       <div class="mc-brand"><div class="mc-brand-logo">MC</div><div class="mc-brand-text"><div class="mc-brand-name">Monte Castelo</div><div class="mc-brand-sub">Expedição</div></div></div>
       <div class="mc-divider-v"></div>
       <div class="mc-page-info"><div class="mc-page-title">📦 Carregamentos</div><div class="mc-page-sub">Conferência por bipagem</div></div>
