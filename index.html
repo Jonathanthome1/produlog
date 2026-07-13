@@ -13021,7 +13021,22 @@ function _carregAcharProduto(cod){ return _carregTodosProdutos().find(p=>_codEq(
 window._carregTodosProdutos=_carregTodosProdutos;
 let carregamentos=[], eanMap={}, eansList=[];
 let _carregEditando=null, _carregConf=null, _carregBipMode='auto', _carregBusca='', _carregHist=[], _carregUltimo=null, _carregEanPendente=null;
-let _carregBuf='', _carregLastKey=0, _carregTimer=null, _carregKeyBound=null, _carregMult=1;
+let _carregBuf='', _carregLastKey=0, _carregTimer=null, _carregKeyBound=null, _carregMult=1, _carregLogAberto=null;
+function carregToggleLog(cod){ _carregLogAberto = (_carregLogAberto===String(cod)) ? null : String(cod); renderCarregConf(); }
+window.carregToggleLog=carregToggleLog;
+function _carregLogHtml(it){
+  const log=Array.isArray(it.log)?it.log:[];
+  if(!log.length) return '<div style="margin-top:8px;background:#f8fafc;border-radius:8px;padding:10px;font-size:12px;color:#64748b;">Nenhum lançamento registrado ainda.</div>';
+  const icone=v=> v==='bip'?'📡':(v==='manual'?'✋':'⌨️');
+  const rot=v=> v==='bip'?'bipado':(v==='manual'?'ajuste manual':'código digitado');
+  return '<div style="margin-top:8px;background:#f8fafc;border-radius:8px;padding:10px;">'+
+    '<div style="font-size:11px;font-weight:800;color:#334155;margin-bottom:6px;">🕐 Histórico de lançamentos ('+log.length+')</div>'+
+    log.slice().reverse().map(l=>'<div style="display:flex;justify-content:space-between;align-items:center;font-size:12px;padding:4px 0;border-bottom:1px dashed #e2e8f0;">'+
+      '<span style="color:#475569;">'+icone(l.via)+' '+rot(l.via)+(l.por?' · '+l.por:'')+'</span>'+
+      '<span style="white-space:nowrap;"><strong style="color:'+((l.qtd||0)<0?'#dc2626':'#16a34a')+';">'+((l.qtd||0)>0?'+':'')+(l.qtd||0)+'</strong> <span style="color:#64748b;">'+(l.em||'')+'</span></span>'+
+      '</div>').join('')+
+    '</div>';
+}
 function _carregSyncInput(){ const i=document.getElementById('carreg-bip'); if(i) i.value=_carregBuf; }
 function _carregKeyHandler(e){
   const active=document.querySelector('.screen.active'); if(!active||active.id!=='s-carreg-conf') return;
@@ -13098,7 +13113,9 @@ function renderCarreg(){
     return '<div class="card" style="margin-bottom:10px;">'+
       '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">'+
       '<div style="flex:1;min-width:0;"><div style="font-size:16px;font-weight:800;">'+(c.nome||'Carregamento')+'</div>'+
-      '<div style="font-size:11px;color:var(--text-secondary);margin-top:2px;">'+(c.data||'')+' · '+(c.itens||[]).length+' produtos · '+totSol+' pacotes</div></div>'+
+      '<div style="font-size:11px;color:var(--text-secondary);margin-top:2px;">'+(c.data||'')+' · '+(c.itens||[]).length+' produtos · '+totSol+' pacotes</div>'+
+      (c.iniciadoEm||c.concluidoEm?'<div style="font-size:10px;color:var(--text-muted);margin-top:2px;">'+(c.iniciadoEm?'▶️ '+c.iniciadoEm:'')+(c.concluidoEm?' · 🏁 '+c.concluidoEm:'')+(c.conferidoPor?' · 👤 '+c.conferidoPor:'')+'</div>':'')+
+      '</div>'+
       '<span style="font-size:10px;font-weight:700;color:'+si.cor+';background:'+si.bg+';border-radius:99px;padding:3px 9px;white-space:nowrap;">'+si.emoji+' '+si.label+'</span>'+
       '</div>'+
       (c.status!=='aberto'?'<div style="height:10px;border-radius:5px;background:var(--bg-page);overflow:hidden;margin-top:10px;"><div style="height:100%;width:'+Math.min(pct,100)+'%;background:'+(pct>=100?'var(--mc-verde)':'var(--mc-azul)')+';border-radius:5px;"></div></div><div style="font-size:11px;color:var(--text-secondary);margin-top:3px;">'+totBip+' / '+totSol+' bipados ('+pct+'%)</div>':'')+
@@ -13335,6 +13352,9 @@ function _carregRegistrar(codigo, nome, ean){
   // BLOQUEIO: não deixa passar do solicitado
   if(sol>0 && cur+add>sol){ renderCarregConf(); _carregBloqueio(it, cur, sol, add); return; }
   it.qtdBipada=cur+add;
+  // LOG: registra cada lançamento no próprio item (auditoria)
+  if(!Array.isArray(it.log)) it.log=[];
+  it.log.push({qtd:add, em:agora(), via:(ean?'bip':'codigo'), por:(_carregConf.conferidoPor||'')});
   _carregHist.push({codigo:String(codigo), qtd:add});
   _carregUltimo={codigo:String(codigo), nome:it.nome, add, total:it.qtdBipada, sol:it.qtdSolicitada};
   _carregPersist();
@@ -13361,13 +13381,27 @@ function _carregPersist(){ if(_carregConf&&_carregConf.firestoreId){ updateDoc(d
 function carregDesfazer(){
   if(!_carregHist.length){ return; }
   const last=_carregHist.pop();
-  const it=_carregConf.itens.find(i=>String(i.codigo)===String(last.codigo));
-  if(it){ it.qtdBipada=Math.max((parseInt(it.qtdBipada)||0)-last.qtd,0); _carregUltimo=null; _carregPersist(); renderCarregConf(); }
+  const it=_carregConf.itens.find(i=>_codEq(i.codigo,last.codigo));
+  if(it){
+    it.qtdBipada=Math.max((parseInt(it.qtdBipada)||0)-last.qtd,0);
+    if(Array.isArray(it.log)&&it.log.length) it.log.pop(); // remove o último log também
+    _carregUltimo=null; _carregPersist(); renderCarregConf();
+  }
   _carregFocus();
 }
 window.carregDesfazer=carregDesfazer;
 // somar/subtrair manual pela lista
-function carregAjustar(codigo, delta){ const it=_carregConf.itens.find(i=>String(i.codigo)===String(codigo)); if(!it)return; const novo=Math.max((parseInt(it.qtdBipada)||0)+delta,0); if(delta>0)_carregHist.push({codigo:String(codigo),qtd:delta}); it.qtdBipada=novo; _carregPersist(); renderCarregConf(); _carregFocus(); }
+function carregAjustar(codigo, delta){
+  const it=_carregConf.itens.find(i=>_codEq(i.codigo,codigo)); if(!it)return;
+  const atual=parseInt(it.qtdBipada)||0;
+  const novo=Math.max(atual+delta,0);
+  if(novo===atual) return;
+  if(!Array.isArray(it.log)) it.log=[];
+  it.log.push({qtd:(novo-atual), em:agora(), via:'manual', por:(_carregConf.conferidoPor||'')});
+  if(delta>0) _carregHist.push({codigo:String(codigo),qtd:delta});
+  it.qtdBipada=novo;
+  _carregPersist(); renderCarregConf(); _carregFocus();
+}
 window.carregAjustar=carregAjustar;
 
 function _carregAbrirResolver(ean){
@@ -13424,6 +13458,11 @@ function renderCarregConf(){
       (concluido?'<div style="font-size:16px;font-weight:900;color:#16a34a;">✅ CONCLUÍDO</div>':(falta>0?'<div style="font-size:20px;font-weight:900;color:'+corBarra+';">faltam '+falta+' 📦</div>':'<div style="font-size:18px;font-weight:900;color:#16a34a;">tudo bipado! 🎉</div>'))+
       '</div></div>'+
     '<div style="height:18px;border-radius:9px;background:rgba(255,255,255,.6);overflow:hidden;margin-top:8px;box-shadow:inset 0 1px 3px rgba(0,0,0,.1);"><div style="height:100%;width:'+Math.min(pct,100)+'%;background:'+corBarra+';border-radius:9px;transition:width .4s ease;"></div></div>'+
+    '<div style="display:flex;gap:12px;flex-wrap:wrap;font-size:11px;color:#475569;font-weight:600;margin-top:7px;">'+
+      (c.iniciadoEm?'<span>▶️ Aberto: '+c.iniciadoEm+'</span>':'')+
+      (c.concluidoEm?'<span>🏁 Fechado: '+c.concluidoEm+'</span>':'')+
+      (c.reabertoEm&&!concluido?'<span>🔓 Reaberto: '+c.reabertoEm+'</span>':'')+
+    '</div>'+
     '</div>';
   if(!concluido){
     // ===== CAMPO DE BIPAGEM (destaque) =====
@@ -13473,9 +13512,11 @@ function renderCarregConf(){
     const completo=bip>=sol && sol>0; const excedeu=bip>sol; const zero=bip===0;
     const cor=excedeu?'#dc2626':(completo?'#16a34a':(zero?'#94a3b8':'#2563eb'));
     const bg=completo?'rgba(22,163,74,.07)':(excedeu?'rgba(220,38,38,.06)':'transparent');
+    const logAberto=_carregLogAberto===String(it.codigo);
+    const nLog=Array.isArray(it.log)?it.log.length:0;
     return '<div style="padding:10px;border-radius:10px;margin-bottom:6px;background:'+bg+';border-left:5px solid '+cor+';">'+
       '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">'+
-        '<div style="flex:1;min-width:0;"><div style="font-size:15px;font-weight:700;'+(completo?'color:#16a34a;':'')+'">'+(completo?'✅ ':'')+it.nome+'</div>'+
+        '<div onclick="carregToggleLog(\''+escapeJsStr(it.codigo)+'\')" style="flex:1;min-width:0;cursor:pointer;"><div style="font-size:15px;font-weight:700;'+(completo?'color:#16a34a;':'')+'">'+(completo?'✅ ':'')+it.nome+' <span style="font-size:12px;color:#94a3b8;">'+(logAberto?'▾':'▸')+(nLog?' 🕐'+nLog:'')+'</span></div>'+
         '<div style="font-size:12px;color:'+(_carregTemEan(it.codigo)?'#64748b':'#b45309')+';font-weight:700;font-family:monospace;">cód '+it.codigo+(_carregTemEan(it.codigo)?'':' 🏷️ digite o código')+'</div></div>'+
         (concluido?'':'<button onclick="carregAjustar(\''+escapeJsStr(it.codigo)+'\',-1)" style="width:34px;height:34px;border-radius:8px;border:1px solid #d1d5db;background:#fff;font-size:18px;font-weight:700;cursor:pointer;">−</button>')+
         '<div style="font-size:20px;font-weight:900;color:'+cor+';white-space:nowrap;min-width:90px;text-align:center;">'+bip+' / '+sol+'</div>'+
@@ -13483,6 +13524,7 @@ function renderCarregConf(){
       '</div>'+
       '<div style="height:8px;border-radius:4px;background:rgba(0,0,0,.06);overflow:hidden;margin-top:7px;"><div style="height:100%;width:'+Math.min(pctI,100)+'%;background:'+cor+';border-radius:4px;transition:width .3s ease;"></div></div>'+
       (excedeu?'<div style="font-size:11px;color:#dc2626;font-weight:700;margin-top:3px;">⚠️ '+(bip-sol)+' pacote(s) A MAIS que o solicitado!</div>':'')+
+      (logAberto? _carregLogHtml(it) : '')+
     '</div>';
   }).join('');
   html+='</div>';
