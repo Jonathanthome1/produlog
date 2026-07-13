@@ -2828,6 +2828,14 @@
         </div>
         <span class="mc-sector-arrow">›</span>
       </button>
+      <button class="mc-sector-card" style="border-left:3px solid var(--mc-laranja);margin-bottom:10px;" onclick="goTo('s-ctrl-prod')">
+        <div class="mc-sector-icon" style="background:#fef3c7;">📋</div>
+        <div class="mc-sector-info">
+          <div class="mc-sector-title">Controle de Produção <span class="ctrl-badge" style="display:none;background:var(--mc-laranja);color:#fff;font-size:11px;font-weight:700;border-radius:99px;padding:1px 8px;margin-left:4px;align-items:center;">0</span></div>
+          <div class="mc-sector-desc">Conferir e dar check nos lançamentos da Quadra e Confeitaria</div>
+        </div>
+        <span class="mc-sector-arrow">›</span>
+      </button>
       <button class="mc-sector-card" style="border-left:3px solid var(--mc-azul);margin-bottom:10px;" onclick="goTo('s-carreg')">
         <div class="mc-sector-icon blue">📦</div>
         <div class="mc-sector-info">
@@ -3650,6 +3658,17 @@
     <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;" id="carreg-edit-content"></div>
   </div>
 
+  <!-- CONTROLE DE PRODUÇÃO (Admin) -->
+  <div class="screen" id="s-ctrl-prod">
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="goTo('s-adm-hub')">‹</button>
+      <div class="mc-brand"><div class="mc-brand-logo">MC</div><div class="mc-brand-text"><div class="mc-brand-name">Monte Castelo</div><div class="mc-brand-sub">Admin</div></div></div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info"><div class="mc-page-title">📋 Controle de Produção</div><div class="mc-page-sub">Conferência de lançamentos</div></div>
+    </div>
+    <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;" id="ctrl-prod-content"></div>
+  </div>
+
   <!-- CADASTRO DE EANs -->
   <div class="screen" id="s-eans">
     <div class="mc-header">
@@ -4214,6 +4233,7 @@ onSnapshot(collection(db,'registros'), snap=>{
   try{
     registros=snap.docs.map(d=>({'firestoreId':d.id,...d.data()})).sort((a,b)=>(b.timestamp||0)-(a.timestamp||0));
     atualizarTela();
+    if(typeof _ctrlAtualizarBadge==='function') _ctrlAtualizarBadge();
   }catch(e){ console.error('registros snap:',e); }
 }, err=>{ console.error('registros err:',err); });
 onSnapshot(collection(db,'massas'), snap=>{
@@ -4259,6 +4279,7 @@ function atualizarTela(){
   if(tela==='s-tv') renderTV();
   if(tela==='s-carreg') renderCarreg();
   if(tela==='s-eans') renderEans();
+  if(tela==='s-ctrl-prod') renderCtrlProd();
   if(tela==='s-compras') renderCompras();
   if(tela==='s-compra-forn') renderCompraForn();
   if(tela==='s-compras-fornlist') renderCompFornList();
@@ -4382,6 +4403,7 @@ function goTo(id){
   if(id==='s-carreg-conf') renderCarregConf();
   if(id==='s-carreg-conf') _carregStartCapture(); else _carregStopCapture();
   if(id==='s-eans') renderEans();
+  if(id==='s-ctrl-prod') renderCtrlProd();
   if(id==='s-compras') renderCompras();
   if(id==='s-compra-forn') renderCompraForn();
   if(id==='s-compras-fornlist') renderCompFornList();
@@ -13376,6 +13398,126 @@ function _carregHistHtml(c){
   return '<div class="card" style="margin-top:10px;"><div style="font-size:12px;font-weight:700;margin-bottom:4px;">🕘 Histórico do carregamento</div>'+linhas+'</div>';
 }
 window.carregFinalizar=carregFinalizar; window.renderCarregConf=renderCarregConf; window.renderCarregEdit=renderCarregEdit;
+
+// ===================== CONTROLE DE PRODUÇÃO (Admin) — conferência de lançamentos =====================
+let ctrlChecks={}; // { registroId: {por, em} }
+let _ctrlDiaSel='todos', _ctrlTipoSel='todos', _ctrlOcultarOk=false, _ctrlBusca='';
+
+onSnapshot(collection(db,'controleProducao'), snap=>{
+  try{
+    ctrlChecks={};
+    snap.docs.forEach(d=>{ ctrlChecks[d.id]=d.data(); });
+    const t=document.querySelector('.screen.active')?.id;
+    if(t==='s-ctrl-prod') renderCtrlProd();
+    _ctrlAtualizarBadge();
+  }catch(e){ console.error('ctrlProd snap',e); }
+});
+
+function _ctrlTipo(r){ return (r.origem==='quadra') ? 'pao' : 'salgado'; }
+function _ctrlTipoLabel(t){ return t==='pao' ? '🍞 Pão' : '🥐 Salgado'; }
+function _ctrlLista(){
+  return (registros||[]).filter(r=>(parseInt(r.qtd)||0)>0).slice().sort((a,b)=>{
+    const da=_ctrlDataKey(a.data), db2=_ctrlDataKey(b.data);
+    if(da!==db2) return db2.localeCompare(da); // dia mais recente primeiro
+    return String(b.hora||'').localeCompare(String(a.hora||''));
+  });
+}
+function _ctrlDataKey(br){ const p=String(br||'').split('/'); return (p.length===3)? p[2]+'-'+p[1].padStart(2,'0')+'-'+p[0].padStart(2,'0') : '0000-00-00'; }
+function _ctrlPendentes(){ return _ctrlLista().filter(r=>!ctrlChecks[r.firestoreId]).length; }
+function _ctrlAtualizarBadge(){ const n=_ctrlPendentes(); document.querySelectorAll('.ctrl-badge').forEach(b=>{ b.textContent=n; b.style.display=n>0?'inline-flex':'none'; }); }
+
+async function ctrlToggle(id){
+  const r=(registros||[]).find(x=>x.firestoreId===id); if(!r) return;
+  try{
+    if(ctrlChecks[id]){ await deleteDoc(doc(db,'controleProducao',id)); }
+    else { await setDoc(doc(db,'controleProducao',id),{ produto:r.produto||'', qtd:parseInt(r.qtd)||0, data:r.data||'', tipo:_ctrlTipo(r), lancadoPor:_demAutor(), lancadoEm:agora(), timestamp:Date.now() }); }
+  }catch(e){ alert('Erro: '+e.message); }
+}
+window.ctrlToggle=ctrlToggle;
+async function ctrlMarcarGrupo(dataBR, tipo){
+  const alvo=_ctrlLista().filter(r=>r.data===dataBR && _ctrlTipo(r)===tipo && !ctrlChecks[r.firestoreId]);
+  if(!alvo.length) return;
+  if(!confirm('Marcar como lançados os '+alvo.length+' item(ns) de '+_ctrlTipoLabel(tipo)+' do dia '+dataBR+'?')) return;
+  try{ for(const r of alvo){ await setDoc(doc(db,'controleProducao',r.firestoreId),{ produto:r.produto||'', qtd:parseInt(r.qtd)||0, data:r.data||'', tipo:tipo, lancadoPor:_demAutor(), lancadoEm:agora(), timestamp:Date.now() }); } }catch(e){ alert('Erro: '+e.message); }
+}
+window.ctrlMarcarGrupo=ctrlMarcarGrupo;
+function setCtrlDia(v){ _ctrlDiaSel=v; renderCtrlProd(); }
+function setCtrlTipo(v){ _ctrlTipoSel=v; renderCtrlProd(); }
+function setCtrlOcultarOk(v){ _ctrlOcultarOk=!!v; renderCtrlProd(); }
+function setCtrlBusca(v){ _ctrlBusca=v; renderCtrlProd(); const i=document.getElementById('ctrl-busca'); if(i){ i.focus(); const n=i.value.length; try{i.setSelectionRange(n,n);}catch(e){} } }
+window.setCtrlDia=setCtrlDia; window.setCtrlTipo=setCtrlTipo; window.setCtrlOcultarOk=setCtrlOcultarOk; window.setCtrlBusca=setCtrlBusca;
+
+function renderCtrlProd(){
+  const el=document.getElementById('ctrl-prod-content'); if(!el) return;
+  let lista=_ctrlLista();
+  const totalPend=lista.filter(r=>!ctrlChecks[r.firestoreId]).length;
+  // filtros
+  const dias=[...new Set(lista.map(r=>r.data))];
+  if(_ctrlDiaSel!=='todos') lista=lista.filter(r=>r.data===_ctrlDiaSel);
+  if(_ctrlTipoSel!=='todos') lista=lista.filter(r=>_ctrlTipo(r)===_ctrlTipoSel);
+  if(_ctrlOcultarOk) lista=lista.filter(r=>!ctrlChecks[r.firestoreId]);
+  if(_ctrlBusca){ const q=_normNome(_ctrlBusca); lista=lista.filter(r=>_normNome(r.produto||'').includes(q)); }
+
+  let html='';
+  // resumo
+  html+='<div class="card" style="margin-bottom:12px;border-left:4px solid '+(totalPend>0?'var(--mc-laranja)':'var(--mc-verde)')+';background:'+(totalPend>0?'#fffbeb':'rgba(22,163,74,.06)')+';">'+
+    '<div style="display:flex;justify-content:space-between;align-items:center;">'+
+    '<div><div style="font-size:16px;font-weight:800;color:'+(totalPend>0?'#b45309':'var(--mc-verde)')+';">'+(totalPend>0?'⏳ '+totalPend+' lançamento(s) a fazer':'✅ Tudo lançado!')+'</div>'+
+    '<div style="font-size:11px;color:var(--text-secondary);margin-top:2px;">Marque o check depois de lançar o produto no sistema</div></div>'+
+    '</div></div>';
+  // filtros
+  html+='<div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap;">'+
+    '<select onchange="setCtrlDia(this.value)" style="flex:1;min-width:120px;font-size:13px;padding:9px;border-radius:8px;border:1px solid var(--border-md,#d1d5db);"><option value="todos">Todos os dias</option>'+dias.map(d=>'<option value="'+d+'"'+(_ctrlDiaSel===d?' selected':'')+'>'+d+'</option>').join('')+'</select>'+
+    '<select onchange="setCtrlTipo(this.value)" style="flex:1;min-width:120px;font-size:13px;padding:9px;border-radius:8px;border:1px solid var(--border-md,#d1d5db);">'+[['todos','Pão e Salgado'],['pao','🍞 Só Pão'],['salgado','🥐 Só Salgado']].map(o=>'<option value="'+o[0]+'"'+(_ctrlTipoSel===o[0]?' selected':'')+'>'+o[1]+'</option>').join('')+'</select>'+
+    '</div>';
+  html+='<div style="display:flex;gap:8px;margin-bottom:12px;align-items:center;flex-wrap:wrap;">'+
+    '<input type="text" id="ctrl-busca" value="'+(_ctrlBusca||'').replace(/"/g,'&quot;')+'" oninput="setCtrlBusca(this.value)" placeholder="🔍 Buscar produto..." style="flex:1;min-width:150px;font-size:13px;padding:9px;border-radius:8px;border:1px solid var(--border-md,#d1d5db);box-sizing:border-box;">'+
+    '<label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;white-space:nowrap;"><input type="checkbox" '+(_ctrlOcultarOk?'checked':'')+' onchange="setCtrlOcultarOk(this.checked)" style="width:17px;height:17px;cursor:pointer;">só pendentes</label>'+
+    '</div>';
+
+  if(!lista.length){ el.innerHTML=html+'<div class="empty" style="padding:24px;">Nenhum lançamento'+(_ctrlOcultarOk?' pendente':'')+'.</div>'; return; }
+
+  // agrupar: dia > tipo
+  const porDia={};
+  lista.forEach(r=>{ (porDia[r.data]=porDia[r.data]||{pao:[],salgado:[]})[_ctrlTipo(r)].push(r); });
+  const diasOrd=Object.keys(porDia).sort((a,b)=>_ctrlDataKey(b).localeCompare(_ctrlDataKey(a)));
+
+  diasOrd.forEach(dia=>{
+    const g=porDia[dia];
+    const todosDia=[...g.pao,...g.salgado];
+    const pendDia=todosDia.filter(r=>!ctrlChecks[r.firestoreId]).length;
+    const totPctDia=todosDia.reduce((s,r)=>s+(parseInt(r.qtd)||0),0);
+    html+='<div style="display:flex;justify-content:space-between;align-items:center;background:'+(pendDia>0?'var(--mc-azul)':'var(--mc-verde)')+';color:#fff;padding:9px 13px;border-radius:10px;margin:14px 0 8px;">'+
+      '<div style="font-size:15px;font-weight:800;">📅 '+dia+'</div>'+
+      '<div style="font-size:12px;font-weight:600;">'+totPctDia+' pct'+(pendDia>0?' · ⏳ '+pendDia+' pendente(s)':' · ✅ tudo lançado')+'</div>'+
+      '</div>';
+    ['pao','salgado'].forEach(tipo=>{
+      const itens=g[tipo]; if(!itens.length) return;
+      const pend=itens.filter(r=>!ctrlChecks[r.firestoreId]).length;
+      const totPct=itens.reduce((s,r)=>s+(parseInt(r.qtd)||0),0);
+      const cor=tipo==='pao'?'#d97706':'#7c3aed';
+      html+='<div style="display:flex;justify-content:space-between;align-items:center;margin:8px 0 6px;padding:0 2px;">'+
+        '<div style="font-size:13px;font-weight:800;color:'+cor+';">'+_ctrlTipoLabel(tipo)+' <span style="color:var(--text-secondary);font-weight:600;">· '+itens.length+' item(ns) · '+totPct+' pct</span></div>'+
+        (pend>0?'<button onclick="ctrlMarcarGrupo(\''+escapeJsStr(dia)+'\',\''+tipo+'\')" style="background:none;border:1px solid '+cor+';color:'+cor+';font-size:11px;font-weight:700;padding:4px 10px;border-radius:99px;cursor:pointer;white-space:nowrap;">✓ marcar todos</button>':'<span style="font-size:11px;color:var(--mc-verde);font-weight:700;">✅ ok</span>')+
+        '</div>';
+      html+=itens.map(r=>{
+        const ck=ctrlChecks[r.firestoreId];
+        const done=!!ck;
+        return '<div onclick="ctrlToggle(\''+r.firestoreId+'\')" style="display:flex;align-items:center;gap:11px;padding:11px 12px;border-radius:10px;margin-bottom:6px;cursor:pointer;background:'+(done?'rgba(22,163,74,.07)':'var(--bg-primary)')+';border:1px solid '+(done?'rgba(22,163,74,.3)':'var(--border)')+';border-left:5px solid '+(done?'var(--mc-verde)':cor)+';">'+
+          '<div style="width:30px;height:30px;border-radius:8px;flex-shrink:0;border:2px solid '+(done?'var(--mc-verde)':'#cbd5e1')+';background:'+(done?'var(--mc-verde)':'transparent')+';display:flex;align-items:center;justify-content:center;color:#fff;font-size:17px;font-weight:800;">'+(done?'✓':'')+'</div>'+
+          '<div style="flex:1;min-width:0;">'+
+            '<div style="font-size:15px;font-weight:700;'+(done?'color:var(--text-secondary);text-decoration:line-through;':'')+'">'+(r.produto||'(sem nome)')+'</div>'+
+            '<div style="font-size:11px;color:var(--text-secondary);">'+(r.hora?'🕐 '+r.hora:'')+(ck&&ck.lancadoPor?' · ✅ lançado por '+ck.lancadoPor:'')+'</div>'+
+          '</div>'+
+          '<div style="font-size:20px;font-weight:900;color:'+(done?'var(--mc-verde)':cor)+';white-space:nowrap;">'+(parseInt(r.qtd)||0)+'<span style="font-size:11px;color:var(--text-secondary);font-weight:600;"> pct</span></div>'+
+        '</div>';
+      }).join('');
+    });
+  });
+  el.innerHTML=html;
+}
+window.renderCtrlProd=renderCtrlProd;
+
 
 // ===================== CADASTRO DE CÓDIGOS DE BARRAS (EAN) =====================
 const _eansSeed=[{"codigo": "826", "nome": "(C&F) CACHORRO ALEMÃO", "ean": "7898661351837"}, {"codigo": "815", "nome": "(C&F) CACHORRO FOLHADO", "ean": "7898661351820"}, {"codigo": "814", "nome": "(C&F) EMPADA FRANGO REQUEIJÃO", "ean": "7898661351813"}, {"codigo": "844", "nome": "(C&F) EMPADA PRESUNTO QUEIJO", "ean": "7898661351875"}, {"codigo": "958", "nome": "(C&F) EMPANADA CALABRESA (10 UN C/ 180GR CX C/ 1,80KG)", "ean": "7898661352285"}, {"codigo": "961", "nome": "(C&F) EMPANADA CARNE (10 UN C/ 180GR CX C/ 1,80KG)", "ean": "7898661352292"}, {"codigo": "960", "nome": "(C&F) EMPANADA COSTELINHA C/ BARBECUE", "ean": "7898661351981"}, {"codigo": "957", "nome": "(C&F) EMPANADA FRANGO CREMOSO", "ean": "7898661351974"}, {"codigo": "841", "nome": "(C&F) EMPANADO DE SALSICHA FRITO", "ean": "7898661351998"}, {"codigo": "803", "nome": "(C&F) FOLHADO CARNE E CHEDDAR", "ean": "7898661351776"}, {"codigo": "804", "nome": "(C&F) FOLHADO CARNE REQUEIJÃO", "ean": "7898661351783"}, {"codigo": "807", "nome": "(C&F) FOLHADO FRANGO CHEDDAR", "ean": "7898661351806"}, {"codigo": "806", "nome": "(C&F) FOLHADO FRANGO REQUEIJÃO", "ean": "7898661351790"}, {"codigo": "854", "nome": "(C&F) MINI BOLINHA DE QUEIJO", "ean": "7898661351899"}, {"codigo": "857", "nome": "(C&F) MINI CHURROS DOCE DE LEITE", "ean": "7898661351905"}, {"codigo": "850", "nome": "(C&F) MINI COXINHA DE FRANGO", "ean": "7898661351882"}, {"codigo": "862", "nome": "(C&F) MINI CROQUETE CARNE C/ REQUEIJÃO", "ean": "7898661351929"}, {"codigo": "865", "nome": "(C&F) MINI CROQUETE DE FRANGO C/ REQUEIJÃO", "ean": "7898661351943"}, {"codigo": "864", "nome": "(C&F) MINI EMPANADINHO DE SALSICHA", "ean": "7898661351936"}, {"codigo": "870", "nome": "(C&F) MINI POLENTINHA DE CALABRESA", "ean": "7898661351950"}, {"codigo": "875", "nome": "(C&F) MINI RISOLES CARNE", "ean": "7898661352001"}, {"codigo": "860", "nome": "(C&F) MINI RISOLES FRANGO", "ean": "7898661351912"}, {"codigo": "837", "nome": "(C&F) PASTEL CASEIRO SABOR CARNE", "ean": "7898661351868"}, {"codigo": "953", "nome": "(C&F) PASTEL CASEIRO SABOR FRANGO", "ean": "7898661351967"}, {"codigo": "830", "nome": "(C&F) RISOLES DE CARNE GRANDE", "ean": "7898661351851"}, {"codigo": "829", "nome": "(C&F) RISOLES DE FRANGO GRANDE", "ean": "7898661351844"}, {"codigo": "500", "nome": "BAURU FOLHADO (10 UN C/ 150GR CX C/ 1,50KG)", "ean": "7898661352018"}, {"codigo": "269", "nome": "BOLINHA DE AIPIM C/ CALABRESA", "ean": "7898661350991"}, {"codigo": "226", "nome": "CACHORRO ALEMÃO (10 UN C/ 150GR CX C/ 1,50KG)", "ean": "7898661350632"}, {"codigo": "215", "nome": "CACHORRO FOLHADO (10 UN C/ 150GR CX C/ 1,50KG)", "ean": "7898661350519"}, {"codigo": "288", "nome": "CALABRINHO", "ean": "7898661351585"}, {"codigo": "228", "nome": "COXINHA DE FRANGO (CX C/ 10 UNID DE 170GR)", "ean": "7898661350762"}, {"codigo": "235", "nome": "CROISSANT (10 UN C/ 125GR CX C/ 1,25KG)", "ean": "7898661351325"}, {"codigo": "233", "nome": "CROISSANT CHOCOLATE (10 UN C/ 125GR CX C/ 1,25KG)", "ean": "7898661351028"}, {"codigo": "364", "nome": "CROISSANT FRANGO (10 UN C/ 140GR CX C/ 1,4KG)", "ean": "7898661351714"}, {"codigo": "366", "nome": "CROISSANT GOIABADA (10 UN C/ 140GR CX C/ 1,4KG)", "ean": "7898661351738"}, {"codigo": "365", "nome": "CROISSANT PRESUNTO (10 UN C/ 140GR CX C/ 1,4KG)", "ean": "7898661351721"}, {"codigo": "130", "nome": "CUCA ALEMÃ 320GR", "ean": "7898661350939"}, {"codigo": "145", "nome": "CUCA CHOCOLATE 320GR", "ean": "7898661350946"}, {"codigo": "154", "nome": "CUCA COLONIAL 400GR", "ean": "7898661351196"}, {"codigo": "122", "nome": "CUCA FRUTAS 320GR", "ean": "7898661350922"}, {"codigo": "132", "nome": "CUECA VIRADA 40GR", "ean": "7898661350298"}, {"codigo": "155", "nome": "CUECA VIRADA GRANDE 44GR", "ean": "7898661351332"}, {"codigo": "282", "nome": "DOGUINHO", "ean": "7898661351448"}, {"codigo": "213", "nome": "EMPADA CARNE (10 UN C/ 150GR CX C/ 1,50KG)", "ean": "7898661350458"}, {"codigo": "240", "nome": "EMPADA CARNE REQUEIJÃO (10 UN C/ 150GR CX C/ 1,5KG)", "ean": "7898661350588"}, {"codigo": "212", "nome": "EMPADA FRANGO (10 UN C/ 150GR CX C/ 1,50KG)", "ean": "7898661350434"}, {"codigo": "214", "nome": "EMPADA FRANGO REQUEIJÃO (10 UN C/ 150GR CX C/ 1,50KG)", "ean": "7898661350489"}, {"codigo": "244", "nome": "EMPADA PRESUNTO QUEIJO (10 UN C/ 150GR CX C/ 1,5KG)", "ean": "7898661350618"}, {"codigo": "362", "nome": "EMPANADA BROCOLIS (10 UN C/ 180GR CX C/ 1,80KG)", "ean": "7898661352148"}, {"codigo": "358", "nome": "EMPANADA CALABRESA (10 UN C/ 180GR CX C/ 1,80KG)", "ean": "7898661352100"}, {"codigo": "361", "nome": "EMPANADA CARNE (10 UN C/ 180GR CX C/ 1,80KG)", "ean": "7898661352117"}, {"codigo": "360", "nome": "EMPANADA COSTELINHA C/ BARBECUE (10 UN C/ 180GR CX C/ 1,80KG)", "ean": "7898661352124"}, {"codigo": "357", "nome": "EMPANADA FRANGO REQUEIJÃO (10 UN C/ 180GR CX C/ 1,80KG)", "ean": "7898661352094"}, {"codigo": "359", "nome": "EMPANADA QUEIJO (10 UN C/ 180GR CX C/ 1,80KG)", "ean": "7898661352131"}, {"codigo": "241", "nome": "EMPANADO DE SALSICHA FRITO (10 UN C/ 150GR CX C/ 1,50KG)", "ean": "7898661351554"}, {"codigo": "501", "nome": "FAGOTTO (CALABRINHO CALABRESA CHEDDAR) (10 UN C/ 150GR CX C/ 1,50KG)", "ean": "7898661352025"}, {"codigo": "210", "nome": "FOLHADO CALABRESA (10 UN C/ 150GR CX C/ 1,50KG)", "ean": "7898661350397"}, {"codigo": "205", "nome": "FOLHADO CALABRESA REQUEIJAO (10UN C/ 150GR CX C/ 1,50KG)", "ean": "7898661350342"}, {"codigo": "209", "nome": "FOLHADO CARNE (10 UN C/ 150GR CX C/ 1,50KG)", "ean": "7898661350380"}, {"codigo": "203", "nome": "FOLHADO CARNE E CHEDDAR (10 UN C/ 150GR CX C/ 1,50KG)", "ean": "7898661350328"}, {"codigo": "204", "nome": "FOLHADO CARNE REQUEIJÃO (10 UN C/ 150GR CX C/ 1,50KG)", "ean": "7898661350335"}, {"codigo": "216", "nome": "FOLHADO CHOCOLATE (10 UN C/ 125GR CX C/ 1,25KG)", "ean": "7898661350540"}, {"codigo": "227", "nome": "FOLHADO DE STROGONOFF (10 UN C/ 150GR CX C/ 1,50KG)", "ean": "7898661351066"}, {"codigo": "208", "nome": "FOLHADO FRANGO (10 UN C/ 150GR CX C/ 1,50KG)", "ean": "7898661350373"}, {"codigo": "207", "nome": "FOLHADO FRANGO CHEDDAR (10 UN C/ 150GR CX C/ 1,50KG)", "ean": "7898661350366"}, {"codigo": "206", "nome": "FOLHADO FRANGO REQUEIJÃO (10 UN C/ 150GR CX C/ 1,50KG)", "ean": "7898661350359"}, {"codigo": "211", "nome": "FOLHADO PRESUNTO QUEIJO (10 UN C/ 150GR CX C/ 1,50KG)", "ean": "7898661350410"}, {"codigo": "502", "nome": "HAMBURGÃO CARNE CHEDDAR (10 UN C/ 180GR CX C/ 1,80KG)", "ean": "7898661352032"}, {"codigo": "261", "nome": "MASSA FOLHADA", "ean": "7898661350786"}, {"codigo": "254", "nome": "MINI BOLINHA DE QUEIJO", "ean": "7898661350502"}, {"codigo": "256", "nome": "MINI CACHORRO FOLHADO", "ean": "7898661350533"}, {"codigo": "257", "nome": "MINI CHURROS DOCE DE LEITE", "ean": "7898661350557"}, {"codigo": "250", "nome": "MINI COXINHA DE FRANGO", "ean": "7898661350427"}, {"codigo": "306", "nome": "MINI CROISSANT CHOCOLATE BRANCO", "ean": "7898661352216"}, {"codigo": "303", "nome": "MINI CROISSANT CHOCOLATE PRETO", "ean": "7898661352155"}, {"codigo": "304", "nome": "MINI CROISSANT COCO", "ean": "7898661352193"}, {"codigo": "300", "nome": "MINI CROISSANT FRANGO", "ean": "7898661352186"}, {"codigo": "302", "nome": "MINI CROISSANT GOIABADA", "ean": "7898661352179"}, {"codigo": "295", "nome": "MINI CROISSANT PREMIUM CHOCOLATE", "ean": "7898661351769"}, {"codigo": "292", "nome": "MINI CROISSANT PREMIUM FRANGO", "ean": "7898661351707"}, {"codigo": "294", "nome": "MINI CROISSANT PREMIUM GOIABADA", "ean": "7898661351752"}, {"codigo": "293", "nome": "MINI CROISSANT PREMIUM PRESUNTO", "ean": "7898661351745"}, {"codigo": "301", "nome": "MINI CROISSANT PRESUNTO", "ean": "7898661352162"}, {"codigo": "251", "nome": "MINI CROQUETE CARNE", "ean": "7898661350441"}, {"codigo": "262", "nome": "MINI CROQUETE CARNE C/ REQUEIJÃO", "ean": "7898661350601"}, {"codigo": "265", "nome": "MINI CROQUETE DE FRANGO C/ REQUEIJÃO", "ean": "7898661351097"}, {"codigo": "255", "nome": "MINI EMPADA FRANGO FOLHADA", "ean": "7898661350526"}, {"codigo": "249", "nome": "MINI EMPADA PRESUNTO E QUEIJO", "ean": "7898661350403"}, {"codigo": "264", "nome": "MINI EMPANADINHO DE SALSICHA FRITO", "ean": "7898661351004"}, {"codigo": "278", "nome": "MINI FOLHADO FRANGO", "ean": "7898661351295"}, {"codigo": "280", "nome": "MINI FOLHADO GOIABADA", "ean": "7898661351301"}, {"codigo": "279", "nome": "MINI FOLHADO PRESUNTO QUEIJO", "ean": "7898661351318"}, {"codigo": "252", "nome": "MINI KIBE", "ean": "7898661350465"}, {"codigo": "281", "nome": "MINI PASTEL DE CARNE", "ean": "7898661351356"}, {"codigo": "290", "nome": "MINI PASTEL DE FRANGO", "ean": "7898661351622"}, {"codigo": "289", "nome": "MINI PASTEL DE QUEIJO", "ean": "7898661351615"}, {"codigo": "270", "nome": "MINI POLENTINHA DE CALABRESA", "ean": "7898661351424"}, {"codigo": "275", "nome": "MINI RISOLES CARNE", "ean": "7898661351103"}, {"codigo": "260", "nome": "MINI RISOLES FRANGO", "ean": "7898661350595"}, {"codigo": "305", "nome": "MINI STRUDEL MAÇÃ/CANELA", "ean": "7898661352209"}, {"codigo": "253", "nome": "MINI TRAVISSEIRINHO PRESUNTO/QUEIJO", "ean": "7898661350472"}, {"codigo": "248", "nome": "MINI TRAVISSEIRINHO CALABRESA", "ean": "7898661350496"}, {"codigo": "259", "nome": "PALMIER - ORELHA DE MACACO", "ean": "7898661350571"}, {"codigo": "351", "nome": "PASTEL CASEIRO SABOR CALABRESA (06 UN C/ 170GR PCT C/ 1,02KG)", "ean": "7898661351523"}, {"codigo": "237", "nome": "PASTEL CASEIRO SABOR CARNE (06 UN C/ 170GR PCT C/ 1,02KG)", "ean": "7898661351462"}, {"codigo": "367", "nome": "PASTEL CASEIRO SABOR CARNE DE PANELA (06 UN C/ 170GR PCT C/ 1,02KG)", "ean": "7898661352308"}, {"codigo": "353", "nome": "PASTEL CASEIRO SABOR FRANGO (06 UN C/ 170GR PCT C/ 1,02KG)", "ean": "7898661351547"}, {"codigo": "350", "nome": "PASTEL CASEIRO SABOR QUEIJO (06 UN C/ 170GR PCT C/ 1,02KG)", "ean": "7898661351516"}, {"codigo": "247", "nome": "POLENTINHA DE QUEIJO", "ean": "7898661351387"}, {"codigo": "144", "nome": "PÃO 7 GRÃOS 500GR", "ean": "7898661350861"}, {"codigo": "148", "nome": "PÃO AIPIM 500GR", "ean": "7898661350892"}, {"codigo": "118", "nome": "PÃO BAGUETE COM FIBRAS 155GR", "ean": "7898661350984"}, {"codigo": "21", "nome": "PÃO BRIOCHE 500GR", "ean": "7898661350724"}, {"codigo": "129", "nome": "PÃO CARACOL 88GR", "ean": "7898661350236"}, {"codigo": "150", "nome": "PÃO CASEIRO 500GR", "ean": "7898661350915"}, {"codigo": "25", "nome": "PÃO CENOURA 500GR", "ean": "7898661351141"}, {"codigo": "26", "nome": "PÃO DE BATATA 500GR", "ean": "7898661351158"}, {"codigo": "138", "nome": "PÃO DE BATATA 75GR", "ean": "7898661350274"}, {"codigo": "139", "nome": "PÃO DE CENOURA 75GR", "ean": "7898661350250"}, {"codigo": "140", "nome": "PÃO DE LEITE 500GR", "ean": "7898661350823"}, {"codigo": "6", "nome": "PÃO DE MILHO - BOLA 75GR", "ean": "7898661350052"}, {"codigo": "14", "nome": "PÃO DE MILHO - SALGADO (CACETINHO) 75GR", "ean": "7898661351172"}, {"codigo": "142", "nome": "PÃO DE MILHO SALGADO 500GR", "ean": "7898661350847"}, {"codigo": "199", "nome": "PÃO DE QUEIJO 25GR", "ean": "7898661350656"}, {"codigo": "405", "nome": "PÃO DE QUEIJO 25GR - RECEITARIA", "ean": "7898661352278"}, {"codigo": "200", "nome": "PÃO DE QUEIJO 65GR", "ean": "7898661350670"}, {"codigo": "404", "nome": "PÃO DE QUEIJO 65GR - RECEITARIA", "ean": "7898661352261"}, {"codigo": "198", "nome": "PÃO DE QUEIJO 65GR 1KG GONDOLA", "ean": "7898661351127"}, {"codigo": "197", "nome": "PÃO DE QUEIJO 90GR", "ean": "7898661350700"}, {"codigo": "400", "nome": "PÃO DE QUEIJO RECH. DOCE DE LEITE 400GR (RECEITARIA)", "ean": "7898661352223"}, {"codigo": "401", "nome": "PÃO DE QUEIJO RECH. FRANGO 400GR (RECEITARIA)", "ean": "7898661352230"}, {"codigo": "186", "nome": "PÃO DE QUEIJO RECH. FRANGO 58GR", "ean": "7898661351264"}, {"codigo": "188", "nome": "PÃO DE QUEIJO RECH. GOIABADA 58GR", "ean": "7898661351271"}, {"codigo": "402", "nome": "PÃO DE QUEIJO RECH. REQUEIJÃO 400GR (RECEITARIA)", "ean": "7898661352247"}, {"codigo": "187", "nome": "PÃO DE QUEIJO RECH. REQUEIJÃO 58GR", "ean": "7898661351288"}, {"codigo": "128", "nome": "PÃO DE SONHO 70GR", "ean": "7898661350212"}, {"codigo": "127", "nome": "PÃO DE SONHO MINI 44GR", "ean": "7898661351370"}, {"codigo": "112", "nome": "PÃO DE XIS 120GR", "ean": "7898661350137"}, {"codigo": "126", "nome": "PÃO DOCE BRIOCHE 60GR", "ean": "7898661350175"}, {"codigo": "159", "nome": "PÃO DONUT 44GR", "ean": "7898661351349"}, {"codigo": "107", "nome": "PÃO FIBRAS - PRETO 75GR", "ean": "7898661350090"}, {"codigo": "108", "nome": "PÃO FIBRAS - BOLA 75GR", "ean": "7898661350106"}, {"codigo": "143", "nome": "PÃO FIBRAS 500GR", "ean": "7898661350854"}, {"codigo": "3", "nome": "PÃO FIBRAS 75GR", "ean": "7898661350021"}, {"codigo": "105", "nome": "PÃO FOLHADO 88GR", "ean": "7898661350267"}, {"codigo": "147", "nome": "PÃO FRANCES 500GR", "ean": "7898661350878"}, {"codigo": "110", "nome": "PÃO FRANCES BAGUETE 155GR", "ean": "7898661350113"}, {"codigo": "12", "nome": "PÃO FRANCES BOLA 75GR", "ean": "7898661350311"}, {"codigo": "7", "nome": "PÃO FRANCES DE QUARTO (250)", "ean": "7898661350069"}, {"codigo": "106", "nome": "PÃO FRANCES MINI 6/8 54GR", "ean": "7898661350199"}, {"codigo": "120", "nome": "PÃO FRANCES PREMIUM 10/12", "ean": "7898661351110"}, {"codigo": "119", "nome": "PÃO FRANCES PREMIUM 75GR", "ean": "7898661351059"}, {"codigo": "160", "nome": "PÃO FRANCES PREMIUM PLUS", "ean": "7898661351455"}, {"codigo": "5", "nome": "PÃO FRANCES SOVADO 88GR", "ean": "7898661350045"}, {"codigo": "117", "nome": "PÃO GAJETA 88GR", "ean": "7898661350182"}, {"codigo": "111", "nome": "PÃO MASSA DOCE - CÃO 135GR", "ean": "7898661350120"}, {"codigo": "4", "nome": "PÃO MASSA DOCE 75GR", "ean": "7898661350038"}, {"codigo": "114", "nome": "PÃO MASSA DOCE ANIVERSARIO 45GR", "ean": "7898661350144"}, {"codigo": "124", "nome": "PÃO MASSA DOCE HAMBURGUER 90GR", "ean": "7898661350205"}, {"codigo": "101", "nome": "PÃO MASSA FORNEADO", "ean": "7898661350977"}, {"codigo": "153", "nome": "PÃO MILHO DOCE 500GR", "ean": "7898661351134"}, {"codigo": "134", "nome": "PÃO RAMINHO 37GR", "ean": "7898661350243"}, {"codigo": "123", "nome": "PÃO TRANÇA 270GR", "ean": "7898661350151"}, {"codigo": "115", "nome": "PÃO VOVÓ 88GR", "ean": "7898661350168"}, {"codigo": "230", "nome": "RISOLES DE CARNE GRANDE (150GR UN/PCT COM 1,5KG)", "ean": "7898661351073"}, {"codigo": "229", "nome": "RISOLES DE FRANGO GRANDE (150GR UN/PCT COM 1,5KG)", "ean": "7898661350779"}, {"codigo": "266", "nome": "ROLO MASSA DE PAO-SEMI FOLHADA", "ean": "7898661350830"}, {"codigo": "267", "nome": "ROLO MASSA FOLHADA", "ean": "7898661350816"}, {"codigo": "201", "nome": "ROSCA DE POLVILHO 250GR", "ean": "7898661350281"}, {"codigo": "231", "nome": "SALGADOS CROQUETE (CX C/ 10UNID DE 110GR)", "ean": "7898661350793"}];
