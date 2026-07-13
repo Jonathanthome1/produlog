@@ -13010,6 +13010,15 @@ window.configurarMuralTV=configurarMuralTV;
 // ===================== CARREGAMENTO + BIPAGEM (Expedição/Admin) =====================
 function _codEq(a,b){ if(a==null||b==null) return false; const sa=String(a).trim(), sb=String(b).trim(); if(sa===sb) return true; const na=parseInt(sa,10), nb=parseInt(sb,10); return !isNaN(na)&&!isNaN(nb)&&na===nb; }
 window._codEq=_codEq;
+// Todos os produtos do sistema (Confeitaria + Quadra/pães)
+function _carregTodosProdutos(){
+  const out=[];
+  (typeof produtosConfFirebase!=='undefined'?produtosConfFirebase:[]).forEach(p=>{ if(p&&p.nome) out.push({cod:String(p.cod||''), nome:p.nome}); });
+  (typeof QUADRA_PRODUTOS!=='undefined'?QUADRA_PRODUTOS:[]).forEach(p=>{ if(p&&p.nome && !out.some(x=>_codEq(x.cod,p.cod))) out.push({cod:String(p.cod||''), nome:p.nome}); });
+  return out;
+}
+function _carregAcharProduto(cod){ return _carregTodosProdutos().find(p=>_codEq(p.cod,cod))||null; }
+window._carregTodosProdutos=_carregTodosProdutos;
 let carregamentos=[], eanMap={}, eansList=[];
 let _carregEditando=null, _carregConf=null, _carregBipMode='auto', _carregBusca='', _carregHist=[], _carregUltimo=null, _carregEanPendente=null;
 let _carregBuf='', _carregLastKey=0, _carregTimer=null, _carregKeyBound=null, _carregMult=1;
@@ -13115,11 +13124,11 @@ function _carregRenderBusca(){
   const cont=document.getElementById('carreg-busca-res'); if(!cont) return;
   const q=_normNome(_carregBusca);
   if(!q){ cont.innerHTML=''; return; }
-  const res=produtosConfFirebase.filter(p=>_normNome((p.nome||'')+' '+(p.cod||'')).includes(q)).slice(0,8);
+  const res=_carregTodosProdutos().filter(p=>_normNome((p.nome||'')+' '+(p.cod||'')).includes(q)).slice(0,8);
   cont.innerHTML=res.length? res.map(p=>'<div onclick="carregAddItem(\''+escapeJsStr(String(p.cod))+'\')" style="padding:9px 11px;border-bottom:1px solid var(--border);cursor:pointer;font-size:14px;">'+(p.nome||'')+' <span style="color:var(--text-secondary);font-size:11px;">cód '+p.cod+'</span></div>').join('') : '<div style="padding:9px;color:var(--text-secondary);font-size:13px;">Nenhum produto encontrado.</div>';
 }
 function carregAddItem(cod){
-  const p=produtosConfFirebase.find(x=>String(x.cod)===String(cod)); if(!p||!_carregEditando) return;
+  const p=_carregAcharProduto(cod); if(!p||!_carregEditando) return;
   if(_carregEditando.itens.some(i=>String(i.codigo)===String(cod))){ alert('Produto já está no carregamento.'); return; }
   const qtd=prompt('Quantidade de pacotes de "'+(p.nome||'')+'":','');
   if(qtd===null) return;
@@ -13142,7 +13151,7 @@ function _carregParseTexto(txt){
     let nome=m[2].trim();
     const qtd=Math.round(parseFloat(String(m[3]).replace(',','.'))||0);
     if(!cod || qtd<=0) return;
-    const p=produtosConfFirebase.find(x=>_codEq(x.cod,cod));
+    const p=_carregAcharProduto(cod);
     if(p) nome=p.nome||nome;
     const existente=_carregEditando.itens.find(i=>_codEq(i.codigo,cod));
     if(existente){ existente.qtdSolicitada+=qtd; add++; return; }
@@ -13156,8 +13165,13 @@ function carregColarLista(){
   const txt=prompt('Cole a lista do carregamento.\n\nFormato: CÓDIGO  PRODUTO  QUANTIDADE  (uma linha por produto)\nEx:  208  FOLHADO FRANGO...  59.0000 PCT','');
   if(!txt) return;
   const r=_carregParseTexto(txt);
+  if(r.add){
+    const semCad = r.naoAch.length ? ('\n\nℹ️ '+r.naoAch.length+' código(s) não estão no cadastro do sistema — foram incluídos com o nome da lista e funcionam normalmente na bipagem.') : '';
+    alert('✅ '+r.add+' item(ns) adicionados.'+semCad);
+  } else {
+    alert('Nenhum item reconhecido.\n\nFormato esperado por linha: CÓDIGO  PRODUTO  QUANTIDADE');
+  }
   renderCarregEdit();
-  alert('✅ '+r.add+' item(ns) adicionados.'+(r.naoAch.length?'\n\n⚠️ Códigos sem cadastro no sistema: '+r.naoAch.join(', ')+'\n(incluídos com o nome da lista)':''));
 }
 window.carregColarLista=carregColarLista;
 function _carregLoadPdfJs(){
@@ -13188,9 +13202,13 @@ async function carregImportarPDF(input){
     }
     const r=_carregParseTexto(texto);
     if(!(_carregEditando.nome||'').trim()){ _carregEditando.nome='Carregamento '+hoje(); }
+    if(r.add){
+      const semCad = r.naoAch.length ? ('\n\nℹ️ '+r.naoAch.length+' código(s) não estão no cadastro do sistema — foram incluídos com o nome que veio no PDF e funcionam normalmente na bipagem.') : '';
+      alert('✅ PDF lido! '+r.add+' item(ns) adicionados.'+semCad);
+    } else {
+      alert('Li o PDF mas não encontrei itens no formato esperado (Código · Produto · Quantidade). Tente "Colar lista".');
+    }
     renderCarregEdit();
-    if(r.add) alert('✅ PDF lido! '+r.add+' item(ns) adicionados.'+(r.naoAch.length?'\n\n⚠️ Códigos sem cadastro: '+r.naoAch.join(', '):''));
-    else alert('Li o PDF mas não encontrei itens no formato esperado (Código · Produto · Quantidade). Tente "Colar lista".');
   }catch(e){ alert('Não consegui ler o PDF: '+e.message+'\n\nUse "📋 Colar lista" como alternativa (abrir o PDF, selecionar tudo, copiar e colar).'); }
 }
 window.carregImportarPDF=carregImportarPDF;
