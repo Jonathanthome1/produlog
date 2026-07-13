@@ -13048,10 +13048,11 @@ window.carregDigitarManual=carregDigitarManual;
 function carregCodLancar(){
   const inp=document.getElementById('carreg-cod'); if(!inp) return;
   const v=String(inp.value||'').trim(); inp.value='';
-  if(!v){ _carregFocus(); return; }
+  if(!v){ inp.focus(); return; }
   const it=_carregConf&&_carregConf.itens.find(i=>_codEq(i.codigo, v));
-  if(!it){ _carregToast('⚠️ Código '+v+' não está neste carregamento!', '#ef4444'); _carregFocus(); return; }
+  if(!it){ _carregToast('⚠️ Código '+v+' não está neste carregamento!', '#ef4444'); setTimeout(()=>{ const c=document.getElementById('carreg-cod'); if(c) c.focus(); },60); return; }
   _carregRegistrar(it.codigo, it.nome, null); // usa o multiplicador atual, igual ao bipe
+  setTimeout(()=>{ const c=document.getElementById('carreg-cod'); if(c) c.focus(); },60); // continua digitando sem mouse
 }
 function carregCodEnter(ev){ if(ev.key==='Enter'){ ev.preventDefault(); carregCodLancar(); } }
 window.carregCodLancar=carregCodLancar; window.carregCodEnter=carregCodEnter;
@@ -13282,7 +13283,14 @@ window.iniciarConferencia=iniciarConferencia;
 function _carregFocus(){ setTimeout(()=>{ const i=document.getElementById('carreg-bip'); if(i){ i.focus(); i.select&&i.select(); } },120); }
 function carregSetMode(m){ _carregBipMode=m; renderCarregConf(); _carregFocus(); }
 window.carregSetMode=carregSetMode;
-function carregAplicarMult(v){ const n=parseInt(v)||1; _carregMult=Math.max(n,1); renderCarregConf(); _carregFocus(); }
+function carregAplicarMult(v){
+  const n=parseInt(v)||1; _carregMult=Math.max(n,1);
+  renderCarregConf();
+  // Foca no campo de código: fluxo sem mouse (digita código → Enter)
+  setTimeout(()=>{ const c=document.getElementById('carreg-cod'); if(c) c.focus(); else _carregFocus(); }, 60);
+}
+function carregMultEnter(ev){ if(ev.key==='Enter'){ ev.preventDefault(); carregAplicarMult(ev.target.value); } }
+window.carregAplicarMult=carregAplicarMult; window.carregMultEnter=carregMultEnter;
 function carregMultLive(v){
   const n=parseInt(String(v||'').trim());
   _carregMult = (!isNaN(n)&&n>1) ? n : 1;
@@ -13294,8 +13302,6 @@ function carregMultLive(v){
   const bip=document.getElementById('carreg-bip'); if(bip) bip.style.borderColor=_carregMult>1?'#d97706':'var(--mc-azul)';
 }
 window.carregMultLive=carregMultLive;
-function carregMultEnter(ev){ if(ev.key==='Enter'){ ev.preventDefault(); carregAplicarMult(ev.target.value); } }
-window.carregAplicarMult=carregAplicarMult; window.carregMultEnter=carregMultEnter;
 function carregBipEnter(ev){ if(ev.key==='Enter'){ ev.preventDefault(); const v=ev.target.value; ev.target.value=''; carregBip(v); } }
 window.carregBipEnter=carregBipEnter;
 
@@ -13426,12 +13432,13 @@ function renderCarregConf(){
         '<button onclick="carregSetMode(\'auto\')" style="flex:1;padding:9px;border-radius:9px;border:2px solid '+(_carregBipMode==='auto'?'var(--mc-azul)':'#d1d5db')+';background:'+(_carregBipMode==='auto'?'var(--mc-azul)':'#fff')+';color:'+(_carregBipMode==='auto'?'#fff':'#334155')+';font-weight:800;font-size:12px;cursor:pointer;">📡 1 bipe = 1 pacote</button>'+
         '<button onclick="carregSetMode(\'qtd\')" style="flex:1;padding:9px;border-radius:9px;border:2px solid '+(_carregBipMode==='qtd'?'var(--mc-azul)':'#d1d5db')+';background:'+(_carregBipMode==='qtd'?'var(--mc-azul)':'#fff')+';color:'+(_carregBipMode==='qtd'?'#fff':'#334155')+';font-weight:800;font-size:12px;cursor:pointer;">🔢 bipar + digitar</button>'+
       '</div>'+
-      // ===== MULTIPLICADOR (campo digitável, one-shot) =====
-      '<div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;">'+
+      // ===== MULTIPLICADOR (botões rápidos + campo manual, one-shot) =====
+      '<div style="display:flex;gap:6px;align-items:center;margin-bottom:8px;flex-wrap:wrap;">'+
         '<div style="font-size:12px;font-weight:700;color:#64748b;white-space:nowrap;">Multiplicador:</div>'+
-        '<input type="text" id="carreg-mult" value="'+(_carregMult>1?_carregMult:'')+'" onkeydown="carregMultEnter(event)" oninput="carregMultLive(this.value)" inputmode="numeric" placeholder="1" style="width:80px;font-size:18px;font-weight:800;padding:8px;border-radius:8px;border:2px solid '+(_carregMult>1?'#d97706':'#d1d5db')+';text-align:center;box-sizing:border-box;">'+
-        '<button onclick="carregAplicarMult(document.getElementById(\'carreg-mult\').value)" style="background:#d97706;color:#fff;border:none;border-radius:8px;padding:9px 14px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;">Definir</button>'+
-        (_carregMult>1?'<button onclick="carregAplicarMult(1)" style="background:none;border:1px solid #d1d5db;border-radius:8px;padding:8px 10px;font-size:12px;color:#334155;cursor:pointer;white-space:nowrap;">×1</button>':'')+
+        '<button onclick="carregAplicarMult(7)" style="flex:0 0 auto;padding:9px 16px;border-radius:9px;border:2px solid '+(_carregMult===7?'#d97706':'#e2e8f0')+';background:'+(_carregMult===7?'#d97706':'#fff')+';color:'+(_carregMult===7?'#fff':'#334155')+';font-weight:900;font-size:16px;cursor:pointer;">×7</button>'+
+        '<button onclick="carregAplicarMult(20)" style="flex:0 0 auto;padding:9px 16px;border-radius:9px;border:2px solid '+(_carregMult===20?'#d97706':'#e2e8f0')+';background:'+(_carregMult===20?'#d97706':'#fff')+';color:'+(_carregMult===20?'#fff':'#334155')+';font-weight:900;font-size:16px;cursor:pointer;">×20</button>'+
+        '<input type="text" id="carreg-mult" value="'+(_carregMult>1&&_carregMult!==7&&_carregMult!==20?_carregMult:'')+'" onkeydown="carregMultEnter(event)" oninput="carregMultLive(this.value)" inputmode="numeric" placeholder="outro" style="width:78px;font-size:16px;font-weight:800;padding:9px;border-radius:9px;border:2px solid '+(_carregMult>1&&_carregMult!==7&&_carregMult!==20?'#d97706':'#d1d5db')+';text-align:center;box-sizing:border-box;">'+
+        (_carregMult>1?'<button onclick="carregAplicarMult(1)" style="flex:0 0 auto;background:#fee2e2;border:1px solid #fca5a5;border-radius:9px;padding:9px 12px;font-size:13px;font-weight:700;color:#b91c1c;cursor:pointer;white-space:nowrap;">✕ ×1</button>':'')+
       '</div>'+
       '<div id="carreg-mult-aviso" style="background:#fff7ed;border:2px solid #d97706;border-radius:10px;padding:10px 12px;margin-bottom:8px;text-align:center;display:'+(_carregMult>1?'block':'none')+';">'+(_carregMult>1?'<div style="font-size:15px;font-weight:900;color:#c2410c;">⚡ PRÓXIMO PRODUTO = '+_carregMult+' pacotes</div><div style="font-size:11px;color:#9a3412;font-weight:600;">Vale para o bipe OU para o código digitado · depois volta para 1</div>':'')+'</div>'+
       '<input type="text" id="carreg-bip" readonly placeholder="📡 PODE BIPAR" autocomplete="off" style="width:100%;font-size:22px;padding:18px;border-radius:12px;border:2px solid '+(_carregMult>1?'#d97706':'var(--mc-azul)')+';box-sizing:border-box;text-align:center;font-weight:800;background:#fff;">'+
