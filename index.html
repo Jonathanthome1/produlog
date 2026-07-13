@@ -741,6 +741,14 @@
           </div>
           <span class="mc-sector-arrow">›</span>
         </button>
+        <button class="mc-sector-card" onclick="abrirPin('carregamento')">
+          <div class="mc-sector-icon" style="background:#dbeafe;">📦</div>
+          <div class="mc-sector-info">
+            <div class="mc-sector-title">Carregamento <span class="carreg-badge" style="display:none;background:var(--mc-azul);color:#fff;font-size:11px;font-weight:700;border-radius:99px;padding:1px 8px;margin-left:4px;align-items:center;">0</span></div>
+            <div class="mc-sector-desc">Conferência de carga por bipagem</div>
+          </div>
+          <span class="mc-sector-arrow">›</span>
+        </button>
         <button class="mc-sector-card" onclick="abrirPin('quadra')">
           <div class="mc-sector-icon gold">🍞</div>
           <div class="mc-sector-info">
@@ -3678,7 +3686,7 @@
   <!-- CARREGAMENTO: HUB -->
   <div class="screen" id="s-carreg">
     <div class="mc-header">
-      <button class="mc-header-back" onclick="goTo(window.setorAtual==='expedicao'?'s-exp-sel-data':'s-adm-hub')">‹</button>
+      <button class="mc-header-back" onclick="goTo(window.setorAtual==='carregamento'?'s-inicio':(window.setorAtual==='expedicao'?'s-exp-sel-data':'s-adm-g-log'))">‹</button>
       <div class="mc-brand"><div class="mc-brand-logo">MC</div><div class="mc-brand-text"><div class="mc-brand-name">Monte Castelo</div><div class="mc-brand-sub">Expedição</div></div></div>
       <div class="mc-divider-v"></div>
       <div class="mc-page-info"><div class="mc-page-title">📦 Carregamentos</div><div class="mc-page-sub">Conferência por bipagem</div></div>
@@ -4264,10 +4272,10 @@ let QUADRA_PRODUTOS = [];
 let QUADRA_KITS_RECEITAS = {};
   let QUADRA_KITS = []; // Lista de nomes de kits da Quadra
 let QUADRA_KIT_MAPPING = {"Kit Massa Especial Mini Sonho": "KIT MASSA ESPECIAL MINI SONHO", "Kit Pão Sovado": "KIT PÃO SOVADO", "Kit Pao De Milho Salgado Cacetinho": "KIT PAO DE MILHO SALGADO CACETINHO", "Kit Cuca Alemã": "KIT CUCA ALEMÃ", "Kit Rosca De Polvilho": "KIT ROSCA DE POLVILHO", "Kit Massa Especial Donuts E Cueca Grande": "KIT MASSA ESPECIAL DONUTS E CUECA GRANDE", "Kit Pão Preto": "KIT PÃO PRETO", "Kit Massa Sonho": "KIT MASSA SONHO", "Kit Massa Especial": "KIT MASSA ESPECIAL", "Kit Massa Doce": "KIT MASSA DOCE", "Kit Pão De Cenoura": "KIT PÃO DE CENOURA", "Kit Cueca Virada": "KIT CUECA VIRADA", "Kit Pão De Leite": "KIT PÃO DE LEITE", "Kit Cuca Colonial": "KIT CUCA COLONIAL", "Kit Pão De Aipim": "KIT PÃO DE AIPIM", "Kit Cuca Frutas": "KIT CUCA FRUTAS", "Kit Cuca Chocolate": "KIT CUCA CHOCOLATE", "Kit Vovo/Gajeta": "KIT VOVO/GAJETA", "Kit Pão De Milho Doce": "KIT PÃO DE MILHO DOCE", "Kit Pão De Batata": "KIT PÃO DE BATATA", "Kit Pão Caseiro": "KIT PÃO CASEIRO", "Kit Raminho": "KIT RAMINHO", "Kit Pão De Milho Salgado": "KIT PÃO DE MILHO SALGADO", "Kit Pão Folhado": "KIT PÃO FOLHADO", "Kit Pão Brioche": "KIT PÃO BRIOCHE", "Kit Pão Integral": "KIT PÃO INTEGRAL", "Kit Grande Premium 6/8": "KIT GRANDE PREMIUM 6/8", "Kit Pão 7 Grãos": "KIT PÃO 7 GRÃOS"};
-let PINS = { confeitaria:'1234', cozinha:'5678', embalagem:'9101', expedicao:'1314', admin:'2504', contagem:'0000', container:'0001', quadra:'2020', testes:'7070', simone:'5050', alteracoes:'4321' }; // Será carregado do Firebase
-const CORES = { confeitaria:'', cozinha:'verde', embalagem:'', expedicao:'laranja', admin:'roxo', contagem:'roxo', container:'', quadra:'', testes:'', simone:'', alteracoes:'roxo' };
-const NOMES = { confeitaria:'Confeitaria 🥐', cozinha:'Cozinha 🍳', embalagem:'Embalagem 📦', expedicao:'Expedição 🚚', admin:'Administrativo 📊', contagem:'Contagem 📋', container:'Rafael 📦', quadra:'Quadra 🍞', testes:'Testes MP 🔬', simone:'Simone - Financeiro 💼', alteracoes:'Alterações de Receita ✏️' };
-const DESTINOS = { confeitaria:'s-conf-home', cozinha:'s-coz-home', embalagem:'s-emb-sel-data', expedicao:'s-exp-sel-data', admin:'s-adm-hub', contagem:'s-contagem-home', container:'s-rafael-home', quadra:'s-quadra-home', testes:'s-testes-home', simone:'s-simone-home', alteracoes:'s-alt-home' };
+let PINS = { confeitaria:'1234', cozinha:'5678', embalagem:'9101', expedicao:'1314', admin:'2504', contagem:'0000', container:'0001', quadra:'2020', testes:'7070', simone:'5050', alteracoes:'4321', carregamento:'6060' }; // Será carregado do Firebase
+const CORES = { confeitaria:'', cozinha:'verde', embalagem:'', expedicao:'laranja', admin:'roxo', contagem:'roxo', container:'', quadra:'', testes:'', simone:'', alteracoes:'roxo', carregamento:'laranja' };
+const NOMES = { confeitaria:'Confeitaria 🥐', cozinha:'Cozinha 🍳', embalagem:'Embalagem 📦', expedicao:'Expedição 🚚', admin:'Administrativo 📊', contagem:'Contagem 📋', container:'Rafael 📦', quadra:'Quadra 🍞', testes:'Testes MP 🔬', simone:'Simone - Financeiro 💼', alteracoes:'Alterações de Receita ✏️', carregamento:'Carregamento 📦' };
+const DESTINOS = { confeitaria:'s-conf-home', cozinha:'s-coz-home', embalagem:'s-emb-sel-data', expedicao:'s-exp-sel-data', admin:'s-adm-hub', contagem:'s-contagem-home', container:'s-rafael-home', quadra:'s-quadra-home', testes:'s-testes-home', simone:'s-simone-home', alteracoes:'s-alt-home', carregamento:'s-carreg' };
 
 let pinAtual = '';
 let setorAtivo = '';
@@ -13013,6 +13021,7 @@ function _carregKeyHandler(e){
   if(document.getElementById('carreg-modal')) return; // modal de EAN aberto
   if(document.getElementById('carreg-bloqueio')) return; // alerta de bloqueio aberto (exige clique no OK)
   if(e.target && e.target.id==='carreg-mult') return; // deixa digitar o multiplicador normalmente
+  if(e.target && e.target.id==='carreg-cod') return; // deixa digitar o código do produto normalmente
   const k=e.key;
   if(k==='Enter'){ if(_carregBuf.length){ e.preventDefault(); const v=_carregBuf; _carregBuf=''; _carregSyncInput(); carregBip(v); } return; }
   if(k && k.length===1 && !e.ctrlKey && !e.metaKey && !e.altKey){
@@ -13026,8 +13035,18 @@ function _carregKeyHandler(e){
 function _carregStartCapture(){ if(_carregKeyBound) return; _carregKeyBound=_carregKeyHandler; document.addEventListener('keydown', _carregKeyBound, true); }
 function _carregStopCapture(){ if(_carregKeyBound){ document.removeEventListener('keydown', _carregKeyBound, true); _carregKeyBound=null; } if(_carregTimer){ clearTimeout(_carregTimer); _carregTimer=null; } _carregBuf=''; }
 window._carregStartCapture=_carregStartCapture; window._carregStopCapture=_carregStopCapture;
-function carregDigitarManual(){ const v=prompt('Digite o código de barras (EAN):',''); if(v===null) return; const t=String(v).trim(); if(t) carregBip(t); }
+function carregDigitarManual(){ const v=prompt('Digite o código de barras (EAN) ou o código do produto:',''); if(v===null) return; const t=String(v).trim(); if(t) carregBip(t); }
 window.carregDigitarManual=carregDigitarManual;
+function carregCodLancar(){
+  const inp=document.getElementById('carreg-cod'); if(!inp) return;
+  const v=String(inp.value||'').trim(); inp.value='';
+  if(!v){ _carregFocus(); return; }
+  const it=_carregConf&&_carregConf.itens.find(i=>_codEq(i.codigo, v));
+  if(!it){ _carregToast('⚠️ Código '+v+' não está neste carregamento!', '#ef4444'); _carregFocus(); return; }
+  _carregRegistrar(it.codigo, it.nome, null); // usa o multiplicador atual, igual ao bipe
+}
+function carregCodEnter(ev){ if(ev.key==='Enter'){ ev.preventDefault(); carregCodLancar(); } }
+window.carregCodLancar=carregCodLancar; window.carregCodEnter=carregCodEnter;
 
 onSnapshot(collection(db,'carregamentos'), snap=>{
   try{
@@ -13065,6 +13084,7 @@ function renderCarreg(){
     if(concluido){ botoes+='<button class="btn btn-secondary" style="flex:1;" onclick="iniciarConferencia(\''+c.firestoreId+'\')">👁 Ver conferência</button>'; }
     else { botoes+='<button class="btn btn-primary" style="flex:2;background:var(--mc-verde);font-size:15px;font-weight:800;" onclick="iniciarConferencia(\''+c.firestoreId+'\')">▶ Iniciar carregamento</button>'; }
     if(isAdmin) botoes+='<button class="btn btn-secondary" style="flex:1;" onclick="abrirCarregEdit(\''+c.firestoreId+'\')">✏️ Editar</button>';
+    if(isAdmin) botoes+='<button class="btn btn-secondary" style="flex:0 0 auto;border-color:#ef9a9a;color:#c62828;padding:0 14px;" onclick="excluirCarreg(\''+c.firestoreId+'\')" title="Excluir carregamento">🗑</button>';
     botoes+='</div>';
     return '<div class="card" style="margin-bottom:10px;">'+
       '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">'+
@@ -13222,6 +13242,17 @@ function _carregFocus(){ setTimeout(()=>{ const i=document.getElementById('carre
 function carregSetMode(m){ _carregBipMode=m; renderCarregConf(); _carregFocus(); }
 window.carregSetMode=carregSetMode;
 function carregAplicarMult(v){ const n=parseInt(v)||1; _carregMult=Math.max(n,1); renderCarregConf(); _carregFocus(); }
+function carregMultLive(v){
+  const n=parseInt(String(v||'').trim());
+  _carregMult = (!isNaN(n)&&n>1) ? n : 1;
+  const av=document.getElementById('carreg-mult-aviso');
+  if(av){
+    if(_carregMult>1){ av.style.display='block'; av.innerHTML='<div style="font-size:15px;font-weight:900;color:#c2410c;">⚡ PRÓXIMO PRODUTO = '+_carregMult+' pacotes</div><div style="font-size:11px;color:#9a3412;font-weight:600;">Vale para o bipe OU para o código digitado · depois volta para 1</div>'; }
+    else { av.style.display='none'; }
+  }
+  const bip=document.getElementById('carreg-bip'); if(bip) bip.style.borderColor=_carregMult>1?'#d97706':'var(--mc-azul)';
+}
+window.carregMultLive=carregMultLive;
 function carregMultEnter(ev){ if(ev.key==='Enter'){ ev.preventDefault(); carregAplicarMult(ev.target.value); } }
 window.carregAplicarMult=carregAplicarMult; window.carregMultEnter=carregMultEnter;
 function carregBipEnter(ev){ if(ev.key==='Enter'){ ev.preventDefault(); const v=ev.target.value; ev.target.value=''; carregBip(v); } }
@@ -13230,15 +13261,29 @@ window.carregBipEnter=carregBipEnter;
 function carregBip(ean){
   ean=String(ean||'').trim(); if(!ean || !_carregConf) return;
   const known=eanMap[ean];
-  if(!known){ _carregEanPendente=ean; _carregAbrirResolver(ean); return; }
-  _carregRegistrar(known.codigo, known.nome, ean);
+  if(known){ _carregRegistrar(known.codigo, known.nome, ean); return; }
+  // Não é EAN conhecido → tenta como CÓDIGO DO PRODUTO deste carregamento
+  const porCod=_carregConf.itens.find(i=>_codEq(i.codigo, ean));
+  if(porCod){ _carregRegistrar(porCod.codigo, porCod.nome, null); return; }
+  // Desconhecido → pergunta qual produto é (aprende o EAN)
+  _carregEanPendente=ean; _carregAbrirResolver(ean);
+}
+function _carregMultAtual(){
+  // Lê o valor do campo na hora — funciona mesmo se o usuário não clicou em "Definir"
+  const inp=document.getElementById('carreg-mult');
+  if(inp){ const n=parseInt(String(inp.value||'').trim()); if(!isNaN(n) && n>1) return n; }
+  return Math.max(_carregMult||1, 1);
+}
+function _carregResetMult(){
+  _carregMult=1;
+  const inp=document.getElementById('carreg-mult'); if(inp) inp.value='';
 }
 function _carregRegistrar(codigo, nome, ean){
   const it=_carregConf.itens.find(i=>_codEq(i.codigo,codigo));
   if(!it){ _carregToast('⚠️ '+(nome||'Produto')+' não faz parte deste carregamento!', '#ef4444'); _carregFocus(); return; }
   const cur=parseInt(it.qtdBipada)||0, sol=parseInt(it.qtdSolicitada)||0;
-  let add=_carregMult||1;
-  if(_carregMult>1) _carregMult=1; // one-shot: volta ao padrão (1) após este bipe
+  let add=_carregMultAtual();
+  _carregResetMult(); // one-shot: volta ao padrão (1) após este lançamento
   if(_carregBipMode==='qtd'){ const q=prompt('Quantos pacotes de "'+it.nome+'"?','1'); if(q===null){ _carregFocus(); return; } add=parseInt(q)||0; if(add<=0){ _carregFocus(); return; } }
   // BLOQUEIO: não deixa passar do solicitado
   if(sol>0 && cur+add>sol){ renderCarregConf(); _carregBloqueio(it, cur, sol, add); return; }
@@ -13343,15 +13388,19 @@ function renderCarregConf(){
       // ===== MULTIPLICADOR (campo digitável, one-shot) =====
       '<div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;">'+
         '<div style="font-size:12px;font-weight:700;color:#64748b;white-space:nowrap;">Multiplicador:</div>'+
-        '<input type="text" id="carreg-mult" value="'+(_carregMult>1?_carregMult:'')+'" onkeydown="carregMultEnter(event)" inputmode="numeric" placeholder="1" style="width:80px;font-size:18px;font-weight:800;padding:8px;border-radius:8px;border:2px solid '+(_carregMult>1?'#d97706':'#d1d5db')+';text-align:center;box-sizing:border-box;">'+
+        '<input type="text" id="carreg-mult" value="'+(_carregMult>1?_carregMult:'')+'" onkeydown="carregMultEnter(event)" oninput="carregMultLive(this.value)" inputmode="numeric" placeholder="1" style="width:80px;font-size:18px;font-weight:800;padding:8px;border-radius:8px;border:2px solid '+(_carregMult>1?'#d97706':'#d1d5db')+';text-align:center;box-sizing:border-box;">'+
         '<button onclick="carregAplicarMult(document.getElementById(\'carreg-mult\').value)" style="background:#d97706;color:#fff;border:none;border-radius:8px;padding:9px 14px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;">Definir</button>'+
         (_carregMult>1?'<button onclick="carregAplicarMult(1)" style="background:none;border:1px solid #d1d5db;border-radius:8px;padding:8px 10px;font-size:12px;color:#334155;cursor:pointer;white-space:nowrap;">×1</button>':'')+
       '</div>'+
-      (_carregMult>1?'<div style="background:#fff7ed;border:2px solid #d97706;border-radius:10px;padding:10px 12px;margin-bottom:8px;text-align:center;"><div style="font-size:15px;font-weight:900;color:#c2410c;">⚡ PRÓXIMO BIPE = '+_carregMult+' pacotes</div><div style="font-size:11px;color:#9a3412;font-weight:600;">Depois volta automaticamente para 1</div></div>':'')+
+      '<div id="carreg-mult-aviso" style="background:#fff7ed;border:2px solid #d97706;border-radius:10px;padding:10px 12px;margin-bottom:8px;text-align:center;display:'+(_carregMult>1?'block':'none')+';">'+(_carregMult>1?'<div style="font-size:15px;font-weight:900;color:#c2410c;">⚡ PRÓXIMO PRODUTO = '+_carregMult+' pacotes</div><div style="font-size:11px;color:#9a3412;font-weight:600;">Vale para o bipe OU para o código digitado · depois volta para 1</div>':'')+'</div>'+
       '<input type="text" id="carreg-bip" readonly placeholder="📡 PODE BIPAR" autocomplete="off" style="width:100%;font-size:22px;padding:18px;border-radius:12px;border:2px solid '+(_carregMult>1?'#d97706':'var(--mc-azul)')+';box-sizing:border-box;text-align:center;font-weight:800;background:#fff;">'+
-      '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;gap:8px;">'+
-        '<div style="font-size:12px;color:#64748b;font-weight:600;">✅ Pode bipar direto — não precisa clicar em nada</div>'+
-        '<button onclick="carregDigitarManual()" style="background:none;border:1px solid #d1d5db;border-radius:8px;padding:6px 10px;font-size:12px;color:#334155;cursor:pointer;white-space:nowrap;">⌨️ Digitar</button>'+
+      '<div style="font-size:12px;color:#64748b;font-weight:600;margin:8px 0 6px;text-align:center;">✅ Pode bipar direto — não precisa clicar em nada</div>'+
+      '<div style="border-top:1px dashed #cbd5e1;padding-top:8px;">'+
+        '<div style="font-size:11px;color:#64748b;font-weight:700;margin-bottom:4px;">Bip não funcionou? Digite o CÓDIGO do produto:</div>'+
+        '<div style="display:flex;gap:8px;">'+
+          '<input type="text" id="carreg-cod" onkeydown="carregCodEnter(event)" inputmode="numeric" placeholder="Ex: 208" style="flex:1;font-size:17px;font-weight:700;padding:11px;border-radius:9px;border:2px solid #d1d5db;text-align:center;box-sizing:border-box;">'+
+          '<button onclick="carregCodLancar()" style="background:var(--mc-azul);color:#fff;border:none;border-radius:9px;padding:11px 18px;font-size:14px;font-weight:700;cursor:pointer;white-space:nowrap;">✓ Lançar</button>'+
+        '</div>'+
       '</div>'+
       '</div>';
     // ===== ÚLTIMO BIPADO (flash grande) =====
@@ -13360,8 +13409,9 @@ function renderCarregConf(){
       html+='<div class="card carreg-flash" style="margin-bottom:12px;background:'+(ok?'linear-gradient(135deg,#16a34a,#22c55e)':'linear-gradient(135deg,#1e3a8a,#3b82f6)')+';color:#fff;border:none;">'+
         '<div style="display:flex;align-items:center;gap:14px;">'+
           '<div style="font-size:40px;">'+(ok?'✅':'📦')+'</div>'+
-          '<div style="flex:1;min-width:0;"><div style="font-size:12px;opacity:.85;font-weight:600;">Último bipado (+'+u.add+')</div>'+
+          '<div style="flex:1;min-width:0;"><div style="font-size:12px;opacity:.85;font-weight:600;">Último lançado (+'+u.add+')</div>'+
           '<div style="font-size:22px;font-weight:900;line-height:1.1;">'+u.nome+'</div>'+
+          '<div style="font-size:12px;opacity:.85;font-weight:700;font-family:monospace;">cód '+u.codigo+'</div>'+
           '<div style="font-size:18px;font-weight:800;margin-top:2px;">'+u.total+' / '+u.sol+' pacotes'+(ok?' — COMPLETO!':'')+'</div></div>'+
         '</div></div>';
     }
@@ -13377,7 +13427,8 @@ function renderCarregConf(){
     const bg=completo?'rgba(22,163,74,.07)':(excedeu?'rgba(220,38,38,.06)':'transparent');
     return '<div style="padding:10px;border-radius:10px;margin-bottom:6px;background:'+bg+';border-left:5px solid '+cor+';">'+
       '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">'+
-        '<div style="flex:1;min-width:0;font-size:15px;font-weight:700;'+(completo?'color:#16a34a;':'')+'">'+(completo?'✅ ':'')+it.nome+'</div>'+
+        '<div style="flex:1;min-width:0;"><div style="font-size:15px;font-weight:700;'+(completo?'color:#16a34a;':'')+'">'+(completo?'✅ ':'')+it.nome+'</div>'+
+        '<div style="font-size:12px;color:#64748b;font-weight:700;font-family:monospace;">cód '+it.codigo+'</div></div>'+
         (concluido?'':'<button onclick="carregAjustar(\''+escapeJsStr(it.codigo)+'\',-1)" style="width:34px;height:34px;border-radius:8px;border:1px solid #d1d5db;background:#fff;font-size:18px;font-weight:700;cursor:pointer;">−</button>')+
         '<div style="font-size:20px;font-weight:900;color:'+cor+';white-space:nowrap;min-width:90px;text-align:center;">'+bip+' / '+sol+'</div>'+
         (concluido?'':'<button onclick="carregAjustar(\''+escapeJsStr(it.codigo)+'\',1)" style="width:34px;height:34px;border-radius:8px;border:1px solid #d1d5db;background:#fff;font-size:18px;font-weight:700;cursor:pointer;">+</button>')+
