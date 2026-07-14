@@ -13041,6 +13041,7 @@ function _carregSyncInput(){ const i=document.getElementById('carreg-bip'); if(i
 function _carregKeyHandler(e){
   const active=document.querySelector('.screen.active'); if(!active||active.id!=='s-carreg-conf') return;
   if(!_carregConf || _carregConf.status==='concluido') return;
+  if(_carregConf.pausado) return; // PAUSADO: nada é bipado
   if(document.getElementById('carreg-modal')) return; // modal de EAN aberto
   if(document.getElementById('carreg-bloqueio')) return; // alerta de bloqueio aberto (exige clique no OK)
   if(e.target && e.target.id==='carreg-mult') return; // deixa digitar o multiplicador normalmente
@@ -13082,7 +13083,8 @@ onSnapshot(collection(db,'carregamentos'), snap=>{
 });
 onSnapshot(collection(db,'eansProdutos'), snap=>{ try{ eanMap={}; eansList=snap.docs.map(d=>{ const x=d.data(); eanMap[d.id]={codigo:x.codigo,nome:x.nome}; return {ean:d.id, codigo:x.codigo, nome:x.nome}; }); const t=document.querySelector('.screen.active')?.id; if(t==='s-eans') renderEans(); }catch(e){} });
 
-function _carregStatusInfo(s){
+function _carregStatusInfo(s, pausado){
+  if(pausado) return {label:'PAUSADO',cor:'#b45309',bg:'rgba(217,119,6,.15)',emoji:'⏸️'};
   if(s==='conferindo') return {label:'Conferindo',cor:'#d97706',bg:'rgba(217,119,6,.1)',emoji:'📡'};
   if(s==='concluido') return {label:'Concluído',cor:'#16a34a',bg:'rgba(22,163,74,.1)',emoji:'✅'};
   return {label:'Aberto',cor:'#2563eb',bg:'rgba(37,99,235,.1)',emoji:'📝'};
@@ -13094,12 +13096,14 @@ function _carregAtualizarBadge(){ if(typeof _hubContadores==='function')_hubCont
 function renderCarreg(){
   const el=document.getElementById('carreg-content'); if(!el) return;
   const isAdmin=window.adminMode===true;
+  const podeGerenciar = isAdmin || window.setorAtual==='carregamento'; // setor Carregamento também cria/edita
   let html='';
-  if(isAdmin) html+='<button class="btn btn-primary" style="width:100%;margin-bottom:12px;" onclick="novoCarreg()">+ Novo carregamento</button>';
+  if(podeGerenciar) html+='<button class="btn btn-primary" style="width:100%;margin-bottom:12px;" onclick="novoCarreg()">+ Novo carregamento</button>';
   if(!carregamentos.length){ el.innerHTML=html+'<div class="empty" style="padding:24px;">Nenhum carregamento. '+(isAdmin?'Crie um para a expedição conferir.':'Aguarde o admin criar um carregamento.')+'</div>'; return; }
-  const lista=carregamentos.slice().sort((a,b)=>(b.timestamp||0)-(a.timestamp||0));
+  const _dtKey=(c)=>{ const p=String(c.data||'').split('/'); return (p.length===3)? (p[2]+p[1].padStart(2,'0')+p[0].padStart(2,'0')) : '00000000'; };
+  const lista=carregamentos.slice().sort((a,b)=>{ const k=_dtKey(b).localeCompare(_dtKey(a)); if(k!==0) return k; return (b.timestamp||0)-(a.timestamp||0); });
   html+=lista.map(c=>{
-    const si=_carregStatusInfo(c.status);
+    const si=_carregStatusInfo(c.status, c.pausado);
     const totSol=(c.itens||[]).reduce((s,i)=>s+(parseInt(i.qtdSolicitada)||0),0);
     const totBip=(c.itens||[]).reduce((s,i)=>s+(parseInt(i.qtdBipada)||0),0);
     const pct=totSol>0?Math.round(totBip/totSol*100):0;
@@ -13107,7 +13111,7 @@ function renderCarreg(){
     let botoes='<div style="display:flex;gap:8px;margin-top:10px;">';
     if(concluido){ botoes+='<button class="btn btn-secondary" style="flex:1;" onclick="iniciarConferencia(\''+c.firestoreId+'\')">👁 Ver conferência</button>'; }
     else { botoes+='<button class="btn btn-primary" style="flex:2;background:var(--mc-verde);font-size:15px;font-weight:800;" onclick="iniciarConferencia(\''+c.firestoreId+'\')">▶ Iniciar carregamento</button>'; }
-    if(isAdmin) botoes+='<button class="btn btn-secondary" style="flex:1;" onclick="abrirCarregEdit(\''+c.firestoreId+'\')">✏️ Editar</button>';
+    if(podeGerenciar) botoes+='<button class="btn btn-secondary" style="flex:1;" onclick="abrirCarregEdit(\''+c.firestoreId+'\')">✏️ Editar</button>';
     if(isAdmin) botoes+='<button class="btn btn-secondary" style="flex:0 0 auto;border-color:#ef9a9a;color:#c62828;padding:0 14px;" onclick="excluirCarreg(\''+c.firestoreId+'\')" title="Excluir carregamento">🗑</button>';
     botoes+='</div>';
     return '<div class="card" style="margin-bottom:10px;">'+
@@ -13126,7 +13130,7 @@ function renderCarreg(){
 }
 function abrirCarreg(id){
   const c=carregamentos.find(x=>x.firestoreId===id); if(!c) return;
-  if(c.status==='aberto' && window.adminMode===true){ abrirCarregEdit(id); }
+  if(c.status==='aberto' && (window.adminMode===true || window.setorAtual==='carregamento')){ abrirCarregEdit(id); }
   else { iniciarConferencia(id); }
 }
 window.abrirCarreg=abrirCarreg; window.renderCarreg=renderCarreg;
@@ -13343,6 +13347,7 @@ function _carregResetMult(){
   const inp=document.getElementById('carreg-mult'); if(inp) inp.value='';
 }
 function _carregRegistrar(codigo, nome, ean){
+  if(_carregConf&&_carregConf.pausado){ _carregToast('⏸ Carregamento PAUSADO — bipagem bloqueada', '#d97706'); return; }
   const it=_carregConf.itens.find(i=>_codEq(i.codigo,codigo));
   if(!it){ _carregToast('⚠️ '+(nome||'Produto')+' não faz parte deste carregamento!', '#ef4444'); _carregFocus(); return; }
   const cur=parseInt(it.qtdBipada)||0, sol=parseInt(it.qtdSolicitada)||0;
@@ -13465,6 +13470,28 @@ function renderCarregConf(){
     '</div>'+
     '</div>';
   if(!concluido){
+    // ===== PAUSADO: bipagem travada + área para o escritório soltar o novo PDF =====
+    if(c.pausado){
+      html+='<div class="card" style="margin-bottom:12px;background:linear-gradient(135deg,#fef3c7,#fde68a);border:3px solid #d97706;text-align:center;">'+
+        '<div style="font-size:44px;line-height:1;">⏸️</div>'+
+        '<div style="font-size:26px;font-weight:900;color:#b45309;margin-top:4px;">CARREGAMENTO PAUSADO</div>'+
+        '<div style="font-size:14px;font-weight:700;color:#92400e;margin-top:4px;">A bipagem está bloqueada. Nada será contado agora.</div>'+
+        '<div style="background:#fff;border:3px dashed #d97706;border-radius:14px;padding:16px;margin-top:14px;">'+
+          '<div style="font-size:15px;font-weight:800;color:#0f172a;margin-bottom:4px;">📄 Escritório: solte aqui o novo carregamento</div>'+
+          '<div style="font-size:12px;color:#64748b;font-weight:600;margin-bottom:10px;">O que já foi bipado será mantido. Vamos comparar e avisar o que precisa sair do caminhão.</div>'+
+          '<label class="btn btn-primary" style="width:100%;text-align:center;cursor:pointer;display:block;background:#1e3a8a;">📄 Anexar novo PDF<input type="file" accept="application/pdf,.pdf" style="display:none" onchange="carregAtualizarPDF(this)"></label>'+
+        '</div>'+
+        '<button class="btn btn-secondary" style="width:100%;margin-top:12px;border-color:#16a34a;color:#16a34a;font-weight:800;" onclick="carregContinuar()">▶️ Continuar bipagem (sem alterar)</button>'+
+        '</div>';
+      // lista dos produtos (só leitura durante a pausa) + ações
+      const itensP=c.itens.slice().sort((a,b)=>{ const ca=((a.qtdBipada||0)>=(a.qtdSolicitada||0))?1:0, cb=((b.qtdBipada||0)>=(b.qtdSolicitada||0))?1:0; return ca-cb || String(a.nome).localeCompare(String(b.nome)); });
+      html+='<div class="card"><div style="font-size:14px;font-weight:800;margin-bottom:10px;">📦 Produtos (bipagem pausada)</div>'+
+        itensP.map(it=>{ const bip=parseInt(it.qtdBipada)||0, sol=parseInt(it.qtdSolicitada)||0; const ok=bip>=sol&&sol>0;
+          return '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);opacity:.85;"><div style="flex:1;min-width:0;"><div style="font-size:14px;font-weight:700;'+(ok?'color:#16a34a;':'')+'">'+(ok?'✅ ':'')+it.nome+'</div><div style="font-size:11px;color:#64748b;font-family:monospace;">cód '+it.codigo+'</div></div><div style="font-size:17px;font-weight:900;color:'+(ok?'#16a34a':'#2563eb')+';white-space:nowrap;">'+bip+' / '+sol+'</div></div>'; }).join('')+
+        '</div>';
+      el.innerHTML=html;
+      return;
+    }
     // ===== CAMPO DE BIPAGEM (destaque) =====
     html+='<div class="card" style="margin-bottom:12px;border:3px solid var(--mc-azul);background:#f0f7ff;">'+
       '<div style="display:flex;gap:8px;margin-bottom:8px;">'+
@@ -13474,9 +13501,10 @@ function renderCarregConf(){
       // ===== MULTIPLICADOR (botões rápidos + campo manual, one-shot) =====
       '<div style="display:flex;gap:6px;align-items:center;margin-bottom:8px;flex-wrap:wrap;">'+
         '<div style="font-size:12px;font-weight:700;color:#64748b;white-space:nowrap;">Multiplicador:</div>'+
-        '<button onclick="carregAplicarMult(7)" style="flex:0 0 auto;padding:9px 16px;border-radius:9px;border:2px solid '+(_carregMult===7?'#d97706':'#e2e8f0')+';background:'+(_carregMult===7?'#d97706':'#fff')+';color:'+(_carregMult===7?'#fff':'#334155')+';font-weight:900;font-size:16px;cursor:pointer;">×7</button>'+
-        '<button onclick="carregAplicarMult(20)" style="flex:0 0 auto;padding:9px 16px;border-radius:9px;border:2px solid '+(_carregMult===20?'#d97706':'#e2e8f0')+';background:'+(_carregMult===20?'#d97706':'#fff')+';color:'+(_carregMult===20?'#fff':'#334155')+';font-weight:900;font-size:16px;cursor:pointer;">×20</button>'+
-        '<input type="text" id="carreg-mult" value="'+(_carregMult>1&&_carregMult!==7&&_carregMult!==20?_carregMult:'')+'" onkeydown="carregMultEnter(event)" oninput="carregMultLive(this.value)" inputmode="numeric" placeholder="outro" style="width:78px;font-size:16px;font-weight:800;padding:9px;border-radius:9px;border:2px solid '+(_carregMult>1&&_carregMult!==7&&_carregMult!==20?'#d97706':'#d1d5db')+';text-align:center;box-sizing:border-box;">'+
+        '<button onclick="carregAplicarMult(7)" style="flex:0 0 auto;padding:9px 14px;border-radius:9px;border:2px solid '+(_carregMult===7?'#d97706':'#e2e8f0')+';background:'+(_carregMult===7?'#d97706':'#fff')+';color:'+(_carregMult===7?'#fff':'#334155')+';font-weight:900;font-size:16px;cursor:pointer;">×7</button>'+
+        '<button onclick="carregAplicarMult(10)" style="flex:0 0 auto;padding:9px 14px;border-radius:9px;border:2px solid '+(_carregMult===10?'#d97706':'#e2e8f0')+';background:'+(_carregMult===10?'#d97706':'#fff')+';color:'+(_carregMult===10?'#fff':'#334155')+';font-weight:900;font-size:16px;cursor:pointer;">×10</button>'+
+        '<button onclick="carregAplicarMult(20)" style="flex:0 0 auto;padding:9px 14px;border-radius:9px;border:2px solid '+(_carregMult===20?'#d97706':'#e2e8f0')+';background:'+(_carregMult===20?'#d97706':'#fff')+';color:'+(_carregMult===20?'#fff':'#334155')+';font-weight:900;font-size:16px;cursor:pointer;">×20</button>'+
+        '<input type="text" id="carreg-mult" value="'+(_carregMult>1&&_carregMult!==7&&_carregMult!==10&&_carregMult!==20?_carregMult:'')+'" onkeydown="carregMultEnter(event)" oninput="carregMultLive(this.value)" inputmode="numeric" placeholder="outro" style="width:74px;font-size:16px;font-weight:800;padding:9px;border-radius:9px;border:2px solid '+(_carregMult>1&&_carregMult!==7&&_carregMult!==10&&_carregMult!==20?'#d97706':'#d1d5db')+';text-align:center;box-sizing:border-box;">'+
         (_carregMult>1?'<button onclick="carregAplicarMult(1)" style="flex:0 0 auto;background:#fee2e2;border:1px solid #fca5a5;border-radius:9px;padding:9px 12px;font-size:13px;font-weight:700;color:#b91c1c;cursor:pointer;white-space:nowrap;">✕ ×1</button>':'')+
       '</div>'+
       '<div id="carreg-mult-aviso" style="background:#fff7ed;border:2px solid #d97706;border-radius:10px;padding:10px 12px;margin-bottom:8px;text-align:center;display:'+(_carregMult>1?'block':'none')+';">'+(_carregMult>1?'<div style="font-size:15px;font-weight:900;color:#c2410c;">⚡ PRÓXIMO PRODUTO = '+_carregMult+' pacotes</div><div style="font-size:11px;color:#9a3412;font-weight:600;">Vale para o bipe OU para o código digitado · depois volta para 1</div>':'')+'</div>'+
@@ -13531,9 +13559,12 @@ function renderCarregConf(){
   // ===== AÇÕES =====
   if(!concluido){
     html+=_carregHistHtml(c);
-    html+='<div style="display:flex;gap:8px;margin-top:12px;padding-bottom:14px;">'+
+    html+='<div style="display:flex;gap:8px;margin-top:12px;">'+
       '<button class="btn btn-secondary" style="flex:1;" onclick="carregDesfazer()">↩️ Desfazer último</button>'+
-      '<button class="btn btn-primary" style="flex:2;background:var(--mc-verde);font-size:16px;font-weight:800;" onclick="carregFinalizar()">✅ Finalizar carregamento</button>'+
+      '<button class="btn btn-secondary" style="flex:1;border-color:#d97706;color:#b45309;font-weight:800;" onclick="carregPausar()">⏸️ Pausar carregamento</button>'+
+      '</div>'+
+      '<div style="display:flex;gap:8px;margin-top:8px;padding-bottom:14px;">'+
+      '<button class="btn btn-primary" style="flex:1;background:var(--mc-verde);font-size:16px;font-weight:800;" onclick="carregFinalizar()">✅ Finalizar carregamento</button>'+
       '</div>';
   } else {
     const faltando=c.itens.filter(i=>(parseInt(i.qtdBipada)||0)<(parseInt(i.qtdSolicitada)||0));
@@ -13542,7 +13573,7 @@ function renderCarregConf(){
         return '<div style="display:flex;align-items:center;gap:10px;margin-top:10px;padding-top:10px;border-top:1px solid rgba(22,163,74,.2);">'+_carregAvatarHtml(cf,44)+'<div><div style="font-size:11px;color:#64748b;font-weight:600;">Conferido por</div><div style="font-size:15px;font-weight:800;color:#0f172a;">'+c.conferidoPor+'</div>'+(c.concluidoEm?'<div style="font-size:11px;color:#64748b;">'+c.concluidoEm+'</div>':'')+'</div></div>'; })():'')+
       '</div>'+
       '<button class="btn btn-primary" style="width:100%;margin-bottom:10px;background:var(--mc-azul);font-size:15px;font-weight:800;" onclick="carregReabrir()">🔓 Reabrir para conferir/editar</button>'+
-      (window.adminMode===true?'<button class="btn btn-secondary" style="width:100%;margin-bottom:10px;" onclick="abrirCarregEdit(\''+c.firestoreId+'\')">✏️ Editar dados do carregamento</button>':'')+
+      ((window.adminMode===true||window.setorAtual==='carregamento')?'<button class="btn btn-secondary" style="width:100%;margin-bottom:10px;" onclick="abrirCarregEdit(\''+c.firestoreId+'\')">✏️ Editar dados do carregamento</button>':'')+
       html+_carregHistHtml(c)+'<button class="btn btn-secondary" style="width:100%;margin-top:12px;margin-bottom:14px;" onclick="goTo(\'s-carreg\')">← Voltar aos carregamentos</button>';
   }
   el.innerHTML=html;
@@ -13647,11 +13678,154 @@ function _carregHistHtml(c){
   if(!h.length) return '';
   const linhas=h.slice().reverse().map(e=> e.tipo==='concluido'
     ? '<div style="font-size:11px;color:#334155;padding:4px 0;border-bottom:1px dashed var(--border);">✅ <strong>Concluído</strong> '+(e.em||'')+(e.por?' por '+e.por:'')+' — '+(e.bip!=null?e.bip+(e.sol!=null?'/'+e.sol:'')+' pacotes':'')+'</div>'
+    : e.tipo==='atualizado'
+    ? '<div style="font-size:11px;color:#334155;padding:4px 0;border-bottom:1px dashed var(--border);">🔄 <strong>Carregamento atualizado</strong> '+(e.em||'')+(e.por?' por '+e.por:'')+' — '+(e.add||0)+' novo(s), '+(e.rem||0)+' removido(s)'+((e.red||0)?', '+e.red+' reduzido(s)':'')+'</div>'
     : '<div style="font-size:11px;color:#334155;padding:4px 0;border-bottom:1px dashed var(--border);">🔓 <strong>Reaberto</strong> '+(e.em||'')+(e.por?' por '+e.por:'')+'</div>'
   ).join('');
   return '<div class="card" style="margin-top:10px;"><div style="font-size:12px;font-weight:700;margin-bottom:4px;">🕘 Histórico do carregamento</div>'+linhas+'</div>';
 }
 window.carregFinalizar=carregFinalizar; window.renderCarregConf=renderCarregConf; window.renderCarregEdit=renderCarregEdit;
+
+// ===================== PAUSAR / ATUALIZAR CARREGAMENTO EM ANDAMENTO =====================
+async function carregPausar(){
+  if(!_carregConf) return;
+  _carregConf.pausado=true;
+  try{ await updateDoc(doc(db,'carregamentos',_carregConf.firestoreId),{pausado:true, pausadoEm:agora()}); }catch(e){}
+  renderCarregConf();
+}
+async function carregContinuar(){
+  if(!_carregConf) return;
+  _carregConf.pausado=false;
+  try{ await updateDoc(doc(db,'carregamentos',_carregConf.firestoreId),{pausado:false, retomadoEm:agora()}); }catch(e){}
+  renderCarregConf(); _carregFocus();
+}
+window.carregPausar=carregPausar; window.carregContinuar=carregContinuar;
+
+// Lê um PDF/lista e devolve os itens (sem mexer no carregamento atual)
+async function _carregLerPdfItens(file){
+  const pdfjsLib=await _carregLoadPdfJs();
+  const buf=await file.arrayBuffer();
+  const pdf=await pdfjsLib.getDocument({data:buf}).promise;
+  let texto='';
+  for(let i=1;i<=pdf.numPages;i++){
+    const page=await pdf.getPage(i);
+    const content=await page.getTextContent();
+    const rows={};
+    content.items.forEach(it=>{ if(!it.str||!it.str.trim())return; const y=Math.round(it.transform[5]); (rows[y]=rows[y]||[]).push({x:it.transform[4], s:it.str}); });
+    Object.keys(rows).map(Number).sort((a,b)=>b-a).forEach(y=>{ texto+=rows[y].sort((a,b)=>a.x-b.x).map(o=>o.s).join(' ')+'\n'; });
+  }
+  return _carregParseItensDeTexto(texto);
+}
+function _carregParseItensDeTexto(txt){
+  const itens=[];
+  String(txt||'').split(/\r?\n/).forEach(l=>{
+    l=l.trim(); if(!l) return;
+    if(/^(c[óo]d|separa|carregamento|classifica|endere|emitido|p[áa]gina|placa|rota)/i.test(l)) return;
+    const m=l.match(/^(\d{1,6})\s+(.+?)\s+([\d]+[.,]?\d*)\s*(?:PCT|UN|UNID|CX)?\.?\s*$/i);
+    if(!m) return;
+    const cod=m[1].trim(); let nome=m[2].trim();
+    const qtd=Math.round(parseFloat(String(m[3]).replace(',','.'))||0);
+    if(!cod||qtd<=0) return;
+    const p=_carregAcharProduto(cod); if(p) nome=p.nome||nome;
+    const ex=itens.find(i=>_codEq(i.codigo,cod));
+    if(ex){ ex.qtdSolicitada+=qtd; return; }
+    itens.push({codigo:cod, nome:nome, qtdSolicitada:qtd, qtdBipada:0});
+  });
+  return itens;
+}
+// Compara e devolve o plano de atualização
+function _carregComparar(antigos, novos){
+  const manter=[], adicionados=[], removidos=[], reduzidos=[], aumentados=[];
+  novos.forEach(n=>{
+    const a=antigos.find(x=>_codEq(x.codigo,n.codigo));
+    if(!a){ adicionados.push({...n, qtdBipada:0}); return; }
+    const bip=parseInt(a.qtdBipada)||0, solNovo=parseInt(n.qtdSolicitada)||0, solAnt=parseInt(a.qtdSolicitada)||0;
+    const item={codigo:n.codigo, nome:n.nome||a.nome, qtdSolicitada:solNovo, qtdBipada:bip, log:Array.isArray(a.log)?a.log:[]};
+    if(solNovo<solAnt){ if(bip>solNovo) reduzidos.push({...item, retirar:bip-solNovo, solAnt}); }
+    else if(solNovo>solAnt){ aumentados.push({...item, solAnt}); }
+    manter.push(item);
+  });
+  antigos.forEach(a=>{
+    if(!novos.some(n=>_codEq(n.codigo,a.codigo))){
+      const bip=parseInt(a.qtdBipada)||0;
+      removidos.push({...a, retirar:bip});
+    }
+  });
+  return {itensFinais:manter.concat(adicionados), adicionados, removidos, reduzidos, aumentados};
+}
+async function carregAtualizarPDF(input){
+  const file=input.files&&input.files[0]; if(!file){ return; } input.value='';
+  if(!_carregConf) return;
+  try{
+    _carregToast('📄 Lendo novo PDF...', '#1e3a8a');
+    const novos=await _carregLerPdfItens(file);
+    if(!novos.length){ alert('Não encontrei itens no formato esperado neste PDF.'); return; }
+    const plano=_carregComparar(_carregConf.itens||[], novos);
+    _carregMostrarComparacao(plano, novos.length);
+  }catch(e){ alert('Não consegui ler o PDF: '+e.message); }
+}
+window.carregAtualizarPDF=carregAtualizarPDF;
+let _carregPlanoPend=null;
+function _carregMostrarComparacao(plano, totalNovos){
+  _carregPlanoPend=plano;
+  const retirar=[...plano.removidos.filter(r=>r.retirar>0), ...plano.reduzidos];
+  let ov=document.getElementById('carreg-comp'); if(ov) ov.remove();
+  ov=document.createElement('div'); ov.id='carreg-comp';
+  ov.style.cssText='position:fixed;inset:0;background:rgba(15,23,42,.85);z-index:10003;display:flex;align-items:center;justify-content:center;padding:16px;overflow:auto;';
+  let corpo='';
+  // ALERTA GRANDE: retirar do caminhão
+  if(retirar.length){
+    const totRet=retirar.reduce((s,r)=>s+(r.retirar||0),0);
+    corpo+='<div style="background:linear-gradient(135deg,#b91c1c,#dc2626);color:#fff;border-radius:16px;padding:18px;margin-bottom:14px;">'+
+      '<div style="font-size:34px;font-weight:900;text-align:center;line-height:1.1;">🚨 RETIRAR DO CAMINHÃO!</div>'+
+      '<div style="font-size:15px;font-weight:700;text-align:center;margin:6px 0 12px;opacity:.95;">'+totRet+' pacote(s) já bipados saíram do carregamento</div>'+
+      retirar.map(r=>'<div style="background:rgba(255,255,255,.15);border-radius:10px;padding:11px 13px;margin-bottom:7px;">'+
+        '<div style="font-size:17px;font-weight:900;">'+r.nome+'</div>'+
+        '<div style="font-size:13px;font-weight:700;opacity:.9;">cód '+r.codigo+' · '+(r.qtdSolicitada===0||r.qtdSolicitada===undefined?'PRODUTO SAIU DA LISTA':'reduziu de '+r.solAnt+' para '+r.qtdSolicitada)+'</div>'+
+        '<div style="font-size:20px;font-weight:900;margin-top:3px;">⬅️ Retirar '+r.retirar+' pacote(s)</div>'+
+      '</div>').join('')+
+      '</div>';
+  }
+  // Resumo das mudanças
+  corpo+='<div style="background:#f8fafc;border-radius:12px;padding:14px;margin-bottom:14px;">'+
+    '<div style="font-size:14px;font-weight:800;color:#0f172a;margin-bottom:8px;">📋 Resumo da atualização</div>'+
+    '<div style="font-size:13px;color:#334155;line-height:1.7;">'+
+      '<div>✅ <strong>'+totalNovos+'</strong> produto(s) no novo carregamento</div>'+
+      (plano.adicionados.length?'<div>➕ <strong>'+plano.adicionados.length+'</strong> produto(s) novo(s): '+plano.adicionados.slice(0,5).map(x=>x.nome).join(', ')+(plano.adicionados.length>5?'...':'')+'</div>':'')+
+      (plano.aumentados.length?'<div>⬆️ <strong>'+plano.aumentados.length+'</strong> aumentaram a quantidade</div>':'')+
+      (plano.removidos.length?'<div>❌ <strong>'+plano.removidos.length+'</strong> produto(s) removido(s)</div>':'')+
+      (plano.reduzidos.length?'<div>⬇️ <strong>'+plano.reduzidos.length+'</strong> reduziram abaixo do já bipado</div>':'')+
+      '<div style="margin-top:6px;color:#16a34a;font-weight:700;">🔒 As quantidades já bipadas foram preservadas — não precisa bipar tudo de novo.</div>'+
+    '</div></div>';
+  ov.innerHTML='<div style="background:#fff;border-radius:20px;max-width:600px;width:100%;padding:20px;max-height:92vh;overflow:auto;">'+
+    '<div style="font-size:20px;font-weight:900;color:#0f172a;margin-bottom:4px;">🔄 Atualizar carregamento</div>'+
+    '<div style="font-size:13px;color:#64748b;font-weight:600;margin-bottom:14px;">Confira as mudanças antes de aplicar</div>'+
+    corpo+
+    '<button onclick="carregAplicarAtualizacao()" style="width:100%;background:#16a34a;color:#fff;border:none;border-radius:12px;padding:15px;font-size:17px;font-weight:900;cursor:pointer;">✅ Aplicar e continuar bipagem</button>'+
+    '<button onclick="carregCancelarAtualizacao()" style="width:100%;background:none;border:none;color:#94a3b8;font-size:13px;margin-top:10px;cursor:pointer;text-decoration:underline;">Cancelar (manter o carregamento atual)</button>'+
+    '</div>';
+  document.body.appendChild(ov);
+}
+function carregCancelarAtualizacao(){ const ov=document.getElementById('carreg-comp'); if(ov) ov.remove(); _carregPlanoPend=null; }
+window.carregCancelarAtualizacao=carregCancelarAtualizacao;
+async function carregAplicarAtualizacao(){
+  if(!_carregPlanoPend||!_carregConf) return;
+  const p=_carregPlanoPend;
+  const ov=document.getElementById('carreg-comp'); if(ov) ov.remove();
+  const hist=_carregConf.historico||[];
+  hist.push({tipo:'atualizado', por:(_carregConf.conferidoPor||_demAutor()), em:agora(),
+             add:p.adicionados.length, rem:p.removidos.length, red:p.reduzidos.length});
+  _carregConf.itens=p.itensFinais;
+  _carregConf.historico=hist;
+  _carregConf.pausado=false; // libera a bipagem
+  _carregPlanoPend=null;
+  try{ await updateDoc(doc(db,'carregamentos',_carregConf.firestoreId),{ itens:_carregConf.itens, historico:hist, pausado:false, atualizadoEm:agora() }); }
+  catch(e){ alert('Erro ao salvar: '+e.message); return; }
+  renderCarregConf(); _carregFocus();
+  _carregToast('✅ Carregamento atualizado — pode continuar bipando', '#16a34a');
+}
+window.carregAplicarAtualizacao=carregAplicarAtualizacao;
+
 
 // ===================== CONTROLE DE PRODUÇÃO (Admin) — conferência de lançamentos =====================
 let ctrlChecks={}; // { registroId: {por, em} }
