@@ -13037,9 +13037,7 @@ window._carregTodosProdutos=_carregTodosProdutos;
 let carregamentos=[], eanMap={}, eansList=[];
 let _carregEditando=null, _carregConf=null, _carregBipMode='auto', _carregBusca='', _carregHist=[], _carregUltimo=null, _carregEanPendente=null;
 let _carregBuf='', _carregLastKey=0, _carregTimer=null, _carregKeyBound=null, _carregMult=1, _carregLogAberto=null, _carregSkipFocus=false;
-function carregToggleLog(cod){
-  _carregLogAberto = (_carregLogAberto===String(cod)) ? null : String(cod);
-  // preserva a posição da rolagem e NÃO foca no campo de bipe (senão a tela pula pro topo)
+function _carregRenderMantendoScroll(){
   const cont=document.getElementById('carreg-conf-content');
   const y=cont?cont.scrollTop:0;
   const yWin=window.scrollY||0;
@@ -13051,6 +13049,10 @@ function carregToggleLog(cod){
     if(c2) c2.scrollTop=y;
     if(yWin) window.scrollTo(0,yWin);
   });
+}
+function carregToggleLog(cod){
+  _carregLogAberto = (_carregLogAberto===String(cod)) ? null : String(cod);
+  _carregRenderMantendoScroll();
 }
 window.carregToggleLog=carregToggleLog;
 function _carregLogHtml(it){
@@ -13434,7 +13436,8 @@ function carregAjustar(codigo, delta){
   it.log.push({qtd:(novo-atual), em:agora(), via:'manual', por:(_carregConf.conferidoPor||'')});
   if(delta>0) _carregHist.push({codigo:String(codigo),qtd:delta});
   it.qtdBipada=novo;
-  _carregPersist(); renderCarregConf(); _carregFocus();
+  _carregPersist();
+  _carregRenderMantendoScroll(); // não sobe a tela ao ajustar
 }
 window.carregAjustar=carregAjustar;
 
