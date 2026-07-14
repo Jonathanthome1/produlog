@@ -2994,6 +2994,16 @@
         <div class="mc-sector-info"><div class="mc-sector-title">Códigos de Barras</div><div class="mc-sector-desc">Cadastro de EAN por produto</div></div>
         <span class="mc-sector-arrow">›</span>
       </button>
+      <button class="mc-sector-card" style="border-left:3px solid var(--mc-vermelho);margin-bottom:10px;" onclick="goTo('s-devolucoes')">
+        <div class="mc-sector-icon" style="background:var(--mc-vermelho-claro);">↩️</div>
+        <div class="mc-sector-info"><div class="mc-sector-title">Devoluções</div><div class="mc-sector-desc">Registro e histórico de devoluções</div></div>
+        <span class="mc-sector-arrow">›</span>
+      </button>
+      <button class="mc-sector-card" style="border-left:3px solid var(--mc-cinza);margin-bottom:10px;" onclick="goToAdmin('s-simone-home')">
+        <div class="mc-sector-icon" style="background:#e5e7eb;">💼</div>
+        <div class="mc-sector-info"><div class="mc-sector-title">Visão da Simone (Financeiro)</div><div class="mc-sector-desc">Abrir a tela como ela vê</div></div>
+        <span class="mc-sector-arrow">›</span>
+      </button>
     </div>
   </div>
 
@@ -3046,6 +3056,11 @@
       <button class="mc-sector-card" style="border-left:3px solid var(--mc-cinza);margin-bottom:10px;" onclick="goTo('s-adm-cadastros')">
         <div class="mc-sector-icon" style="background:#e5e7eb;">⚙️</div>
         <div class="mc-sector-info"><div class="mc-sector-title">Cadastros &amp; Configurações</div><div class="mc-sector-desc">Produtos, fichas, senhas e ajustes</div></div>
+        <span class="mc-sector-arrow">›</span>
+      </button>
+      <button class="mc-sector-card" style="border-left:3px solid var(--mc-laranja);margin-bottom:10px;" onclick="goTo('s-manut-home')">
+        <div class="mc-sector-icon" style="background:#ffedd5;">🔧</div>
+        <div class="mc-sector-info"><div class="mc-sector-title">Manutenção</div><div class="mc-sector-desc">Máquinas e ordens de manutenção</div></div>
         <span class="mc-sector-arrow">›</span>
       </button>
     </div>
@@ -13021,8 +13036,22 @@ function _carregAcharProduto(cod){ return _carregTodosProdutos().find(p=>_codEq(
 window._carregTodosProdutos=_carregTodosProdutos;
 let carregamentos=[], eanMap={}, eansList=[];
 let _carregEditando=null, _carregConf=null, _carregBipMode='auto', _carregBusca='', _carregHist=[], _carregUltimo=null, _carregEanPendente=null;
-let _carregBuf='', _carregLastKey=0, _carregTimer=null, _carregKeyBound=null, _carregMult=1, _carregLogAberto=null;
-function carregToggleLog(cod){ _carregLogAberto = (_carregLogAberto===String(cod)) ? null : String(cod); renderCarregConf(); }
+let _carregBuf='', _carregLastKey=0, _carregTimer=null, _carregKeyBound=null, _carregMult=1, _carregLogAberto=null, _carregSkipFocus=false;
+function carregToggleLog(cod){
+  _carregLogAberto = (_carregLogAberto===String(cod)) ? null : String(cod);
+  // preserva a posição da rolagem e NÃO foca no campo de bipe (senão a tela pula pro topo)
+  const cont=document.getElementById('carreg-conf-content');
+  const y=cont?cont.scrollTop:0;
+  const yWin=window.scrollY||0;
+  _carregSkipFocus=true;
+  renderCarregConf();
+  _carregSkipFocus=false;
+  requestAnimationFrame(()=>{
+    const c2=document.getElementById('carreg-conf-content');
+    if(c2) c2.scrollTop=y;
+    if(yWin) window.scrollTo(0,yWin);
+  });
+}
 window.carregToggleLog=carregToggleLog;
 function _carregLogHtml(it){
   const log=Array.isArray(it.log)?it.log:[];
@@ -13301,7 +13330,7 @@ async function iniciarConferencia(id){
   goTo('s-carreg-conf'); renderCarregConf(); _carregFocus();
 }
 window.iniciarConferencia=iniciarConferencia;
-function _carregFocus(){ setTimeout(()=>{ const i=document.getElementById('carreg-bip'); if(i){ i.focus(); i.select&&i.select(); } },120); }
+function _carregFocus(){ if(_carregSkipFocus) return; setTimeout(()=>{ if(_carregSkipFocus) return; const i=document.getElementById('carreg-bip'); if(i){ i.focus(); i.select&&i.select(); } },120); }
 function carregSetMode(m){ _carregBipMode=m; renderCarregConf(); _carregFocus(); }
 window.carregSetMode=carregSetMode;
 function carregAplicarMult(v){
