@@ -4324,17 +4324,31 @@ onSnapshot(collection(db,'recheios'), snap=>{
   }catch(e){ console.error('recheios snap:',e); }
 }, err=>{ console.error('recheios err:',err); });
 
+// ===== MODO TV VIA LINK (?tv=1) — para deixar rodando numa TV Android =====
+window._tvLinkMode = /[?&]tv=1\b/.test(location.search);
+function _entrarModoTvLink(){
+  if(!window._tvLinkMode || window._tvLinkIniciado) return;
+  window._tvLinkIniciado=true;
+  const loading=document.getElementById('loading'); if(loading) loading.style.display='none';
+  goTo('s-tv');
+  // tenta tela cheia (alguns navegadores exigem toque; então também tentamos no 1º toque)
+  const fs=()=>{ const s=document.getElementById('s-tv'); if(s && !document.fullscreenElement){ (s.requestFullscreen||s.webkitRequestFullscreen||function(){}).call(s); } };
+  setTimeout(fs, 400);
+  document.addEventListener('click', function _once(){ fs(); document.removeEventListener('click', _once); }, {once:true});
+}
+
 // Fallback: show app after 4s even if Firebase is slow
 setTimeout(()=>{
   const loading=document.getElementById('loading');
   if(loading.style.display!=='none'){
     loading.style.display='none';
-    goTo('s-inicio');
+    if(window._tvLinkMode){ _entrarModoTvLink(); } else { goTo('s-inicio'); }
   }
 },4000);
 
 function atualizarTela(){
   document.getElementById('loading').style.display='none';
+  if(window._tvLinkMode && !window._tvLinkIniciado){ _entrarModoTvLink(); return; }
   const tela=document.querySelector('.screen.active')?.id;
   if(!tela||tela==='loading'){ goTo('s-inicio'); return; }
   if(tela==='s-conf-home') renderConfHome();
@@ -12890,7 +12904,7 @@ function _tvFooter(d, views, viewIdx, isAdmin){
       (isAdmin?'<button onclick="configurarMuralTV()" style="'+btn+'padding:9px 16px;">💬 Recado</button>':'')+
       (isAdmin?'<button onclick="configurarPremioTV()" style="'+btn+'padding:9px 16px;">⚙️ Prêmio</button>':'')+
       '<button onclick="tvFullscreen()" style="background:#1e3a8a;border:none;color:#fff;font-size:14px;font-weight:600;padding:9px 16px;border-radius:12px;cursor:pointer;box-shadow:0 2px 8px rgba(30,58,138,.2);">⛶ Tela cheia</button>'+
-      '<button onclick="sairTV()" style="'+btn+'color:#64748b;padding:9px 16px;">✕ Sair</button>'+
+      (window._tvLinkMode?'':'<button onclick="sairTV()" style="'+btn+'color:#64748b;padding:9px 16px;">✕ Sair</button>')+
     '</div></div>';
 }
 function _tvViewHoje(d){
@@ -12984,7 +12998,8 @@ function renderTV(){
   const el=document.getElementById('tv-content'); if(!el) return;
   _tvInjectStyles();
   const d=_tvDados();
-  const isAdmin=window.adminMode===true;
+  // Pode editar prêmio/recado: Admin OU setor Confeitaria — mas NUNCA no modo TV-link (só exibe)
+  const podeEditar = !window._tvLinkMode && (window.adminMode===true || window.setorAtual==='confeitaria');
   if(!d){ el.innerHTML='<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#64748b;font-size:28px;">Sem plano de produção para esta semana.</div>'; return; }
   if(d.metaDiaPct>=100 && _tvCelebradoDia!==hoje()){ _tvCelebradoDia=hoje(); setTimeout(_tvConfetti, 300); }
   const views=['hoje','semana','ranking']; if((tvMural.texto||'').trim()) views.push('mural');
@@ -12997,7 +13012,7 @@ function renderTV(){
   let html='<div style="position:relative;display:flex;flex-direction:column;height:100%;padding:2.2vh 2vw;box-sizing:border-box;color:#1e293b;font-family:inherit;overflow:hidden;">';
   html+='<div style="position:absolute;top:-8vw;right:-6vw;width:26vw;height:26vw;border-radius:50%;background:radial-gradient(circle,rgba(59,130,246,.10),transparent 70%);animation:tvBg 14s ease-in-out infinite;pointer-events:none;"></div>';
   html+='<div style="position:absolute;bottom:-10vw;left:-6vw;width:24vw;height:24vw;border-radius:50%;background:radial-gradient(circle,rgba(245,158,11,.12),transparent 70%);animation:tvBg 18s ease-in-out infinite reverse;pointer-events:none;"></div>';
-  html+=_tvHeader(d)+body+_tvFooter(d,views,viewIdx,isAdmin);
+  html+=_tvHeader(d)+body+_tvFooter(d,views,viewIdx,podeEditar);
   html+='</div>';
   el.innerHTML=html;
   _tvClock();
@@ -13013,7 +13028,7 @@ function tvNextView(){ tvGotoView(_tvView+1); }
 function tvRetomarRotacao(){ _tvPaused=false; _tvTickN=0; renderTV(); }
 window.tvGotoView=tvGotoView; window.tvPrevView=tvPrevView; window.tvNextView=tvNextView; window.tvRetomarRotacao=tvRetomarRotacao;
 async function configurarMuralTV(){
-  if(window.adminMode!==true){ alert('Apenas o Admin pode postar um recado.'); return; }
+  if(!(window.adminMode===true || window.setorAtual==='confeitaria')){ alert('Apenas o Admin ou a Confeitaria podem postar um recado.'); return; }
   const texto=prompt('Recado/reconhecimento para aparecer na TV (deixe vazio para remover):', tvMural.texto||'');
   if(texto===null) return;
   let autor=tvMural.autor||'';
@@ -14260,7 +14275,7 @@ function _tvTick(){
 }
 function iniciarTV(){ if(_tvInterval) clearInterval(_tvInterval); _tvTickN=0; _tvInterval=setInterval(_tvTick,1000); renderTV(); }
 function pararTV(){ if(_tvInterval){ clearInterval(_tvInterval); _tvInterval=null; } }
-function sairTV(){ if(document.fullscreenElement){ try{document.exitFullscreen();}catch(e){} } pararTV(); goTo(window.adminMode?'s-adm-hub':'s-conf-home'); }
+function sairTV(){ if(window._tvLinkMode){ return; } if(document.fullscreenElement){ try{document.exitFullscreen();}catch(e){} } pararTV(); goTo(window.adminMode?'s-adm-hub':'s-conf-home'); }
 function tvFullscreen(){ const s=document.getElementById('s-tv'); if(!document.fullscreenElement){ (s.requestFullscreen||s.webkitRequestFullscreen||function(){}).call(s); } else { try{document.exitFullscreen();}catch(e){} } }
 window.sairTV=sairTV; window.tvFullscreen=tvFullscreen; window.renderTV=renderTV; window.iniciarTV=iniciarTV; window.pararTV=pararTV;
 
@@ -14285,7 +14300,7 @@ function _tvConfetti(){
 }
 
 async function configurarPremioTV(){
-  if(window.adminMode!==true){ alert('Apenas o Admin configura o prêmio.'); return; }
+  if(!(window.adminMode===true || window.setorAtual==='confeitaria')){ alert('Apenas o Admin ou a Confeitaria configuram o prêmio.'); return; }
   const meta=prompt('Meta de cumprimento do plano para ganhar o prêmio (%):', tvPremio.metaPct||90);
   if(meta===null) return;
   const texto=prompt('Qual é o prêmio? (ex: Pizza na sexta 🍕)', tvPremio.texto||'');
