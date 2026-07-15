@@ -4211,6 +4211,9 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getFirestore, collection, addDoc, deleteDoc, setDoc, getDoc, onSnapshot, doc, updateDoc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
+// MODO TV VIA LINK (?tv=1): detectado logo no início, antes de qualquer snapshot do Firebase
+window._tvLinkMode = /[?&]tv=1\b/.test(location.search);
+
 const firebaseConfig = {
   apiKey: "AIzaSyDY5ma_NbCmZ2dyXUjKm6GZQ3ibhwgcdmI",
   authDomain: "montecastelo-a0764.firebaseapp.com",
@@ -4325,7 +4328,6 @@ onSnapshot(collection(db,'recheios'), snap=>{
 }, err=>{ console.error('recheios err:',err); });
 
 // ===== MODO TV VIA LINK (?tv=1) — para deixar rodando numa TV Android =====
-window._tvLinkMode = /[?&]tv=1\b/.test(location.search);
 function _entrarModoTvLink(){
   if(!window._tvLinkMode || window._tvLinkIniciado) return;
   window._tvLinkIniciado=true;
@@ -4335,6 +4337,11 @@ function _entrarModoTvLink(){
   const fs=()=>{ const s=document.getElementById('s-tv'); if(s && !document.fullscreenElement){ (s.requestFullscreen||s.webkitRequestFullscreen||function(){}).call(s); } };
   setTimeout(fs, 400);
   document.addEventListener('click', function _once(){ fs(); document.removeEventListener('click', _once); }, {once:true});
+}
+// Entra no painel assim que o DOM estiver pronto (não espera o Firebase responder)
+if(window._tvLinkMode){
+  if(document.readyState==='loading'){ document.addEventListener('DOMContentLoaded', ()=>setTimeout(_entrarModoTvLink,50)); }
+  else { setTimeout(_entrarModoTvLink,50); }
 }
 
 // Fallback: show app after 4s even if Firebase is slow
