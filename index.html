@@ -805,6 +805,14 @@
           </div>
           <span class="mc-sector-arrow">›</span>
         </button>
+        <button class="mc-sector-card" style="border-left:3px solid var(--mc-verde);" onclick="abrirPin('comercial')">
+          <div class="mc-sector-icon green">🛒</div>
+          <div class="mc-sector-info">
+            <div class="mc-sector-title">Comercial</div>
+            <div class="mc-sector-desc">Solicitar liberação antecipada de produtos</div>
+          </div>
+          <span class="mc-sector-arrow">›</span>
+        </button>
         <button class="mc-sector-card" style="border-left:3px solid var(--mc-roxo);" onclick="abrirPin('admin')">
           <div class="mc-sector-icon purple">📊</div>
           <div class="mc-sector-info">
@@ -2836,6 +2844,15 @@
         <span class="mc-sector-arrow">›</span>
       </button>
 
+      <button class="mc-sector-card" style="border-left:3px solid var(--mc-vermelho);margin-bottom:10px;" onclick="goTo('s-la-decisao');renderLaDecisao()">
+        <div class="mc-sector-icon" style="background:#fee2e2;">⚖️</div>
+        <div class="mc-sector-info">
+          <div class="mc-sector-title">Liberação Antecipada <span class="la-badge" style="display:none;background:var(--mc-vermelho);color:#fff;font-size:11px;font-weight:700;border-radius:99px;padding:1px 8px;margin-left:4px;align-items:center;">0</span> <span class="la-badge-aj" style="display:none;background:var(--mc-laranja);color:#fff;font-size:11px;font-weight:700;border-radius:99px;padding:1px 8px;margin-left:4px;align-items:center;">0</span></div>
+          <div class="mc-sector-desc">Decidir solicitações · Dias lançados · Ajustes em aberto</div>
+        </div>
+        <span class="mc-sector-arrow">›</span>
+      </button>
+
       <button class="mc-sector-card" style="border-left:3px solid var(--mc-indigo);margin-bottom:10px;" onclick="goTo('s-adm-g-rel')">
         <div class="mc-sector-icon indigo">📊</div>
         <div class="mc-sector-info">
@@ -3734,6 +3751,52 @@
   </div>
 
   <!-- CONTROLE DE PRODUÇÃO (Admin) -->
+<!-- ═══════════════ TELAS: LIBERAÇÃO ANTECIPADA ═══════════════ -->
+
+<!-- TELA 1: Dias lançados (admin) -->
+<div class="screen" id="s-la-dias">
+  <div class="mc-header">
+    <button class="mc-header-back" onclick="goTo('s-adm-hub')">‹</button>
+    <div class="mc-brand"><div class="mc-brand-logo">MC</div><div class="mc-brand-text"><div class="mc-brand-name">Monte Castelo</div><div class="mc-brand-sub">Admin</div></div></div>
+    <div class="mc-divider-v"></div>
+    <div class="mc-page-info"><div class="mc-page-title">✅ Dias lançados no ERP</div><div class="mc-page-sub">Linha de corte da produção</div></div>
+  </div>
+  <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;" id="la-dias-content"></div>
+</div>
+
+<!-- TELA 2: Solicitar (escritório) -->
+<div class="screen" id="s-la-solicitar">
+  <div class="mc-header">
+    <button class="mc-header-back" onclick="window.adminMode?goTo('s-adm-hub'):goTo('s-inicio')">‹</button>
+    <div class="mc-brand"><div class="mc-brand-logo">MC</div><div class="mc-brand-text"><div class="mc-brand-name">Monte Castelo</div><div class="mc-brand-sub">Comercial</div></div></div>
+    <div class="mc-divider-v"></div>
+    <div class="mc-page-info"><div class="mc-page-title">📝 Solicitar produto</div><div class="mc-page-sub">Pedido de liberação antecipada</div></div>
+  </div>
+  <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;" id="la-solicitar-content"></div>
+</div>
+
+<!-- TELA 3: Decisão (admin) -->
+<div class="screen" id="s-la-decisao">
+  <div class="mc-header">
+    <button class="mc-header-back" onclick="goTo('s-adm-hub')">‹</button>
+    <div class="mc-brand"><div class="mc-brand-logo">MC</div><div class="mc-brand-text"><div class="mc-brand-name">Monte Castelo</div><div class="mc-brand-sub">Admin</div></div></div>
+    <div class="mc-divider-v"></div>
+    <div class="mc-page-info"><div class="mc-page-title">⚖️ Decidir solicitações</div><div class="mc-page-sub">Aprovar ou negar liberações</div></div>
+  </div>
+  <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;" id="la-decisao-content"></div>
+</div>
+
+<!-- TELA 4: Ajustes em aberto (admin) -->
+<div class="screen" id="s-la-ajustes">
+  <div class="mc-header">
+    <button class="mc-header-back" onclick="goTo('s-adm-hub')">‹</button>
+    <div class="mc-brand"><div class="mc-brand-logo">MC</div><div class="mc-brand-text"><div class="mc-brand-name">Monte Castelo</div><div class="mc-brand-sub">Admin</div></div></div>
+    <div class="mc-divider-v"></div>
+    <div class="mc-page-info"><div class="mc-page-title">↩ Ajustes em aberto</div><div class="mc-page-sub">Controle de entradas/saídas</div></div>
+  </div>
+  <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;" id="la-ajustes-content"></div>
+</div>
+
   <div class="screen" id="s-ctrl-prod">
     <div class="mc-header">
       <button class="mc-header-back" onclick="goTo('s-adm-hub')">‹</button>
@@ -4289,10 +4352,10 @@ let QUADRA_PRODUTOS = [];
 let QUADRA_KITS_RECEITAS = {};
   let QUADRA_KITS = []; // Lista de nomes de kits da Quadra
 let QUADRA_KIT_MAPPING = {"Kit Massa Especial Mini Sonho": "KIT MASSA ESPECIAL MINI SONHO", "Kit Pão Sovado": "KIT PÃO SOVADO", "Kit Pao De Milho Salgado Cacetinho": "KIT PAO DE MILHO SALGADO CACETINHO", "Kit Cuca Alemã": "KIT CUCA ALEMÃ", "Kit Rosca De Polvilho": "KIT ROSCA DE POLVILHO", "Kit Massa Especial Donuts E Cueca Grande": "KIT MASSA ESPECIAL DONUTS E CUECA GRANDE", "Kit Pão Preto": "KIT PÃO PRETO", "Kit Massa Sonho": "KIT MASSA SONHO", "Kit Massa Especial": "KIT MASSA ESPECIAL", "Kit Massa Doce": "KIT MASSA DOCE", "Kit Pão De Cenoura": "KIT PÃO DE CENOURA", "Kit Cueca Virada": "KIT CUECA VIRADA", "Kit Pão De Leite": "KIT PÃO DE LEITE", "Kit Cuca Colonial": "KIT CUCA COLONIAL", "Kit Pão De Aipim": "KIT PÃO DE AIPIM", "Kit Cuca Frutas": "KIT CUCA FRUTAS", "Kit Cuca Chocolate": "KIT CUCA CHOCOLATE", "Kit Vovo/Gajeta": "KIT VOVO/GAJETA", "Kit Pão De Milho Doce": "KIT PÃO DE MILHO DOCE", "Kit Pão De Batata": "KIT PÃO DE BATATA", "Kit Pão Caseiro": "KIT PÃO CASEIRO", "Kit Raminho": "KIT RAMINHO", "Kit Pão De Milho Salgado": "KIT PÃO DE MILHO SALGADO", "Kit Pão Folhado": "KIT PÃO FOLHADO", "Kit Pão Brioche": "KIT PÃO BRIOCHE", "Kit Pão Integral": "KIT PÃO INTEGRAL", "Kit Grande Premium 6/8": "KIT GRANDE PREMIUM 6/8", "Kit Pão 7 Grãos": "KIT PÃO 7 GRÃOS"};
-let PINS = { confeitaria:'1234', cozinha:'5678', embalagem:'9101', expedicao:'1314', admin:'2504', contagem:'0000', container:'0001', quadra:'2020', testes:'7070', simone:'5050', alteracoes:'4321', carregamento:'6060' }; // Será carregado do Firebase
-const CORES = { confeitaria:'', cozinha:'verde', embalagem:'', expedicao:'laranja', admin:'roxo', contagem:'roxo', container:'', quadra:'', testes:'', simone:'', alteracoes:'roxo', carregamento:'laranja' };
-const NOMES = { confeitaria:'Confeitaria 🥐', cozinha:'Cozinha 🍳', embalagem:'Embalagem 📦', expedicao:'Expedição 🚚', admin:'Administrativo 📊', contagem:'Contagem 📋', container:'Rafael 📦', quadra:'Quadra 🍞', testes:'Testes MP 🔬', simone:'Simone - Financeiro 💼', alteracoes:'Alterações de Receita ✏️', carregamento:'Carregamento 📦' };
-const DESTINOS = { confeitaria:'s-conf-home', cozinha:'s-coz-home', embalagem:'s-emb-sel-data', expedicao:'s-exp-sel-data', admin:'s-adm-hub', contagem:'s-contagem-home', container:'s-rafael-home', quadra:'s-quadra-home', testes:'s-testes-home', simone:'s-simone-home', alteracoes:'s-alt-home', carregamento:'s-carreg' };
+let PINS = { confeitaria:'1234', cozinha:'5678', embalagem:'9101', expedicao:'1314', admin:'2504', contagem:'0000', container:'0001', quadra:'2020', testes:'7070', simone:'5050', alteracoes:'4321', carregamento:'6060', comercial:'3030' }; // Será carregado do Firebase
+const CORES = { confeitaria:'', cozinha:'verde', embalagem:'', expedicao:'laranja', admin:'roxo', contagem:'roxo', container:'', quadra:'', testes:'', simone:'', alteracoes:'roxo', carregamento:'laranja', comercial:'verde' };
+const NOMES = { confeitaria:'Confeitaria 🥐', cozinha:'Cozinha 🍳', embalagem:'Embalagem 📦', expedicao:'Expedição 🚚', admin:'Administrativo 📊', contagem:'Contagem 📋', container:'Rafael 📦', quadra:'Quadra 🍞', testes:'Testes MP 🔬', simone:'Simone - Financeiro 💼', alteracoes:'Alterações de Receita ✏️', carregamento:'Carregamento 📦', comercial:'Comercial 🛒' };
+const DESTINOS = { confeitaria:'s-conf-home', cozinha:'s-coz-home', embalagem:'s-emb-sel-data', expedicao:'s-exp-sel-data', admin:'s-adm-hub', contagem:'s-contagem-home', container:'s-rafael-home', quadra:'s-quadra-home', testes:'s-testes-home', simone:'s-simone-home', alteracoes:'s-alt-home', carregamento:'s-carreg', comercial:'s-la-solicitar' };
 
 let pinAtual = '';
 let setorAtivo = '';
@@ -4497,6 +4560,10 @@ function goTo(id){
   if(id==='s-demandas') renderDemandas();
   if(id==='s-tv') iniciarTV(); else pararTV();
   if(id==='s-carreg') renderCarreg();
+  if(id==='s-la-solicitar') renderLaSolicitar();
+  if(id==='s-la-decisao') renderLaDecisao();
+  if(id==='s-la-dias') renderLaDias();
+  if(id==='s-la-ajustes') renderLaAjustes();
   if(id==='s-carreg-edit') renderCarregEdit();
   if(id==='s-carreg-conf') renderCarregConf();
   if(id==='s-carreg-conf') _carregStartCapture(); else _carregStopCapture();
@@ -13999,6 +14066,340 @@ function renderCtrlProd(){
   el.innerHTML=html;
 }
 window.renderCtrlProd=renderCtrlProd;
+
+/* ══════════════════════════════════════════════════════════════════
+   LIBERAÇÃO ANTECIPADA — Solicitações + Decisão + Ajustes em aberto
+   Bloco isolado. Não altera nada existente.
+   Coleções novas: diasLancados, solicitacoes, ajustesAbertos
+   ══════════════════════════════════════════════════════════════════ */
+
+let laDiasLancados = {};   // chave "DATA|tipo" -> doc
+let laSolicitacoes = [];   // solicitações do escritório
+let laAjustes = [];        // ajustes de entrada (Excel substituto)
+
+// ---- listeners (mesmo padrão dos outros onSnapshot do app) ----
+onSnapshot(collection(db,'diasLancados'), snap=>{
+  try{
+    laDiasLancados = {};
+    snap.docs.forEach(d=> laDiasLancados[d.id] = {firestoreId:d.id, ...d.data()});
+    const t=document.querySelector('.screen.active')?.id;
+    if(t==='s-la-dias') renderLaDias();
+    if(t==='s-la-decisao') renderLaDecisao();
+    _laBadge();
+  }catch(e){ console.error('diasLancados snap',e); }
+});
+onSnapshot(collection(db,'solicitacoes'), snap=>{
+  try{
+    laSolicitacoes = snap.docs.map(d=>({firestoreId:d.id,...d.data()}))
+      .sort((a,b)=>(b.timestamp||0)-(a.timestamp||0));
+    const t=document.querySelector('.screen.active')?.id;
+    if(t==='s-la-solicitar') renderLaSolicitar();
+    if(t==='s-la-decisao') renderLaDecisao();
+    _laBadge();
+  }catch(e){ console.error('solicitacoes snap',e); }
+});
+onSnapshot(collection(db,'ajustesAbertos'), snap=>{
+  try{
+    laAjustes = snap.docs.map(d=>({firestoreId:d.id,...d.data()}))
+      .sort((a,b)=>(b.timestamp||0)-(a.timestamp||0));
+    const t=document.querySelector('.screen.active')?.id;
+    if(t==='s-la-ajustes') renderLaAjustes();
+    if(t==='s-la-dias') renderLaDias();
+    _laBadge();
+  }catch(e){ console.error('ajustesAbertos snap',e); }
+});
+
+// ---- helpers ----
+function laTipo(r){ return (r.origem==='quadra') ? 'pao' : 'salgado'; }
+function laTipoLabel(t){ return t==='pao' ? '🍞 Pão' : '🥐 Salgado'; }
+function laDataKey(br){ const p=String(br||'').split('/'); return (p.length===3)? p[2]+'-'+p[1].padStart(2,'0')+'-'+p[0].padStart(2,'0') : '0000-00-00'; }
+function laDiaKey(data, tipo){ return String(data).replace(/\//g,'-')+'__'+tipo; }
+function laDiaLancado(data, tipo){ return !!laDiasLancados[laDiaKey(data,tipo)]; }
+
+// embalado = soma dos parciais; senão feito? qtdEmbalada : 0  (decisão do cliente)
+function laEmbalado(e){
+  e=e||{};
+  if(Array.isArray(e.parciais) && e.parciais.length)
+    return Math.max(0, e.parciais.reduce((s,p)=>s+(p.qtd||0),0));
+  return e.feito ? (e.qtdEmbalada||0) : 0;
+}
+
+// núcleo: calcula disponibilidade de um produto (por cod, fallback nome)
+function laCalcular(cod, nome){
+  const alvo=(registros||[]).filter(r=>{
+    if(cod && String(r.cod||'')!=='') return String(r.cod)===String(cod);
+    return _normNome(r.produto||'')===_normNome(nome||'');
+  });
+  let embAntecip=0, soProduzido=0, jaNoErp=0;
+  const porDia={};
+  alvo.forEach(r=>{
+    const tipo=laTipo(r), e=r.embalagem||{};
+    const embalada=laEmbalado(e);
+    // "produzido" confiável = qtd do registro (sempre em pacotes, igual aos parciais).
+    // NÃO usar embalagem.qtdProduzida: às vezes vem em unidades (qtd×qtdPct), o que inflava o "a embalar".
+    const produzida=(parseInt(r.qtd)||0) || (r.qtdPacotes||0) || (e.qtdProduzida||0);
+    const naoEmb=Math.max(0, produzida-embalada);
+    const k=r.data+'|'+tipo;
+    porDia[k]=porDia[k]||{data:r.data,tipo,emb:0,naoEmb:0,lancado:laDiaLancado(r.data,tipo)};
+    if(porDia[k].lancado){ jaNoErp+=embalada; }
+    else { embAntecip+=embalada; soProduzido+=naoEmb; porDia[k].emb+=embalada; porDia[k].naoEmb+=naoEmb; }
+  });
+  return { embAntecip, soProduzido, jaNoErp, porDia:Object.values(porDia) };
+}
+
+function _laBadge(){
+  const pend=laSolicitacoes.filter(s=>(s.status||'pendente')==='pendente').length;
+  document.querySelectorAll('.la-badge').forEach(b=>{ b.textContent=pend; b.style.display=pend>0?'inline-flex':'none'; });
+  const ab=laAjustes.filter(a=>(a.status||'aberto')==='aberto').length;
+  document.querySelectorAll('.la-badge-aj').forEach(b=>{ b.textContent=ab; b.style.display=ab>0?'inline-flex':'none'; });
+}
+
+/* ============ TELA 1: DIAS LANÇADOS (admin) ============ */
+async function laToggleDia(data, tipo){
+  const id=laDiaKey(data,tipo);
+  try{
+    if(laDiasLancados[id]){
+      // desmarcar: só se não houver ajuste aberto travando
+      const trava=laAjustes.filter(a=>(a.status||'aberto')==='aberto' && a.data===data && a.tipo===tipo);
+      if(trava.length){ if(!confirm('Há '+trava.length+' ajuste(s) em aberto deste dia. Desmarcar mesmo assim?')) return; }
+      await deleteDoc(doc(db,'diasLancados',id));
+    } else {
+      await setDoc(doc(db,'diasLancados',id), { data, tipo, lancadoEm:agora(), timestamp:Date.now() });
+      // ao marcar como lançado: avisa ajustes em aberto deste dia (fechar par = saída)
+      const abertos=laAjustes.filter(a=>(a.status||'aberto')==='aberto' && a.data===data && a.tipo===tipo);
+      if(abertos.length){
+        const linhas=abertos.map(a=>'• '+a.produto+' — '+a.qtd+' pct (cód '+(a.cod||'?')+')').join('\n');
+        alert('⚠️ ATENÇÃO — dia lançado!\n\nEste dia tem '+abertos.length+' ajuste(s) de ENTRADA em aberto que agora precisam de AJUSTE DE SAÍDA no ERP para não duplicar estoque:\n\n'+linhas+'\n\nVá em "Ajustes em aberto" para fechar cada um.');
+      }
+    }
+  }catch(e){ alert('Erro: '+e.message); }
+}
+window.laToggleDia=laToggleDia;
+
+function renderLaDias(){
+  const el=document.getElementById('la-dias-content'); if(!el) return;
+  const lista=(registros||[]).filter(r=>(parseInt(r.qtd)||0)>0 || (r.embalagem&&laEmbalado(r.embalagem)>0));
+  // agrupa dia|tipo
+  const grupos={};
+  lista.forEach(r=>{ const t=laTipo(r); const k=r.data+'|'+t; (grupos[k]=grupos[k]||{data:r.data,tipo:t,itens:0,pct:0})&&(grupos[k].itens++,grupos[k].pct+=parseInt(r.qtd)||0); });
+  const arr=Object.values(grupos).sort((a,b)=>{ const dk=laDataKey(b.data).localeCompare(laDataKey(a.data)); return dk!==0?dk:(a.tipo<b.tipo?-1:1); });
+  if(!arr.length){ el.innerHTML='<div class="empty" style="padding:24px;">Nenhuma produção registrada.</div>'; return; }
+  let html=laNavbar('s-la-dias')+'<div style="font-size:12px;color:var(--text-secondary);margin-bottom:12px;padding:10px 12px;background:rgba(37,99,235,.06);border-radius:10px;">Marque um dia quando você <strong>lançar a produção cheia dele no ERP</strong>. Antes disso, os produtos ficam disponíveis para liberação antecipada.</div>';
+  html+='<div style="display:flex;gap:6px;margin-bottom:12px;align-items:center;flex-wrap:wrap;"><input type="text" id="la-ate-data" placeholder="dd/mm/aaaa" value="06/07/2026" style="flex:1;min-width:120px;font-size:13px;padding:8px 10px;border-radius:8px;border:1px solid var(--border,#d1d5db);"><button onclick="laMarcarAte()" class="btn" style="background:#16a34a;color:#fff;border:none;font-size:13px;padding:8px 12px;border-radius:8px;cursor:pointer;">✓ Marcar tudo até esta data</button></div>';
+  let diaAtual='';
+  arr.forEach(g=>{
+    if(g.data!==diaAtual){ diaAtual=g.data; html+='<div style="font-size:15px;font-weight:800;margin:16px 0 6px;color:var(--text-primary);">📅 '+g.data+'</div>'; }
+    const on=laDiaLancado(g.data,g.tipo);
+    const ajAbertos=laAjustes.filter(a=>(a.status||'aberto')==='aberto'&&a.data===g.data&&a.tipo===g.tipo).length;
+    const cor=g.tipo==='pao'?'#d97706':'#7c3aed';
+    html+='<div onclick="laToggleDia(\''+escapeJsStr(g.data)+'\',\''+g.tipo+'\')" style="display:flex;align-items:center;gap:11px;padding:12px;border-radius:10px;margin-bottom:6px;cursor:pointer;background:'+(on?'rgba(22,163,74,.07)':'var(--bg-primary)')+';border:1px solid '+(on?'rgba(22,163,74,.3)':'var(--border)')+';border-left:5px solid '+(on?'#16a34a':cor)+';">'+
+      '<div style="width:30px;height:30px;border-radius:8px;flex-shrink:0;border:2px solid '+(on?'#16a34a':'#cbd5e1')+';background:'+(on?'#16a34a':'transparent')+';display:flex;align-items:center;justify-content:center;color:#fff;font-size:17px;font-weight:800;">'+(on?'✓':'')+'</div>'+
+      '<div style="flex:1;min-width:0;"><div style="font-size:15px;font-weight:700;color:'+cor+';">'+laTipoLabel(g.tipo)+'</div>'+
+      '<div style="font-size:11px;color:var(--text-secondary);">'+g.itens+' item(ns) · '+g.pct+' pct'+(on?' · ✅ lançado no ERP':' · ⏳ não lançado')+(ajAbertos>0?' · <span style="color:#dc2626;font-weight:700;">'+ajAbertos+' ajuste(s) a desfazer</span>':'')+'</div></div>'+
+      '</div>';
+  });
+  el.innerHTML=html;
+}
+window.renderLaDias=renderLaDias;
+
+// Marca em massa todos os dias de produção (pão e salgado) até a data informada (inclusive)
+async function laMarcarAte(){
+  const alvo=(document.getElementById('la-ate-data')||{}).value||'';
+  const alvoKey=laDataKey(alvo);
+  if(alvoKey==='0000-00-00'){ alert('Data inválida. Use o formato dd/mm/aaaa.'); return; }
+  // reúne todos os dia|tipo existentes nos registros com produção
+  const grupos={};
+  (registros||[]).forEach(r=>{
+    if(!((parseInt(r.qtd)||0)>0 || (r.embalagem&&laEmbalado(r.embalagem)>0))) return;
+    const t=laTipo(r); grupos[r.data+'__'+t]={data:r.data,tipo:t};
+  });
+  const paraMarcar=Object.values(grupos).filter(g=> laDataKey(g.data)<=alvoKey && !laDiaLancado(g.data,g.tipo));
+  if(!paraMarcar.length){ alert('Nada novo para marcar até '+alvo+'.'); return; }
+  if(!confirm('Marcar '+paraMarcar.length+' dia(s)/tipo como lançados no ERP, até '+alvo+'?')) return;
+  let ok=0;
+  for(const g of paraMarcar){
+    try{ await setDoc(doc(db,'diasLancados',laDiaKey(g.data,g.tipo)), {data:g.data,tipo:g.tipo,lancadoEm:agora(),timestamp:Date.now()}); ok++; }
+    catch(e){ console.error('marcar',g,e); }
+  }
+  alert('✓ '+ok+' dia(s) marcados como lançados até '+alvo+'.');
+}
+window.laMarcarAte=laMarcarAte;
+
+/* ============ TELA 2: SOLICITAR (escritório) ============ */
+function _laProdutosUnicos(){
+  const m={};
+  (registros||[]).forEach(r=>{
+    const nome=(r.produto||'').trim(); if(!nome) return;
+    const k=_normNome(nome);
+    if(!m[k]) m[k]={cod:r.cod||'',nome:nome};
+    else if(!m[k].cod && r.cod) m[k].cod=r.cod; // usa o código quando aparecer em algum registro
+  });
+  return Object.values(m).sort((a,b)=>String(a.nome).localeCompare(String(b.nome)));
+}
+function renderLaSolicitar(){
+  const el=document.getElementById('la-solicitar-content'); if(!el) return;
+  const prods=_laProdutosUnicos();
+  const datas=sortDatas([...new Set((registros||[]).map(r=>r.data))]);
+  let html=(window.setorAtual==='comercial'?'':laNavbar('s-la-solicitar'))+'<div class="card" style="margin-bottom:12px;">'+
+    '<div style="font-size:13px;font-weight:700;margin-bottom:10px;">📝 Nova solicitação</div>'+
+    '<label style="font-size:12px;color:var(--text-secondary);">Produto</label>'+
+    '<select id="la-sol-prod" style="width:100%;font-size:14px;padding:10px;border-radius:8px;border:1px solid var(--border-md,#d1d5db);margin:4px 0 10px;"><option value="">— selecione —</option>'+prods.map(p=>'<option value="'+escapeJsStr(p.cod)+'|'+escapeJsStr(p.nome)+'">'+(p.cod?'['+p.cod+'] ':'')+p.nome+'</option>').join('')+'</select>'+
+    '<label style="font-size:12px;color:var(--text-secondary);">Quantidade (pct)</label>'+
+    '<input type="number" id="la-sol-qtd" min="1" placeholder="ex: 30" style="width:100%;font-size:14px;padding:10px;border-radius:8px;border:1px solid var(--border-md,#d1d5db);margin:4px 0 10px;box-sizing:border-box;">'+
+    '<button onclick="laEnviarSolicitacao()" class="btn btn-primary" style="width:100%;">Enviar solicitação →</button>'+
+    '</div>';
+  // minhas solicitações recentes
+  const minhas=laSolicitacoes.slice(0,10);
+  if(minhas.length){
+    html+='<div style="font-size:13px;font-weight:700;margin:14px 0 8px;">Últimas solicitações</div>';
+    html+=minhas.map(s=>{
+      const st=_laStatusInfo(s.status||'pendente');
+      return '<div class="card" style="margin-bottom:6px;border-left:3px solid '+st.cor+';"><div style="display:flex;justify-content:space-between;"><div><div style="font-size:14px;font-weight:700;">'+(s.produto||'')+'</div><div style="font-size:11px;color:var(--text-secondary);">'+(s.qtd||0)+' pct'+(s.dia?' · dia '+s.dia:'')+' · '+(s.autor||'')+'</div>'+(s.motivoNega?'<div style="font-size:11px;color:#dc2626;margin-top:2px;">✗ '+s.motivoNega+'</div>':'')+'</div><span style="font-size:11px;font-weight:700;color:'+st.cor+';background:'+st.bg+';padding:3px 9px;border-radius:99px;height:fit-content;">'+st.label+'</span></div></div>';
+    }).join('');
+  }
+  el.innerHTML=html;
+}
+window.renderLaSolicitar=renderLaSolicitar;
+
+function _laStatusInfo(s){
+  if(s==='aprovada') return {label:'Aprovada',cor:'#16a34a',bg:'rgba(22,163,74,.10)'};
+  if(s==='negada') return {label:'Negada',cor:'#dc2626',bg:'rgba(220,38,38,.10)'};
+  return {label:'Pendente',cor:'#d97706',bg:'rgba(217,119,6,.12)'};
+}
+
+async function laEnviarSolicitacao(){
+  const dia='';
+  const prodv=document.getElementById('la-sol-prod').value;
+  const qtd=parseInt(document.getElementById('la-sol-qtd').value)||0;
+  if(!prodv){ alert('Selecione o produto.'); return; }
+  if(qtd<=0){ alert('Informe a quantidade.'); return; }
+  const [cod,nome]=prodv.split('|');
+  try{
+    await addDoc(collection(db,'solicitacoes'),{
+      cod:cod||'', produto:nome||'', qtd, dia:dia||'',
+      autor:_demAutor(), status:'pendente',
+      data:hoje(), hora:agora(), timestamp:Date.now()
+    });
+    document.getElementById('la-sol-qtd').value='';
+    alert('✓ Solicitação enviada! O admin vai avaliar.');
+  }catch(e){ alert('Erro: '+e.message); }
+}
+window.laEnviarSolicitacao=laEnviarSolicitacao;
+
+/* ============ TELA 3: DECISÃO (admin) ============ */
+function laNavbar(ativa){
+  const abas=[['s-la-decisao','renderLaDecisao','⚖️ Decidir'],['s-la-dias','renderLaDias','✅ Dias ERP'],['s-la-ajustes','renderLaAjustes','↩ Ajustes'],['s-la-solicitar','renderLaSolicitar','📝 Solicitar']];
+  return '<div style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap;">'+abas.map(a=>{
+    const on=a[0]===ativa;
+    return '<button onclick="goTo(\''+a[0]+'\');'+a[1]+'()" style="flex:1;min-width:80px;font-size:12px;font-weight:700;padding:9px 6px;border-radius:8px;cursor:pointer;border:1px solid '+(on?'#dc2626':'var(--border,#d1d5db)')+';background:'+(on?'#fee2e2':'#fff')+';color:'+(on?'#dc2626':'var(--text-secondary,#6b7280)')+';">'+a[2]+'</button>';
+  }).join('')+'</div>';
+}
+function renderLaDecisao(){
+  const el=document.getElementById('la-decisao-content'); if(!el) return;
+  const pend=laSolicitacoes.filter(s=>(s.status||'pendente')==='pendente');
+  let html=laNavbar('s-la-decisao');
+  if(!pend.length){ el.innerHTML=html+'<div class="empty" style="padding:24px;">✅ Nenhuma solicitação pendente.</div>'; return; }
+  else {
+    html+='<div style="font-size:12px;color:var(--text-secondary);margin-bottom:12px;">'+pend.length+' solicitação(ões) aguardando sua decisão.</div>';
+    pend.forEach(s=>{
+      const c=laCalcular(s.cod, s.produto);
+      const pedido=s.qtd||0;
+      const cabe = pedido<=c.embAntecip;
+      const falta = Math.max(0, pedido-c.embAntecip);
+      const cor = cabe?'#16a34a':(c.embAntecip>0?'#d97706':'#dc2626');
+      const bg  = cabe?'rgba(22,163,74,.06)':(c.embAntecip>0?'#fffbeb':'#fef2f2');
+      html+='<div class="card" style="margin-bottom:12px;border-left:5px solid '+cor+';background:'+bg+';">';
+      html+='<div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:8px;"><div><div style="font-size:16px;font-weight:800;">'+(s.produto||'')+'</div><div style="font-size:11px;color:var(--text-secondary);">'+(s.cod?'cód '+s.cod+' · ':'')+'pedido por '+(s.autor||'')+' · '+(s.hora||'')+(s.dia?' · dia '+s.dia:'')+'</div></div><div style="text-align:right;"><div style="font-size:22px;font-weight:900;color:'+cor+';">'+pedido+'</div><div style="font-size:10px;color:var(--text-secondary);">pct pedidos</div></div></div>';
+      // barras de disponibilidade
+      html+='<div style="display:flex;gap:6px;margin:8px 0;">'+
+        '<div style="flex:1;background:rgba(22,163,74,.10);border-radius:8px;padding:8px;text-align:center;"><div style="font-size:18px;font-weight:900;color:#16a34a;">'+c.embAntecip+'</div><div style="font-size:10px;color:var(--text-secondary);">embalado (liberável)</div></div>'+
+        '<div style="flex:1;background:rgba(217,119,6,.10);border-radius:8px;padding:8px;text-align:center;"><div style="font-size:18px;font-weight:900;color:#d97706;">'+c.soProduzido+'</div><div style="font-size:10px;color:var(--text-secondary);">produzido, falta embalar</div></div>'+
+        '<div style="flex:1;background:rgba(107,114,128,.10);border-radius:8px;padding:8px;text-align:center;"><div style="font-size:18px;font-weight:900;color:#6b7280;">'+c.jaNoErp+'</div><div style="font-size:10px;color:var(--text-secondary);">já no ERP</div></div>'+
+        '</div>';
+      // veredito
+      if(cabe) html+='<div style="font-size:13px;font-weight:700;color:#16a34a;margin:6px 0;">✅ Pode liberar — cabe nos '+c.embAntecip+' pct já embalados.</div>';
+      else if(c.embAntecip>0) html+='<div style="font-size:13px;font-weight:700;color:#d97706;margin:6px 0;">⚠️ Só '+c.embAntecip+' embalados. Faltam '+falta+' pct'+(c.soProduzido>0?' — há '+c.soProduzido+' produzidos que PRECISAM SER EMBALADOS antes.':'.')+'</div>';
+      else html+='<div style="font-size:13px;font-weight:700;color:#dc2626;margin:6px 0;">🚫 Nada embalado disponível'+(c.soProduzido>0?' — '+c.soProduzido+' pct produzidos PRECISAM SER EMBALADOS.':'.')+'</div>';
+      // detalhe por dia não lançado
+      const dets=c.porDia.filter(d=>!d.lancado && (d.emb>0||d.naoEmb>0));
+      if(dets.length){ html+='<div style="font-size:11px;color:var(--text-secondary);margin:4px 0;border-top:1px dashed var(--border);padding-top:6px;">'+dets.map(d=>laTipoLabel(d.tipo)+' '+d.data+': '+d.emb+' emb'+(d.naoEmb>0?' · '+d.naoEmb+' a embalar':'')).join('<br>')+'</div>'; }
+      // botões
+      html+='<div style="display:flex;gap:8px;margin-top:10px;">'+
+        '<button onclick="laAprovar(\''+s.firestoreId+'\')" class="btn btn-primary" style="flex:1;background:#16a34a;">✓ Aprovar</button>'+
+        '<button onclick="laNegar(\''+s.firestoreId+'\')" class="btn" style="flex:1;background:#fff;border:1px solid #dc2626;color:#dc2626;">✗ Negar</button>'+
+        '</div>';
+      html+='</div>';
+    });
+  }
+  el.innerHTML=html;
+}
+window.renderLaDecisao=renderLaDecisao;
+
+async function laAprovar(id){
+  const s=laSolicitacoes.find(x=>x.firestoreId===id); if(!s) return;
+  const c=laCalcular(s.cod, s.produto);
+  // dia|tipo de origem do ajuste: usa o dia informado, ou o dia não-lançado com mais embalado
+  let alvoDia=s.dia, alvoTipo='';
+  if(alvoDia){ const d=c.porDia.find(x=>x.data===alvoDia && !x.lancado); alvoTipo=d?d.tipo:''; }
+  if(!alvoTipo){ const d=c.porDia.filter(x=>!x.lancado && x.emb>0).sort((a,b)=>b.emb-a.emb)[0]; if(d){alvoDia=d.data;alvoTipo=d.tipo;} }
+  const aviso = s.qtd>c.embAntecip ? '\n\n⚠️ ATENÇÃO: pedido ('+s.qtd+') é maior que o embalado disponível ('+c.embAntecip+').' : '';
+  const instr='AJUSTE DE ENTRADA no ERP:\n• Código: '+(s.cod||'?')+'\n• Produto: '+s.produto+'\n• Quantidade: '+s.qtd+' pct\n• Origem: '+(alvoDia||'?')+' '+laTipoLabel(alvoTipo||'salgado');
+  if(!confirm('Aprovar e registrar ajuste em aberto?'+aviso+'\n\n'+instr+'\n\n(Você lançará no ERP manualmente por enquanto.)')) return;
+  try{
+    await updateDoc(doc(db,'solicitacoes',id),{ status:'aprovada', decididoEm:agora(), decididoPor:_demAutor() });
+    await addDoc(collection(db,'ajustesAbertos'),{
+      cod:s.cod||'', produto:s.produto||'', qtd:s.qtd||0,
+      data:alvoDia||'', tipo:alvoTipo||'salgado',
+      solicitacaoId:id, solicitante:s.autor||'',
+      status:'aberto', criadoEm:agora(), criadoPor:_demAutor(), timestamp:Date.now()
+    });
+    alert('✓ Aprovado e registrado em "Ajustes em aberto".\n\nInstrução para o ERP:\n'+instr);
+  }catch(e){ alert('Erro: '+e.message); }
+}
+window.laAprovar=laAprovar;
+
+async function laNegar(id){
+  const motivo=(prompt('Motivo da negativa (aparece para o escritório):')||'').trim();
+  try{ await updateDoc(doc(db,'solicitacoes',id),{ status:'negada', motivoNega:motivo, decididoEm:agora(), decididoPor:_demAutor() }); }
+  catch(e){ alert('Erro: '+e.message); }
+}
+window.laNegar=laNegar;
+
+/* ============ TELA 4: AJUSTES EM ABERTO (Excel substituto) ============ */
+function renderLaAjustes(){
+  const el=document.getElementById('la-ajustes-content'); if(!el) return;
+  const abertos=laAjustes.filter(a=>(a.status||'aberto')==='aberto');
+  const fechados=laAjustes.filter(a=>a.status==='fechado').slice(0,20);
+  let html=laNavbar('s-la-ajustes')+'<div class="card" style="margin-bottom:12px;border-left:4px solid '+(abertos.length?'#dc2626':'#16a34a')+';background:'+(abertos.length?'#fef2f2':'rgba(22,163,74,.06)')+';"><div style="font-size:16px;font-weight:800;color:'+(abertos.length?'#dc2626':'#16a34a')+';">'+(abertos.length?'⚠️ '+abertos.length+' ajuste(s) em aberto':'✅ Nenhum ajuste em aberto')+'</div><div style="font-size:11px;color:var(--text-secondary);margin-top:2px;">Cada entrada precisa de uma SAÍDA quando o dia for lançado no ERP.</div></div>';
+  if(abertos.length){
+    html+=abertos.map(a=>{
+      const diaJaLancado=laDiaLancado(a.data,a.tipo);
+      return '<div class="card" style="margin-bottom:8px;border-left:4px solid '+(diaJaLancado?'#dc2626':'#d97706')+';">'+
+        '<div style="display:flex;justify-content:space-between;align-items:start;"><div><div style="font-size:15px;font-weight:800;">'+a.produto+' <span style="font-size:12px;color:var(--text-secondary);">'+(a.cod?'#'+a.cod:'')+'</span></div>'+
+        '<div style="font-size:11px;color:var(--text-secondary);">ENTRADA de '+a.qtd+' pct · '+laTipoLabel(a.tipo)+' '+(a.data||'?')+' · por '+(a.criadoPor||'')+'</div>'+
+        (diaJaLancado?'<div style="font-size:12px;font-weight:700;color:#dc2626;margin-top:4px;">🔴 Dia já lançado no ERP — faça a SAÍDA agora!</div>':'<div style="font-size:11px;color:var(--text-secondary);margin-top:4px;">Aguardando o dia ser lançado.</div>')+
+        '</div><div style="font-size:20px;font-weight:900;color:#d97706;">'+a.qtd+'</div></div>'+
+        '<button onclick="laFecharAjuste(\''+a.firestoreId+'\')" class="btn" style="width:100%;margin-top:8px;background:'+(diaJaLancado?'#dc2626':'#fff')+';color:'+(diaJaLancado?'#fff':'#dc2626')+';border:1px solid #dc2626;">↩ Fiz o ajuste de SAÍDA (fechar par)</button>'+
+        '</div>';
+    }).join('');
+  }
+  if(fechados.length){
+    html+='<div style="font-size:13px;font-weight:700;margin:16px 0 8px;color:var(--text-secondary);">Histórico (fechados)</div>';
+    html+=fechados.map(a=>'<div class="card" style="margin-bottom:6px;opacity:.7;"><div style="display:flex;justify-content:space-between;"><div style="font-size:13px;">'+a.produto+' · '+a.qtd+' pct</div><div style="font-size:11px;color:#16a34a;font-weight:700;">✓ fechado '+(a.fechadoEm||'')+'</div></div></div>').join('');
+  }
+  el.innerHTML=html;
+}
+window.renderLaAjustes=renderLaAjustes;
+
+async function laFecharAjuste(id){
+  const a=laAjustes.find(x=>x.firestoreId===id); if(!a) return;
+  const instr='AJUSTE DE SAÍDA no ERP:\n• Código: '+(a.cod||'?')+'\n• Produto: '+a.produto+'\n• Quantidade: '+a.qtd+' pct\n\n(Desfaz a entrada antecipada. Confirme só depois de lançar a saída no ERP.)';
+  if(!confirm(instr)) return;
+  try{ await updateDoc(doc(db,'ajustesAbertos',id),{ status:'fechado', fechadoEm:agora(), fechadoPor:_demAutor() }); }
+  catch(e){ alert('Erro: '+e.message); }
+}
+window.laFecharAjuste=laFecharAjuste;
+
 
 // ===================== AGENDA DE CONTAGENS (aviso 3 dias antes) =====================
 let agendaContagens=[];
