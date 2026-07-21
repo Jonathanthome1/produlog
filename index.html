@@ -14323,6 +14323,12 @@ function renderLaDecisao(){
       // detalhe por dia não lançado
       const dets=c.porDia.filter(d=>!d.lancado && (d.emb>0||d.naoEmb>0));
       if(dets.length){ html+='<div style="font-size:11px;color:var(--text-secondary);margin:4px 0;border-top:1px dashed var(--border);padding-top:6px;">'+dets.map(d=>laTipoLabel(d.tipo)+' '+d.data+': '+d.emb+' emb'+(d.naoEmb>0?' · '+d.naoEmb+' a embalar':'')).join('<br>')+'</div>'; }
+      // campo de quantidade a liberar (admin digita manualmente)
+      html+='<div style="margin-top:10px;padding:10px;background:rgba(37,99,235,.05);border-radius:8px;">'+
+        '<label style="font-size:12px;font-weight:700;color:var(--text-primary);">Quantidade a liberar (pct)</label>'+
+        '<input type="number" id="la-lib-'+s.firestoreId+'" min="1" placeholder="digite quanto liberar" data-emb="'+c.embAntecip+'" style="width:100%;font-size:15px;font-weight:700;padding:11px;border-radius:8px;border:1px solid var(--border-md,#d1d5db);margin-top:4px;box-sizing:border-box;">'+
+        '<div style="font-size:11px;color:var(--text-secondary);margin-top:4px;">Solicitado: '+pedido+' pct · Embalado disponível: '+c.embAntecip+' pct</div>'+
+        '</div>';
       // botões
       html+='<div style="display:flex;gap:8px;margin-top:10px;">'+
         '<button onclick="laAprovar(\''+s.firestoreId+'\')" class="btn btn-primary" style="flex:1;background:#16a34a;">✓ Aprovar</button>'+
@@ -14338,17 +14344,32 @@ window.renderLaDecisao=renderLaDecisao;
 async function laAprovar(id){
   const s=laSolicitacoes.find(x=>x.firestoreId===id); if(!s) return;
   const c=laCalcular(s.cod, s.produto);
-  // dia|tipo de origem do ajuste: usa o dia informado, ou o dia não-lançado com mais embalado
+  // lê a quantidade que o admin digitou manualmente
+  const inp=document.getElementById('la-lib-'+id);
+  const qtdLiberar=parseInt(inp && inp.value)||0;
+  if(qtdLiberar<=0){ alert('⚠️ Digite a quantidade a liberar antes de aprovar.'); if(inp) inp.focus(); return; }
+  // dia|tipo de origem do ajuste
   let alvoDia=s.dia, alvoTipo='';
   if(alvoDia){ const d=c.porDia.find(x=>x.data===alvoDia && !x.lancado); alvoTipo=d?d.tipo:''; }
   if(!alvoTipo){ const d=c.porDia.filter(x=>!x.lancado && x.emb>0).sort((a,b)=>b.emb-a.emb)[0]; if(d){alvoDia=d.data;alvoTipo=d.tipo;} }
-  const aviso = s.qtd>c.embAntecip ? '\n\n⚠️ ATENÇÃO: pedido ('+s.qtd+') é maior que o embalado disponível ('+c.embAntecip+').' : '';
-  const instr='AJUSTE DE ENTRADA no ERP:\n• Código: '+(s.cod||'?')+'\n• Produto: '+s.produto+'\n• Quantidade: '+s.qtd+' pct\n• Origem: '+(alvoDia||'?')+' '+laTipoLabel(alvoTipo||'salgado');
-  if(!confirm('Aprovar e registrar ajuste em aberto?'+aviso+'\n\n'+instr+'\n\n(Você lançará no ERP manualmente por enquanto.)')) return;
+  // AVISO GRANDE quando libera mais que o embalado disponível
+  if(qtdLiberar > c.embAntecip){
+    const excedente = qtdLiberar - c.embAntecip;
+    const msg = '🚨🚨🚨 ATENÇÃO — LIBERAÇÃO ACIMA DO EMBALADO 🚨🚨🚨\n\n'+
+      'Você está liberando '+qtdLiberar+' pct, mas só há '+c.embAntecip+' pct EMBALADOS disponíveis.\n\n'+
+      'Isso são '+excedente+' pct A MAIS do que foi embalado.\n\n'+
+      'Produto: '+s.produto+'\n\n'+
+      '⚠️ Só confirme se você tem CERTEZA de que essa quantidade extra será embalada.\n\n'+
+      'Deseja realmente liberar '+qtdLiberar+' pct mesmo assim?';
+    if(!confirm(msg)) return;
+  }
+  const instr='AJUSTE DE ENTRADA no ERP:\n• Código: '+(s.cod||'?')+'\n• Produto: '+s.produto+'\n• Quantidade: '+qtdLiberar+' pct\n• Origem: '+(alvoDia||'?')+' '+laTipoLabel(alvoTipo||'salgado');
+  if(!confirm('Aprovar e registrar ajuste em aberto?\n\n'+instr+'\n\n(Você lançará no ERP manualmente por enquanto.)')) return;
   try{
-    await updateDoc(doc(db,'solicitacoes',id),{ status:'aprovada', decididoEm:agora(), decididoPor:_demAutor() });
+    await updateDoc(doc(db,'solicitacoes',id),{ status:'aprovada', qtdLiberada:qtdLiberar, decididoEm:agora(), decididoPor:_demAutor() });
     await addDoc(collection(db,'ajustesAbertos'),{
-      cod:s.cod||'', produto:s.produto||'', qtd:s.qtd||0,
+      cod:s.cod||'', produto:s.produto||'', qtd:qtdLiberar,
+      qtdSolicitada:s.qtd||0, acimaEmbalado:(qtdLiberar>c.embAntecip),
       data:alvoDia||'', tipo:alvoTipo||'salgado',
       solicitacaoId:id, solicitante:s.autor||'',
       status:'aberto', criadoEm:agora(), criadoPor:_demAutor(), timestamp:Date.now()
@@ -14377,6 +14398,8 @@ function renderLaAjustes(){
       return '<div class="card" style="margin-bottom:8px;border-left:4px solid '+(diaJaLancado?'#dc2626':'#d97706')+';">'+
         '<div style="display:flex;justify-content:space-between;align-items:start;"><div><div style="font-size:15px;font-weight:800;">'+a.produto+' <span style="font-size:12px;color:var(--text-secondary);">'+(a.cod?'#'+a.cod:'')+'</span></div>'+
         '<div style="font-size:11px;color:var(--text-secondary);">ENTRADA de '+a.qtd+' pct · '+laTipoLabel(a.tipo)+' '+(a.data||'?')+' · por '+(a.criadoPor||'')+'</div>'+
+        (a.qtdSolicitada&&a.qtdSolicitada!==a.qtd?'<div style="font-size:11px;color:var(--text-secondary);">(solicitado: '+a.qtdSolicitada+' pct)</div>':'')+
+        (a.acimaEmbalado?'<div style="font-size:11px;font-weight:700;color:#d97706;margin-top:2px;">⚠️ liberado acima do embalado</div>':'')+
         (diaJaLancado?'<div style="font-size:12px;font-weight:700;color:#dc2626;margin-top:4px;">🔴 Dia já lançado no ERP — faça a SAÍDA agora!</div>':'<div style="font-size:11px;color:var(--text-secondary);margin-top:4px;">Aguardando o dia ser lançado.</div>')+
         '</div><div style="font-size:20px;font-weight:900;color:#d97706;">'+a.qtd+'</div></div>'+
         '<button onclick="laFecharAjuste(\''+a.firestoreId+'\')" class="btn" style="width:100%;margin-top:8px;background:'+(diaJaLancado?'#dc2626':'#fff')+';color:'+(diaJaLancado?'#fff':'#dc2626')+';border:1px solid #dc2626;">↩ Fiz o ajuste de SAÍDA (fechar par)</button>'+
