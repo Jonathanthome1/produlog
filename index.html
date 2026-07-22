@@ -2844,6 +2844,15 @@
         <span class="mc-sector-arrow">›</span>
       </button>
 
+      <button class="mc-sector-card" style="border-left:3px solid var(--mc-azul,#2563eb);margin-bottom:10px;" onclick="goTo('s-cpm');renderCpm()">
+        <div class="mc-sector-icon" style="background:#dbeafe;">🏭</div>
+        <div class="mc-sector-info">
+          <div class="mc-sector-title">Controle de Produção</div>
+          <div class="mc-sector-desc">Lançamento manual mensal · exportar Excel</div>
+        </div>
+        <span class="mc-sector-arrow">›</span>
+      </button>
+
       <button class="mc-sector-card" style="border-left:3px solid var(--mc-vermelho);margin-bottom:10px;" onclick="goTo('s-la-decisao');renderLaDecisao()">
         <div class="mc-sector-icon" style="background:#fee2e2;">⚖️</div>
         <div class="mc-sector-info">
@@ -3797,6 +3806,16 @@
   <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;" id="la-ajustes-content"></div>
 </div>
 
+  <div class="screen" id="s-cpm">
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="goTo('s-adm-hub')">‹</button>
+      <div class="mc-brand"><div class="mc-brand-logo">MC</div><div class="mc-brand-text"><div class="mc-brand-name">Monte Castelo</div><div class="mc-brand-sub">Admin</div></div></div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info"><div class="mc-page-title">🏭 Controle de Produção</div><div class="mc-page-sub">Lançamento mensal manual</div></div>
+    </div>
+    <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;" id="cpm-content"></div>
+  </div>
+
   <div class="screen" id="s-ctrl-prod">
     <div class="mc-header">
       <button class="mc-header-back" onclick="goTo('s-adm-hub')">‹</button>
@@ -4564,6 +4583,7 @@ function goTo(id){
   if(id==='s-la-decisao') renderLaDecisao();
   if(id==='s-la-dias') renderLaDias();
   if(id==='s-la-ajustes') renderLaAjustes();
+  if(id==='s-cpm') renderCpm();
   if(id==='s-carreg-edit') renderCarregEdit();
   if(id==='s-carreg-conf') renderCarregConf();
   if(id==='s-carreg-conf') _carregStartCapture(); else _carregStopCapture();
@@ -14374,7 +14394,7 @@ async function laAprovar(id){
       solicitacaoId:id, solicitante:s.autor||'',
       status:'aberto', criadoEm:agora(), criadoPor:_demAutor(), timestamp:Date.now()
     });
-    alert('✓ Aprovado e registrado em "Ajustes em aberto".\n\nInstrução para o ERP:\n'+instr);
+    alert('✓ Aprovado e registrado em "Ajustes em aberto".\n\nVá em "↩ Ajustes" e use o botão "📋 Instrução ENTRADA" para copiar o passo a passo pronto e colar na extensão do Claude no ELIGO.');
   }catch(e){ alert('Erro: '+e.message); }
 }
 window.laAprovar=laAprovar;
@@ -14402,7 +14422,11 @@ function renderLaAjustes(){
         (a.acimaEmbalado?'<div style="font-size:11px;font-weight:700;color:#d97706;margin-top:2px;">⚠️ liberado acima do embalado</div>':'')+
         (diaJaLancado?'<div style="font-size:12px;font-weight:700;color:#dc2626;margin-top:4px;">🔴 Dia já lançado no ERP — faça a SAÍDA agora!</div>':'<div style="font-size:11px;color:var(--text-secondary);margin-top:4px;">Aguardando o dia ser lançado.</div>')+
         '</div><div style="font-size:20px;font-weight:900;color:#d97706;">'+a.qtd+'</div></div>'+
-        '<button onclick="laFecharAjuste(\''+a.firestoreId+'\')" class="btn" style="width:100%;margin-top:8px;background:'+(diaJaLancado?'#dc2626':'#fff')+';color:'+(diaJaLancado?'#fff':'#dc2626')+';border:1px solid #dc2626;">↩ Fiz o ajuste de SAÍDA (fechar par)</button>'+
+        '<div style="display:flex;gap:6px;margin-top:8px;">'+
+        '<button onclick="laCopiarInstrucao(\'entrada\',\''+escapeJsStr(a.cod||'')+'\',\''+escapeJsStr(a.produto||'')+'\','+(a.qtd||0)+')" class="btn" style="flex:1;background:#2563eb;color:#fff;border:none;font-size:12px;">📋 Instrução ENTRADA</button>'+
+        (diaJaLancado?'<button onclick="laCopiarInstrucao(\'saida\',\''+escapeJsStr(a.cod||'')+'\',\''+escapeJsStr(a.produto||'')+'\','+(a.qtd||0)+')" class="btn" style="flex:1;background:#7c3aed;color:#fff;border:none;font-size:12px;">📋 Instrução SAÍDA</button>':'')+
+        '</div>'+
+        '<button onclick="laFecharAjuste(\''+a.firestoreId+'\')" class="btn" style="width:100%;margin-top:6px;background:'+(diaJaLancado?'#dc2626':'#fff')+';color:'+(diaJaLancado?'#fff':'#dc2626')+';border:1px solid #dc2626;">↩ Fiz o ajuste de SAÍDA (fechar par)</button>'+
         '</div>';
     }).join('');
   }
@@ -14422,6 +14446,256 @@ async function laFecharAjuste(id){
   catch(e){ alert('Erro: '+e.message); }
 }
 window.laFecharAjuste=laFecharAjuste;
+
+/* ===== Gerador de instrução para a extensão do Claude no Chrome (ELIGO) ===== */
+function laDataHoje(){ // dd/mm/aaaa de hoje
+  const d=new Date();
+  return String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')+'/'+d.getFullYear();
+}
+function laInstrucaoEligo(tipoMov, cod, produto, qtd){
+  const mov = tipoMov==='entrada'
+    ? 'AJUSTE AUTOMATICO DE ESTOQUE ( ENTRADA ) - ESTOQUE PRODUTOS - ENTRADA'
+    : 'AJUSTE AUTOMATICO DE ESTOQUE ( SAÍDA ) - ESTOQUE PRODUTOS - SAIDA';
+  return [
+    'No sistema ELIGO, faça um lançamento de estoque avulso seguindo exatamente estes passos:',
+    '1. Vá em Estoque > Lançamentos avulsos e clique em Novo.',
+    '2. Tipo de estoque: selecione "ESTOQUE PRODUTOS".',
+    '3. Tipo de movimento: selecione "'+mov+'".',
+    '4. Data do movimento: '+laDataHoje()+'.',
+    '5. Produto: digite o código '+(cod||'?')+' ('+produto+') e selecione na lista.',
+    '6. Quantidade: '+qtd+' (em PACOTE).',
+    '7. Valor unitário: 3,00.',
+    '8. Projeto: deixe em branco.',
+    '9. Observações: "AJUSTE REFAZIMENTO PARCIAL APP".',
+    '10. Confira todos os campos e, se estiver tudo certo, clique em Salvar (F3). Antes de salvar, me mostre o que preencheu para eu confirmar.'
+  ].join('\n');
+}
+async function laCopiarInstrucao(tipoMov, cod, produto, qtd){
+  const txt=laInstrucaoEligo(tipoMov, cod, produto||'', qtd||0);
+  try{
+    await navigator.clipboard.writeText(txt);
+    alert('📋 Instrução copiada!\n\nAgora abra o ELIGO no Chrome, acione a extensão do Claude e cole (Ctrl+V) a instrução.\n\n— — —\n'+txt);
+  }catch(e){
+    // fallback: mostra o texto pra copiar manualmente
+    prompt('Copie a instrução abaixo (Ctrl+C) e cole na extensão do Claude:', txt);
+  }
+}
+window.laCopiarInstrucao=laCopiarInstrucao;
+
+/* ══════════════════════════════════════════════════════════════════
+   CONTROLE DE PRODUÇÃO (manual) — lançamento mensal + export Excel
+   Independente. Só reaproveita produtosConfFirebase (código→nome).
+   Coleção nova: controleProducaoManual (1 doc por mês: "2026-06")
+   ══════════════════════════════════════════════════════════════════ */
+let cpmDados = {};       // { "2026-06": { "01": [{cod,nome,qtd}], "02":[...] }, ... }
+let cpmMesSel = '';      // "2026-06"
+let cpmDiaSel = '';      // "01"
+
+const CPM_MESES = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+
+onSnapshot(collection(db,'controleProducaoManual'), snap=>{
+  try{
+    cpmDados = {};
+    snap.docs.forEach(d=> cpmDados[d.id] = d.data().dias || {});
+    const t=document.querySelector('.screen.active')?.id;
+    if(t==='s-cpm') renderCpm();
+  }catch(e){ console.error('controleProducaoManual snap',e); }
+});
+
+function cpmCatalogo(){
+  // une as duas bases exatamente como o resto do app (PRODUTOS=confeitaria + QUADRA_PRODUTOS=quadra)
+  const cat={};
+  (typeof PRODUTOS!=='undefined'?PRODUTOS:[]).forEach(p=>{ if(p&&p.cod!=null){ const k=String(p.cod).trim(); if(k&&!cat[k])cat[k]=p.nome||''; } });
+  (typeof QUADRA_PRODUTOS!=='undefined'?QUADRA_PRODUTOS:[]).forEach(p=>{ if(p&&p.cod!=null){ const k=String(p.cod).trim(); if(k&&!cat[k])cat[k]=p.nome||''; } });
+  (typeof produtosConfFirebase!=='undefined'?produtosConfFirebase:[]).forEach(p=>{ if(p&&p.cod!=null){ const k=String(p.cod).trim(); if(k&&!cat[k])cat[k]=p.nome||''; } });
+  return cat;
+}
+function cpmProdNome(cod){
+  const c=String(cod||'').trim();
+  return cpmCatalogo()[c] || '';
+}
+
+async function cpmSalvarMes(){
+  const id=cpmMesSel; if(!id) return;
+  try{ await setDoc(doc(db,'controleProducaoManual',id), { mes:id, dias:cpmDados[id]||{}, atualizadoEm:agora(), timestamp:Date.now() }); }
+  catch(e){ alert('Erro ao salvar: '+e.message); }
+}
+
+/* ---------- render principal (3 estados: sem mês, mês sem dia, dia aberto) ---------- */
+function renderCpm(){
+  const el=document.getElementById('cpm-content'); if(!el) return;
+  if(!cpmMesSel){ el.innerHTML=cpmRenderSelMes(); return; }
+  if(!cpmDiaSel){ el.innerHTML=cpmRenderMes(); return; }
+  el.innerHTML=cpmRenderDia();
+}
+window.renderCpm=renderCpm;
+
+/* ---------- estado 1: seleção de mês ---------- */
+function cpmRenderSelMes(){
+  const anoAtual=new Date().getFullYear();
+  const anos=[anoAtual, anoAtual-1];
+  let h='<div style="font-size:13px;color:var(--text-secondary);margin-bottom:16px;">Selecione o mês para lançar a produção:</div>';
+  anos.forEach(ano=>{
+    h+='<div style="font-size:14px;font-weight:700;margin:14px 0 8px;color:var(--text-secondary);">'+ano+'</div><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;">';
+    CPM_MESES.forEach((nome,i)=>{
+      const id=ano+'-'+String(i+1).padStart(2,'0');
+      const temDados=cpmDados[id] && Object.keys(cpmDados[id]).length;
+      const totalLanc=temDados?Object.values(cpmDados[id]).reduce((s,arr)=>s+arr.length,0):0;
+      h+='<button onclick="cpmAbrirMes(\''+id+'\')" style="padding:14px 8px;border-radius:10px;border:1px solid '+(temDados?'#16a34a':'var(--border,#e2e8f0)')+';background:'+(temDados?'#16a34a':'#fff')+';color:'+(temDados?'#fff':'var(--text-primary,#1e293b)')+';cursor:pointer;font-size:14px;font-weight:600;display:flex;flex-direction:column;align-items:center;gap:2px;">'+nome+(totalLanc?'<span style="font-size:10px;font-weight:500;opacity:.9;">'+totalLanc+' lanç.</span>':'')+'</button>';
+    });
+    h+='</div>';
+  });
+  return h;
+}
+function cpmAbrirMes(id){ cpmMesSel=id; cpmDiaSel=''; renderCpm(); }
+window.cpmAbrirMes=cpmAbrirMes;
+
+/* ---------- estado 2: mês aberto, lista de dias ---------- */
+function cpmRenderMes(){
+  const [ano,mes]=cpmMesSel.split('-').map(Number);
+  const diasNoMes=new Date(ano,mes,0).getDate();
+  const dias=cpmDados[cpmMesSel]||{};
+  let h='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;gap:10px;">'+
+    '<button onclick="cpmVoltarMeses()" style="background:transparent;border:none;color:var(--text-accent,#2563eb);font-weight:600;cursor:pointer;padding:6px 0;font-size:14px;">‹ Meses</button>'+
+    '<div style="font-size:17px;font-weight:700;flex:1;text-align:center;">'+CPM_MESES[mes-1]+' '+ano+'</div>'+
+    '<button onclick="cpmExportarExcel()" style="background:#16a34a;color:#fff;border:none;font-size:13px;font-weight:600;padding:8px 14px;border-radius:8px;cursor:pointer;">⬇ Excel</button>'+
+    '</div>';
+  h+='<div style="font-size:12px;color:var(--text-secondary);margin-bottom:12px;">Toque num dia para lançar. Dias com produção ficam destacados.</div>';
+  h+='<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:7px;">';
+  for(let d=1;d<=diasNoMes;d++){
+    const dd=String(d).padStart(2,'0');
+    const arr=dias[dd]||[];
+    const tem=arr.length>0;
+    h+='<button onclick="cpmAbrirDia(\''+dd+'\')" style="aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:10px;border:1px solid '+(tem?'#16a34a':'var(--border,#e2e8f0)')+';background:'+(tem?'#16a34a':'#fff')+';color:'+(tem?'#fff':'var(--text-primary,#1e293b)')+';cursor:pointer;font-weight:700;font-size:15px;padding:0;transition:.1s;">'+d+(tem?'<span style="font-size:9px;font-weight:600;opacity:.9;">'+arr.length+'</span>':'')+'</button>';
+  }
+  h+='</div>';
+  return h;
+}
+function cpmVoltarMeses(){ cpmMesSel=''; cpmDiaSel=''; renderCpm(); }
+function cpmAbrirDia(dd){ cpmDiaSel=dd; renderCpm(); }
+window.cpmVoltarMeses=cpmVoltarMeses;
+window.cpmAbrirDia=cpmAbrirDia;
+
+/* ---------- estado 3: dia aberto, lançamento ---------- */
+function cpmRenderDia(){
+  const [ano,mes]=cpmMesSel.split('-').map(Number);
+  const arr=(cpmDados[cpmMesSel] && cpmDados[cpmMesSel][cpmDiaSel]) || [];
+  let h='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;gap:10px;">'+
+    '<button onclick="cpmVoltarDias()" style="background:transparent;border:none;color:var(--text-accent,#2563eb);font-weight:600;cursor:pointer;padding:6px 0;font-size:14px;">‹ Dias</button>'+
+    '<div style="font-size:17px;font-weight:700;flex:1;text-align:center;">'+cpmDiaSel+'/'+String(mes).padStart(2,'0')+'/'+ano+'</div>'+
+    '<div style="width:44px;"></div>'+
+    '</div>';
+  // form de lançamento — campos empilhados, largos e legíveis
+  h+='<div style="background:var(--surface-1,#f8fafc);border:1px solid var(--border,#e2e8f0);border-radius:12px;padding:14px;margin-bottom:16px;">'+
+    '<div style="font-size:13px;font-weight:700;margin-bottom:10px;color:var(--text-primary,#1e293b);">Novo lançamento</div>'+
+    '<label style="font-size:12px;color:var(--text-secondary);display:block;margin-bottom:3px;">Código do produto</label>'+
+    '<input id="cpm-cod" inputmode="numeric" oninput="cpmPreview()" placeholder="digite o código" style="width:100%;font-size:16px;padding:12px;border-radius:9px;border:1px solid var(--border-md,#cbd5e1);box-sizing:border-box;margin-bottom:4px;">'+
+    '<div id="cpm-preview" style="font-size:13px;font-weight:600;margin:2px 0 10px;min-height:18px;"></div>'+
+    '<label style="font-size:12px;color:var(--text-secondary);display:block;margin-bottom:3px;">Quantidade (pacotes)</label>'+
+    '<input id="cpm-qtd" type="number" inputmode="numeric" min="1" placeholder="0" onkeydown="if(event.key===\'Enter\')cpmAddItem()" style="width:100%;font-size:16px;padding:12px;border-radius:9px;border:1px solid var(--border-md,#cbd5e1);box-sizing:border-box;margin-bottom:12px;">'+
+    '<button onclick="cpmAddItem()" style="width:100%;background:#2563eb;color:#fff;border:none;font-size:15px;font-weight:600;padding:13px;border-radius:9px;cursor:pointer;">+ Adicionar produto</button>'+
+    '</div>';
+  // lista de itens do dia
+  if(arr.length){
+    const totalDia=arr.reduce((s,it)=>s+(it.qtd||0),0);
+    h+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;"><div style="font-size:13px;font-weight:700;">Lançados ('+arr.length+')</div><div style="font-size:12px;color:var(--text-secondary);">Total: '+totalDia+' pct</div></div>';
+    arr.forEach((it,idx)=>{
+      h+='<div style="background:#fff;border:1px solid var(--border,#e2e8f0);border-radius:10px;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center;padding:11px 13px;">'+
+        '<div style="min-width:0;flex:1;"><div style="font-weight:600;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+(it.nome||('Código '+it.cod))+'</div><div style="font-size:11px;color:var(--text-secondary);">cód '+it.cod+'</div></div>'+
+        '<div style="display:flex;align-items:center;gap:12px;flex-shrink:0;"><span style="font-size:17px;font-weight:700;">'+it.qtd+'</span>'+
+        '<button onclick="cpmRemItem('+idx+')" style="background:transparent;border:none;color:#dc2626;font-size:20px;cursor:pointer;padding:0 2px;line-height:1;">×</button></div></div>';
+    });
+    h+='<button onclick="cpmConfirmarDia()" style="width:100%;margin-top:12px;background:#16a34a;color:#fff;border:none;font-size:15px;font-weight:600;padding:13px;border-radius:9px;cursor:pointer;">✓ Confirmar dia e voltar</button>';
+  } else {
+    h+='<div style="padding:24px;text-align:center;color:var(--text-secondary);font-size:13px;">Nenhum item lançado ainda neste dia.</div>';
+  }
+  return h;
+}
+function cpmVoltarDias(){ cpmDiaSel=''; renderCpm(); }
+window.cpmVoltarDias=cpmVoltarDias;
+
+function cpmPreview(){
+  const cod=(document.getElementById('cpm-cod')||{}).value||'';
+  const nome=cpmProdNome(cod);
+  const el=document.getElementById('cpm-preview'); if(!el) return;
+  if(!cod.trim()){ el.innerHTML=''; return; }
+  el.innerHTML = nome ? '✓ '+nome : '⚠ código não encontrado no cadastro';
+  el.style.color = nome ? '#16a34a' : '#d97706';
+}
+window.cpmPreview=cpmPreview;
+
+async function cpmAddItem(){
+  const codEl=document.getElementById('cpm-cod'), qtdEl=document.getElementById('cpm-qtd');
+  const cod=(codEl.value||'').trim();
+  const qtd=parseInt(qtdEl.value)||0;
+  if(!cod){ alert('Digite o código.'); codEl.focus(); return; }
+  if(qtd<=0){ alert('Digite a quantidade.'); qtdEl.focus(); return; }
+  const nome=cpmProdNome(cod);
+  if(!nome && !confirm('Código '+cod+' não está na base de produtos. Lançar mesmo assim?')) return;
+  cpmDados[cpmMesSel]=cpmDados[cpmMesSel]||{};
+  cpmDados[cpmMesSel][cpmDiaSel]=cpmDados[cpmMesSel][cpmDiaSel]||[];
+  // se já existe o mesmo código no dia, soma
+  const existente=cpmDados[cpmMesSel][cpmDiaSel].find(x=>String(x.cod)===cod);
+  if(existente){ existente.qtd += qtd; }
+  else { cpmDados[cpmMesSel][cpmDiaSel].push({cod, nome:nome||'', qtd}); }
+  await cpmSalvarMes();
+  renderCpm();
+  // foca no campo de código DEPOIS do redesenho, para o cursor já ficar pronto pro próximo lançamento
+  const novoCod=document.getElementById('cpm-cod');
+  if(novoCod){ novoCod.value=''; novoCod.focus(); }
+  const prev=document.getElementById('cpm-preview'); if(prev) prev.innerHTML='';
+}
+window.cpmAddItem=cpmAddItem;
+
+async function cpmRemItem(idx){
+  const arr=cpmDados[cpmMesSel][cpmDiaSel];
+  if(!arr) return;
+  arr.splice(idx,1);
+  if(!arr.length) delete cpmDados[cpmMesSel][cpmDiaSel];
+  await cpmSalvarMes();
+  renderCpm();
+}
+window.cpmRemItem=cpmRemItem;
+
+function cpmConfirmarDia(){ cpmDiaSel=''; renderCpm(); }
+window.cpmConfirmarDia=cpmConfirmarDia;
+
+/* ---------- export Excel: matriz produto (linha) × dia (coluna) + total ---------- */
+async function cpmExportarExcel(){
+  const [ano,mes]=cpmMesSel.split('-').map(Number);
+  const dias=cpmDados[cpmMesSel]||{};
+  const diasOrd=Object.keys(dias).sort();
+  if(!diasOrd.length){ alert('Nenhum lançamento neste mês para exportar.'); return; }
+  // garante que a biblioteca XLSX está carregada (o app carrega sob demanda)
+  try{
+    await new Promise((res,rej)=>{ if(window.XLSX){res();return;} const s=document.createElement('script'); s.src='https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js'; s.onload=res; s.onerror=rej; document.head.appendChild(s); });
+  }catch(e){ alert('Não foi possível carregar o gerador de Excel. Verifique a conexão.'); return; }
+  // reúne todos os produtos (por código), mantendo nome
+  const prodMap={}; // cod -> {nome, porDia:{dd:qtd}, total}
+  diasOrd.forEach(dd=>{
+    (dias[dd]||[]).forEach(it=>{
+      const k=String(it.cod);
+      if(!prodMap[k]) prodMap[k]={cod:it.cod, nome:it.nome||cpmProdNome(it.cod)||'', porDia:{}, total:0};
+      prodMap[k].porDia[dd]=(prodMap[k].porDia[dd]||0)+it.qtd;
+      prodMap[k].total+=it.qtd;
+    });
+  });
+  const produtos=Object.values(prodMap).sort((a,b)=>String(a.nome).localeCompare(String(b.nome)));
+  // monta matriz (array of arrays)
+  const header=['Código','Produto', ...diasOrd.map(dd=>dd+'/'+String(mes).padStart(2,'0')), 'TOTAL MÊS'];
+  const rows=[header];
+  produtos.forEach(p=>{
+    const linha=[p.cod, p.nome, ...diasOrd.map(dd=>p.porDia[dd]||''), p.total];
+    rows.push(linha);
+  });
+  const wb=XLSX.utils.book_new();
+  const ws=XLSX.utils.aoa_to_sheet(rows);
+  ws['!cols']=[{wch:10},{wch:32}, ...diasOrd.map(()=>({wch:8})), {wch:12}];
+  XLSX.utils.book_append_sheet(wb, ws, CPM_MESES[mes-1]+' '+ano);
+  XLSX.writeFile(wb, 'ControleProducao_'+CPM_MESES[mes-1]+'_'+ano+'.xlsx');
+}
+window.cpmExportarExcel=cpmExportarExcel;
+
 
 
 // ===================== AGENDA DE CONTAGENS (aviso 3 dias antes) =====================
