@@ -14976,6 +14976,19 @@ function acPlayFinalizar(semana,dia,produto){
 }
 window.acPlayFinalizar=acPlayFinalizar;
 
+// quem pode apagar histórico de play: admin ou encarregado do setor (conf/quadra)
+function acPlayPodeApagar(){
+  return window.adminMode || ['admin','conf','quadra'].includes(window.setorAtual);
+}
+async function acPlayApagar(semana,dia,produto){
+  if(!acPlayPodeApagar()) return;
+  if(!confirm('Apagar o histórico de tempo (play/pausa/manutenção) deste produto?\n\nIsso zera o cronômetro e permite iniciar de novo. Não afeta a produção lançada.')) return;
+  const id=acPlayId(semana,dia,produto);
+  try{ await deleteDoc(doc(db,'acompProdStatus',id)); delete acPlayStatus[id]; renderAcomp(); }
+  catch(e){ alert('Erro: '+e.message); }
+}
+window.acPlayApagar=acPlayApagar;
+
 // finaliza automaticamente ao atingir 90% (chamado durante o render)
 function acPlayAutoFinalizar(semana,dia,produto,pct){
   const id=acPlayId(semana,dia,produto);
@@ -15007,7 +15020,8 @@ function acPlayControle(semana,dia,produto,pct){
     const fimHora=st.eventos[st.eventos.length-1].hora;
     let resumo='✓ '+ini+' → '+fimHora+' · líquido '+_fmtDur(t.liquido);
     const extra=[]; if(t.manut>0)extra.push('🔧 '+_fmtDur(t.manut)); if(t.pausa>0)extra.push('⏸ '+_fmtDur(t.pausa));
-    return '<div style="font-size:11px;color:#16a34a;font-weight:600;margin-top:6px;">'+resumo+(extra.length?' <span style="color:#d97706;">('+extra.join(' · ')+')</span>':'')+'</div>';
+    const apagar = acPlayPodeApagar() ? '<button onclick="event.stopPropagation();acPlayApagar('+args+')" title="Apagar histórico de tempo" style="background:transparent;border:none;color:#dc2626;font-size:14px;cursor:pointer;padding:0 4px;margin-left:6px;">🗑</button>' : '';
+    return '<div style="display:flex;align-items:center;justify-content:space-between;margin-top:6px;"><span style="font-size:11px;color:#16a34a;font-weight:600;">'+resumo+(extra.length?' <span style="color:#d97706;">('+extra.join(' · ')+')</span>':'')+'</span>'+apagar+'</div>';
   }
   // em produção / pausado / manutenção — mostra status + botões conforme o estado
   let statusLinha='', botoes='';
@@ -15022,6 +15036,7 @@ function acPlayControle(semana,dia,produto,pct){
     botoes=btn('▶ Retomar','var(--mc-azul,#2563eb)',"acPlayEvento("+args+",'manut_fim')",true)+btn('■ Finalizar','#16a34a',"acPlayFinalizar("+args+")");
   }
   const infoTempo = (t.manut>0||t.pausa>0) ? '<div style="font-size:10px;color:var(--text-muted);margin-top:3px;">líquido '+_fmtDur(t.liquido)+(t.manut>0?' · 🔧 '+_fmtDur(t.manut):'')+(t.pausa>0?' · ⏸ '+_fmtDur(t.pausa):'')+'</div>' : '';
+  if(acPlayPodeApagar()) botoes+=btn('🗑','#dc2626',"acPlayApagar("+args+")");
   return '<div style="margin-top:6px;"><div style="margin-bottom:5px;">'+statusLinha+'</div><div style="display:flex;gap:6px;flex-wrap:wrap;">'+botoes+'</div>'+infoTempo+'</div>';
 }
 
@@ -15919,10 +15934,27 @@ function _acSeletorSemanaHtml(){
 }
 window.setAcSemana=setAcSemana;
 
+let _acAba='acomp'; // 'acomp' ou 'perdas'
+function setAcAba(a){ _acAba=a; renderAcomp(); }
+window.setAcAba=setAcAba;
+
 function renderAcomp(){
   const el=document.getElementById('acomp-content'); if(!el) return;
+  // barra de abas — a aba Perdas só aparece para confeitaria/admin
+  const podePerdas = (window.setorAtual==='conf' || window.setorAtual==='admin' || window.adminMode);
+  let _abasPrefix='';
+  if(podePerdas){
+    const btn=(id,txt)=>'<button onclick="setAcAba(\''+id+'\')" style="flex:1;font-size:13px;font-weight:700;padding:10px;border:none;border-bottom:3px solid '+(_acAba===id?'var(--mc-azul,#2563eb)':'transparent')+';background:transparent;color:'+(_acAba===id?'var(--mc-azul,#2563eb)':'var(--text-secondary,#6b7280)')+';cursor:pointer;">'+txt+'</button>';
+    _abasPrefix='<div style="display:flex;border-bottom:1px solid var(--border,#e2e8f0);margin:-4px -2px 14px;">'+btn('acomp','📋 Acompanhamento')+btn('perdas','📉 Perdas')+'</div>';
+  } else if(_acAba==='perdas'){ _acAba='acomp'; }
+  // ABA PERDAS
+  if(_acAba==='perdas' && podePerdas){
+    perdaSetor='conf';
+    el.innerHTML = _abasPrefix + perdaRenderDatas();
+    return;
+  }
   const dados=_acCalcular();
-  if(!dados.semana){ el.innerHTML=_acSeletorSemanaHtml()+'<div class="empty" style="padding:30px;">Nenhum plano de Confeitaria para esta semana.</div>'; return; }
+  if(!dados.semana){ el.innerHTML=_abasPrefix+_acSeletorSemanaHtml()+'<div class="empty" style="padding:30px;">Nenhum plano de Confeitaria para esta semana.</div>'; return; }
   const semana=dados.semana;
 
   // Reorganizar por DIA: { dia -> [{produto, status, qtdPlan, prodNoDia, dateBR}] }
@@ -15944,7 +15976,7 @@ function renderAcomp(){
   const pctGeral=totP>0?Math.round(totF/totP*100):0;
   const nPend=dados.produtos.filter(p=>p.pendente).length;
 
-  let html=_acSeletorSemanaHtml()+'<div style="font-size:12px;color:var(--text-secondary);margin-bottom:8px;">📅 '+dados.semanaLabel+'</div>';
+  let html=_abasPrefix+_acSeletorSemanaHtml()+'<div style="font-size:12px;color:var(--text-secondary);margin-bottom:8px;">📅 '+dados.semanaLabel+'</div>';
   if((dados.excessos||[]).length){
     html+='<div class="card" style="border-left:3px solid #d97706;background:rgba(217,119,6,.06);margin-bottom:12px;">'+
       '<div style="font-size:14px;font-weight:700;color:#b45309;margin-bottom:6px;">⚠️ Produzido muito acima do plano (+50%)</div>'+
