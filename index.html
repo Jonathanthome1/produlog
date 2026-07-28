@@ -1085,14 +1085,6 @@
 
       <div class="mc-section-header">Consultas</div>
       <div class="mc-sector-grid">
-        <button class="mc-sector-card" style="border-left:3px solid var(--mc-vermelho,#dc2626);" onclick="perdaAbrir('conf')">
-          <div class="mc-sector-icon red">📉</div>
-          <div class="mc-sector-info">
-            <div class="mc-sector-title">Perdas de produção</div>
-            <div class="mc-sector-desc">Produzido × embalado por dia · margem 3%</div>
-          </div>
-          <span class="mc-sector-arrow">›</span>
-        </button>
         <button class="mc-sector-card" style="border-left:3px solid var(--mc-dourado);" onclick="goTo('s-tv')">
           <div class="mc-sector-icon" style="background:linear-gradient(135deg,#1e3a8a,#3b82f6);color:#fff;">📺</div>
           <div class="mc-sector-info">
@@ -12964,16 +12956,23 @@ function _tvDados(){
       ac.produtos.forEach(p=>{
         const dObj=(p.dias||[]).find(x=>x.dia===todayInfo.dia);
         if(!dObj) return; // produto não planejado para hoje
+        // estado do play (produzindo agora / pausado / manutenção) — vindo do Acompanhamento
+        let playEstado='';
+        try{ const pid=acPlayId(ac.semana||_acSemanaSel||semanaAtual(), todayInfo.dia, p.nome); playEstado=acPlayEstado(acPlayStatus[pid]); }catch(e){}
         hojeProdutos.push({
           nome:p.nome, plan:dObj.qtdPlan, feito:dObj.mostrado,
-          status:dObj.status, fonteLabel:dObj.fonteLabel||'',
+          status:dObj.status, fonteLabel:dObj.fonteLabel||'', playEstado,
           ok:(dObj.status==='verde'||dObj.status==='adiantado'||dObj.status==='atrasado')
         });
       });
     }
-    // ordena: pendentes primeiro, depois por plano
+    // ordena: produzindo agora primeiro, depois pendentes, depois por plano
     const _ord={vermelho:0,atrasado:1,parcial:2,cinza:3,adiantado:4,verde:5};
-    hojeProdutos.sort((a,b)=>((_ord[a.status]??9)-(_ord[b.status]??9))|| b.plan-a.plan);
+    hojeProdutos.sort((a,b)=>{
+      const pa=(a.playEstado==='produzindo')?0:1, pb=(b.playEstado==='produzindo')?0:1;
+      if(pa!==pb) return pa-pb;
+      return ((_ord[a.status]??9)-(_ord[b.status]??9))|| b.plan-a.plan;
+    });
   }
   // METADIA: usa a MESMA fonte da lista (dObj.mostrado). Produtos ADIANTADOS ficam
   // NEUTROS — saem do feito E do plano de hoje, pois já foram produzidos em dia anterior.
@@ -13087,14 +13086,16 @@ function _tvViewHoje(d){
       const isAdiant=(st==='adiantado');
       const isAtras=(st==='atrasado');
       const isFeito=(st==='verde');
+      const isProduzindo=(p.playEstado==='produzindo');
       // cores por status
-      const corBarra = isAdiant?'#0d9488':(isAtras?'#d97706':(isFeito?'#22c55e':'linear-gradient(90deg,#1e3a8a,#3b82f6)'));
-      const corIcone = isAdiant?'#0d9488':(isAtras?'#d97706':(isFeito?'#22c55e':'#eef2f7'));
-      const corNome  = isAdiant?'#0f766e':(isAtras?'#b45309':(isFeito?'#16a34a':'#334155'));
-      const icone    = isAdiant?'⏩':(isAtras?'⏰':(isFeito?'✓':''));
-      const selo     = isAdiant?' <span style="font-size:'+(fsz)+';color:#0f766e;font-weight:800;">⏩ adiantado'+(p.fonteLabel?' ('+p.fonteLabel+')':'')+'</span>':'';
-      return '<div style="display:flex;align-items:center;gap:0.8vw;">'+
-      '<div style="width:'+ic+'px;height:'+ic+'px;border-radius:8px;background:'+corIcone+';display:flex;align-items:center;justify-content:center;font-size:'+(ic*0.5)+'px;color:#fff;flex-shrink:0;'+(p.ok?'animation:tvPop .5s ease both;':'')+'">'+icone+'</div>'+
+      const corBarra = isProduzindo?'linear-gradient(90deg,#dc2626,#f87171)':(isAdiant?'#0d9488':(isAtras?'#d97706':(isFeito?'#22c55e':'linear-gradient(90deg,#1e3a8a,#3b82f6)')));
+      const corIcone = isProduzindo?'#dc2626':(isAdiant?'#0d9488':(isAtras?'#d97706':(isFeito?'#22c55e':'#eef2f7')));
+      const corNome  = isProduzindo?'#b91c1c':(isAdiant?'#0f766e':(isAtras?'#b45309':(isFeito?'#16a34a':'#334155')));
+      const icone    = isProduzindo?'●':(isAdiant?'⏩':(isAtras?'⏰':(isFeito?'✓':'')));
+      const selo     = isProduzindo?' <span style="font-size:'+(fsz)+';color:#b91c1c;font-weight:800;">🔴 produzindo agora</span>':(isAdiant?' <span style="font-size:'+(fsz)+';color:#0f766e;font-weight:800;">⏩ adiantado'+(p.fonteLabel?' ('+p.fonteLabel+')':'')+'</span>':'');
+      const rowBg    = isProduzindo?'background:rgba(220,38,38,.06);border-radius:8px;padding:4px 6px;margin:0 -6px;':'';
+      return '<div style="display:flex;align-items:center;gap:0.8vw;'+rowBg+'">'+
+      '<div style="width:'+ic+'px;height:'+ic+'px;border-radius:8px;background:'+corIcone+';display:flex;align-items:center;justify-content:center;font-size:'+(ic*0.5)+'px;color:#fff;flex-shrink:0;'+(isProduzindo?'animation:tvPulse 1.2s infinite;':(p.ok?'animation:tvPop .5s ease both;':''))+'">'+icone+'</div>'+
       '<div style="flex:1;min-width:0;"><div style="font-size:'+fsz+';font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:'+corNome+';">'+p.nome+selo+'</div>'+
       '<div style="height:'+bh+'px;border-radius:5px;background:#eef2f7;overflow:hidden;margin-top:3px;"><div style="height:100%;width:'+Math.min(pct,100)+'%;background:'+corBarra+';border-radius:5px;transition:width 1s ease;"></div></div></div>'+
       '<div style="font-size:'+fsz+';color:#64748b;font-weight:700;white-space:nowrap;">'+p.feito+'/'+p.plan+'</div></div>'; }).join('');
@@ -14917,7 +14918,9 @@ onSnapshot(collection(db,'acompProdStatus'), snap=>{
   try{
     acPlayStatus={};
     snap.docs.forEach(d=> acPlayStatus[d.id]=d.data());
-    if(document.querySelector('.screen.active')?.id==='s-acomp') renderAcomp();
+    const _t=document.querySelector('.screen.active')?.id;
+    if(_t==='s-acomp') renderAcomp();
+    if(_t==='s-tv') renderTV();
   }catch(e){ console.error('acompProdStatus snap',e); }
 });
 
