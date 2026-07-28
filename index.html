@@ -1085,6 +1085,14 @@
 
       <div class="mc-section-header">Consultas</div>
       <div class="mc-sector-grid">
+        <button class="mc-sector-card" style="border-left:3px solid var(--mc-vermelho,#dc2626);" onclick="perdaAbrir('conf')">
+          <div class="mc-sector-icon red">📉</div>
+          <div class="mc-sector-info">
+            <div class="mc-sector-title">Perdas de produção</div>
+            <div class="mc-sector-desc">Produzido × embalado por dia · margem 3%</div>
+          </div>
+          <span class="mc-sector-arrow">›</span>
+        </button>
         <button class="mc-sector-card" style="border-left:3px solid var(--mc-dourado);" onclick="goTo('s-tv')">
           <div class="mc-sector-icon" style="background:linear-gradient(135deg,#1e3a8a,#3b82f6);color:#fff;">📺</div>
           <div class="mc-sector-info">
@@ -2399,6 +2407,14 @@
           <div class="mc-sector-info">
             <div class="mc-sector-title">Plano de Produção</div>
             <div class="mc-sector-desc">Cronograma da semana</div>
+          </div>
+          <span class="mc-sector-arrow">›</span>
+        </button>
+        <button class="mc-sector-card" style="border-left:3px solid var(--mc-vermelho,#dc2626);" onclick="perdaAbrir('quadra')">
+          <div class="mc-sector-icon red">📉</div>
+          <div class="mc-sector-info">
+            <div class="mc-sector-title">Perdas de produção</div>
+            <div class="mc-sector-desc">Produzido × embalado por dia · margem 3%</div>
           </div>
           <span class="mc-sector-arrow">›</span>
         </button>
@@ -3806,6 +3822,16 @@
   <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;" id="la-ajustes-content"></div>
 </div>
 
+  <div class="screen" id="s-perdas">
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="perdaSetor==='quadra'?goTo('s-quadra-home'):goTo('s-conf-home')">‹</button>
+      <div class="mc-brand"><div class="mc-brand-logo">MC</div><div class="mc-brand-text"><div class="mc-brand-name">Monte Castelo</div><div class="mc-brand-sub" id="perdas-sub">Perdas</div></div></div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info"><div class="mc-page-title">📉 Perdas de produção</div><div class="mc-page-sub">Produzido × embalado</div></div>
+    </div>
+    <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;" id="perdas-content"></div>
+  </div>
+
   <div class="screen" id="s-cpm">
     <div class="mc-header">
       <button class="mc-header-back" onclick="goTo('s-adm-hub')">‹</button>
@@ -4584,6 +4610,7 @@ function goTo(id){
   if(id==='s-la-dias') renderLaDias();
   if(id==='s-la-ajustes') renderLaAjustes();
   if(id==='s-cpm') renderCpm();
+  if(id==='s-perdas') renderPerdas();
   if(id==='s-carreg-edit') renderCarregEdit();
   if(id==='s-carreg-conf') renderCarregConf();
   if(id==='s-carreg-conf') _carregStartCapture(); else _carregStopCapture();
@@ -12928,13 +12955,42 @@ function _tvDados(){
   let diasBatidos=0, diasComPlano=0;
   diasInfo.forEach(di=>{ let planDia=0; Object.values(prodMap).forEach(p=>planDia+=p.plano[di.dia]||0); if(planDia<=0) return; if(di.date<=hoje0){ diasComPlano++; if((feitoPorDia[di.dateBR]||0)>=0.9*planDia) diasBatidos++; } });
   // produtos de hoje
-  const hojeProdutos = todayInfo ? Object.values(prodMap).filter(p=>(p.plano[todayInfo.dia]||0)>0).map(p=>{ const plan=p.plano[todayInfo.dia]; const feito=prodHojeProduto[_normNome(p.nome)]||0; return {nome:p.nome, plan, feito, ok:feito>=plan}; }).sort((a,b)=>(a.ok-b.ok)||b.plan-a.plan) : [];
-  const metaDiaPct = planoHoje>0 ? Math.round(feitoHoje/planoHoje*100) : (feitoHoje>0?100:0);
+  // produtos de hoje — usa a MESMA lógica do Acompanhamento (_acCalcular) para saber
+  // o que foi adiantado, atrasado, etc. — em vez de somar produção crua por data.
+  let hojeProdutos = [];
+  if(todayInfo){
+    const _sv=_acSemanaSel; _acSemanaSel=null; let ac=null; try{ ac=_acCalcular(); }catch(e){} _acSemanaSel=_sv;
+    if(ac && ac.produtos){
+      ac.produtos.forEach(p=>{
+        const dObj=(p.dias||[]).find(x=>x.dia===todayInfo.dia);
+        if(!dObj) return; // produto não planejado para hoje
+        hojeProdutos.push({
+          nome:p.nome, plan:dObj.qtdPlan, feito:dObj.mostrado,
+          status:dObj.status, fonteLabel:dObj.fonteLabel||'',
+          ok:(dObj.status==='verde'||dObj.status==='adiantado'||dObj.status==='atrasado')
+        });
+      });
+    }
+    // ordena: pendentes primeiro, depois por plano
+    const _ord={vermelho:0,atrasado:1,parcial:2,cinza:3,adiantado:4,verde:5};
+    hojeProdutos.sort((a,b)=>((_ord[a.status]??9)-(_ord[b.status]??9))|| b.plan-a.plan);
+  }
+  // METADIA: usa a MESMA fonte da lista (dObj.mostrado). Produtos ADIANTADOS ficam
+  // NEUTROS — saem do feito E do plano de hoje, pois já foram produzidos em dia anterior.
+  let feitoHojeAc=0, planoHojeAc=0;
+  hojeProdutos.forEach(p=>{
+    if(p.status==='adiantado') return; // neutro: não entra na meta de hoje
+    planoHojeAc+=p.plan||0;
+    feitoHojeAc+=Math.min(p.feito||0, p.plan||0);
+  });
+  const planoHojeFinal = planoHojeAc>0 ? planoHojeAc : (hojeProdutos.length? 0 : planoHoje);
+  const feitoHojeFinal = feitoHojeAc;
+  const metaDiaPct = planoHojeFinal>0 ? Math.round(feitoHojeFinal/planoHojeFinal*100) : (feitoHojeFinal>0?100:0);
   // ranking dos dias (com plano e já passados/hoje) por % de cumprimento
   const ranking=[];
   diasInfo.forEach(di=>{ let planDia=0; Object.values(prodMap).forEach(p=>planDia+=p.plano[di.dia]||0); if(planDia<=0) return; if(di.date>hoje0) return; const feitoDia=feitoPorDia[di.dateBR]||0; ranking.push({dia:di.dia, abrev:di.dia.slice(0,3), plano:planDia, feito:feitoDia, pct:Math.round(feitoDia/planDia*100)}); });
   ranking.sort((a,b)=>b.pct-a.pct || b.feito-a.feito);
-  return {semStr, semanaLabel:semanaLabel(semStr), todayDia: todayInfo?todayInfo.dia:null, planoHoje, feitoHoje, metaDiaPct, planoSemana, feitoSemana, cumprimento:Math.round(cumprimento), diasBatidos, diasComPlano, hojeProdutos, ranking};
+  return {semStr, semanaLabel:semanaLabel(semStr), todayDia: todayInfo?todayInfo.dia:null, planoHoje:planoHojeFinal, feitoHoje:feitoHojeFinal, metaDiaPct, planoSemana, feitoSemana, cumprimento:Math.round(cumprimento), diasBatidos, diasComPlano, hojeProdutos, ranking};
 }
 
 let _tvPrev={};
@@ -13025,10 +13081,22 @@ function _tvViewHoje(d){
     '<div style="font-size:1.2vw;font-weight:800;color:#334155;margin-bottom:1vh;">📋 Produtos de hoje'+(n?' <span style="font-size:0.9vw;color:#94a3b8;font-weight:600;">('+n+')</span>':'')+'</div>'+
     '<div style="flex:1;overflow:hidden;display:flex;flex-direction:column;gap:'+gp+';justify-content:space-evenly;">';
   if(d.hojeProdutos.length){
-    h+=d.hojeProdutos.map(p=>{ const pct=p.plan>0?Math.round(p.feito/p.plan*100):0; return '<div style="display:flex;align-items:center;gap:0.8vw;">'+
-      '<div style="width:'+ic+'px;height:'+ic+'px;border-radius:8px;background:'+(p.ok?'#22c55e':'#eef2f7')+';display:flex;align-items:center;justify-content:center;font-size:'+(ic*0.55)+'px;color:#fff;flex-shrink:0;'+(p.ok?'animation:tvPop .5s ease both;':'')+'">'+(p.ok?'✓':'')+'</div>'+
-      '<div style="flex:1;min-width:0;"><div style="font-size:'+fsz+';font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;'+(p.ok?'color:#16a34a;':'color:#334155;')+'">'+p.nome+'</div>'+
-      '<div style="height:'+bh+'px;border-radius:5px;background:#eef2f7;overflow:hidden;margin-top:3px;"><div style="height:100%;width:'+Math.min(pct,100)+'%;background:'+(p.ok?'#22c55e':'linear-gradient(90deg,#1e3a8a,#3b82f6)')+';border-radius:5px;transition:width 1s ease;"></div></div></div>'+
+    h+=d.hojeProdutos.map(p=>{
+      const pct=p.plan>0?Math.round(p.feito/p.plan*100):0;
+      const st=p.status||'';
+      const isAdiant=(st==='adiantado');
+      const isAtras=(st==='atrasado');
+      const isFeito=(st==='verde');
+      // cores por status
+      const corBarra = isAdiant?'#0d9488':(isAtras?'#d97706':(isFeito?'#22c55e':'linear-gradient(90deg,#1e3a8a,#3b82f6)'));
+      const corIcone = isAdiant?'#0d9488':(isAtras?'#d97706':(isFeito?'#22c55e':'#eef2f7'));
+      const corNome  = isAdiant?'#0f766e':(isAtras?'#b45309':(isFeito?'#16a34a':'#334155'));
+      const icone    = isAdiant?'⏩':(isAtras?'⏰':(isFeito?'✓':''));
+      const selo     = isAdiant?' <span style="font-size:'+(fsz)+';color:#0f766e;font-weight:800;">⏩ adiantado'+(p.fonteLabel?' ('+p.fonteLabel+')':'')+'</span>':'';
+      return '<div style="display:flex;align-items:center;gap:0.8vw;">'+
+      '<div style="width:'+ic+'px;height:'+ic+'px;border-radius:8px;background:'+corIcone+';display:flex;align-items:center;justify-content:center;font-size:'+(ic*0.5)+'px;color:#fff;flex-shrink:0;'+(p.ok?'animation:tvPop .5s ease both;':'')+'">'+icone+'</div>'+
+      '<div style="flex:1;min-width:0;"><div style="font-size:'+fsz+';font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:'+corNome+';">'+p.nome+selo+'</div>'+
+      '<div style="height:'+bh+'px;border-radius:5px;background:#eef2f7;overflow:hidden;margin-top:3px;"><div style="height:100%;width:'+Math.min(pct,100)+'%;background:'+corBarra+';border-radius:5px;transition:width 1s ease;"></div></div></div>'+
       '<div style="font-size:'+fsz+';color:#64748b;font-weight:700;white-space:nowrap;">'+p.feito+'/'+p.plan+'</div></div>'; }).join('');
   } else h+='<div style="color:#94a3b8;font-size:1.1vw;">Sem produtos planejados para hoje.</div>';
   h+='</div></div></div>';
@@ -14696,6 +14764,269 @@ async function cpmExportarExcel(){
 }
 window.cpmExportarExcel=cpmExportarExcel;
 
+/* ══════════════════════════════════════════════════════════════════
+   PAINEL DE PERDAS — produto acabado (produzido × embalado)
+   Dois níveis: lista de datas → detalhe produto a produto.
+   Parametrizado por setor: 'quadra' (pães) ou 'conf' (salgados).
+   Reaproveita registros[] e a lógica de embalado (parciais) já validada.
+   ══════════════════════════════════════════════════════════════════ */
+let perdaSetor='conf';   // 'conf' (salgados) ou 'quadra' (pães)
+let perdaDataSel='';     // data aberta no nível 2
+const PERDA_MARGEM=3;    // % de margem: até 3% = verde
+
+// embalado confiável = soma dos parciais; senão feito? qtdEmbalada : 0
+function perdaEmbalado(e){
+  e=e||{};
+  if(Array.isArray(e.parciais) && e.parciais.length) return Math.max(0, e.parciais.reduce((s,p)=>s+(p.qtd||0),0));
+  return e.feito ? (e.qtdEmbalada||0) : 0;
+}
+// produzido confiável = qtd (pacotes), nunca qtdProduzida (unidade inconsistente)
+function perdaProduzido(r){ return (parseInt(r.qtd)||0) || (r.qtdPacotes||0) || 0; }
+
+// registros do setor que já têm alguma embalagem lançada (só interessa o que foi embalado)
+function perdaRegistrosSetor(){
+  return (registros||[]).filter(r=>{
+    const ehSetor = perdaSetor==='quadra' ? (r.origem==='quadra') : (r.origem!=='quadra');
+    if(!ehSetor) return false;
+    return perdaProduzido(r)>0;
+  });
+}
+
+function perdaAbrir(setor){
+  perdaSetor=setor; perdaDataSel='';
+  goTo('s-perdas');
+  const sub=document.getElementById('perdas-sub'); if(sub) sub.textContent = setor==='quadra'?'Quadra':'Confeitaria';
+  renderPerdas();
+}
+window.perdaAbrir=perdaAbrir;
+
+function renderPerdas(){
+  const el=document.getElementById('perdas-content'); if(!el) return;
+  el.innerHTML = perdaRenderDatas();
+}
+window.renderPerdas=renderPerdas;
+
+/* ---------- NÍVEL 1: lista de datas ---------- */
+/* ---------- VISÃO AGRUPADA: cada dia é um bloco (cabeçalho com % + produtos) ---------- */
+function perdaRenderDatas(){
+  const regs=perdaRegistrosSetor();
+  // agrupa por data -> produtos
+  const porData={};
+  regs.forEach(r=>{
+    const emb=perdaEmbalado(r.embalagem);
+    if(emb<=0) return;
+    const prod=perdaProduzido(r);
+    porData[r.data]=porData[r.data]||{data:r.data, prod:0, emb:0, itens:{}};
+    porData[r.data].prod+=prod;
+    porData[r.data].emb+=emb;
+    const k=String(r.cod||'')+'|'+(r.produto||'');
+    const it=porData[r.data].itens[k]||(porData[r.data].itens[k]={cod:r.cod||'',nome:r.produto||'',prod:0,emb:0,obs:[]});
+    it.prod+=prod; it.emb+=emb;
+    const o=(r.embalagem&&r.embalagem.obs||'').trim();
+    if(o && !it.obs.includes(o)) it.obs.push(o);
+  });
+  const arr=Object.values(porData).sort((a,b)=> perdaDataKey(b.data)-perdaDataKey(a.data));
+  let h='<div style="font-size:12px;color:var(--text-secondary);margin-bottom:14px;padding:10px 12px;background:rgba(37,99,235,.05);border-radius:10px;">Perda de produto acabado = produzido − embalado. Só entram itens já embalados. Margem de '+PERDA_MARGEM+'%: até isso é normal (verde).</div>';
+  if(!arr.length){ return h+'<div style="padding:24px;text-align:center;color:var(--text-secondary);">Nenhum produto embalado registrado ainda.</div>'; }
+  arr.forEach(d=>{
+    const perda=Math.max(0, d.prod-d.emb);
+    const pct=d.prod>0 ? (perda/d.prod*100) : 0;
+    const dentro=pct<=PERDA_MARGEM;
+    const cor=dentro?'#16a34a':(pct<=8?'#d97706':'#dc2626');
+    // CABEÇALHO DO DIA — barra destacada
+    h+='<div style="margin:18px 0 0;">'+
+      '<div style="display:flex;justify-content:space-between;align-items:center;background:'+cor+';color:#fff;border-radius:10px 10px 0 0;padding:11px 14px;">'+
+        '<div style="font-size:15px;font-weight:700;">📅 '+d.data+'</div>'+
+        '<div style="text-align:right;"><span style="font-size:17px;font-weight:800;">'+pct.toFixed(1)+'%</span><span style="font-size:11px;opacity:.9;margin-left:6px;">'+(perda>0?'−'+perda+' pct':'sem perda')+'</span></div>'+
+      '</div>'+
+      '<div style="border:1px solid '+cor+'44;border-top:none;border-radius:0 0 10px 10px;padding:6px;">';
+    // PRODUTOS DO DIA
+    const itens=Object.values(d.itens).sort((a,b)=>String(a.nome).localeCompare(String(b.nome)));
+    itens.forEach(x=>{
+      const p=Math.max(0,x.prod-x.emb);
+      const pc=x.prod>0?(p/x.prod*100):0;
+      const excede=x.emb>x.prod;
+      const dtr=pc<=PERDA_MARGEM;
+      const c=excede?'#6b7280':(dtr?'#16a34a':(pc<=8?'#d97706':'#dc2626'));
+      h+='<div style="display:flex;justify-content:space-between;align-items:center;padding:9px 10px;border-bottom:1px solid var(--border,#f1f5f9);">'+
+        '<div style="min-width:0;flex:1;"><div style="font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+(x.nome||('cód '+x.cod))+'</div>'+
+        '<div style="font-size:11px;color:var(--text-secondary);">Produzido '+x.prod+' → Embalado '+x.emb+(p>0?' · perda '+p:'')+'</div>'+
+        (x.obs&&x.obs.length?'<div style="font-size:11px;color:#d97706;font-style:italic;margin-top:3px;">📝 '+x.obs.join(' · ')+'</div>':'')+
+        '</div>'+
+        '<div style="font-weight:800;color:'+c+';font-size:14px;flex-shrink:0;margin-left:8px;">'+(excede?'⚠':pc.toFixed(1)+'%')+'</div>'+
+        '</div>';
+    });
+    h+='</div></div>';
+  });
+  return h;
+}
+function perdaDataKey(br){ const p=String(br||'').split('/'); return p.length===3 ? Number(p[2]+p[1].padStart(2,'0')+p[0].padStart(2,'0')) : 0; }
+
+/* ---------- NÍVEL 2: detalhe produto a produto ---------- */
+function perdaRenderDetalhe(){
+  const regs=perdaRegistrosSetor().filter(r=>r.data===perdaDataSel);
+  // agrupa por produto (cod|nome)
+  const porProd={};
+  regs.forEach(r=>{
+    const emb=perdaEmbalado(r.embalagem);
+    if(emb<=0) return;
+    const prod=perdaProduzido(r);
+    const k=String(r.cod||'')+'|'+(r.produto||'');
+    porProd[k]=porProd[k]||{cod:r.cod||'', nome:r.produto||'', prod:0, emb:0};
+    porProd[k].prod+=prod; porProd[k].emb+=emb;
+  });
+  const itens=Object.values(porProd).sort((a,b)=>String(a.nome).localeCompare(String(b.nome)));
+  const totProd=itens.reduce((s,x)=>s+x.prod,0), totEmb=itens.reduce((s,x)=>s+x.emb,0);
+  const totPerda=Math.max(0,totProd-totEmb), totPct=totProd>0?(totPerda/totProd*100):0;
+  let h='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;gap:10px;">'+
+    '<button onclick="perdaVoltar()" style="background:transparent;border:none;color:var(--text-accent,#2563eb);font-weight:600;cursor:pointer;padding:6px 0;font-size:14px;">‹ Datas</button>'+
+    '<div style="font-size:16px;font-weight:700;flex:1;text-align:center;">'+perdaDataSel+'</div><div style="width:44px;"></div></div>';
+  h+='<div style="display:flex;gap:8px;margin-bottom:14px;"><div style="flex:1;background:var(--surface-1,#f8fafc);border-radius:10px;padding:10px;text-align:center;"><div style="font-size:18px;font-weight:800;">'+totProd+'</div><div style="font-size:10px;color:var(--text-secondary);">produzido</div></div>'+
+    '<div style="flex:1;background:var(--surface-1,#f8fafc);border-radius:10px;padding:10px;text-align:center;"><div style="font-size:18px;font-weight:800;">'+totEmb+'</div><div style="font-size:10px;color:var(--text-secondary);">embalado</div></div>'+
+    '<div style="flex:1;background:'+(totPct<=PERDA_MARGEM?'rgba(22,163,74,.1)':'#fef2f2')+';border-radius:10px;padding:10px;text-align:center;"><div style="font-size:18px;font-weight:800;color:'+(totPct<=PERDA_MARGEM?'#16a34a':'#dc2626')+';">'+totPct.toFixed(1)+'%</div><div style="font-size:10px;color:var(--text-secondary);">perda</div></div></div>';
+  if(!itens.length){ return h+'<div style="padding:24px;text-align:center;color:var(--text-secondary);">Nenhum produto embalado neste dia.</div>'; }
+  itens.forEach(x=>{
+    const perda=Math.max(0,x.prod-x.emb);
+    const pct=x.prod>0?(perda/x.prod*100):0;
+    const excedeEmb = x.emb>x.prod; // embalou mais que produziu (dado inconsistente)
+    const dentro=pct<=PERDA_MARGEM;
+    const cor=excedeEmb?'#6b7280':(dentro?'#16a34a':(pct<=8?'#d97706':'#dc2626'));
+    const bg=excedeEmb?'#f3f4f6':(dentro?'rgba(22,163,74,.06)':(pct<=8?'#fffbeb':'#fef2f2'));
+    h+='<div style="background:'+bg+';border-radius:10px;border-left:4px solid '+cor+';padding:11px 13px;margin-bottom:6px;">'+
+      '<div style="display:flex;justify-content:space-between;align-items:center;"><div style="font-weight:600;font-size:14px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+(x.nome||('cód '+x.cod))+'</div>'+
+      '<div style="font-weight:800;color:'+cor+';font-size:15px;flex-shrink:0;margin-left:8px;">'+(excedeEmb?'⚠':pct.toFixed(1)+'%')+'</div></div>'+
+      '<div style="font-size:11px;color:var(--text-secondary);margin-top:3px;">Produzido '+x.prod+' → Embalado '+x.emb+(perda>0?' · perda '+perda+' pct':'')+(excedeEmb?' · embalado > produzido (conferir)':'')+'</div>'+
+      '</div>';
+  });
+  return h;
+}
+function perdaVoltar(){ perdaDataSel=''; renderPerdas(); }
+window.perdaVoltar=perdaVoltar;
+
+/* ══════════════════════════════════════════════════════════════════
+   PLAY / PAUSA / MANUTENÇÃO / FINALIZAR por produto no Acompanhamento
+   Coleção: acompProdStatus (id = "semana__dia__produtoNorm")
+   Guarda um array 'eventos': [{tipo,hora,min}] onde tipo ∈
+     inicio | pausa | retoma | manut_ini | manut_fim | fim
+   Calcula: tempo total, tempo de manutenção, produção líquida.
+   Finaliza sozinho quando alocado >= 90% do plano do dia.
+   ══════════════════════════════════════════════════════════════════ */
+let acPlayStatus = {}; // id -> {eventos:[...], estado}
+
+onSnapshot(collection(db,'acompProdStatus'), snap=>{
+  try{
+    acPlayStatus={};
+    snap.docs.forEach(d=> acPlayStatus[d.id]=d.data());
+    if(document.querySelector('.screen.active')?.id==='s-acomp') renderAcomp();
+  }catch(e){ console.error('acompProdStatus snap',e); }
+});
+
+function acPlayId(semana,dia,produto){ return semana+'__'+dia+'__'+_normNome(produto); }
+function _horaMin(s){ const m=String(s||'').match(/(\d{1,2}):(\d{2})/); return m?(+m[1]*60+ +m[2]):null; }
+function _fmtDur(min){ if(min==null||min<0)min=0; const h=Math.floor(min/60),mm=Math.round(min%60); return h>0?(h+'h'+(mm?mm+'min':'')):(mm+'min'); }
+
+// estado atual a partir dos eventos
+function acPlayEstado(st){
+  const ev=(st&&st.eventos)||[];
+  if(!ev.length) return 'nao_iniciado';
+  const ultimo=ev[ev.length-1].tipo;
+  if(ultimo==='fim') return 'finalizado';
+  if(ultimo==='pausa') return 'pausado';
+  if(ultimo==='manut_ini') return 'manutencao';
+  return 'produzindo'; // inicio, retoma, manut_fim
+}
+
+// calcula tempos (em minutos) a partir dos eventos; usa 'agora' como corte se ainda aberto
+function acPlayTempos(st){
+  const ev=((st&&st.eventos)||[]).map(e=>({tipo:e.tipo, m:_horaMin(e.hora)})).filter(e=>e.m!=null);
+  if(!ev.length) return {total:0, manut:0, pausa:0, liquido:0, aberto:false};
+  const fim = ev.find(e=>e.tipo==='fim');
+  const cutoff = fim ? fim.m : _horaMin(agora());
+  const ini = ev[0].m;
+  let total = cutoff - ini; if(total<0) total+=1440;
+  // soma intervalos de manutenção e de pausa
+  let manut=0, pausa=0;
+  for(let i=0;i<ev.length;i++){
+    if(ev[i].tipo==='manut_ini' || ev[i].tipo==='pausa'){
+      const fecha = ev.slice(i+1).find(e=>['manut_fim','retoma','fim'].includes(e.tipo));
+      const fm = fecha ? fecha.m : cutoff;
+      let d = fm - ev[i].m; if(d<0) d+=1440;
+      if(ev[i].tipo==='manut_ini') manut+=d; else pausa+=d;
+    }
+  }
+  const liquido = Math.max(0, total - manut - pausa);
+  return {total, manut, pausa, liquido, aberto:!fim};
+}
+
+async function acPlayEvento(semana,dia,produto,tipo){
+  const id=acPlayId(semana,dia,produto);
+  const cur=acPlayStatus[id]||{eventos:[]};
+  const eventos=(cur.eventos||[]).slice();
+  eventos.push({tipo, hora:agora()});
+  try{ await setDoc(doc(db,'acompProdStatus',id), { semana,dia,produto, eventos, timestamp:Date.now() }, {merge:true}); }
+  catch(e){ alert('Erro: '+e.message); }
+}
+window.acPlayEvento=acPlayEvento;
+
+function acPlayFinalizar(semana,dia,produto){
+  const id=acPlayId(semana,dia,produto);
+  const est=acPlayEstado(acPlayStatus[id]);
+  if(est==='nao_iniciado'){ if(!confirm('Este produto não foi iniciado. Finalizar mesmo assim?')) return; }
+  acPlayEvento(semana,dia,produto,'fim');
+}
+window.acPlayFinalizar=acPlayFinalizar;
+
+// finaliza automaticamente ao atingir 90% (chamado durante o render)
+function acPlayAutoFinalizar(semana,dia,produto,pct){
+  const id=acPlayId(semana,dia,produto);
+  const est=acPlayEstado(acPlayStatus[id]);
+  if((est==='produzindo'||est==='pausado'||est==='manutencao') && pct>=90){
+    const cur=acPlayStatus[id]||{eventos:[]};
+    const eventos=(cur.eventos||[]).slice();
+    eventos.push({tipo:'fim', hora:agora()});
+    acPlayStatus[id]={...cur, eventos}; // cache local imediato
+    setDoc(doc(db,'acompProdStatus',id), { eventos, finalizadoAuto:true, timestamp:Date.now() }, {merge:true}).catch(e=>console.error(e));
+  }
+}
+
+// HTML do controle play/tempo para um produto-dia
+function acPlayControle(semana,dia,produto,pct){
+  const id=acPlayId(semana,dia,produto);
+  acPlayAutoFinalizar(semana,dia,produto,pct);
+  const st=acPlayStatus[id]||{eventos:[]};
+  const est=acPlayEstado(st);
+  const t=acPlayTempos(st);
+  const args="'"+semana+"','"+dia+"','"+escapeJsStr(produto)+"'";
+  const btn=(txt,cor,fn,fill)=>'<button onclick="event.stopPropagation();'+fn+'" style="font-size:11px;padding:4px 10px;border-radius:6px;border:1px solid '+cor+';background:'+(fill?cor:'#fff')+';color:'+(fill?'#fff':cor)+';cursor:pointer;font-weight:600;display:inline-flex;align-items:center;gap:4px;">'+txt+'</button>';
+  const ini=st.eventos&&st.eventos.length?st.eventos[0].hora:'';
+
+  if(est==='nao_iniciado'){
+    return '<div style="margin-top:6px;">'+btn('▶ Iniciar produção','var(--mc-azul,#2563eb)',"acPlayEvento("+args+",'inicio')")+'</div>';
+  }
+  if(est==='finalizado'){
+    const fimHora=st.eventos[st.eventos.length-1].hora;
+    let resumo='✓ '+ini+' → '+fimHora+' · líquido '+_fmtDur(t.liquido);
+    const extra=[]; if(t.manut>0)extra.push('🔧 '+_fmtDur(t.manut)); if(t.pausa>0)extra.push('⏸ '+_fmtDur(t.pausa));
+    return '<div style="font-size:11px;color:#16a34a;font-weight:600;margin-top:6px;">'+resumo+(extra.length?' <span style="color:#d97706;">('+extra.join(' · ')+')</span>':'')+'</div>';
+  }
+  // em produção / pausado / manutenção — mostra status + botões conforme o estado
+  let statusLinha='', botoes='';
+  if(est==='produzindo'){
+    statusLinha='<span style="font-size:11px;color:#16a34a;font-weight:600;display:flex;align-items:center;gap:4px;"><span style="width:8px;height:8px;border-radius:50%;background:#16a34a;display:inline-block;animation:tvPulse 1.4s infinite;"></span>produzindo desde '+ini+'</span>';
+    botoes=btn('⏸ Pausar','#d97706',"acPlayEvento("+args+",'pausa')")+btn('🔧 Manutenção','#7c3aed',"acPlayEvento("+args+",'manut_ini')")+btn('■ Finalizar','#16a34a',"acPlayFinalizar("+args+")",true);
+  } else if(est==='pausado'){
+    statusLinha='<span style="font-size:11px;color:#d97706;font-weight:600;">⏸ pausado</span>';
+    botoes=btn('▶ Retomar','var(--mc-azul,#2563eb)',"acPlayEvento("+args+",'retoma')",true)+btn('■ Finalizar','#16a34a',"acPlayFinalizar("+args+")");
+  } else if(est==='manutencao'){
+    statusLinha='<span style="font-size:11px;color:#7c3aed;font-weight:600;display:flex;align-items:center;gap:4px;">🔧 em manutenção</span>';
+    botoes=btn('▶ Retomar','var(--mc-azul,#2563eb)',"acPlayEvento("+args+",'manut_fim')",true)+btn('■ Finalizar','#16a34a',"acPlayFinalizar("+args+")");
+  }
+  const infoTempo = (t.manut>0||t.pausa>0) ? '<div style="font-size:10px;color:var(--text-muted);margin-top:3px;">líquido '+_fmtDur(t.liquido)+(t.manut>0?' · 🔧 '+_fmtDur(t.manut):'')+(t.pausa>0?' · ⏸ '+_fmtDur(t.pausa):'')+'</div>' : '';
+  return '<div style="margin-top:6px;"><div style="margin-bottom:5px;">'+statusLinha+'</div><div style="display:flex;gap:6px;flex-wrap:wrap;">'+botoes+'</div>'+infoTempo+'</div>';
+}
+
+
+
 
 
 // ===================== AGENDA DE CONTAGENS (aviso 3 dias antes) =====================
@@ -15632,13 +15963,16 @@ function renderAcomp(){
     for(let i=0;i<6;i++){ const d=new Date(monW); d.setDate(monW.getDate()+i); weekBR.add(d.toLocaleDateString('pt-BR')); }
     const clsCod={}, clsNome={};
     produtosConfFirebase.forEach(p=>{ const c=(p.classe||'').trim(); if(!c) return; if(p.cod) clsCod[String(p.cod).trim()]=c; if(p.nome) clsNome[_normNome(p.nome)]=c; });
-    let tot=0; const porClasse={};
-    registros.forEach(r=>{ if(r.origem==='quadra') return; if(!weekBR.has(r.data)) return; const q=parseInt(r.qtd)||0; if(q<=0) return; tot+=q; const cls=clsCod[String(r.cod||'').trim()]||clsNome[_normNome(r.produto||'')]||'Sem classe'; porClasse[cls]=(porClasse[cls]||0)+q; });
+    // de-para peso do pacote (g) por código e por nome — para calcular KG produzidos
+    const pesoCod={}, pesoNome={};
+    produtosConfFirebase.forEach(p=>{ const g=parseFloat(p.pesoPct)||0; if(g<=0) return; if(p.cod) pesoCod[String(p.cod).trim()]=g; if(p.nome) pesoNome[_normNome(p.nome)]=g; });
+    let tot=0, totKg=0; const porClasse={};
+    registros.forEach(r=>{ if(r.origem==='quadra') return; if(!weekBR.has(r.data)) return; const q=parseInt(r.qtd)||0; if(q<=0) return; tot+=q; const cls=clsCod[String(r.cod||'').trim()]||clsNome[_normNome(r.produto||'')]||'Sem classe'; porClasse[cls]=(porClasse[cls]||0)+q; const g=pesoCod[String(r.cod||'').trim()]||pesoNome[_normNome(r.produto||'')]||0; totKg+=q*g/1000; });
     const ordem=[...classesProducao,'Sem classe'];
     const chaves=Object.keys(porClasse).sort((a,b)=>{ const ia=ordem.indexOf(a), ib=ordem.indexOf(b); return (ia<0?99:ia)-(ib<0?99:ib); });
     const chips=chaves.map(c=>{ const pc=tot>0?Math.round(porClasse[c]/tot*100):0; return '<div style="flex:1;min-width:90px;background:var(--bg-page);border-radius:8px;padding:8px 10px;text-align:center;"><div style="font-size:16px;font-weight:800;color:var(--mc-azul);">'+porClasse[c].toLocaleString('pt-BR')+'</div><div style="font-size:11px;color:var(--text-secondary);">'+c+' · '+pc+'%</div></div>'; }).join('');
     html+='<div class="card" style="margin-bottom:12px;">'+
-      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;"><div style="font-size:14px;font-weight:700;">📦 Produção total da semana</div><div style="font-size:18px;font-weight:800;color:var(--mc-verde);">'+tot.toLocaleString('pt-BR')+' <span style="font-size:12px;font-weight:600;color:var(--text-secondary);">pct</span></div></div>'+
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;"><div style="font-size:14px;font-weight:700;">📦 Produção total da semana</div><div style="text-align:right;"><div style="font-size:18px;font-weight:800;color:var(--mc-verde);">'+tot.toLocaleString('pt-BR')+' <span style="font-size:12px;font-weight:600;color:var(--text-secondary);">pct</span></div>'+(totKg>0?'<div style="font-size:13px;font-weight:700;color:var(--mc-azul);">'+totKg.toLocaleString('pt-BR',{maximumFractionDigits:0})+' <span style="font-size:11px;font-weight:600;color:var(--text-secondary);">kg</span></div>':'')+'</div></div>'+
       (chips?('<div style="display:flex;flex-wrap:wrap;gap:8px;">'+chips+'</div>'):'<div style="font-size:12px;color:var(--text-secondary);">Sem produção lançada nesta semana.</div>')+
       '<div style="font-size:10px;color:var(--text-muted);margin-top:6px;">Total real produzido (inclui acima do plano e fora do plano). Classes vêm do cadastro do produto.</div>'+
       '</div>';
@@ -15719,6 +16053,7 @@ function renderAcomp(){
         '<div style="text-align:right;white-space:nowrap;"><div style="font-size:12px;color:var(--text-secondary);">Plano: <strong>'+it.qtdPlan.toLocaleString('pt-BR')+'</strong></div>'+
         '<div style="font-size:13px;font-weight:700;color:'+si.cor+';">Feito: '+it.mostrado.toLocaleString('pt-BR')+' ('+pct+'%)</div></div>'+
         '</div>'+obsHtml+
+        acPlayControle(semana,dia,it.produto,pct)+
         '</div>';
     }).join('');
 
