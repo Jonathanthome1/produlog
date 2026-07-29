@@ -191,7 +191,11 @@
     .dot-pendente { width: 8px; height: 8px; border-radius: 50%; background: var(--mc-dourado); flex-shrink: 0; }
     .dot-laranja { width: 8px; height: 8px; border-radius: 50%; background: var(--mc-laranja); flex-shrink: 0; }
 
-    .emb-item { background: var(--bg-primary); border: 0.5px solid var(--border); border-radius: 12px; padding: 13px 14px; margin-bottom: 8px; }
+    .emb-item { background: var(--bg-primary); border: 0.5px solid var(--border); border-radius: 12px; padding: 13px 14px; margin-bottom: 8px; position: relative; }
+    .amostra-selo { position:absolute; top:8px; right:8px; width:30px; height:30px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:15px; cursor:pointer; border:2px solid #fff; box-shadow:0 1px 3px rgba(0,0,0,.2); z-index:2; user-select:none; }
+    .amostra-selo.pendente { background:#dc2626; color:#fff; animation: amostraPulse 1.6s infinite; }
+    .amostra-selo.feita { background:#16a34a; color:#fff; }
+    @keyframes amostraPulse { 0%,100%{ box-shadow:0 0 0 0 rgba(220,38,38,.5);} 50%{ box-shadow:0 0 0 5px rgba(220,38,38,0);} }
     .emb-item.done { border-left: 3px solid #4caf50; }
     .emb-item.done-parcial { border-left: 3px solid var(--mc-laranja); }
     .emb-item-header { display: flex; align-items: center; gap: 10px; }
@@ -5409,6 +5413,9 @@ function renderSelDataEmb(){
     if(status==='pendente'){const p=total-feitos;badge=`<span class="badge-pendente-emb">⏳ ${p} pendente${p>1?'s':''}</span>`;dot=`<div class="dot-pendente"></div>`;}
     else if(status==='completo')badge=`<span class="badge-completo-emb">✓ completo</span>`;
     else badge=`<span class="badge-vazio-emb">sem registros</span>`;
+    // badge de amostras pendentes (embalados sem amostra separada) — só a partir da data de início
+    const amostraPend = amostraVale(data) ? regs.filter(r=>r.embalagem&&r.embalagem.feito&&!(r.amostra&&r.amostra.separada)).length : 0;
+    if(amostraPend>0) badge+=`<span style="background:#dc2626;color:#fff;border-radius:99px;padding:3px 9px;font-size:11px;font-weight:700;white-space:nowrap;margin-left:4px;">A ${amostraPend}</span>`;
     const lbl=labelDia(idx);
     const nome=lbl?`${lbl} · ${nomeDiaSemana(d)}`:`${nomeDiaSemana(d)}`;
             const clk=status!=='vazio';
@@ -5469,13 +5476,15 @@ function renderEmbalagem(){
       </div>
       <div class="progresso-bar-wrap"><div class="progresso-bar" style="width:${pct}%;background:${barColor};"></div></div>
       <div style="font-size:12px;color:var(--text-secondary);margin-top:4px;">${feitos} de ${total} produto(s) embalados</div>
+      ${(()=>{ if(!amostraVale(dataSelEmb)) return ''; const amostraPend=regs.filter(r=>r.embalagem&&r.embalagem.feito&&!(r.amostra&&r.amostra.separada)).length; return amostraPend>0?`<div style="margin-top:8px;padding:8px 10px;background:rgba(220,38,38,.08);border:1px solid rgba(220,38,38,.25);border-radius:8px;font-size:12px;color:#b91c1c;font-weight:700;display:flex;align-items:center;gap:6px;"><span style="background:#dc2626;color:#fff;width:20px;height:20px;border-radius:5px;display:inline-flex;align-items:center;justify-content:center;font-weight:800;">A</span> ${amostraPend} amostra(s) pendente(s) para vigilância</div>`:''; })()}
     </div>
     ${regs.map(r=>{
       const emb=r.embalagem||{feito:false,qtdEmbalada:0,parciais:[]};const done=emb.feito;
       const parciais=emb.parciais||[];
       const totalParcial=Math.max(0,parciais.reduce((s,p)=>s+(p.qtd||0),0));
       return `<div class="emb-item ${done?'done':''}">
-        <div class="emb-item-header">
+        ${amostraVale(r.data)?`<div class="amostra-selo ${r.amostra&&r.amostra.separada?'feita':'pendente'}" onclick="marcarAmostra('${r.firestoreId}')" title="${r.amostra&&r.amostra.separada?('Amostra separada por '+(r.amostra.por||'')+' as '+(r.amostra.quando||'')):'Separar amostra para vigilancia'}">${r.amostra&&r.amostra.separada?'✓':'A'}</div>`:''}
+        <div class="emb-item-header" style="padding-right:36px;">
           <div class="emb-check-btn ${done?'done':''}">${done?'✓':totalParcial>0?'…':''}</div>
           <div class="emb-item-info">
             <div class="emb-item-nome">${r.produto}</div>
@@ -5554,6 +5563,27 @@ async function salvarObsEmb(fid, obs){
     await updateDoc(doc(db,'registros',fid),{'embalagem.obs':obs.trim()});
   }catch(e){console.error('Erro salvando obs emb:',e);}
 }
+
+// AMOSTRA VIGILÂNCIA: só passa a valer para produções a partir desta data (as anteriores já foram resolvidas)
+const AMOSTRA_DATA_INICIO='29/07/2026';
+function _amostraDataKey(br){ const p=String(br||'').split('/'); return p.length===3 ? Number(p[2]+p[1].padStart(2,'0')+p[0].padStart(2,'0')) : 0; }
+function amostraVale(dataBR){ return _amostraDataKey(dataBR) >= _amostraDataKey(AMOSTRA_DATA_INICIO); }
+
+// AMOSTRA VIGILÂNCIA: marca/desmarca que a amostra do produto foi separada
+async function marcarAmostra(fid){
+  const reg=registros.find(r=>r.firestoreId===fid);
+  if(!reg) return;
+  const jaFeita = reg.amostra && reg.amostra.separada;
+  try{
+    if(jaFeita){
+      if(!confirm('Desmarcar a amostra deste produto?')) return;
+      await updateDoc(doc(db,'registros',fid),{ amostra:{separada:false} });
+    } else {
+      await updateDoc(doc(db,'registros',fid),{ amostra:{separada:true, por:_demAutor(), quando:agora(), data:hoje()} });
+    }
+  }catch(e){ alert('Erro: '+e.message); }
+}
+window.marcarAmostra=marcarAmostra;
 
 async function subtrairParcialEmb(fid){
   const inp=document.getElementById('emb-parc-inp-'+fid);
