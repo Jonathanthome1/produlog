@@ -6164,6 +6164,20 @@ function voltarPresenca(){
   goTo(back[setorPresencaAtivo]||'s-inicio');
 }
 
+// Abre o formulário de presença já preenchido com um registro existente (edição)
+function editarPresenca(setor, data){
+  setorPresencaAtivo=setor;
+  dataPresencaAtiva=data;
+  colaboradoresTemp=[]; // será recarregado do registro dentro do renderPresencaForm
+  const tb=document.getElementById('presenca-form-topbar');
+  const nomes={conf:'Confeitaria 🥐',coz:'Cozinha 🍳',emb:'Embalagem 📦'};
+  const subEl=document.getElementById('presenca-form-sub'); if(subEl) subEl.textContent=nomes[setor];
+  if(tb) tb.className='topbar'+(setor==='coz'?' verde':'');
+  renderPresencaForm();
+  goTo('s-presenca-form');
+}
+window.editarPresenca=editarPresenca;
+
 function renderPresencaForm(){
   const el=document.getElementById('presenca-form-content');
   if(!el)return;
@@ -6183,7 +6197,7 @@ function renderPresencaForm(){
     </button>`).join('');
 
   el.innerHTML=`
-    ${rec?`<div class="banner banner-ok">✓ Presença já registrada neste dia — você pode editar abaixo.</div>`:''}
+    ${rec?`<div class="banner banner-ok">✓ Editando presença de <strong>${dfAtual}</strong> — altere abaixo e salve.</div>`:''}
     <div class="card">
       <div class="card-label">Selecionar data</div>
       <div class="date-btn-grid">${dateGrid}</div>
@@ -6423,7 +6437,10 @@ function renderPresencaReg(setor){
           </div>`).join('')}
         </div>`:''}
       ${rec.editadoEm?`<div style="font-size:11px;color:var(--mc-dourado);margin-top:4px;">✏️ Atualizado às ${rec.editadoEm}</div>`:''}
-      <button class="btn-del-admin" onclick="excluirPresenca('${rec.firestoreId}')" style="margin-top:6px;background:none;border:1px solid #ef9a9a;color:#c62828;font-size:12px;padding:5px 10px;border-radius:8px;cursor:pointer;font-family:inherit;">🗑 Excluir</button>
+      <div style="display:flex;gap:6px;margin-top:6px;">
+        <button onclick="editarPresenca('${setor}','${escapeJsStr(data)}')" style="background:none;border:1px solid var(--mc-azul);color:var(--mc-azul);font-size:12px;padding:5px 10px;border-radius:8px;cursor:pointer;font-family:inherit;">✏️ Editar</button>
+        <button class="btn-del-admin" onclick="excluirPresenca('${rec.firestoreId}')" style="background:none;border:1px solid #ef9a9a;color:#c62828;font-size:12px;padding:5px 10px;border-radius:8px;cursor:pointer;font-family:inherit;">🗑 Excluir</button>
+      </div>
     </div>`;
   }).join('');
 }
