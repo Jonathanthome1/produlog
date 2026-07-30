@@ -9092,7 +9092,7 @@ function renderConfMassas(){
       </div>`;
     }
     return `<div class="reg-item">
-      <div class="reg-header"><span class="reg-produto">${r.massa}</span><span style="display:flex;align-items:center;gap:6px;"><span class="reg-hora">${r.hora}</span><button onclick="iniciarEdicaoMassa('${r.firestoreId}')" style="background:none;border:1px solid var(--mc-azul);color:var(--mc-azul);font-size:11px;padding:3px 8px;border-radius:6px;cursor:pointer;font-family:inherit;">Editar</button></span></div>
+      <div class="reg-header"><span class="reg-produto">${r.massa}</span><span style="display:flex;align-items:center;gap:6px;"><span class="reg-hora">${r.hora}</span><button onclick="iniciarEdicaoMassa('${r.firestoreId}')" style="background:none;border:1px solid var(--mc-azul);color:var(--mc-azul);font-size:11px;padding:3px 8px;border-radius:6px;cursor:pointer;font-family:inherit;">Editar</button><button onclick="excluirMassa('${r.firestoreId}')" style="background:none;border:1px solid #ef9a9a;color:#c62828;font-size:11px;padding:3px 8px;border-radius:6px;cursor:pointer;font-family:inherit;">🗑</button></span></div>
       <div class="reg-detalhe">${r.qtdKg} kg${r.obs?' · <em>'+r.obs+'</em>':''}</div>
       ${r.editadoEm?`<div style="font-size:11px;color:var(--mc-dourado);margin-top:4px;">✏️ Editado: ${r.editadoEm}</div>`:''}
     </div>`;
@@ -9125,6 +9125,18 @@ async function salvarEdicaoMassa(fid){
     alert('Erro ao salvar: '+e.message);
   }
 }
+
+async function excluirMassa(fid){
+  const m=regMassas.find(r=>r.firestoreId===fid);
+  const nome=m?m.massa:'';
+  if(!confirm('Excluir o lançamento de massa'+(nome?' "'+nome+'"':'')+(m?' ('+m.qtdKg+' kg)':'')+'?\n\nEsta ação não pode ser desfeita.')) return;
+  try{
+    await deleteDoc(doc(db,'massas',fid));
+    window._massaEditandoId=null;
+    renderConfMassas();
+  } catch(e){ alert('Erro ao excluir: '+e.message); }
+}
+window.excluirMassa=excluirMassa;
 
 window.iniciarEdicaoMassa=iniciarEdicaoMassa;
 window.cancelarEdicaoMassa=cancelarEdicaoMassa;
