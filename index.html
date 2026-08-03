@@ -1445,6 +1445,14 @@
 
       <div class="mc-section-header">Ações</div>
       <div class="mc-sector-grid">
+        <button class="mc-sector-card" style="border-left:3px solid var(--mc-verde,#16a34a);grid-column:1/-1;" onclick="goTo('s-rc-painel');renderRecheioPainel()">
+          <div class="mc-sector-icon green">🎯</div>
+          <div class="mc-sector-info">
+            <div class="mc-sector-title">Painel de recheios</div>
+            <div class="mc-sector-desc">O que descer hoje e amanhã · tempo real</div>
+          </div>
+          <span class="mc-sector-arrow">›</span>
+        </button>
         <button class="mc-sector-card" onclick="goTo('s-recheio-data')">
           <div class="mc-sector-icon green">🥄</div>
           <div class="mc-sector-info">
@@ -1510,6 +1518,14 @@
   </div>
 
   <!-- RECHEIO: DATA -->
+  <div class="screen" id="s-rc-painel">
+    <div class="topbar verde" id="rc-topbar">
+      <button class="mc-header-back" onclick="goTo('s-coz-home')" style="background:none;border:none;color:#fff;font-size:22px;cursor:pointer;">‹</button>
+      <div class="topbar-title"><div class="topbar-title-main">🎯 Painel de Recheios</div><div class="topbar-title-sub" id="rc-sub">Hoje e amanhã</div></div>
+    </div>
+    <div style="flex:1;padding:16px;overflow-y:auto;" id="rc-content"></div>
+  </div>
+
   <div class="screen" id="s-recheio-data">
     <div class="mc-header">
       <button class="mc-header-back" onclick="goTo('s-coz-home')">‹</button>
@@ -4404,6 +4420,7 @@ let pinBuffer = '';
 
 let MASSAS = [];
 let RECHEIOS = [];
+let RECHEIOS_INFO = {}; // nome -> 'normal' | 'adicional'
 let PRODUTOS = [];
 
 let prodSel=null, dataSel=null, dataSelEmb=null, dataSelExp=null, tabAtiva='resumo';
@@ -4428,6 +4445,7 @@ onSnapshot(collection(db,'recheios'), snap=>{
   try{
     regRecheios=snap.docs.map(d=>({'firestoreId':d.id,...d.data()})).sort((a,b)=>(b.timestamp||0)-(a.timestamp||0));
     atualizarTela();
+    if(document.querySelector('.screen.active')?.id==='s-rc-painel' && typeof renderRecheioPainel==='function') renderRecheioPainel();
   }catch(e){ console.error('recheios snap:',e); }
 }, err=>{ console.error('recheios err:',err); });
 
@@ -4571,6 +4589,7 @@ function goTo(id){
   if(id==='s-sel-data') renderDateGrid('date-btn-grid',dataSel,'prod');
   if(id==='s-massa-data') renderDateGrid('massa-date-grid',dataMassa,'massa');
   if(id==='s-recheio-data') renderDateGrid('recheio-date-grid',dataRecheio,'recheio');
+  if(id==='s-rc-painel') renderRecheioPainel();
   if(id==='s-massa-lanc') renderMassaList();
   if(id==='s-recheio-lanc') renderRecheioList();
   if(id==='s-emb-sel-data') renderSelDataEmb();
@@ -9382,7 +9401,8 @@ function aplicarMassasRecheiosFirebase(){
   // RECHEIOS
   if(recheiosFirebase.length>0){
     RECHEIOS.length=0;
-    recheiosFirebase.forEach(r=>{ if(r.nome) RECHEIOS.push(r.nome); });
+    Object.keys(RECHEIOS_INFO).forEach(k=>delete RECHEIOS_INFO[k]);
+    recheiosFirebase.forEach(r=>{ if(r.nome){ RECHEIOS.push(r.nome); RECHEIOS_INFO[r.nome]=(r.tipo==='adicional')?'adicional':'normal'; } });
     RECHEIOS.sort();
   } else {
     if(RECHEIOS.length===0) _RECHEIOS_ORIGINAIS.forEach(r=>RECHEIOS.push(r));
@@ -10800,7 +10820,7 @@ function renderProdConfForm(){
   html+='<div class="card-label" style="color:var(--mc-laranja);">🥄 Recheio 1</div>';
   html+='<div style="display:grid;grid-template-columns:2fr 1fr;gap:10px;margin-top:8px;">';
   html+='<div><label style="font-size:11px;color:var(--text-secondary);">Tipo de recheio</label><select id="pc-tiporecheio" style="width:100%;font-size:14px;padding:8px;border-radius:6px;border:1px solid var(--border-md);"><option value="">— Sem recheio —</option>';
-  RECHEIOS.forEach(r=>{ html+='<option value="'+r.replace(/"/g,'&quot;')+'"'+(p.tipoRecheio===r?' selected':'')+'>'+r+'</option>'; });
+  html+=_optionsRecheioAgrupadas(p.tipoRecheio);
   html+='</select></div>';
   html+='<div><label style="font-size:11px;color:var(--text-secondary);">Gramatura (gr/un)</label><input type="number" id="pc-grrecheio" value="'+(p.grRecheio||'')+'" step="0.01" style="width:100%;font-size:14px;padding:8px;border-radius:6px;border:1px solid var(--border-md);" /></div>';
   html+='</div>';
@@ -10811,7 +10831,7 @@ function renderProdConfForm(){
   html+='<div class="card-label" style="color:var(--mc-roxo);">🥄 Recheio 2 (opcional)</div>';
   html+='<div style="display:grid;grid-template-columns:2fr 1fr;gap:10px;margin-top:8px;">';
   html+='<div><label style="font-size:11px;color:var(--text-secondary);">Tipo de recheio</label><select id="pc-tiporecheio2" style="width:100%;font-size:14px;padding:8px;border-radius:6px;border:1px solid var(--border-md);"><option value="">— Sem 2º recheio —</option>';
-  RECHEIOS.forEach(r=>{ html+='<option value="'+r.replace(/"/g,'&quot;')+'"'+(p.tipoRecheio2===r?' selected':'')+'>'+r+'</option>'; });
+  html+=_optionsRecheioAgrupadas(p.tipoRecheio2);
   html+='</select></div>';
   html+='<div><label style="font-size:11px;color:var(--text-secondary);">Gramatura (gr/un)</label><input type="number" id="pc-grrecheio2" value="'+(p.grRecheio2||'')+'" step="0.01" style="width:100%;font-size:14px;padding:8px;border-radius:6px;border:1px solid var(--border-md);" /></div>';
   html+='</div>';
@@ -11031,7 +11051,7 @@ function renderAdmMassasRecheios(){
       const temFicha=nIng>0;
       html+='<div style="background:var(--bg-primary);border:1px solid var(--border);border-left:3px solid '+(isFB?'var(--mc-laranja)':'var(--text-muted)')+';border-radius:var(--r-md);padding:10px 12px;margin-bottom:6px;display:flex;align-items:center;gap:10px;">';
       html+='<div style="flex:1;min-width:0;">';
-      html+='<div style="font-size:13px;font-weight:600;color:var(--text-primary);">'+(r.nome||'')+'</div>';
+      html+='<div style="font-size:13px;font-weight:600;color:var(--text-primary);">'+(r.nome||'')+(isFB?(' <span onclick="event.stopPropagation();alternarTipoRecheio(\''+r.firestoreId+'\')" style="cursor:pointer;font-size:10px;font-weight:700;padding:2px 7px;border-radius:99px;margin-left:4px;'+((r.tipo==='adicional')?'background:#0d9488;color:#fff;':'background:#e0e7ff;color:#3730a3;')+'" title="Clique para alternar">'+((r.tipo==='adicional')?'➕ Adicional':'🥄 Normal')+'</span>'):'')+'</div>';
       if(isFB){
         html+='<div style="font-size:11px;color:var(--text-secondary);margin-top:2px;">'+(r.codigo?'Cód '+r.codigo+' · ':'')+(temFicha?(nIng+' ingrediente(s) · '+(rendR?('rende '+rendR+' kg (real) · ingred. '+rend+' kg'):('rende '+rend+' kg'))):'<span style="color:var(--mc-laranja);">sem ficha técnica</span>')+'</div>';
       }
@@ -11077,9 +11097,52 @@ async function excluirMassaNome(firestoreId,nome){
 async function adicionarRecheio(){
   const nome=prompt('Nome do novo recheio:');
   if(!nome||!nome.trim()) return;
+  const ehAdicional=confirm('Este é um RECHEIO ADICIONAL (matéria-prima usada direto, ex: salsicha, requeijão, goiabada)?\n\nOK = Adicional\nCancelar = Recheio normal (produzido pela cozinha)');
   try{
-    await addDoc(collection(db,'recheiosList'),{nome:nome.trim(),atualizadoEm:agora()});
+    await addDoc(collection(db,'recheiosList'),{nome:nome.trim(), tipo:ehAdicional?'adicional':'normal', atualizadoEm:agora()});
   } catch(e){ alert('Erro: '+e.message); }
+}
+
+async function alternarTipoRecheio(firestoreId){
+  const r=recheiosFirebase.find(x=>x.firestoreId===firestoreId);
+  if(!r)return;
+  const novoTipo=(r.tipo==='adicional')?'normal':'adicional';
+  try{
+    await updateDoc(doc(db,'recheiosList',firestoreId),{tipo:novoTipo, atualizadoEm:agora()});
+  } catch(e){ alert('Erro: '+e.message); }
+}
+window.alternarTipoRecheio=alternarTipoRecheio;
+
+function _optionsRecheioAgrupadas(selecionado){
+  const esc=s=>String(s).replace(/"/g,'&quot;');
+  const normais=RECHEIOS.filter(r=>(RECHEIOS_INFO[r]||'normal')!=='adicional');
+  const adicionais=RECHEIOS.filter(r=>(RECHEIOS_INFO[r]||'normal')==='adicional');
+  // matérias-primas que ainda não estão na lista de recheios (evita duplicar)
+  const jaTem=new Set(RECHEIOS.map(r=>_normNome(r)));
+  const mps=(typeof materiasPrimas!=='undefined'?materiasPrimas:[])
+    .map(m=>m.nome).filter(n=>n && !jaTem.has(_normNome(n)))
+    .sort((a,b)=>String(a).localeCompare(String(b),'pt-BR'));
+  let h='';
+  if(normais.length){
+    h+='<optgroup label="🥄 Recheios normais">';
+    normais.forEach(r=>{ h+='<option value="'+esc(r)+'"'+(selecionado===r?' selected':'')+'>'+r+'</option>'; });
+    h+='</optgroup>';
+  }
+  if(adicionais.length){
+    h+='<optgroup label="➕ Recheios adicionais">';
+    adicionais.forEach(r=>{ h+='<option value="'+esc(r)+'"'+(selecionado===r?' selected':'')+'>'+r+'</option>'; });
+    h+='</optgroup>';
+  }
+  if(mps.length){
+    h+='<optgroup label="📦 Matérias-primas">';
+    mps.forEach(r=>{ h+='<option value="'+esc(r)+'"'+(selecionado===r?' selected':'')+'>'+r+'</option>'; });
+    h+='</optgroup>';
+  }
+  // se o valor selecionado não está em nenhum grupo (ex.: recheio antigo removido), garante que apareça
+  if(selecionado && !jaTem.has(_normNome(selecionado)) && !mps.some(m=>_normNome(m)===_normNome(selecionado))){
+    h+='<option value="'+esc(selecionado)+'" selected>'+selecionado+'</option>';
+  }
+  return h;
 }
 
 async function editarRecheioNome(firestoreId){
@@ -14657,6 +14720,142 @@ function renderCpm(){
   el.innerHTML=cpmRenderDia();
 }
 window.renderCpm=renderCpm;
+
+/* ══════════════════════════════════════════════════════════════════
+   PAINEL DE RECHEIOS — Cozinha (projeto piloto)
+   Necessidade calculada do plano da confeitaria (pacotes × g/pct do cadastro).
+   Compara com recheios lançados (coleção 'recheios', em kg).
+   FIFO de adiantamento igual à confeitaria. Tela Hoje | Amanhã.
+   Coleção de status (feito manual/play): reaproveita acompProdStatus? Não —
+   aqui o "feito" vem do próprio lançamento de recheio (kg). Sem play.
+   ══════════════════════════════════════════════════════════════════ */
+const RC_DIAS=['Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
+function _rcNorm(s){ return String(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\s+/g,' ').trim(); }
+
+// catálogo produto -> recheios (nome + gramas por pacote)
+function _rcRecheiosDe(nomeProd){
+  const p=(typeof PRODUTOS!=='undefined'?PRODUTOS:[]).find(x=>_rcNorm(x.nome)===_rcNorm(nomeProd));
+  if(!p) return [];
+  const out=[];
+  if(p.tipoRecheio && p.grRecheio>0) out.push({recheio:p.tipoRecheio, gr:p.grRecheio});
+  if(p.tipoRecheio2 && p.grRecheio2>0) out.push({recheio:p.tipoRecheio2, gr:p.grRecheio2});
+  return out;
+}
+
+// calcula, para a semana, necessidade de cada recheio por dia + cobertura FIFO
+function _rcCalcular(){
+  const semAlvo=_acSemanaSel||semanaAtual();
+  let plano=planos.find(p=>p.semana===semAlvo && (!p.setor||p.setor==='conf'));
+  if(!plano && !_acSemanaSel){ const confs=planos.filter(p=>!p.setor||p.setor==='conf'); plano=confs.sort((a,b)=>String(b.semana||'').localeCompare(String(a.semana||'')))[0]; }
+  if(!plano) return {semana:null, recheios:[], diasInfo:[]};
+  const semStr=plano.semana||semAlvo;
+  const mon=_acMondayOfWeek(semStr);
+  const diasInfo=RC_DIAS.map((d,i)=>{ const dt=new Date(mon); dt.setDate(mon.getDate()+i); dt.setHours(0,0,0,0); return {dia:d,date:dt,dateBR:_acFmtBR(dt),abrev:d.slice(0,3)}; });
+  const itens=plano.itens||{};
+
+  // 1) necessidade[recheio][dia] = kg
+  const necessidade={}; // recheioNome -> {dia:kg}
+  const nomeReal={};    // norm -> nome exibição
+  RC_DIAS.forEach(d=>{
+    (itens[d]||[]).forEach(it=>{
+      const nome=it.nome||it.produtoNome||''; const pac=parseInt(it.qtdPacotes||it.qtd)||0;
+      if(!nome||pac<=0) return;
+      _rcRecheiosDe(nome).forEach(({recheio,gr})=>{
+        const k=_rcNorm(recheio); nomeReal[k]=recheio;
+        const kg=pac*gr/1000;
+        necessidade[k]=necessidade[k]||{};
+        necessidade[k][d]=(necessidade[k][d]||0)+kg;
+      });
+    });
+  });
+
+  // 2) para cada recheio, FIFO com o que a cozinha lançou (regRecheios: {recheio,qtdKg,data})
+  const hoje0=new Date(); hoje0.setHours(0,0,0,0);
+  const recheios=Object.keys(necessidade).map(k=>{
+    const need=necessidade[k];
+    const diasPlan=diasInfo.filter(di=>(need[di.dia]||0)>0);
+    // eventos de produção (kg) por dia, ordenados
+    const feitosPorDia={};
+    (regRecheios||[]).forEach(r=>{ if(_rcNorm(r.recheio)!==k) return; const di=diasInfo.find(x=>x.dateBR===r.data); if(!di) return; feitosPorDia[di.dia]=(feitosPorDia[di.dia]||0)+(parseFloat(r.qtdKg)||0); });
+    const events=diasInfo.filter(di=>(feitosPorDia[di.dia]||0)>0).map(di=>({dia:di.dia,abrev:di.abrev,rest:feitosPorDia[di.dia]}));
+    const aloc={}, fontesDe={};
+    diasPlan.forEach(di=>{
+      let n=need[di.dia]; const fontes=[];
+      for(const ev of events){ if(n<=0)break; if(ev.rest<=0)continue; const take=Math.min(ev.rest,n); ev.rest-=take; n-=take; fontes.push({dia:ev.dia,kg:take}); }
+      aloc[di.dia]=need[di.dia]-n; fontesDe[di.dia]=fontes;
+    });
+    const sobra=events.reduce((s,e)=>s+e.rest,0);
+    const idxDe={}; diasInfo.forEach((di,idx)=>idxDe[di.dia]=idx);
+    const dias=diasPlan.map(di=>{
+      const precisa=need[di.dia], cob=aloc[di.dia]||0;
+      const pct=precisa>0?(cob/precisa*100):100;
+      const origens=[...new Set((fontesDe[di.dia]||[]).map(f=>f.dia))];
+      const idx=idxDe[di.dia];
+      const earlier=origens.filter(o=>idxDe[o]<idx);
+      const feito=cob>=0.999*precisa; // coberto
+      let status,fonteLabel='';
+      if(feito){ if(earlier.length){ status='adiantado'; fonteLabel=earlier.map(d=>d.toLowerCase()).join(', '); } else status='verde'; }
+      else { if(di.date<hoje0) status='vermelho'; else status = cob>0?'parcial':'cinza'; }
+      return {dia:di.dia,abrev:di.abrev,dateBR:di.dateBR,precisa,cob,pct:Math.round(pct),status,fonteLabel};
+    });
+    return {recheio:nomeReal[k], dias, sobra, totalPrecisa:diasPlan.reduce((s,di)=>s+need[di.dia],0)};
+  }).sort((a,b)=>a.recheio.localeCompare(b.recheio,'pt-BR'));
+
+  return {semana:semStr, semanaLabel:semanaLabel(semStr), recheios, diasInfo};
+}
+
+// qual índice de dia é "hoje" e "amanhã" (próximo dia útil da semana exibida)
+function _rcHojeAmanha(diasInfo){
+  const hoje0=new Date(); hoje0.setHours(0,0,0,0);
+  let hojeIdx=diasInfo.findIndex(di=>di.date.getTime()===hoje0.getTime());
+  if(hojeIdx<0){ // hoje fora da semana exibida: usa o primeiro dia
+    hojeIdx=0;
+  }
+  const amanhaIdx=hojeIdx+1 < diasInfo.length ? hojeIdx+1 : -1;
+  return {hojeIdx, amanhaIdx};
+}
+
+function renderRecheioPainel(){
+  const el=document.getElementById('rc-content'); if(!el) return;
+  const dados=_rcCalcular();
+  if(!dados.semana){ el.innerHTML='<div class="empty" style="padding:30px;">Nenhum plano de produção para esta semana.</div>'; return; }
+  const {hojeIdx,amanhaIdx}=_rcHojeAmanha(dados.diasInfo);
+  const diaHoje=dados.diasInfo[hojeIdx], diaAmanha=amanhaIdx>=0?dados.diasInfo[amanhaIdx]:null;
+
+  // monta, para um dia, a lista de recheios necessários
+  const colunaDe=(diaInfo)=>{
+    if(!diaInfo) return '<div style="color:var(--text-muted);font-size:13px;text-align:center;padding:20px;">—</div>';
+    const linhas=dados.recheios.map(rc=>{
+      const d=rc.dias.find(x=>x.dia===diaInfo.dia);
+      if(!d) return null;
+      return {recheio:rc.recheio, ...d};
+    }).filter(Boolean).sort((a,b)=>{ const ord={vermelho:0,cinza:1,parcial:2,adiantado:3,verde:4}; return (ord[a.status]-ord[b.status])||a.recheio.localeCompare(b.recheio); });
+    if(!linhas.length) return '<div style="color:var(--text-muted);font-size:12px;text-align:center;padding:16px;">Sem recheios para este dia.</div>';
+    return linhas.map(l=>{
+      const cor = l.status==='verde'?'#16a34a':(l.status==='adiantado'?'#0d9488':(l.status==='parcial'?'#d97706':(l.status==='vermelho'?'#dc2626':'#94a3b8')));
+      const bg  = l.status==='verde'?'rgba(22,163,74,.07)':(l.status==='adiantado'?'rgba(13,148,136,.07)':(l.status==='parcial'?'#fffbeb':(l.status==='vermelho'?'#fef2f2':'#f8fafc')));
+      const icone= l.status==='verde'?'✓':(l.status==='adiantado'?'⏩':(l.status==='vermelho'?'!':''));
+      const selo = l.status==='adiantado'?'<div style="font-size:10px;color:#0f766e;font-weight:700;">⏩ feito '+l.fonteLabel+'</div>':(l.status==='vermelho'?'<div style="font-size:10px;color:#dc2626;font-weight:700;">pendente</div>':'');
+      return '<div style="background:'+bg+';border:1px solid '+cor+'33;border-left:4px solid '+cor+';border-radius:10px;padding:10px 12px;margin-bottom:8px;">'+
+        '<div style="display:flex;justify-content:space-between;align-items:start;gap:6px;"><div style="min-width:0;"><div style="font-weight:700;font-size:14px;">'+l.recheio+'</div>'+selo+'</div>'+
+        '<div style="text-align:right;flex-shrink:0;"><div style="font-weight:800;color:'+cor+';font-size:15px;">'+(icone?icone+' ':'')+l.cob.toFixed(1)+'/'+l.precisa.toFixed(1)+'</div><div style="font-size:10px;color:var(--text-secondary);">kg</div></div></div>'+
+        '<div style="height:6px;border-radius:4px;background:#e5e7eb;overflow:hidden;margin-top:7px;"><div style="height:100%;width:'+Math.min(l.pct,100)+'%;background:'+cor+';border-radius:4px;transition:width .8s;"></div></div>'+
+        '</div>';
+    }).join('');
+  };
+
+  const cabTitulo=(lbl,diaInfo,destaque)=>'<div style="text-align:center;padding:10px;background:'+(destaque?'var(--mc-verde,#16a34a)':'#334155')+';color:#fff;border-radius:10px 10px 0 0;"><div style="font-size:13px;font-weight:800;">'+lbl+'</div><div style="font-size:11px;opacity:.9;">'+(diaInfo?diaInfo.dia+' · '+diaInfo.dateBR:'—')+'</div></div>';
+
+  el.innerHTML=
+    '<div style="font-size:12px;color:var(--text-secondary);margin-bottom:12px;padding:10px 12px;background:rgba(37,99,235,.05);border-radius:10px;">Necessidade calculada do plano da confeitaria. Conforme a cozinha lança recheio, os cards atualizam. Recheio feito a mais cobre os próximos dias automaticamente.</div>'+
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">'+
+      '<div>'+cabTitulo('HOJE',diaHoje,true)+'<div style="border:1px solid var(--border,#e2e8f0);border-top:none;border-radius:0 0 10px 10px;padding:8px;">'+colunaDe(diaHoje)+'</div></div>'+
+      '<div>'+cabTitulo('AMANHÃ',diaAmanha,false)+'<div style="border:1px solid var(--border,#e2e8f0);border-top:none;border-radius:0 0 10px 10px;padding:8px;">'+colunaDe(diaAmanha)+'</div></div>'+
+    '</div>'+
+    '<div style="margin-top:14px;"><button onclick="goTo(\'s-recheio-data\')" style="width:100%;background:var(--mc-verde,#16a34a);color:#fff;border:none;padding:13px;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;">+ Lançar recheio</button></div>';
+}
+window.renderRecheioPainel=renderRecheioPainel;
+
 
 /* ---------- estado 1: seleção de mês ---------- */
 function cpmRenderSelMes(){
