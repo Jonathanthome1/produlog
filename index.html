@@ -4346,22 +4346,25 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// NOVO: Carregar senhas dos setores do Firebase
-async function carregarSetoresDoFirebase(){
+// Carregar senhas dos setores do Firebase EM TEMPO REAL (atualiza sozinho em todos os aparelhos)
+function escutarSetoresDoFirebase(){
   try {
-    const snap = await getDoc(doc(db, 'configuracoes', 'setores'));
-    if(snap.exists()){
-      const dados = snap.data();
-      if(dados.pins){
-        PINS = {...PINS, ...dados.pins}; // Mesclar com padrão
-        console.log('✅ Senhas carregadas do Firebase');
-      }
-    } else {
-      console.log('⚠️ Documento de setores não existe, criando...');
-      await inicializarSetoresNoFirebase();
-    }
+    onSnapshot(doc(db, 'configuracoes', 'setores'), snap=>{
+      try{
+        if(snap.exists()){
+          const dados = snap.data();
+          if(dados && dados.pins){
+            PINS = {...PINS, ...dados.pins}; // aplica as senhas do Firebase por cima do padrão
+            console.log('✅ Senhas sincronizadas do Firebase');
+          }
+        } else {
+          console.log('⚠️ Documento de setores não existe, criando...');
+          inicializarSetoresNoFirebase();
+        }
+      }catch(e){ console.warn('setores snap erro:', e.message); }
+    }, err=>{ console.warn('setores listener erro:', err.message); });
   } catch(e) {
-    console.warn('⚠️ Erro ao carregar setores:', e.message);
+    console.warn('⚠️ Erro ao escutar setores:', e.message);
   }
 }
 
@@ -4383,11 +4386,8 @@ async function inicializarSetoresNoFirebase(){
 async function atualizarSenhaSetor(setor, novaSenha){
   try {
     const docRef = doc(db, 'configuracoes', 'setores');
-    const snap = await getDoc(docRef);
-    const dados = snap.data() || {pins:{}};
-    dados.pins[setor] = novaSenha;
-    dados.atualizado = new Date().toISOString();
-    await setDoc(docRef, dados);
+    // atualiza APENAS o pin daquele setor, sem tocar nos demais (evita sobrescrever)
+    await setDoc(docRef, { pins: { [setor]: novaSenha }, atualizado: new Date().toISOString() }, { merge:true });
     PINS[setor] = novaSenha;
     console.log('✅ Senha do setor', setor, 'atualizada');
     return true;
@@ -4397,8 +4397,8 @@ async function atualizarSenhaSetor(setor, novaSenha){
   }
 }
 
-// Carregar setores quando a página abre
-setTimeout(() => carregarSetoresDoFirebase(), 1000);
+// Escutar setores em tempo real quando a página abre
+escutarSetoresDoFirebase();
 
 // PINs por setor
 let CONTAGEM_ITENS = {};
