@@ -15182,7 +15182,8 @@ onSnapshot(collection(db,'acompProdStatus'), snap=>{
   }catch(e){ console.error('acompProdStatus snap',e); }
 });
 
-function acPlayId(semana,dia,produto){ return semana+'__'+dia+'__'+_normNome(produto); }
+function _acSafeSeg(s){ return String(s||'').replace(/[\/\\.#$\[\]]/g,'-').replace(/\s+/g,' ').trim(); }
+function acPlayId(semana,dia,produto){ return _acSafeSeg(semana)+'__'+_acSafeSeg(dia)+'__'+_acSafeSeg(_normNome(produto)); }
 function _horaMin(s){ const m=String(s||'').match(/(\d{1,2}):(\d{2})/); return m?(+m[1]*60+ +m[2]):null; }
 function _fmtDur(min){ if(min==null||min<0)min=0; const h=Math.floor(min/60),mm=Math.round(min%60); return h>0?(h+'h'+(mm?mm+'min':'')):(mm+'min'); }
 
