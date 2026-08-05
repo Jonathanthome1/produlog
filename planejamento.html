@@ -271,7 +271,7 @@ textarea{width:100%;height:300px;padding:12px;border:1px solid var(--border);bor
 
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
-import { getFirestore, collection, doc, setDoc, onSnapshot, getDocs, getDoc, deleteDoc } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
+import { getFirestore, collection, doc, setDoc, onSnapshot, getDocs, getDoc, deleteDoc, writeBatch } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
 
 const app = initializeApp({
   apiKey: "AIzaSyDfFT80SMTsSMml0BpWYLDBrxrFGFG5Jk78",
@@ -1664,20 +1664,45 @@ window.processarEstoque = async () => {
 
 window.limparTudo = async () => {
   if(!confirm('Apagar os dados de planejamento (vendas, estoque, quantidades)?\n\nA reclassificação de setor (Quadra/Confeitaria) que você fez será PRESERVADA.')) return;
-  const snapshot = await getDocs(collection(db, 'planejProdutos'));
-  const batch = [];
-  snapshot.docs.forEach(d => {
-    const setor = d.data().setor; // preserva o setor reclassificado manualmente
-    if(setor){
-      // mantém só o documento com o setor; apaga os dados de planejamento
-      batch.push(setDoc(d.ref, { cod: d.id, setor }, { merge:false }));
-    } else {
-      // sem override de setor: pode apagar normalmente
-      batch.push(deleteDoc(d.ref));
+  const btn = document.querySelector('button[onclick="limparTudo()"]');
+  const txtOrig = btn ? btn.textContent : '';
+  if(btn){ btn.disabled = true; btn.textContent = '⏳ Limpando...'; }
+  try {
+    const snapshot = await getDocs(collection(db, 'planejProdutos'));
+    const docs = snapshot.docs;
+    // processa em lotes de 450 (limite do writeBatch é 500) usando batch ATÔMICO
+    let processados = 0;
+    for(let i=0; i<docs.length; i+=450){
+      const lote = docs.slice(i, i+450);
+      const batch = writeBatch(db);
+      lote.forEach(d => {
+        const setor = d.data().setor; // preserva reclassificação manual
+        if(setor){
+          batch.set(d.ref, { cod: d.id, setor }); // sobrescreve: mantém só cod+setor
+        } else {
+          batch.delete(d.ref);
+        }
+      });
+      await batch.commit(); // se falhar, cai no catch — nada de "sucesso" falso
+      processados += lote.length;
     }
-  });
-  await Promise.all(batch);
-  alert('✓ Dados removidos! Reclassificações de setor preservadas.');
+    // atualiza o estado LOCAL na hora (não espera o onSnapshot, que pode ter latência)
+    produtos = produtos
+      .map(p => {
+        if(p.setor){ return { id:p.id, cod:p.cod||p.id, setor:p.setor }; } // manteve só cod+setor
+        return null; // sem setor: foi apagado
+      })
+      .filter(Boolean);
+    // limpa também os dados derivados que alimentam a tela
+    if(typeof plano === 'object' && plano) Object.keys(plano).forEach(k => delete plano[k]);
+    render(); // re-renderiza imediatamente
+    alert('✓ '+processados+' produto(s) limpos! Reclassificações de setor preservadas.');
+  } catch(err){
+    console.error('Erro ao limpar:', err);
+    alert('⚠️ Não foi possível limpar tudo: '+err.message+'\n\nTente de novo. Nada foi perdido pela metade — o processo é atômico por lote.');
+  } finally {
+    if(btn){ btn.disabled = false; btn.textContent = txtOrig; }
+  }
 };
 
 ['mult','order','filtro','filtroClasse','filtroDia','busca'].forEach(id => {
