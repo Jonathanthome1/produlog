@@ -1492,7 +1492,7 @@ window.moverProduto = async (cod) => {
   const nomeDestino = destino === 'quadra' ? 'Quadra' : 'Confeitaria';
   if(!confirm('Mover "'+p.desc+'" (cód '+cod+')\n\nde '+nomeOrigem+'  →  '+nomeDestino+'\n\nO produto sai do plano da '+nomeOrigem+' e passa pro da '+nomeDestino+'. As quantidades já preenchidas vão junto.')) return;
   try {
-    await setDoc(doc(db, 'planejProdutos', String(p.id || cod)), {setor: destino}, {merge: true});
+    await setDoc(doc(db, 'planejProdutos', String(cod)), {setor: destino}, {merge: true});
     p.setor = destino; // refletir na hora (o onSnapshot também confirma depois)
     fecharModal();
     render();
@@ -1663,12 +1663,21 @@ window.processarEstoque = async () => {
 };
 
 window.limparTudo = async () => {
-  if(!confirm('Apagar TODOS os dados?')) return;
+  if(!confirm('Apagar os dados de planejamento (vendas, estoque, quantidades)?\n\nA reclassificação de setor (Quadra/Confeitaria) que você fez será PRESERVADA.')) return;
   const snapshot = await getDocs(collection(db, 'planejProdutos'));
   const batch = [];
-  snapshot.docs.forEach(d => batch.push(deleteDoc(d.ref)));
+  snapshot.docs.forEach(d => {
+    const setor = d.data().setor; // preserva o setor reclassificado manualmente
+    if(setor){
+      // mantém só o documento com o setor; apaga os dados de planejamento
+      batch.push(setDoc(d.ref, { cod: d.id, setor }, { merge:false }));
+    } else {
+      // sem override de setor: pode apagar normalmente
+      batch.push(deleteDoc(d.ref));
+    }
+  });
   await Promise.all(batch);
-  alert('✓ Dados removidos!');
+  alert('✓ Dados removidos! Reclassificações de setor preservadas.');
 };
 
 ['mult','order','filtro','filtroClasse','filtroDia','busca'].forEach(id => {
