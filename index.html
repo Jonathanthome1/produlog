@@ -2872,6 +2872,15 @@
         <span class="mc-sector-arrow">›</span>
       </button>
 
+      <button class="mc-sector-card" style="border-left:3px solid var(--mc-roxo,#7c3aed);margin-bottom:10px;" onclick="_cdcModo='lista';goTo('s-cdc');renderCDC()">
+        <div class="mc-sector-icon" style="background:#ede9fe;">📊</div>
+        <div class="mc-sector-info">
+          <div class="mc-sector-title">Controle Diário Confeitaria</div>
+          <div class="mc-sector-desc">Massa, recheio, produzido, embalado e quebra por dia</div>
+        </div>
+        <span class="mc-sector-arrow">›</span>
+      </button>
+
       <button class="mc-sector-card" style="border-left:3px solid var(--mc-azul,#2563eb);margin-bottom:10px;" onclick="goTo('s-cpm');renderCpm()">
         <div class="mc-sector-icon" style="background:#dbeafe;">🏭</div>
         <div class="mc-sector-info">
@@ -3844,6 +3853,19 @@
     <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;" id="perdas-content"></div>
   </div>
 
+  <div class="screen" id="s-cdc">
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="goTo('s-adm-hub')">‹</button>
+      <div class="mc-brand"><div class="mc-brand-logo">MC</div><div class="mc-brand-text"><div class="mc-brand-name">Monte Castelo</div><div class="mc-brand-sub">Admin</div></div></div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info"><div class="mc-page-title">📊 Controle Diário Confeitaria</div><div class="mc-page-sub">Resumo por dia</div></div>
+    </div>
+    <div style="flex:1;padding:16px;background:var(--bg-page);overflow-y:auto;" id="cdc-content"></div>
+    <div id="cdc-modal" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:1000;align-items:center;justify-content:center;padding:16px;" onclick="if(event.target===this)_cdcFecharModal()">
+      <div style="background:#fff;border-radius:16px;max-width:440px;width:100%;max-height:88vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.3);" id="cdc-modal-content"></div>
+    </div>
+  </div>
+
   <div class="screen" id="s-cpm">
     <div class="mc-header">
       <button class="mc-header-back" onclick="goTo('s-adm-hub')">‹</button>
@@ -4354,7 +4376,10 @@ function escutarSetoresDoFirebase(){
         if(snap.exists()){
           const dados = snap.data();
           if(dados && dados.pins){
-            PINS = {...PINS, ...dados.pins}; // aplica as senhas do Firebase por cima do padrão
+            // aplica só os pins válidos (não-vazios) do Firebase, preservando o padrão para os vazios
+            const limpos={};
+            Object.keys(dados.pins).forEach(k=>{ const v=dados.pins[k]; if(v!==null && v!==undefined && String(v).trim()!=='') limpos[k]=String(v).trim(); });
+            PINS = {...PINS, ...limpos};
             console.log('✅ Senhas sincronizadas do Firebase');
           }
         } else {
@@ -4566,7 +4591,9 @@ function abrirPin(setor){
 function verificarPin(){
   const inp=document.getElementById('pin-input');
   const val=(inp?inp.value:'').trim();
-  if(val===PINS[setorAtivo]){
+  // senha mestra de emergência do admin (sempre funciona, mesmo que o Firebase esteja com valor errado)
+  const ehAdminMestra = (setorAtivo==='admin' && val==='250406');
+  if(val===PINS[setorAtivo] || ehAdminMestra){
     window.setorAtual=setorAtivo; // Para validações de permissão
     if(setorAtivo==='admin'){ adminMode=true; window.adminMode=true; document.body.classList.add('admin-mode'); }
     else { adminMode=false; window.adminMode=false; document.body.classList.remove('admin-mode'); }
@@ -4625,6 +4652,7 @@ function goTo(id){
   if(id==='s-la-dias') renderLaDias();
   if(id==='s-la-ajustes') renderLaAjustes();
   if(id==='s-cpm') renderCpm();
+  if(id==='s-cdc') renderCDC();
   if(id==='s-perdas') renderPerdas();
   if(id==='s-carreg-edit') renderCarregEdit();
   if(id==='s-carreg-conf') renderCarregConf();
@@ -14855,6 +14883,387 @@ function renderRecheioPainel(){
     '<div style="margin-top:14px;"><button onclick="goTo(\'s-recheio-data\')" style="width:100%;background:var(--mc-verde,#16a34a);color:#fff;border:none;padding:13px;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;">+ Lançar recheio</button></div>';
 }
 window.renderRecheioPainel=renderRecheioPainel;
+
+/* ══════════════════════════════════════════════════════════════════
+   CONTROLE DIÁRIO CONFEITARIA — resumo por dia (admin)
+   Uma linha por produto: massa+kg, recheio1+kg, recheio2+kg,
+   produzido, embalado, quebra. Navegação entre dias + export Excel.
+   Tudo calculado dos registros + cadastro (PRODUTOS). Só visualização.
+   ══════════════════════════════════════════════════════════════════ */
+let _cdcDataSel=''; // 'dd/mm/aaaa'
+let _cdcModo='lista'; // 'lista' (visão de dias) ou 'dia' (detalhe de um dia)
+
+// listener dos dias conferidos (coleção cdcConferidos)
+onSnapshot(collection(db,'cdcConferidos'), snap=>{
+  try{
+    _cdcConferidos={};
+    snap.docs.forEach(d=>{ if(d.data().conferido) _cdcConferidos[d.data().data||d.id]=true; });
+    if(document.querySelector('.screen.active')?.id==='s-cdc' && typeof renderCDC==='function') renderCDC();
+  }catch(e){ console.error('cdcConferidos snap',e); }
+});
+
+async function _cdcMarcarConferido(data){
+  const id=String(data).replace(/\//g,'-');
+  const jaConf=!!_cdcConferidos[data];
+  try{
+    if(jaConf){
+      if(!confirm('Desmarcar a conferência do dia '+data+'?')) return;
+      await setDoc(doc(db,'cdcConferidos',id),{data, conferido:false, quando:agora()},{merge:true});
+    } else {
+      await setDoc(doc(db,'cdcConferidos',id),{data, conferido:true, por:_demAutor(), quando:agora(), quandoData:hoje()},{merge:true});
+    }
+  }catch(e){ alert('Erro: '+e.message); }
+}
+window._cdcMarcarConferido=_cdcMarcarConferido;
+
+function _cdcAbrirDia(data){ _cdcDataSel=data; _cdcModo='dia'; renderCDC(); }
+function _cdcVoltarLista(){ _cdcModo='lista'; renderCDC(); }
+window._cdcAbrirDia=_cdcAbrirDia;
+window._cdcVoltarLista=_cdcVoltarLista;
+
+function _cdcNorm(s){ return String(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\s+/g,' ').trim(); }
+function _cdcProdInfo(nome, cod){
+  const arr=(typeof PRODUTOS!=='undefined'?PRODUTOS:[]);
+  let p=cod?arr.find(x=>String(x.cod||'').trim()===String(cod).trim()):null;
+  if(!p) p=arr.find(x=>_cdcNorm(x.nome)===_cdcNorm(nome));
+  return p||{};
+}
+function _cdcEmbalado(e){
+  e=e||{};
+  if(Array.isArray(e.parciais) && e.parciais.length) return Math.max(0, e.parciais.reduce((s,p)=>s+(p.qtd||0),0));
+  return e.feito ? (e.qtdEmbalada||0) : 0;
+}
+// datas da confeitaria (registros não-quadra) que têm produção, ordenadas desc
+function _cdcDatasDisponiveis(){
+  const set={};
+  (registros||[]).forEach(r=>{ if(r.origem==='quadra') return; if((parseInt(r.qtd)||0)<=0 && _cdcEmbalado(r.embalagem)<=0) return; if(r.data) set[r.data]=true; });
+  return Object.keys(set).sort((a,b)=>_cdcKey(b)-_cdcKey(a));
+}
+function _cdcKey(br){ const p=String(br||'').split('/'); return p.length===3?Number(p[2]+p[1].padStart(2,'0')+p[0].padStart(2,'0')):0; }
+
+// monta as linhas do dia selecionado
+function _cdcLinhas(data){
+  const regs=(registros||[]).filter(r=>r.origem!=='quadra' && r.data===data);
+  // agrupa por produto (cod|nome)
+  const map={};
+  regs.forEach(r=>{
+    const k=String(r.cod||'')+'|'+_cdcNorm(r.produto||'');
+    if(!map[k]){
+      const info=_cdcProdInfo(r.produto, r.cod);
+      map[k]={cod:r.cod||'', nome:r.produto||'', tipoMassa:info.tipoMassa||'', grMassa:info.grMassa||0,
+              tipoRecheio:info.tipoRecheio||'', grRecheio:info.grRecheio||0,
+              tipoRecheio2:info.tipoRecheio2||'', grRecheio2:info.grRecheio2||0,
+              prod:0, emb:0,
+              // real usado (somado dos registros) e esperado (do quebra gravado)
+              massaReal:0, massaEsp:0, r1Real:0, r1Esp:0, r2Real:0, r2Esp:0,
+              temEmbPendente:false};
+    }
+    const m=map[k];
+    m.prod += parseInt(r.qtd)||0;
+    m.emb  += _cdcEmbalado(r.embalagem);
+    if(!(r.embalagem && r.embalagem.feito)) m.temEmbPendente=true;
+    // soma massa/recheio esperado e real do objeto quebra (o app já grava)
+    const q=r.quebra||{};
+    m.massaReal += (+q.massaReal||+r.massa||0); m.massaEsp += (+q.massaEsp||0);
+    m.r1Real += (+q.r1Real||+r.r1||0); m.r1Esp += (+q.r1Esp||0);
+    m.r2Real += (+q.r2Real||+r.r2||0); m.r2Esp += (+q.r2Esp||0);
+  });
+  return Object.values(map).map(l=>{
+    // kg mostrados na tabela = o que foi REALMENTE lançado na produção (bate com o modal)
+    const kgMassa=l.massaReal;
+    const kgR1=l.r1Real;
+    const kgR2=l.r2Real;
+    const quebra=l.prod-l.emb; // produzido - embalado (pode ser negativo)
+    // % de quebra de embalagem (absoluta) para o semáforo de 6%
+    const pctEmb = l.prod>0 ? Math.abs(quebra)/l.prod*100 : 0;
+    // quebra de consumo (teórico × real) por insumo — em %
+    const desvio=(real,esp)=> esp>0 ? (real-esp)/esp*100 : 0;
+    const devMassa=desvio(l.massaReal,l.massaEsp);
+    const devR1=desvio(l.r1Real,l.r1Esp);
+    const devR2=desvio(l.r2Real,l.r2Esp);
+    const consumoForaFaixa = (Math.abs(devMassa)>6 || Math.abs(devR1)>6 || Math.abs(devR2)>6);
+    const consumoGrave = (Math.abs(devMassa)>25 || Math.abs(devR1)>25 || Math.abs(devR2)>25);
+    return {...l, kgMassa, kgR1, kgR2, quebra, pctEmb, devMassa, devR1, devR2, consumoForaFaixa, consumoGrave};
+  }).sort((a,b)=>String(a.nome).localeCompare(String(b.nome),'pt-BR'));
+}
+
+// status de um dia (para a lista): embalado completo? quebra? conferido?
+function _cdcStatusDia(data){
+  const linhas=_cdcLinhas(data);
+  const faltaEmbalar = linhas.some(l=>l.temEmbPendente || l.emb<l.prod);
+  // produtos com quebra: embalagem >6% OU consumo (massa/recheio) fora da faixa de 6%
+  const comQuebra = linhas.filter(l=>l.pctEmb>6 || l.consumoForaFaixa);
+  const conferido = !!(_cdcConferidos[data]);
+  let cor, rotulo;
+  if(faltaEmbalar){ cor='#94a3b8'; rotulo='falta embalar'; }
+  else if(comQuebra.length){ cor='#d97706'; rotulo=comQuebra.length+' com quebra >6%'; }
+  else { cor='#16a34a'; rotulo='tudo ok'; }
+  return {cor, rotulo, faltaEmbalar, qtdQuebra:comQuebra.length, conferido, nProdutos:linhas.length};
+}
+let _cdcConferidos={}; // data -> true (carregado do Firebase)
+
+function renderCDC(){
+  const el=document.getElementById('cdc-content'); if(!el) return;
+  const datas=_cdcDatasDisponiveis();
+  if(!datas.length){ el.innerHTML='<div class="empty" style="padding:30px;">Nenhuma produção de confeitaria registrada.</div>'; return; }
+  if(_cdcModo==='lista'){ el.innerHTML=_cdcRenderLista(datas); return; }
+  if(!_cdcDataSel || !datas.includes(_cdcDataSel)) _cdcDataSel=datas[0];
+  el.innerHTML=_cdcRenderDia(datas);
+}
+window.renderCDC=renderCDC;
+
+/* ---------- LISTA DE DIAS (com semáforo + conferido clicável) ---------- */
+function _cdcRenderLista(datas){
+  let h='<div style="font-size:12px;color:var(--text-secondary);margin-bottom:12px;">Toque num dia para ver o relatório. O botão de conferido pode ser marcado aqui mesmo.</div>';
+  datas.forEach(data=>{
+    const st=_cdcStatusDia(data);
+    // situação em texto + selo
+    let selo, seloBg, seloCor;
+    if(st.faltaEmbalar){ selo='⏳ falta embalar'; seloBg='#f1f5f9'; seloCor='#475569'; }
+    else if(st.qtdQuebra){ selo='⚠ '+st.qtdQuebra+' com quebra >6%'; seloBg='#fef3c7'; seloCor='#b45309'; }
+    else { selo='✓ tudo embalado, sem quebra'; seloBg='rgba(22,163,74,.12)'; seloCor='#15803d'; }
+    // fundo do card: verde FORTE quando conferido
+    const cardBg = st.conferido ? '#16a34a' : '#fff';
+    const cardTxt = st.conferido ? '#fff' : 'var(--text-primary,#1e293b)';
+    const cardBorda = st.conferido ? '#15803d' : 'var(--border,#e2e8f0)';
+    h+='<div style="border:1px solid '+cardBorda+';border-left:5px solid '+(st.conferido?'#15803d':st.cor)+';border-radius:12px;margin-bottom:10px;background:'+cardBg+';overflow:hidden;">'+
+      // linha clicável (abre o dia)
+      '<div onclick="_cdcAbrirDia(\''+escapeJsStr(data)+'\')" style="display:flex;align-items:center;gap:12px;padding:13px 14px;cursor:pointer;">'+
+        '<div style="width:12px;height:12px;border-radius:50%;background:'+(st.conferido?'#fff':st.cor)+';flex-shrink:0;"></div>'+
+        '<div style="flex:1;min-width:0;">'+
+          '<div style="font-weight:800;font-size:15px;color:'+cardTxt+';">📅 '+data+(st.conferido?' <span style="font-size:12px;font-weight:700;">· CONFERIDO ✓</span>':'')+'</div>'+
+          '<div style="font-size:12px;margin-top:3px;"><span style="background:'+(st.conferido?'rgba(255,255,255,.2)':seloBg)+';color:'+(st.conferido?'#fff':seloCor)+';padding:2px 9px;border-radius:99px;font-weight:700;">'+selo+'</span> <span style="color:'+(st.conferido?'rgba(255,255,255,.85)':'var(--text-secondary)')+';font-size:11px;">'+st.nProdutos+' produto(s)</span></div>'+
+        '</div>'+
+        (st.qtdQuebra?'<span style="background:'+(st.conferido?'rgba(255,255,255,.22)':'#fef2f2')+';color:'+(st.conferido?'#fff':'#dc2626')+';border:1px solid '+(st.conferido?'rgba(255,255,255,.4)':'#fecaca')+';padding:4px 9px;border-radius:99px;font-weight:800;font-size:13px;white-space:nowrap;flex-shrink:0;">⚠ '+st.qtdQuebra+'</span>':'')+
+        '<span style="color:'+(st.conferido?'rgba(255,255,255,.7)':'#cbd5e1')+';font-size:18px;">›</span>'+
+      '</div>'+
+      // botão conferido direto na lista
+      '<div style="padding:0 14px 12px;">'+
+        '<button onclick="event.stopPropagation();_cdcMarcarConferido(\''+escapeJsStr(data)+'\')" style="width:100%;background:'+(st.conferido?'rgba(255,255,255,.2)':'#fff')+';color:'+(st.conferido?'#fff':'#16a34a')+';border:1px solid '+(st.conferido?'rgba(255,255,255,.5)':'#16a34a')+';padding:8px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;">'+(st.conferido?'✓ Conferido (toque para desmarcar)':'Marcar como conferido')+'</button>'+
+      '</div>'+
+      '</div>';
+  });
+  return h;
+}
+
+/* ---------- DETALHE DO DIA ---------- */
+function _cdcRenderDia(datas){
+  const idx=datas.indexOf(_cdcDataSel);
+  const linhas=_cdcLinhas(_cdcDataSel);
+  const st=_cdcStatusDia(_cdcDataSel);
+  const tot=linhas.reduce((a,l)=>({kgMassa:a.kgMassa+l.kgMassa,kgR1:a.kgR1+l.kgR1,kgR2:a.kgR2+l.kgR2,prod:a.prod+l.prod,emb:a.emb+l.emb,quebra:a.quebra+(l.prod-l.emb)}),{kgMassa:0,kgR1:0,kgR2:0,prod:0,emb:0,quebra:0});
+  const kg=n=>n&&Math.abs(n)>0?n.toLocaleString('pt-BR',{maximumFractionDigits:2}):'—';
+
+  // topo: voltar + navegação
+  let h='<button onclick="_cdcVoltarLista()" style="background:transparent;border:none;color:var(--text-accent,#2563eb);font-weight:600;cursor:pointer;padding:0 0 10px;font-size:14px;">‹ Todos os dias</button>';
+  h+='<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:12px;">'+
+    '<button onclick="_cdcNav(1)" '+(idx>=datas.length-1?'disabled':'')+' style="background:var(--surface-2,#f1f5f9);border:1px solid var(--border,#e2e8f0);border-radius:8px;padding:9px 12px;cursor:pointer;font-size:14px;'+(idx>=datas.length-1?'opacity:.4;':'')+'">‹ anterior</button>'+
+    '<div style="text-align:center;"><div style="font-size:16px;font-weight:800;">📅 '+_cdcDataSel+'</div><div style="font-size:11px;color:var(--text-secondary);">'+linhas.length+' produto(s)</div></div>'+
+    '<button onclick="_cdcNav(-1)" '+(idx<=0?'disabled':'')+' style="background:var(--surface-2,#f1f5f9);border:1px solid var(--border,#e2e8f0);border-radius:8px;padding:9px 12px;cursor:pointer;font-size:14px;'+(idx<=0?'opacity:.4;':'')+'">próximo ›</button>'+
+    '</div>';
+  // botão conferido + excel
+  h+='<div style="display:flex;gap:8px;margin-bottom:12px;">'+
+    '<button onclick="_cdcMarcarConferido(\''+escapeJsStr(_cdcDataSel)+'\')" style="flex:1;background:'+(st.conferido?'#16a34a':'#fff')+';color:'+(st.conferido?'#fff':'#16a34a')+';border:1px solid #16a34a;padding:11px;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;">'+(st.conferido?'✓ Dia conferido':'Marcar como conferido')+'</button>'+
+    '<button onclick="_cdcExcel()" style="flex:1;background:#334155;color:#fff;border:none;padding:11px;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;">⬇ Excel</button>'+
+    '</div>';
+
+  // tabela
+  h+='<div style="overflow-x:auto;border:1px solid var(--border,#e2e8f0);border-radius:10px;">';
+  h+='<table style="border-collapse:collapse;width:100%;font-size:12px;white-space:nowrap;min-width:680px;">';
+  h+='<thead><tr style="background:#334155;color:#fff;">'+
+    ['Produto','Massa','kg Massa','Recheio','kg Rec.','Recheio AD','kg Rec.AD','Prod.','Emb.','Quebra','Conf.']
+    .map((c,i)=>'<th style="padding:8px 10px;text-align:'+(i===0?'left':'center')+';font-weight:700;position:'+(i===0?'sticky':'static')+';left:0;'+(i===0?'background:#334155;z-index:1;':'')+'">'+c+'</th>').join('')+'</tr></thead><tbody>';
+  linhas.forEach((l,i)=>{
+    const bg=i%2?'#f8fafc':'#fff';
+    const qAbs=Math.abs(l.quebra);
+    const qCor=qAbs===0?'#16a34a':(l.pctEmb>6?'#dc2626':'#d97706');
+    // botão de conferência de consumo (só aparece se fora da faixa de 6%; vermelho se grave >25%)
+    const btnConf = l.consumoForaFaixa ? '<button onclick="_cdcDetalheConsumo(\''+escapeJsStr(l.cod)+'\',\''+escapeJsStr(l.nome)+'\')" style="background:'+(l.consumoGrave?'#dc2626':'#fef3c7')+';border:1px solid '+(l.consumoGrave?'#b91c1c':'#d97706')+';color:'+(l.consumoGrave?'#fff':'#b45309')+';font-size:14px;padding:2px 8px;border-radius:6px;cursor:pointer;font-weight:800;" title="Ver conferência de consumo">⚠</button>' : '<span style="color:#cbd5e1;">—</span>';
+    h+='<tr style="background:'+bg+';border-top:1px solid var(--border,#f1f5f9);">'+
+      '<td style="padding:8px 10px;font-weight:600;position:sticky;left:0;background:'+bg+';">'+l.nome+'</td>'+
+      '<td style="padding:8px 10px;text-align:center;color:var(--text-secondary);">'+(l.tipoMassa||'—')+'</td>'+
+      '<td style="padding:8px 10px;text-align:center;font-weight:600;">'+kg(l.kgMassa)+'</td>'+
+      '<td style="padding:8px 10px;text-align:center;color:var(--text-secondary);">'+(l.tipoRecheio||'—')+'</td>'+
+      '<td style="padding:8px 10px;text-align:center;">'+kg(l.kgR1)+'</td>'+
+      '<td style="padding:8px 10px;text-align:center;color:var(--text-secondary);">'+(l.tipoRecheio2||'—')+'</td>'+
+      '<td style="padding:8px 10px;text-align:center;">'+kg(l.kgR2)+'</td>'+
+      '<td style="padding:8px 10px;text-align:center;font-weight:700;">'+l.prod+'</td>'+
+      '<td style="padding:8px 10px;text-align:center;font-weight:700;">'+l.emb+'</td>'+
+      '<td style="padding:8px 10px;text-align:center;font-weight:800;color:'+qCor+';">'+(l.quebra!==0?(l.quebra>0?'':'+')+(-l.quebra===0?0:l.quebra):'0')+'</td>'+
+      '<td style="padding:8px 10px;text-align:center;">'+btnConf+'</td>'+
+      '</tr>';
+  });
+  h+='<tr style="background:#e2e8f0;font-weight:800;border-top:2px solid #94a3b8;">'+
+    '<td style="padding:9px 10px;position:sticky;left:0;background:#e2e8f0;">TOTAL</td>'+
+    '<td></td><td style="padding:9px 10px;text-align:center;">'+kg(tot.kgMassa)+'</td>'+
+    '<td></td><td style="padding:9px 10px;text-align:center;">'+kg(tot.kgR1)+'</td>'+
+    '<td></td><td style="padding:9px 10px;text-align:center;">'+kg(tot.kgR2)+'</td>'+
+    '<td style="padding:9px 10px;text-align:center;">'+tot.prod+'</td>'+
+    '<td style="padding:9px 10px;text-align:center;">'+tot.emb+'</td>'+
+    '<td style="padding:9px 10px;text-align:center;">'+tot.quebra+'</td><td></td>'+
+    '</tr>';
+  h+='</tbody></table></div>';
+
+  // ---------- RESUMO DE MASSAS E RECHEIOS PRODUZIDOS ----------
+  h+=_cdcResumoInsumos(_cdcDataSel);
+  // ---------- CONFERÊNCIA GERAL DE CONSUMO (esperado × real, agregado) ----------
+  h+=_cdcResumoConsumo(_cdcDataSel);
+  return h;
+}
+
+/* ---------- RESUMO GERAL de consumo do dia (agregado por insumo) ---------- */
+function _cdcResumoConsumo(data){
+  const linhas=_cdcLinhas(data);
+  // agrega por nome de massa e por nome de recheio (esperado × real)
+  const massas={}, recheios={};
+  const add=(map,nome,esp,real)=>{ if(!nome||(esp<=0&&real<=0))return; if(!map[nome])map[nome]={esp:0,real:0}; map[nome].esp+=esp; map[nome].real+=real; };
+  linhas.forEach(l=>{
+    add(massas, l.tipoMassa, l.massaEsp, l.massaReal);
+    add(recheios, l.tipoRecheio, l.r1Esp, l.r1Real);
+    add(recheios, l.tipoRecheio2, l.r2Esp, l.r2Real);
+  });
+  const kg=n=>Number(n||0).toLocaleString('pt-BR',{maximumFractionDigits:2});
+  const linhaResumo=(nome,d)=>{
+    const dev = d.esp>0 ? (d.real-d.esp)/d.esp*100 : 0;
+    const fora=Math.abs(dev)>6, grave=Math.abs(dev)>25;
+    const cor=grave?'#b91c1c':(fora?(dev>0?'#dc2626':'#d97706'):'#16a34a');
+    const bg=fora?(grave?'#fee2e2':(dev>0?'#fef2f2':'#fffbeb')):'transparent';
+    const sinal=dev>0?'+':'';
+    return '<div style="display:grid;grid-template-columns:1.4fr 1fr 1fr 0.9fr;gap:4px;align-items:center;padding:7px 10px;background:'+bg+';border-bottom:1px solid #f1f5f9;font-size:12px;">'+
+      '<span style="font-weight:600;">'+nome+(grave?' 🔴':'')+'</span>'+
+      '<span style="text-align:right;color:var(--text-secondary);">'+kg(d.esp)+'</span>'+
+      '<span style="text-align:right;font-weight:600;">'+kg(d.real)+'</span>'+
+      '<span style="text-align:right;font-weight:800;color:'+cor+';">'+sinal+dev.toFixed(1)+'%</span>'+
+      '</div>';
+  };
+  const cabecalho='<div style="display:grid;grid-template-columns:1.4fr 1fr 1fr 0.9fr;gap:4px;padding:6px 10px;font-size:10px;text-transform:uppercase;color:var(--text-secondary);font-weight:700;">'+
+    '<span>Insumo</span><span style="text-align:right;">Deveria</span><span style="text-align:right;">Usou</span><span style="text-align:right;">Quebra</span></div>';
+  const mKeys=Object.keys(massas).sort(), rKeys=Object.keys(recheios).sort();
+  let h='<div style="margin-top:16px;">';
+  h+='<div style="font-size:13px;font-weight:800;margin-bottom:8px;">⚖️ Conferência geral de consumo do dia</div>';
+  h+='<div style="font-size:11px;color:var(--text-secondary);margin-bottom:10px;">Total do dia: o que o cadastro previa × o que foi lançado. No agregado, erros de lançamento entre produtos se compensam.</div>';
+  // massas
+  h+='<div style="border:1px solid var(--border,#e2e8f0);border-radius:10px;overflow:hidden;margin-bottom:10px;"><div style="background:#7c3aed;color:#fff;padding:7px 10px;font-weight:700;font-size:12px;">🌾 Massas</div>'+cabecalho;
+  h+= mKeys.length ? mKeys.map(k=>linhaResumo(k,massas[k])).join('') : '<div style="padding:10px;font-size:12px;color:var(--text-secondary);">Sem dados.</div>';
+  h+='</div>';
+  // recheios
+  h+='<div style="border:1px solid var(--border,#e2e8f0);border-radius:10px;overflow:hidden;"><div style="background:#0d9488;color:#fff;padding:7px 10px;font-weight:700;font-size:12px;">🥄 Recheios</div>'+cabecalho;
+  h+= rKeys.length ? rKeys.map(k=>linhaResumo(k,recheios[k])).join('') : '<div style="padding:10px;font-size:12px;color:var(--text-secondary);">Sem dados.</div>';
+  h+='</div>';
+  h+='</div>';
+  return h;
+}
+
+/* ---------- RESUMO massas (confeitaria) + recheios (cozinha) produzidos no dia ---------- */
+function _cdcResumoInsumos(data){
+  // massas lançadas (coleção 'massas': {massa,qtdKg,data})
+  const massasDia={};
+  (regMassas||[]).forEach(m=>{ if(m.data===data && m.massa){ massasDia[m.massa]=(massasDia[m.massa]||0)+(+m.qtdKg||0); } });
+  // recheios lançados (coleção 'recheios': {recheio,qtdKg,data})
+  const recheiosDia={};
+  (regRecheios||[]).forEach(r=>{ if(r.data===data && r.recheio){ recheiosDia[r.recheio]=(recheiosDia[r.recheio]||0)+(+r.qtdKg||0); } });
+  const kg=n=>n.toLocaleString('pt-BR',{maximumFractionDigits:2});
+  let h='<div style="margin-top:16px;display:grid;grid-template-columns:1fr 1fr;gap:10px;">';
+  // massas
+  h+='<div style="border:1px solid var(--border,#e2e8f0);border-radius:10px;overflow:hidden;"><div style="background:#7c3aed;color:#fff;padding:8px 12px;font-weight:700;font-size:13px;">🌾 Massas produzidas</div><div style="padding:8px 12px;">';
+  const mKeys=Object.keys(massasDia).sort();
+  h+= mKeys.length ? mKeys.map(k=>'<div style="display:flex;justify-content:space-between;font-size:12px;padding:4px 0;border-bottom:1px solid #f1f5f9;"><span>'+k+'</span><strong>'+kg(massasDia[k])+' kg</strong></div>').join('')+'<div style="display:flex;justify-content:space-between;font-size:13px;padding:6px 0 0;font-weight:800;"><span>Total</span><span>'+kg(Object.values(massasDia).reduce((s,v)=>s+v,0))+' kg</span></div>' : '<div style="font-size:12px;color:var(--text-secondary);padding:6px 0;">Sem massas lançadas neste dia.</div>';
+  h+='</div></div>';
+  // recheios
+  h+='<div style="border:1px solid var(--border,#e2e8f0);border-radius:10px;overflow:hidden;"><div style="background:#0d9488;color:#fff;padding:8px 12px;font-weight:700;font-size:13px;">🥄 Recheios produzidos</div><div style="padding:8px 12px;">';
+  const rKeys=Object.keys(recheiosDia).sort();
+  h+= rKeys.length ? rKeys.map(k=>'<div style="display:flex;justify-content:space-between;font-size:12px;padding:4px 0;border-bottom:1px solid #f1f5f9;"><span>'+k+'</span><strong>'+kg(recheiosDia[k])+' kg</strong></div>').join('')+'<div style="display:flex;justify-content:space-between;font-size:13px;padding:6px 0 0;font-weight:800;"><span>Total</span><span>'+kg(Object.values(recheiosDia).reduce((s,v)=>s+v,0))+' kg</span></div>' : '<div style="font-size:12px;color:var(--text-secondary);padding:6px 0;">Sem recheios lançados neste dia.</div>';
+  h+='</div></div>';
+  h+='</div>';
+  return h;
+}
+
+/* ---------- DETALHE de conferência de consumo (teórico × real) — MODAL ---------- */
+function _cdcDetalheConsumo(cod, nome){
+  const linha=_cdcLinhas(_cdcDataSel).find(l=>String(l.cod)===String(cod) && l.nome===nome);
+  if(!linha){ return; }
+  const fmt=n=>Number(n||0).toLocaleString('pt-BR',{maximumFractionDigits:2});
+
+  const cardInsumo=(rotulo, sub, esp, real, dev)=>{
+    if(esp<=0 && real<=0) return '';
+    const fora=Math.abs(dev)>6;
+    const grave=Math.abs(dev)>25;
+    const cor=grave?'#b91c1c':(fora?(dev>0?'#dc2626':'#d97706'):'#16a34a');
+    const bg=grave?'#fee2e2':(fora?(dev>0?'#fef2f2':'#fffbeb'):'rgba(22,163,74,.06)');
+    const maxv=Math.max(esp,real,0.0001);
+    const pEsp=Math.round(esp/maxv*100), pReal=Math.round(real/maxv*100);
+    const sinal=dev>0?'+':'';
+    return '<div style="background:'+bg+';border:'+(grave?'2px':'1px')+' solid '+cor+(grave?'':'33')+';border-radius:12px;padding:14px;margin-bottom:12px;">'+
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">'+
+        '<div><div style="font-weight:800;font-size:14px;">'+rotulo+(grave?' <span style="color:#b91c1c;">🔴</span>':'')+'</div>'+(sub?'<div style="font-size:11px;color:var(--text-secondary);">'+sub+'</div>':'')+'</div>'+
+        '<div style="text-align:right;"><div style="font-size:20px;font-weight:900;color:'+cor+';">'+sinal+dev.toFixed(1)+'%</div><div style="font-size:10px;color:'+cor+';font-weight:700;">'+(grave?'⚠ QUEBRA GRAVE':(fora?'fora da faixa':'dentro de 6%'))+'</div></div>'+
+      '</div>'+
+      // barra esperado
+      '<div style="margin-bottom:6px;"><div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:2px;"><span style="color:var(--text-secondary);">Deveria usar</span><strong>'+fmt(esp)+' kg</strong></div>'+
+        '<div style="height:8px;background:#e5e7eb;border-radius:4px;overflow:hidden;"><div style="height:100%;width:'+pEsp+'%;background:#94a3b8;border-radius:4px;"></div></div></div>'+
+      // barra real
+      '<div><div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:2px;"><span style="color:var(--text-secondary);">Usou de verdade</span><strong>'+fmt(real)+' kg</strong></div>'+
+        '<div style="height:8px;background:#e5e7eb;border-radius:4px;overflow:hidden;"><div style="height:100%;width:'+pReal+'%;background:'+cor+';border-radius:4px;"></div></div></div>'+
+      '<div style="font-size:11px;color:'+cor+';font-weight:700;margin-top:8px;">Diferença: '+sinal+fmt(real-esp)+' kg</div>'+
+      '</div>';
+  };
+
+  let corpo='';
+  corpo+=cardInsumo('🌾 Massa', linha.tipoMassa||'', linha.massaEsp, linha.massaReal, linha.devMassa);
+  corpo+=cardInsumo('🥄 Recheio', linha.tipoRecheio||'', linha.r1Esp, linha.r1Real, linha.devR1);
+  if(linha.r2Esp>0||linha.r2Real>0) corpo+=cardInsumo('➕ Recheio adicional', linha.tipoRecheio2||'', linha.r2Esp, linha.r2Real, linha.devR2);
+
+  // gramatura cadastrada por pacote
+  const gramas=[];
+  if(linha.grMassa>0) gramas.push('Massa '+linha.grMassa+'g');
+  if(linha.grRecheio>0) gramas.push('Rec. '+linha.grRecheio+'g');
+  if(linha.grRecheio2>0) gramas.push('Rec.AD '+linha.grRecheio2+'g');
+  const gramaturaTxt = gramas.length ? gramas.join(' · ')+' por pacote' : 'sem gramatura cadastrada';
+
+  const html='<div style="padding:16px 18px;background:linear-gradient(135deg,#7c3aed,#a855f7);color:#fff;border-radius:16px 16px 0 0;display:flex;justify-content:space-between;align-items:start;">'+
+      '<div><div style="font-size:16px;font-weight:800;">'+nome+'</div>'+
+        '<div style="font-size:11px;opacity:.85;margin-top:2px;">📋 '+gramaturaTxt+'</div>'+
+        '<div style="font-size:12px;opacity:.9;margin-top:2px;">'+linha.prod+' pacotes · conferência de consumo</div></div>'+
+      '<button onclick="_cdcFecharModal()" style="background:rgba(255,255,255,.25);border:none;color:#fff;width:30px;height:30px;border-radius:8px;cursor:pointer;font-size:16px;font-weight:700;flex-shrink:0;">✕</button>'+
+    '</div>'+
+    '<div style="padding:16px 18px;">'+
+      '<div style="font-size:12px;color:var(--text-secondary);margin-bottom:14px;">Comparação entre o que o cadastro prevê e o que foi realmente lançado na produção. Alerta a partir de 6%; quebra grave acima de 25%.</div>'+
+      corpo+
+    '</div>';
+  document.getElementById('cdc-modal-content').innerHTML=html;
+  document.getElementById('cdc-modal').style.display='flex';
+}
+window._cdcDetalheConsumo=_cdcDetalheConsumo;
+
+function _cdcFecharModal(){ const m=document.getElementById('cdc-modal'); if(m) m.style.display='none'; }
+window._cdcFecharModal=_cdcFecharModal;
+
+function _cdcNav(dir){
+  const datas=_cdcDatasDisponiveis();
+  const idx=datas.indexOf(_cdcDataSel);
+  const novo=idx+dir;
+  if(novo>=0 && novo<datas.length){ _cdcDataSel=datas[novo]; _cdcModo='dia'; renderCDC(); }
+}
+window._cdcNav=_cdcNav;
+
+async function _cdcExcel(){
+  const linhas=_cdcLinhas(_cdcDataSel);
+  if(!linhas.length){ alert('Nada para exportar neste dia.'); return; }
+  try{
+    await new Promise((res,rej)=>{ if(window.XLSX){res();return;} const s=document.createElement('script'); s.src='https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js'; s.onload=res; s.onerror=rej; document.head.appendChild(s); });
+  }catch(e){ alert('Não foi possível carregar o gerador de Excel.'); return; }
+  const header=['Produto','Massa','kg Massa','Recheio','kg Recheio','Recheio AD','kg Recheio AD','Produzido','Embalado','Quebra'];
+  const rows=[header];
+  linhas.forEach(l=>rows.push([l.nome,l.tipoMassa,Number(l.kgMassa.toFixed(2)),l.tipoRecheio,Number(l.kgR1.toFixed(2)),l.tipoRecheio2,Number(l.kgR2.toFixed(2)),l.prod,l.emb,l.quebra]));
+  const tot=linhas.reduce((a,l)=>({m:a.m+l.kgMassa,r1:a.r1+l.kgR1,r2:a.r2+l.kgR2,p:a.p+l.prod,e:a.e+l.emb,q:a.q+l.quebra}),{m:0,r1:0,r2:0,p:0,e:0,q:0});
+  rows.push(['TOTAL','',Number(tot.m.toFixed(2)),'',Number(tot.r1.toFixed(2)),'',Number(tot.r2.toFixed(2)),tot.p,tot.e,tot.q]);
+  const wb=XLSX.utils.book_new(); const ws=XLSX.utils.aoa_to_sheet(rows);
+  ws['!cols']=[{wch:30},{wch:20},{wch:10},{wch:22},{wch:10},{wch:22},{wch:12},{wch:10},{wch:10},{wch:9}];
+  XLSX.utils.book_append_sheet(wb, ws, 'Controle '+_cdcDataSel.replace(/\//g,'-'));
+  XLSX.writeFile(wb, 'ControleDiario_Confeitaria_'+_cdcDataSel.replace(/\//g,'-')+'.xlsx');
+}
+window._cdcExcel=_cdcExcel;
+
 
 
 /* ---------- estado 1: seleção de mês ---------- */
