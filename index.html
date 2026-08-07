@@ -12799,12 +12799,21 @@ function compRenderLista(){
   if(bloqueado){ cat=cat.filter(m=>(parseFloat(_compQtd[m.firestoreId])||0)>0); } // requisição mostra só o pedido
   if(_compBusca){ const q=_normNome(_compBusca); cat=cat.filter(m=>_normNome(m.nome+' '+m.codigo).includes(q)); }
   if(!cat.length){ cont.innerHTML='<div class="empty" style="padding:18px;">'+(bloqueado?'Sem itens neste pedido.':'Nenhum item. Carregue o catálogo ou verifique o fornecedor.')+'</div>'; return; }
+  // itens com quantidade preenchida sobem para o topo (mantendo a ordem alfabética dentro de cada grupo)
+  if(!bloqueado){
+    cat=cat.slice().sort((a,b)=>{
+      const qa=(parseFloat(_compQtd[a.firestoreId])||0)>0?0:1;
+      const qb=(parseFloat(_compQtd[b.firestoreId])||0)>0?0:1;
+      if(qa!==qb) return qa-qb;
+      return String(a.nome).localeCompare(String(b.nome),'pt-BR');
+    });
+  }
   cont.innerHTML=cat.map((m,i)=>{
     const k=m.firestoreId; const cod=m.codigo; const qtd=parseFloat(_compQtd[k])||0; const preco=parseFloat(_compPreco[k])||0;
     const kg=qtd*(parseFloat(m.kgPorUnidade)||0); const total=kg*preco;
     const temObs=(_compObs[k]||'').trim();
     const ativoRow=qtd>0;
-    return '<div class="card" style="margin-bottom:6px;padding:9px 11px;'+(ativoRow?'border-left:3px solid var(--mc-verde);':'')+'">'+
+    return '<div class="card" style="margin-bottom:6px;padding:9px 11px;'+(ativoRow?'border-left:3px solid var(--mc-verde);background:rgba(76,175,80,.08);':'')+'">'+
       '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">'+
         '<div style="flex:1;min-width:0;"><div style="font-size:14px;font-weight:600;">'+m.nome+'</div>'+
         '<div style="font-size:10px;color:var(--text-secondary);">cód '+cod+' · 1 '+(m.unidade||'un')+' = '+_fmtKg(m.kgPorUnidade)+' kg'+(m.infoUM?' · '+m.infoUM:'')+'</div></div>'+
@@ -12815,7 +12824,7 @@ function compRenderLista(){
         '<div style="display:flex;gap:10px;margin-top:6px;font-size:13px;flex-wrap:wrap;"><span>Qtd: <strong>'+qtd+' '+(m.unidade||'')+'</strong></span><span>Kg: <strong>'+_fmtKg(kg)+'</strong></span><span>Preço: '+_fmtRS(preco)+'/kg</span><span style="margin-left:auto;font-weight:700;color:var(--mc-verde);">'+_fmtRS(total)+'</span></div>'+(temObs?'<div style="font-size:11px;color:var(--text-secondary);margin-top:3px;">📝 '+temObs+'</div>':'')
         :
         '<div style="display:flex;gap:6px;align-items:center;margin-top:7px;flex-wrap:wrap;">'+
-          '<div style="flex:1;min-width:80px;"><div style="font-size:9px;color:var(--text-muted);">Qtd ('+(m.unidade||'un')+')</div><input type="number" min="0" step="any" value="'+(qtd||'')+'" oninput="compSetQtd(\''+escapeJsStr(k)+'\',this.value)" placeholder="0" style="width:100%;font-size:14px;padding:7px;border-radius:7px;border:1px solid var(--border-md,#d1d5db);box-sizing:border-box;"></div>'+
+          '<div style="flex:1;min-width:80px;"><div style="font-size:9px;color:var(--text-muted);">Qtd ('+(m.unidade||'un')+')</div><input type="number" min="0" step="any" value="'+(qtd||'')+'" oninput="compSetQtd(\''+escapeJsStr(k)+'\',this.value)" onchange="compReordenar()" placeholder="0" style="width:100%;font-size:14px;padding:7px;border-radius:7px;border:1px solid var(--border-md,#d1d5db);box-sizing:border-box;"></div>'+
           '<div style="flex:0 0 auto;text-align:center;min-width:66px;"><div style="font-size:9px;color:var(--text-muted);">Kg</div><div id="ck-'+i+'" style="font-size:14px;font-weight:700;padding:7px 0;">'+_fmtKg(kg)+'</div></div>'+
           '<div style="flex:1;min-width:80px;"><div style="font-size:9px;color:var(--text-muted);">Preço/kg</div><input type="number" min="0" step="0.01" value="'+(preco||'')+'" oninput="compSetPreco(\''+escapeJsStr(k)+'\',this.value)" placeholder="0,00" style="width:100%;font-size:14px;padding:7px;border-radius:7px;border:1px solid var(--border-md,#d1d5db);box-sizing:border-box;"></div>'+
           '<div style="flex:0 0 auto;text-align:right;min-width:78px;"><div style="font-size:9px;color:var(--text-muted);">Total</div><div id="ct-'+i+'" style="font-size:14px;font-weight:700;color:var(--mc-verde);padding:7px 0;">'+_fmtRS(total)+'</div></div>'+
@@ -12837,6 +12846,11 @@ function _compHistPanel(cod){
 function compToggleHist(cod){ _compHistItem=(_compHistItem===cod)?null:cod; compRenderLista(); }
 window.compToggleHist=compToggleHist;
 function compSetQtd(k,val){ _compQtd[k]=val; _compAtualizarRow(k); compRenderFooter(); }
+function compReordenar(){
+  // reordena a lista (itens preenchidos sobem) quando o usuário sai do campo de quantidade
+  compRenderLista();
+}
+window.compReordenar=compReordenar;
 function compSetPreco(k,val){ _compPreco[k]=val; _compAtualizarRow(k); compRenderFooter(); }
 window.compSetQtd=compSetQtd; window.compSetPreco=compSetPreco;
 function compEditarObs(k){ const raw=prompt('Observação do item:', _compObs[k]||''); if(raw===null)return; _compObs[k]=raw.trim(); compRenderLista(); }
@@ -12844,6 +12858,16 @@ window.compEditarObs=compEditarObs;
 function _compAtualizarRow(k){
   const cat=_compCatalogoDo(_compFornSel);
   let visiveis=cat; if(_compBusca){ const q=_normNome(_compBusca); visiveis=cat.filter(x=>_normNome(x.nome+' '+x.codigo).includes(q)); }
+  // aplica a MESMA ordenação da renderização (preenchidos no topo) para achar o índice certo
+  const st=_compPedido.status||'solicitado'; const bloqueado=(st==='oc_gerada'||st==='recebido');
+  if(!bloqueado){
+    visiveis=visiveis.slice().sort((a,b)=>{
+      const qa=(parseFloat(_compQtd[a.firestoreId])||0)>0?0:1;
+      const qb=(parseFloat(_compQtd[b.firestoreId])||0)>0?0:1;
+      if(qa!==qb) return qa-qb;
+      return String(a.nome).localeCompare(String(b.nome),'pt-BR');
+    });
+  }
   const i=visiveis.findIndex(x=>x.firestoreId===k); const m=visiveis[i];
   if(!m) return;
   const qtd=parseFloat(_compQtd[k])||0, preco=parseFloat(_compPreco[k])||0;
@@ -13012,12 +13036,11 @@ function compExportar(){
   if(f.diaEntrega) txt+='🚚 Entrega: '+f.diaEntrega+'\n';
   if(_compPedido.previsaoEntrega) txt+='📦 Previsão de entrega: '+_compPedido.previsaoEntrega+'\n';
   txt+='\n*ITENS:*\n';
-  itens.forEach((it,idx)=>{ txt+=(idx+1)+'. '+it.nome+'\n   '+it.qtd+' '+(it.unidade||'')+' = '+_fmtKg(it.kg)+' kg'+(it.precoKg?'  ·  '+_fmtRS(it.precoKg)+'/kg  ·  '+_fmtRS(it.total):'')+(it.obs?'\n   📝 '+it.obs:'')+'\n'; });
+  itens.forEach((it,idx)=>{ txt+=(idx+1)+'. '+it.nome+'\n   '+it.qtd+' '+(it.unidade||'')+' = '+_fmtKg(it.kg)+' kg'+(it.obs?'\n   📝 '+it.obs:'')+'\n'; });
   txt+='\n━━━━━━━━━━━━━━━━━━━━━━\n';
-  txt+='*TOTAL: '+_fmtKg(tk)+' kg';
-  if(t>0) txt+='  ·  '+_fmtRS(t);
-  txt+='*\n━━━━━━━━━━━━━━━━━━━━━━\n';
-  txt+='\nPedido gerado via sistema Monte Castelo em '+hoje()+'.';
+  txt+='*TOTAL: '+_fmtKg(tk)+' kg*\n';
+  txt+='━━━━━━━━━━━━━━━━━━━━━━\n';
+  txt+='\n_Por favor enviar espelho da cotação e data de entrega prevista!_';
   _compMostrarModal(txt, f.contato);
 }
 function _compMostrarModal(txt, contato){
