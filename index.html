@@ -3861,9 +3861,10 @@
       <div class="mc-page-info"><div class="mc-page-title">📊 Controle Diário Confeitaria</div><div class="mc-page-sub">Resumo por dia</div></div>
     </div>
     <div style="flex:1;padding:16px;background:var(--bg-page);overflow-y:auto;" id="cdc-content"></div>
-    <div id="cdc-modal" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:1000;align-items:center;justify-content:center;padding:16px;" onclick="if(event.target===this)_cdcFecharModal()">
-      <div style="background:#fff;border-radius:16px;max-width:440px;width:100%;max-height:88vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.3);" id="cdc-modal-content"></div>
-    </div>
+  </div>
+
+  <div id="cdc-modal" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:3000;align-items:center;justify-content:center;padding:16px;" onclick="if(event.target===this)_cdcFecharModal()">
+    <div style="background:#fff;border-radius:16px;max-width:440px;width:100%;max-height:88vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.3);" id="cdc-modal-content"></div>
   </div>
 
   <div class="screen" id="s-cpm">
@@ -15205,6 +15206,12 @@ function _cdcResumoInsumos(data){
 function _cdcDetalheConsumo(cod, nome){
   const linha=_cdcLinhas(_cdcDataSel).find(l=>String(l.cod)===String(cod) && l.nome===nome);
   if(!linha){ return; }
+  _cdcDetalheConsumoRender(linha);
+}
+window._cdcDetalheConsumo=_cdcDetalheConsumo;
+
+function _cdcDetalheConsumoRender(linha){
+  const nome=linha.nome;
   const fmt=n=>Number(n||0).toLocaleString('pt-BR',{maximumFractionDigits:2});
 
   const cardInsumo=(rotulo, sub, esp, real, dev)=>{
@@ -15256,7 +15263,6 @@ function _cdcDetalheConsumo(cod, nome){
   document.getElementById('cdc-modal-content').innerHTML=html;
   document.getElementById('cdc-modal').style.display='flex';
 }
-window._cdcDetalheConsumo=_cdcDetalheConsumo;
 
 function _cdcFecharModal(){ const m=document.getElementById('cdc-modal'); if(m) m.style.display='none'; }
 window._cdcFecharModal=_cdcFecharModal;
@@ -16503,6 +16509,100 @@ async function acEditarObs(semana,dia,produto){
 }
 window.acEditarObs=acEditarObs;
 
+/* ═══ QUEBRAS por produto na SEMANA inteira (reusa a lógica do Controle Diário) ═══
+   Agrupa todos os registros do produto na semana (qualquer dia) e calcula:
+   - quebra de embalagem: produzido × embalado
+   - quebra de consumo: massa/recheio esperado × real (do objeto quebra gravado)
+   Retorna null se não houver produção ainda. */
+function _acQuebrasProduto(semStr, produto){
+  const mon=_acMondayOfWeek(semStr);
+  const datasSemana=new Set();
+  for(let i=0;i<6;i++){ const d=new Date(mon); d.setDate(mon.getDate()+i); datasSemana.add(_acFmtBR(d)); }
+  const alvo=_normNome(produto);
+  let prod=0, emb=0, massaEsp=0, massaReal=0, r1Esp=0, r1Real=0, r2Esp=0, r2Real=0, temEmbFeito=false;
+  let cod='', info=null;
+  (registros||[]).forEach(r=>{
+    if(r.origem==='quadra') return;
+    if(!datasSemana.has(r.data)) return;
+    if(_normNome(r.produto||'')!==alvo) return;
+    if(!cod && r.cod) cod=r.cod;
+    prod += parseInt(r.qtd)||0;
+    emb  += _cdcEmbalado(r.embalagem);
+    if(r.embalagem && r.embalagem.feito) temEmbFeito=true;
+    const q=r.quebra||{};
+    massaEsp+=(+q.massaEsp||0); massaReal+=(+q.massaReal||+r.massa||0);
+    r1Esp+=(+q.r1Esp||0); r1Real+=(+q.r1Real||+r.r1||0);
+    r2Esp+=(+q.r2Esp||0); r2Real+=(+q.r2Real||+r.r2||0);
+  });
+  if(prod<=0 && emb<=0) return null;
+  const pctEmb = prod>0 ? Math.abs(prod-emb)/prod*100 : 0;
+  const desvio=(real,esp)=> esp>0 ? (real-esp)/esp*100 : 0;
+  const devMassa=desvio(massaReal,massaEsp), devR1=desvio(r1Real,r1Esp), devR2=desvio(r2Real,r2Esp);
+  const consumoForaFaixa=(Math.abs(devMassa)>6||Math.abs(devR1)>6||Math.abs(devR2)>6);
+  const consumoGrave=(Math.abs(devMassa)>25||Math.abs(devR1)>25||Math.abs(devR2)>25);
+  // embalagem: mesma regra do Controle Diário (só sinaliza quando há embalagem feita e quebra >6%)
+  const embForaFaixa = temEmbFeito && pctEmb>6;
+  const embGrave = temEmbFeito && pctEmb>25;
+  const inf=_cdcProdInfo(produto, cod);
+  return {cod, nome:produto, prod, emb, pctEmb, quebra:prod-emb,
+    massaEsp, massaReal, r1Esp, r1Real, r2Esp, r2Real, devMassa, devR1, devR2,
+    consumoForaFaixa, consumoGrave, embForaFaixa, embGrave,
+    tipoMassa:inf.tipoMassa||'', grMassa:inf.grMassa||0,
+    tipoRecheio:inf.tipoRecheio||'', grRecheio:inf.grRecheio||0,
+    tipoRecheio2:inf.tipoRecheio2||'', grRecheio2:inf.grRecheio2||0, temEmbFeito};
+}
+
+// HTML dos 2 ícones de quebra para um produto (canto direito do card no acompanhamento)
+function _acIconesQuebra(semStr, produto){
+  const q=_acQuebrasProduto(semStr, produto);
+  if(!q) return '';
+  let ic='';
+  // ícone 1: quebra de embalagem
+  if(q.embForaFaixa){
+    const cor=q.embGrave?'#dc2626':'#d97706', bg=q.embGrave?'#dc2626':'#fef3c7', txt=q.embGrave?'#fff':'#b45309';
+    ic+='<button onclick="event.stopPropagation();_acVerQuebraEmb(\''+semStr+'\',\''+escapeJsStr(produto)+'\')" title="Quebra de embalagem" style="background:'+bg+';border:1px solid '+cor+';color:'+txt+';font-size:12px;padding:2px 7px;border-radius:6px;cursor:pointer;font-weight:800;">📦</button>';
+  }
+  // ícone 2: quebra de consumo (massa/recheio)
+  if(q.consumoForaFaixa){
+    const cor=q.consumoGrave?'#b91c1c':'#d97706', bg=q.consumoGrave?'#dc2626':'#fef3c7', txt=q.consumoGrave?'#fff':'#b45309';
+    ic+='<button onclick="event.stopPropagation();_cdcDetalheConsumoSemana(\''+semStr+'\',\''+escapeJsStr(produto)+'\')" title="Quebra de massa/recheio" style="background:'+bg+';border:1px solid '+cor+';color:'+txt+';font-size:12px;padding:2px 7px;border-radius:6px;cursor:pointer;font-weight:800;">⚠</button>';
+  }
+  return ic ? '<div style="display:flex;gap:4px;margin-top:4px;justify-content:flex-end;">'+ic+'</div>' : '';
+}
+
+// modal de quebra de embalagem (produzido × embalado)
+function _acVerQuebraEmb(semStr, produto){
+  const q=_acQuebrasProduto(semStr, produto); if(!q) return;
+  const pct=q.prod>0?(q.quebra/q.prod*100):0;
+  const grave=Math.abs(pct)>25;
+  const cor=grave?'#b91c1c':(Math.abs(pct)>6?'#dc2626':'#16a34a');
+  const html='<div style="padding:16px 18px;background:linear-gradient(135deg,#334155,#475569);color:#fff;border-radius:16px 16px 0 0;display:flex;justify-content:space-between;align-items:start;">'+
+      '<div><div style="font-size:16px;font-weight:800;">'+produto+'</div><div style="font-size:12px;opacity:.9;">Quebra de embalagem · semana</div></div>'+
+      '<button onclick="_cdcFecharModal()" style="background:rgba(255,255,255,.25);border:none;color:#fff;width:30px;height:30px;border-radius:8px;cursor:pointer;font-size:16px;font-weight:700;flex-shrink:0;">✕</button>'+
+    '</div>'+
+    '<div style="padding:16px 18px;">'+
+      '<div style="background:'+(Math.abs(pct)>6?(grave?'#fee2e2':'#fef2f2'):'rgba(22,163,74,.06)')+';border:'+(grave?'2px':'1px')+' solid '+cor+(grave?'':'33')+';border-radius:12px;padding:16px;text-align:center;">'+
+        '<div style="font-size:32px;font-weight:900;color:'+cor+';">'+(pct>0?'−':'+')+Math.abs(q.quebra)+'</div>'+
+        '<div style="font-size:12px;color:var(--text-secondary);margin-bottom:12px;">pacotes de diferença ('+(pct>0?'':'+')+pct.toFixed(1)+'%)'+(grave?' · QUEBRA GRAVE':'')+'</div>'+
+        '<div style="display:flex;justify-content:space-around;font-size:13px;">'+
+          '<div><div style="color:var(--text-secondary);font-size:11px;">Produzido</div><div style="font-weight:800;font-size:18px;">'+q.prod+'</div></div>'+
+          '<div><div style="color:var(--text-secondary);font-size:11px;">Embalado</div><div style="font-weight:800;font-size:18px;">'+q.emb+'</div></div>'+
+        '</div>'+
+      '</div>'+
+      '<div style="font-size:11px;color:var(--text-secondary);margin-top:12px;">Considera toda a produção do produto na semana, em qualquer dia.</div>'+
+    '</div>';
+  document.getElementById('cdc-modal-content').innerHTML=html;
+  document.getElementById('cdc-modal').style.display='flex';
+}
+window._acVerQuebraEmb=_acVerQuebraEmb;
+
+// modal de consumo por SEMANA (reusa o visual do _cdcDetalheConsumo, mas com dados da semana)
+function _cdcDetalheConsumoSemana(semStr, produto){
+  const linha=_acQuebrasProduto(semStr, produto); if(!linha) return;
+  _cdcDetalheConsumoRender(linha);
+}
+window._cdcDetalheConsumoSemana=_cdcDetalheConsumoSemana;
+
 function _acMondayOfWeek(semStr){
   const [yr,wk]=String(semStr).split('-W');
   const jan1=new Date(parseInt(yr),0,1);
@@ -16777,7 +16877,8 @@ function renderAcomp(){
         '<div style="flex:1;min-width:0;"><div style="font-size:14px;font-weight:600;">'+si.emoji+' '+it.produto+'</div>'+
         '<div style="font-size:11px;color:var(--text-secondary);margin-top:2px;">'+label+'</div></div>'+
         '<div style="text-align:right;white-space:nowrap;"><div style="font-size:12px;color:var(--text-secondary);">Plano: <strong>'+it.qtdPlan.toLocaleString('pt-BR')+'</strong></div>'+
-        '<div style="font-size:13px;font-weight:700;color:'+si.cor+';">Feito: '+it.mostrado.toLocaleString('pt-BR')+' ('+pct+'%)</div></div>'+
+        '<div style="font-size:13px;font-weight:700;color:'+si.cor+';">Feito: '+it.mostrado.toLocaleString('pt-BR')+' ('+pct+'%)</div>'+
+        _acIconesQuebra(semana, it.produto)+'</div>'+
         '</div>'+obsHtml+
         acPlayControle(semana,dia,it.produto,pct)+
         '</div>';
