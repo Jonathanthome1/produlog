@@ -8599,6 +8599,48 @@ let quadraDataSel = null;
 let quadraKitSel = null;
 let quadraProdutosLanc = {}; // {cod: {nome, kgPacote, qtdPacotes}}
 
+/* ══════════════════════════════════════════════════════════════════
+   ESTOQUE DE KITS DA QUADRA (Etapa 1 produz, Etapa 2 consome)
+   Coleção 'quadraKitsEstoque': doc por kit {kit, saldo, atualizado}
+   Coleção 'quadraKitsMov': histórico de movimentações (produção/consumo)
+   ══════════════════════════════════════════════════════════════════ */
+let quadraKitsEstoque = {}; // { nomeKit: saldo }
+onSnapshot(collection(db,'quadraKitsEstoque'), snap=>{
+  try{
+    quadraKitsEstoque={};
+    snap.docs.forEach(d=>{ const x=d.data(); if(x && x.kit!=null) quadraKitsEstoque[x.kit]=(+x.saldo||0); });
+    const t=document.querySelector('.screen.active')?.id;
+    if(t==='s-quadra-kits-prod' && typeof renderKitsProd==='function') renderKitsProd();
+    if(t==='s-quadra-kit' && typeof filtrarKitsQuadra==='function') filtrarKitsQuadra();
+  }catch(e){ console.error('quadraKitsEstoque snap',e); }
+});
+function _kitSaldo(kit){ return +quadraKitsEstoque[kit]||0; }
+function _kitDocId(kit){ return String(kit||'').replace(/[\/\\.#$\[\]]/g,'-').replace(/\s+/g,' ').trim(); }
+async function _kitAjustarSaldo(kit, delta, motivo, extra){
+  const id=_kitDocId(kit);
+  const novo=Math.max(0, _kitSaldo(kit)+delta);
+  try{
+    await setDoc(doc(db,'quadraKitsEstoque',id), {kit, saldo:novo, atualizado:agora(), atualizadoData:hoje()}, {merge:true});
+    quadraKitsEstoque[kit]=novo;
+    // histórico
+    const mv=doc(collection(db,'quadraKitsMov'));
+    await setDoc(mv, {kit, delta, motivo:motivo||'', data:hoje(), hora:agora(), por:_demAutor(), saldoResultante:novo, ...(extra||{})});
+  }catch(e){ alert('Erro no estoque de kits: '+e.message); throw e; }
+}
+// kg de massa que 1 kit rende (da receita)
+function _kitKgPorKit(kit){
+  const recKey=QUADRA_KIT_MAPPING[kit]||(QUADRA_KITS_RECEITAS[kit]?kit:Object.keys(QUADRA_KITS_RECEITAS).find(k=>k.toLowerCase()===(kit||'').toLowerCase()));
+  const receita=recKey?QUADRA_KITS_RECEITAS[recKey]:null;
+  return receita?(+receita.totalKg||0):0;
+}
+// converte kits usados num produto -> pacotes: (kits × kgPorKit) ÷ (grMassa/1000)
+function _kitsParaPacotes(kits, produto, kit){
+  const kgPorKit=_kitKgPorKit(kit);
+  const kgMassaPct=(+produto.grMassa||0)/1000;
+  if(kgMassaPct<=0) return 0;
+  return (kits*kgPorKit)/kgMassaPct;
+}
+
 onSnapshot(collection(db,'quadraRegistros'), snap=>{
   try{
     quadraRegistros=snap.docs.map(d=>({firestoreId:d.id,...d.data()})).sort((a,b)=>(b.timestamp||0)-(a.timestamp||0));
@@ -12519,8 +12561,8 @@ function _compStatusInfo(s){
   if(s==='oc_gerada'||s==='recebido') return {label:'OC gerada',cor:'#16a34a',bg:'rgba(22,163,74,.10)',emoji:'📄'};
   return {label:'Solicitado',cor:'#d97706',bg:'rgba(217,119,6,.10)',emoji:'📝'}; // solicitado / rascunho / pronto (legado)
 }
-function _compPedidoAberto(fornId){ return comprasPedidos.filter(p=>p.fornecedorId===fornId && p.status!=='oc_gerada' && p.status!=='recebido' && p.status!=='cancelado').sort((a,b)=>(b.criadoEm2||0)-(a.criadoEm2||0))[0]||null; }
-function _compPendentesReq(){ return comprasPedidos.filter(p=>p.status!=='oc_gerada' && p.status!=='recebido' && p.status!=='cancelado' && (p.itens||[]).length>0).length; }
+function _compPedidoAberto(fornId){ return comprasPedidos.filter(p=>p.fornecedorId===fornId && p.status!=='oc_gerada' && p.status!=='recebido' && p.status!=='cancelado' && p.status!=='arquivado').sort((a,b)=>(b.criadoEm2||0)-(a.criadoEm2||0))[0]||null; }
+function _compPendentesReq(){ return comprasPedidos.filter(p=>p.status!=='oc_gerada' && p.status!=='recebido' && p.status!=='cancelado' && p.status!=='arquivado' && (p.itens||[]).length>0).length; }
 function _compAtualizarBadge(){ const n=_compPendentesReq(); document.querySelectorAll('.comp-badge').forEach(b=>{ b.textContent=n; b.style.display=n>0?'inline-flex':'none'; }); }
 function _comprasHistItem(cod){
   const out=[]; const c=String(cod).trim();
@@ -12744,6 +12786,30 @@ function compCopiarUltimo(){
   renderCompraForn();
 }
 window.compCopiarUltimo=compCopiarUltimo;
+
+// Arquiva o pedido atual (manda pro histórico) e abre um novo em branco da semana atual
+async function compNovoPedido(){
+  const temItens=(_compPedido.itens||[]).length>0 || Object.values(_compQtd).some(v=>parseFloat(v)>0);
+  const msg = temItens
+    ? 'Arquivar o pedido atual (vai para o histórico) e começar um pedido NOVO em branco?'
+    : 'Começar um pedido novo em branco?';
+  if(!confirm(msg)) return;
+  // arquiva o pedido atual se ele já existe no Firebase e não está finalizado
+  if(_compPedido.firestoreId){
+    const st=_compPedido.status||'solicitado';
+    if(st!=='oc_gerada' && st!=='recebido' && st!=='cancelado'){
+      try{
+        await updateDoc(doc(db,'comprasPedidos',_compPedido.firestoreId), {status:'arquivado', arquivadoEm:agora(), arquivadoData:hoje(), arquivadoPor:_demAutor()});
+      }catch(e){ alert('Erro ao arquivar: '+e.message); return; }
+    }
+  }
+  // abre um novo em branco da semana atual
+  _compPedido = {fornecedorId:_compFornSel, fornecedorNome:(_compForn(_compFornSel)||{}).nome||'', status:'solicitado', itens:[], semana:(typeof semanaAtual==='function'?semanaAtual():'')};
+  _compQtd={}; _compPreco={}; _compObs={}; _compBusca=''; _compHistItem=null;
+  _compCatalogoDo(_compFornSel).forEach(m=>{ const k=m.firestoreId; if(m.precoKg) _compPreco[k]=m.precoKg; });
+  renderCompraForn();
+}
+window.compNovoPedido=compNovoPedido;
 function compFornEditarAtual(){ if(_compFornSel) editarCompForn(_compFornSel); }
 function renderCompraForn(){
   const el=document.getElementById('comp-forn-content'); if(!el) return;
@@ -12775,6 +12841,10 @@ function renderCompraForn(){
     (st==='solicitado'&&_compPedido.firestoreId?'<div style="font-size:12px;color:var(--mc-verde);font-weight:700;margin-top:5px;background:rgba(22,163,74,.10);border-radius:8px;padding:6px 10px;">✅ Solicitação feita! Aguardando o comprador confirmar com o vendedor.</div>':'')+
     (st==='solicitado'&&!_compPedido.firestoreId?'<div style="font-size:11px;color:#d97706;font-weight:600;margin-top:4px;">👉 Monte o pedido e clique em "Fazer solicitação".</div>':'')+
     '</div>';
+  // botão "Novo pedido" — aparece quando há um pedido aberto salvo com itens
+  if(_compPedido.firestoreId && !bloqueado && (_compPedido.itens||[]).length>0){
+    html+='<button class="btn btn-secondary" style="width:100%;margin-bottom:10px;border:1px solid var(--mc-azul);color:var(--mc-azul);font-weight:700;" onclick="compNovoPedido()">🆕 Novo pedido (arquivar o atual)</button>';
+  }
   // copiar último (quando pedido novo/vazio)
   if(!bloqueado && !_compPedido.firestoreId){
     html+='<button class="btn btn-secondary" style="width:100%;margin-bottom:10px;" onclick="compCopiarUltimo()">📋 Copiar quantidades do último pedido</button>';
@@ -16071,7 +16141,7 @@ function renderComprasHist(){
   let html='<div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap;">'+
     '<select onchange="setCompHistSem(this.value)" style="flex:1;min-width:130px;font-size:13px;padding:8px;border-radius:8px;border:1px solid var(--border-md,#d1d5db);"><option value="todas">Todas as semanas</option>'+semanas.map(s=>'<option value="'+s+'"'+(_compHistFiltroSem===s?' selected':'')+'>'+(typeof semanaLabel==='function'?semanaLabel(s):s)+'</option>').join('')+'</select>'+
     '<select onchange="setCompHistForn(this.value)" style="flex:1;min-width:130px;font-size:13px;padding:8px;border-radius:8px;border:1px solid var(--border-md,#d1d5db);"><option value="todos">Todos fornecedores</option>'+comprasFornecedores.map(f=>'<option value="'+f.firestoreId+'"'+(_compHistFiltroForn===f.firestoreId?' selected':'')+'>'+f.nome+'</option>').join('')+'</select>'+
-    '<select onchange="setCompHistStatus(this.value)" style="flex:1;min-width:130px;font-size:13px;padding:8px;border-radius:8px;border:1px solid var(--border-md,#d1d5db);">'+[['todos','Todos status'],['solicitado','Solicitado'],['confirmado','Confirmado'],['oc_gerada','OC gerada']].map(([v,l])=>'<option value="'+v+'"'+(_compHistFiltroStatus===v?' selected':'')+'>'+l+'</option>').join('')+'</select>'+
+    '<select onchange="setCompHistStatus(this.value)" style="flex:1;min-width:130px;font-size:13px;padding:8px;border-radius:8px;border:1px solid var(--border-md,#d1d5db);">'+[['todos','Todos status'],['solicitado','Solicitado'],['confirmado','Confirmado'],['oc_gerada','OC gerada'],['arquivado','Arquivado']].map(([v,l])=>'<option value="'+v+'"'+(_compHistFiltroStatus===v?' selected':'')+'>'+l+'</option>').join('')+'</select>'+
     '</div>';
   if(!lista.length){ el.innerHTML=html+'<div class="empty" style="padding:20px;">Nenhum pedido.</div>'; return; }
   // agrupar por semana
