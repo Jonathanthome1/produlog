@@ -2398,11 +2398,19 @@
       </div>
       <div class="mc-section-header">Ações</div>
       <div class="mc-sector-grid">
+        <button class="mc-sector-card" style="border-left:3px solid #16a34a;" onclick="abrirProduzirKits()">
+          <div class="mc-sector-icon green">🏭</div>
+          <div class="mc-sector-info">
+            <div class="mc-sector-title">Produzir kits</div>
+            <div class="mc-sector-desc">Lançar kits produzidos → gera estoque</div>
+          </div>
+          <span class="mc-sector-arrow">›</span>
+        </button>
         <button class="mc-sector-card" onclick="iniciarNovoLancQuadra()">
           <div class="mc-sector-icon gold">📋</div>
           <div class="mc-sector-info">
-            <div class="mc-sector-title">Novo Lançamento</div>
-            <div class="mc-sector-desc">Registrar produção de kits</div>
+            <div class="mc-sector-title">Consumir kits (lançar produção)</div>
+            <div class="mc-sector-desc">Usar kits do estoque nos produtos</div>
           </div>
           <span class="mc-sector-arrow">›</span>
         </button>
@@ -2432,6 +2440,17 @@
         </button>
       </div>
     </div>
+  </div>
+
+  <!-- QUADRA: PRODUZIR KITS (Etapa 1) -->
+  <div class="screen" id="s-quadra-kits-prod">
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="goTo('s-quadra-home')">‹</button>
+      <div class="mc-brand"><div class="mc-brand-logo">MC</div><div class="mc-brand-text"><div class="mc-brand-name">Monte Castelo</div><div class="mc-brand-sub">Quadra</div></div></div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info"><div class="mc-page-title">🏭 Produzir kits</div><div class="mc-page-sub">Gera estoque de kits</div></div>
+    </div>
+    <div style="flex:1;padding:16px;background:var(--bg-page);overflow-y:auto;" id="kits-prod-content"></div>
   </div>
 
   <!-- QUADRA: PASSO 1 - DATA -->
@@ -4693,6 +4712,7 @@ function goTo(id){
   if(id==='s-testes-edit'){ const b=document.getElementById('testes-edit-btn');if(b){b.textContent='Salvar alterações ✓';b.disabled=false;} }
   if(id==='s-testes-novo'){ const b=document.getElementById('testes-btn-salvar');if(b){b.textContent='Salvar teste ✓';b.disabled=false;} }
   if(id==='s-quadra-data'){ renderQuadraDateGrid(); }
+  if(id==='s-quadra-kits-prod') renderKitsProd();
   if(id==='s-quadra-kit'){ filtrarKitsQuadra(); }
   if(id==='s-quadra-lanc'){ const lc=document.getElementById('quadra-lanc-content'); if(lc&&!lc.innerHTML.trim())renderQuadraLanc(); else renderQuadraLanc(); }
   if(id==='s-quadra-reg') renderQuadraReg();
@@ -8633,10 +8653,12 @@ function _kitKgPorKit(kit){
   const receita=recKey?QUADRA_KITS_RECEITAS[recKey]:null;
   return receita?(+receita.totalKg||0):0;
 }
-// converte kits usados num produto -> pacotes: (kits × kgPorKit) ÷ (grMassa/1000)
+// converte kits usados num produto -> pacotes: (kits × kgPorKit) ÷ (kg de massa por pacote)
+// na quadra, o peso do pacote está em kgPacote (kg). grMassa (g) é fallback caso exista.
 function _kitsParaPacotes(kits, produto, kit){
   const kgPorKit=_kitKgPorKit(kit);
-  const kgMassaPct=(+produto.grMassa||0)/1000;
+  let kgMassaPct=(+produto.kgPacote||0);
+  if(kgMassaPct<=0 && +produto.grMassa>0) kgMassaPct=(+produto.grMassa)/1000;
   if(kgMassaPct<=0) return 0;
   return (kits*kgPorKit)/kgMassaPct;
 }
@@ -8647,6 +8669,103 @@ onSnapshot(collection(db,'quadraRegistros'), snap=>{
     atualizarTela();
   }catch(e){ console.error('quadraRegistros snap:',e); }
 });
+
+/* ══════════════════════════════════════════════════════════════════
+   ETAPA 1 — PRODUZIR KITS: lança kits produzidos → gera estoque
+   ══════════════════════════════════════════════════════════════════ */
+let _pkKitSel=null, _pkQtd='';
+function abrirProduzirKits(){ _pkKitSel=null; _pkQtd=''; goTo('s-quadra-kits-prod'); renderKitsProd(); }
+window.abrirProduzirKits=abrirProduzirKits;
+
+function _pkReceita(kit){
+  const recKey=QUADRA_KIT_MAPPING[kit]||(QUADRA_KITS_RECEITAS[kit]?kit:Object.keys(QUADRA_KITS_RECEITAS).find(k=>k.toLowerCase()===(kit||'').toLowerCase()));
+  return recKey?QUADRA_KITS_RECEITAS[recKey]:null;
+}
+
+function renderKitsProd(){
+  const el=document.getElementById('kits-prod-content'); if(!el) return;
+  const kits=(typeof QUADRA_KITS!=='undefined'?QUADRA_KITS:[]).slice().sort((a,b)=>String(a).localeCompare(String(b),'pt-BR'));
+  if(!kits.length){ el.innerHTML='<div class="empty" style="padding:30px;">Nenhum kit cadastrado.</div>'; return; }
+
+  // saldo atual dos kits (resumo no topo)
+  let h='<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;padding:12px 14px;margin-bottom:14px;">'+
+    '<div style="font-size:12px;font-weight:700;color:#15803d;margin-bottom:8px;">📦 Estoque atual de kits</div>';
+  const comSaldo=kits.filter(k=>_kitSaldo(k)>0);
+  if(comSaldo.length){
+    h+=comSaldo.map(k=>'<div style="display:flex;justify-content:space-between;font-size:13px;padding:3px 0;"><span>'+k+'</span><strong>'+_kitSaldo(k).toLocaleString('pt-BR')+' kits</strong></div>').join('');
+  } else { h+='<div style="font-size:12px;color:var(--text-secondary);">Nenhum kit em estoque ainda.</div>'; }
+  h+='</div>';
+
+  // seletor de kit
+  h+='<div style="font-size:13px;font-weight:700;margin-bottom:8px;">Qual kit foi produzido?</div>';
+  h+='<div style="display:flex;flex-direction:column;gap:6px;margin-bottom:14px;">';
+  kits.forEach(k=>{
+    const sel=_pkKitSel===k;
+    h+='<button onclick="_pkSelKit(\''+escapeJsStr(k)+'\')" style="text-align:left;padding:11px 13px;border-radius:10px;border:1px solid '+(sel?'#16a34a':'var(--border,#e2e8f0)')+';background:'+(sel?'rgba(22,163,74,.08)':'#fff')+';cursor:pointer;font-size:14px;font-weight:'+(sel?'700':'500')+';display:flex;justify-content:space-between;align-items:center;">'+
+      '<span>'+k+'</span><span style="font-size:11px;color:var(--text-secondary);">saldo: '+_kitSaldo(k).toLocaleString('pt-BR')+'</span></button>';
+  });
+  h+='</div>';
+
+  // se um kit está selecionado: quantidade + receita + confirmar
+  if(_pkKitSel){
+    const receita=_pkReceita(_pkKitSel);
+    const kgPorKit=receita?(+receita.totalKg||0):0;
+    h+='<div style="background:#fff;border:1px solid var(--border,#e2e8f0);border-radius:12px;padding:14px;margin-bottom:14px;">'+
+      '<label style="font-size:13px;font-weight:600;">Quantos kits de <strong>'+_pkKitSel+'</strong> foram produzidos?</label>'+
+      '<input type="number" min="0" step="any" value="'+_pkQtd+'" oninput="_pkSetQtd(this.value)" placeholder="0" style="width:100%;font-size:20px;font-weight:700;padding:10px;border-radius:8px;border:1px solid var(--border-md,#d1d5db);box-sizing:border-box;margin-top:8px;text-align:center;">'+
+      '</div>';
+
+    const n=parseFloat(_pkQtd)||0;
+    if(receita && receita.ingredientes && receita.ingredientes.length){
+      h+='<div style="background:#fffbeb;border:1px solid #fde68a;border-radius:12px;padding:14px;margin-bottom:14px;">'+
+        '<div style="font-size:13px;font-weight:700;color:#92400e;margin-bottom:8px;">🧾 Matéria-prima que será consumida<span id="pk-header-kits">'+(n>0?' ('+n+' kits)':'')+'</span></div>'+
+        '<table style="width:100%;font-size:13px;border-collapse:collapse;">'+
+        '<tr style="border-bottom:1px solid #fde68a;"><th style="text-align:left;padding:4px 0;color:#92400e;font-weight:600;">Ingrediente</th><th style="text-align:right;padding:4px 0;color:#92400e;font-weight:600;">Kg/kit</th><th style="text-align:right;padding:4px 0;color:#92400e;font-weight:600;">Total</th></tr>';
+      receita.ingredientes.forEach((ing,idx)=>{
+        const totalIng=(+ing.qtd||0)*n;
+        h+='<tr style="border-bottom:.5px solid #fef3c7;"><td style="padding:5px 0;">'+ing.nome+'</td><td style="padding:5px 0;text-align:right;">'+(+ing.qtd||0)+'</td><td id="pk-ing-'+idx+'" style="padding:5px 0;text-align:right;font-weight:700;">'+(n>0?totalIng.toLocaleString('pt-BR',{maximumFractionDigits:2}):'—')+'</td></tr>';
+      });
+      h+='<tr><td style="padding:6px 0;font-weight:800;color:#92400e;">Total massa</td><td style="padding:6px 0;text-align:right;font-weight:700;color:#92400e;">'+kgPorKit.toFixed(2)+'</td><td id="pk-total-massa" style="padding:6px 0;text-align:right;font-weight:800;color:#92400e;">'+(n>0?(kgPorKit*n).toLocaleString('pt-BR',{maximumFractionDigits:2})+' kg':'—')+'</td></tr>';
+      h+='</table></div>';
+    } else {
+      h+='<div style="font-size:12px;color:var(--text-secondary);margin-bottom:14px;">Receita não encontrada para este kit — o kit será somado ao estoque mesmo assim.</div>';
+    }
+
+    h+='<button id="pk-btn-confirmar" onclick="_pkConfirmar()" '+(n>0?'':'disabled')+' style="width:100%;background:'+(n>0?'#16a34a':'#cbd5e1')+';color:#fff;border:none;padding:14px;border-radius:10px;font-size:16px;font-weight:700;cursor:'+(n>0?'pointer':'default')+';">✓ Confirmar produção → +'+(n||0)+' no estoque</button>';
+  }
+  el.innerHTML=h;
+}
+window.renderKitsProd=renderKitsProd;
+function _pkSelKit(k){ _pkKitSel=k; _pkQtd=''; renderKitsProd(); }
+function _pkSetQtd(v){
+  _pkQtd=v;
+  // atualiza só os totais da receita e o botão, sem re-renderizar o input (não perde o foco)
+  const n=parseFloat(v)||0;
+  const receita=_pkReceita(_pkKitSel);
+  const kgPorKit=receita?(+receita.totalKg||0):0;
+  // botão
+  const btn=document.getElementById('pk-btn-confirmar');
+  if(btn){ btn.disabled=!(n>0); btn.style.background=n>0?'#16a34a':'#cbd5e1'; btn.style.cursor=n>0?'pointer':'default'; btn.textContent='✓ Confirmar produção → +'+(n||0)+' no estoque'; }
+  // totais dos ingredientes
+  if(receita && receita.ingredientes){
+    receita.ingredientes.forEach((ing,idx)=>{ const c=document.getElementById('pk-ing-'+idx); if(c) c.textContent=n>0?((+ing.qtd||0)*n).toLocaleString('pt-BR',{maximumFractionDigits:2}):'—'; });
+    const tt=document.getElementById('pk-total-massa'); if(tt) tt.textContent=n>0?(kgPorKit*n).toLocaleString('pt-BR',{maximumFractionDigits:2})+' kg':'—';
+    const th=document.getElementById('pk-header-kits'); if(th) th.textContent=n>0?' ('+n+' kits)':'';
+  }
+}
+window._pkSelKit=_pkSelKit; window._pkSetQtd=_pkSetQtd;
+
+async function _pkConfirmar(){
+  const n=parseFloat(_pkQtd)||0;
+  if(n<=0){ alert('Informe a quantidade de kits produzidos.'); return; }
+  if(!confirm('Confirmar produção de '+n+' kits de '+_pkKitSel+'?\n\nIsso vai somar ao estoque de kits.')) return;
+  try{
+    await _kitAjustarSaldo(_pkKitSel, n, 'producao', {tipo:'producao', kits:n});
+    alert('✓ '+n+' kits de '+_pkKitSel+' adicionados ao estoque!\nSaldo atual: '+_kitSaldo(_pkKitSel)+' kits.');
+    _pkQtd=''; _pkKitSel=null; renderKitsProd();
+  }catch(e){ /* erro já alertado */ }
+}
+window._pkConfirmar=_pkConfirmar;
 
 function renderQuadraHome(){
   document.getElementById('quadra-date').textContent=hoje();
@@ -8740,6 +8859,10 @@ function renderQuadraLanc(){
   // Only build shell once
   if(!document.getElementById('quadra-num-kits')){
     let html=`
+    <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;padding:12px 14px;margin-bottom:12px;text-align:center;">
+      <div style="font-size:11px;color:#15803d;font-weight:600;text-transform:uppercase;letter-spacing:.04em;">Estoque de KIT em casa</div>
+      <div style="font-size:26px;font-weight:900;color:#16a34a;" id="quadra-saldo-kit">${_kitSaldo(quadraKitSel).toLocaleString('pt-BR')} <span style="font-size:14px;font-weight:700;">kits de ${quadraKitSel}</span></div>
+    </div>
     <div class="card" style="border-left:3px solid #92400e;margin-bottom:12px;">
       <div style="font-size:13px;font-weight:700;color:#92400e;margin-bottom:10px;">📋 ${quadraKitSel}</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
@@ -8779,7 +8902,8 @@ function renderQuadraLanc(){
       </table>`:'<div style="color:var(--text-secondary);font-size:12px;">Receita não encontrada.</div>'}
     </div>
 
-    <div class="section-divider">Produtos produzidos</div>
+    <div class="section-divider" style="text-align:center;">Distribuir os kits nos produtos</div>
+    <div style="font-size:12px;color:var(--text-secondary);margin-bottom:8px;text-align:center;">Informe quantos <strong>kits</strong> foram usados em cada produto. O app calcula os pacotes automaticamente.</div>
     ${produtosKit.map(p=>`
     <div class="card" id="quadra-card-${p.cod}">
       <div style="margin-bottom:8px;">
@@ -8787,11 +8911,12 @@ function renderQuadraLanc(){
         <div style="font-size:11px;color:var(--text-secondary);" id="quadra-info-${p.cod}">${p.kgPacote}kg/pct</div>
       </div>
       <div class="input-unit">
-        <input type="number" id="quadra-pct-${p.cod}" placeholder="0" min="0" inputmode="numeric"
+        <input type="number" id="quadra-kits-${p.cod}" placeholder="0" min="0" step="any" inputmode="decimal"
           oninput="atualizarProdQuadra('${p.cod}','${p.nome.replace(/'/g,"\'")}',${p.kgPacote},this.value)"
           style="font-size:15px;" />
-        <span class="unit-label">pacotes</span>
+        <span class="unit-label">kits</span>
       </div>
+      <div id="quadra-pacotes-${p.cod}" style="font-size:12px;color:#16a34a;font-weight:700;margin-top:6px;text-align:right;"></div>
     </div>`).join('')}
 
     <div id="quadra-resumo-card"></div>
@@ -8803,17 +8928,20 @@ function renderQuadraLanc(){
 }
 
 function atualizarProdQuadra(cod, nome, kgPacote, val){
-  const qtd=parseInt(val)||0;
-  if(qtd>0){
-    quadraProdutosLanc[cod]={cod, nome, kgPacote, qtdPacotes:qtd};
+  const kitsUsados=parseFloat(val)||0;
+  const prod=QUADRA_PRODUTOS.find(p=>p.cod===cod)||{grMassa:0, kgPacote:kgPacote};
+  // converte kits usados nesse produto -> pacotes: (kits × kgPorKit) ÷ (grMassa/1000)
+  const pacotes = kitsUsados>0 ? Math.round(_kitsParaPacotes(kitsUsados, prod, quadraKitSel)) : 0;
+  if(kitsUsados>0){
+    quadraProdutosLanc[cod]={cod, nome, kgPacote, kitsUsados, qtdPacotes:pacotes};
   } else {
     delete quadraProdutosLanc[cod];
   }
-  // Update card border + info label
+  // Update card border + labels
   const card=document.getElementById('quadra-card-'+cod);
-  const info=document.getElementById('quadra-info-'+cod);
-  if(card) card.style.borderLeft=qtd>0?'3px solid #92400e':'';
-  if(info) info.textContent=kgPacote+'kg/pct'+(qtd>0?' · '+(qtd*kgPacote).toFixed(2)+' kg total':'');
+  const pacEl=document.getElementById('quadra-pacotes-'+cod);
+  if(card) card.style.borderLeft=kitsUsados>0?'3px solid #92400e':'';
+  if(pacEl) pacEl.textContent = kitsUsados>0 ? '→ '+pacotes.toLocaleString('pt-BR')+' pacotes' : '';
   atualizarResumoQuadra();
 }
 
@@ -8827,12 +8955,23 @@ function atualizarResumoQuadra(){
   let totalKgProd=0;
   Object.values(quadraProdutosLanc).forEach(p=>{ totalKgProd+=p.qtdPacotes*(p.kgPacote||0); });
   const quebra=totalKgProd-totalEsperado;
+  // kits distribuídos entre os produtos e saldo do estoque
+  const kitsDistribuidos=Object.values(quadraProdutosLanc).reduce((s,p)=>s+(p.kitsUsados||0),0);
+  const saldo=_kitSaldo(quadraKitSel);
+  const somaBate=Math.abs(kitsDistribuidos-numKits)<0.01;
+  const passaSaldo=numKits>saldo;
   const resumoEl=document.getElementById('quadra-resumo-card');
   if(!resumoEl)return;
   if(numKits<=0&&totalKgProd<=0){resumoEl.innerHTML='';return;}
   const corQuebra=Math.abs(quebra)<0.01?'#2e7d32':quebra>0?'#2e7d32':'#c62828';
-  resumoEl.innerHTML=`<div class="card" style="border-left:3px solid var(--mc-dourado);margin-top:4px;margin-bottom:4px;">
+  // avisos
+  let avisos='';
+  if(passaSaldo){ avisos+='<div style="background:#fef2f2;border:1px solid #fecaca;color:#b91c1c;border-radius:8px;padding:8px 10px;font-size:12px;font-weight:700;margin-bottom:8px;">⚠ Estoque insuficiente: você tem '+saldo.toLocaleString('pt-BR')+' kits de '+quadraKitSel+' e está tentando usar '+numKits.toLocaleString('pt-BR')+'.</div>'; }
+  if(numKits>0 && kitsDistribuidos>0 && !somaBate){ avisos+='<div style="background:#fffbeb;border:1px solid #fde68a;color:#b45309;border-radius:8px;padding:8px 10px;font-size:12px;font-weight:700;margin-bottom:8px;">⚠ A soma dos kits nos produtos ('+kitsDistribuidos.toLocaleString('pt-BR')+') não bate com os kits usados ('+numKits.toLocaleString('pt-BR')+').</div>'; }
+  resumoEl.innerHTML=avisos+`<div class="card" style="border-left:3px solid var(--mc-dourado);margin-top:4px;margin-bottom:4px;">
     <div style="font-size:13px;font-weight:600;color:var(--mc-dourado);margin-bottom:8px;">📊 Resumo</div>
+    <div class="resumo-row"><span class="resumo-nome">Estoque de ${quadraKitSel}</span><span style="font-weight:700;color:${passaSaldo?'#c62828':'#16a34a'};">${saldo.toLocaleString('pt-BR')} kits</span></div>
+    <div class="resumo-row"><span class="resumo-nome">Kits distribuídos / usados</span><span style="font-weight:700;color:${somaBate?'#16a34a':'#b45309'};">${kitsDistribuidos.toLocaleString('pt-BR')} / ${numKits.toLocaleString('pt-BR')}</span></div>
     ${numKits>0?`<div class="resumo-row"><span class="resumo-nome">Kits (${numKits}×${kgPorKit.toFixed(2)}kg)</span><span style="font-weight:700;">${(numKits*kgPorKit).toFixed(3)} kg</span></div>`:''}
     ${massaVelha>0?`<div class="resumo-row"><span class="resumo-nome">− Massa velha</span><span style="font-weight:700;color:var(--mc-azul);">-${massaVelha.toFixed(3)} kg</span></div>`:''}
     ${numKits>0||massaVelha>0?`<div class="resumo-row"><span class="resumo-nome">Total esperado</span><span style="font-weight:700;">${totalEsperado.toFixed(3)} kg</span></div>`:''}
@@ -8847,6 +8986,18 @@ async function salvarQuadra(){
   const produtosArr=Object.values(quadraProdutosLanc);
   if(numKits<=0){alert('Informe a quantidade de kits usados.');return;}
   if(!produtosArr.length){alert('Informe a produção de pelo menos um produto.');return;}
+
+  // valida saldo do estoque de kits (impede consumir mais do que tem)
+  const saldo=_kitSaldo(quadraKitSel);
+  if(numKits>saldo){
+    alert('Estoque insuficiente!\n\nVocê tem '+saldo.toLocaleString('pt-BR')+' kits de '+quadraKitSel+' em estoque, mas está tentando usar '+numKits.toLocaleString('pt-BR')+'.\n\nProduza mais kits antes (aba "Produzir kits") ou ajuste a quantidade.');
+    return;
+  }
+  // avisa (não bloqueia) se a soma dos kits por produto não bate com o total
+  const kitsDistribuidos=produtosArr.reduce((s,p)=>s+(p.kitsUsados||0),0);
+  if(Math.abs(kitsDistribuidos-numKits)>=0.01){
+    if(!confirm('Atenção: a soma dos kits distribuídos nos produtos ('+kitsDistribuidos.toLocaleString('pt-BR')+') não bate com os kits usados ('+numKits.toLocaleString('pt-BR')+').\n\nDeseja salvar mesmo assim?')) return;
+  }
 
   const recKey=QUADRA_KIT_MAPPING[quadraKitSel]||(QUADRA_KITS_RECEITAS[quadraKitSel]?quadraKitSel:Object.keys(QUADRA_KITS_RECEITAS).find(k=>k.toLowerCase()===(quadraKitSel||'').toLowerCase()));
   const receita=recKey?QUADRA_KITS_RECEITAS[recKey]:null;
@@ -8883,6 +9034,9 @@ async function salvarQuadra(){
         expedicao:{parciais:[],totalLiberado:0}
       });
     }
+
+    // subtrai os kits consumidos do estoque
+    await _kitAjustarSaldo(quadraKitSel, -numKits, 'consumo', {tipo:'consumo', kits:numKits, data:quadraDataSel, quadraRegId:ref.id});
 
     goTo('s-quadra-home');
   }catch(e){
