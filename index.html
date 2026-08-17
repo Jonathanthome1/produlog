@@ -8702,7 +8702,7 @@ function renderKitsProd(){
     '<div style="font-size:12px;font-weight:700;color:#15803d;margin-bottom:8px;">📦 Estoque atual de kits</div>';
   const comSaldo=kits.filter(k=>_kitSaldo(k)>0);
   if(comSaldo.length){
-    h+=comSaldo.map(k=>'<div style="display:flex;justify-content:space-between;font-size:13px;padding:3px 0;"><span>'+k+'</span><strong>'+_kitSaldo(k).toLocaleString('pt-BR')+' kits</strong></div>').join('');
+    h+=comSaldo.map(k=>'<div style="display:flex;justify-content:space-between;align-items:center;font-size:13px;padding:5px 0;border-bottom:1px solid #dcfce7;"><span>'+k+'</span><span style="display:flex;align-items:center;gap:8px;"><strong>'+_kitSaldo(k).toLocaleString('pt-BR')+' kits</strong><button onclick="_pkDesmanchar(\''+escapeJsStr(k)+'\')" style="background:#fef2f2;border:1px solid #fecaca;color:#dc2626;font-size:11px;padding:3px 8px;border-radius:6px;cursor:pointer;font-weight:700;">desmanchar</button></span></div>').join('');
   } else { h+='<div style="font-size:12px;color:var(--text-secondary);">Nenhum kit em estoque ainda.</div>'; }
   h+='</div>';
 
@@ -8764,6 +8764,23 @@ function _pkSetQtd(v){
   }
 }
 window._pkSelKit=_pkSelKit; window._pkSetQtd=_pkSetQtd;
+
+async function _pkDesmanchar(kit){
+  const saldo=_kitSaldo(kit);
+  if(saldo<=0){ alert('Não há kits de '+kit+' em estoque.'); return; }
+  const resp=prompt('Desmanchar kits de '+kit+'\n\nSaldo atual: '+saldo+' kits.\nQuantos kits deseja tirar do estoque?', saldo);
+  if(resp===null) return;
+  const n=parseFloat(resp)||0;
+  if(n<=0){ alert('Quantidade inválida.'); return; }
+  if(n>saldo){ alert('Você tem só '+saldo+' kits de '+kit+' em estoque.'); return; }
+  if(!confirm('Confirmar: tirar '+n+' kit(s) de '+kit+' do estoque?\n\nSaldo ficará: '+(saldo-n)+' kits.')) return;
+  try{
+    await _kitAjustarSaldo(kit, -n, 'desmanche', {tipo:'desmanche', kits:n});
+    alert('✓ '+n+' kit(s) de '+kit+' removidos do estoque.\nSaldo atual: '+_kitSaldo(kit)+' kits.');
+    renderKitsProd();
+  }catch(e){ /* erro já alertado */ }
+}
+window._pkDesmanchar=_pkDesmanchar;
 
 async function _pkConfirmar(){
   const n=parseFloat(_pkQtd)||0;
@@ -9092,14 +9109,22 @@ function renderQuadraReg(){
 
 async function excluirRegQuadra(fid){
   if(!window.adminMode){alert('Apenas o administrador pode excluir.');return;}
-  if(!confirm('Excluir este lançamento?\nOs produtos serão removidos da embalagem.\nEssa ação não pode ser desfeita.'))return;
+  const reg=quadraRegistros.find(r=>r.firestoreId===fid);
+  const kitsVoltam=reg&&reg.kit&&(+reg.numKits>0);
+  const msg='Excluir este lançamento?\nOs produtos serão removidos da embalagem.'+
+    (kitsVoltam?'\n\n✓ '+(+reg.numKits)+' kit(s) de '+reg.kit+' voltarão para o estoque.':'')+
+    '\n\nEssa ação não pode ser desfeita.';
+  if(!confirm(msg))return;
   try{
-    const reg=quadraRegistros.find(r=>r.firestoreId===fid);
     await deleteDoc(doc(db,'quadraRegistros',fid));
     // Also remove from registros
     if(reg){
       const regsProd=registros.filter(r=>r.quadraRegId===fid);
       for(const r of regsProd) await deleteDoc(doc(db,'registros',r.firestoreId));
+      // devolve os kits consumidos de volta ao estoque
+      if(kitsVoltam){
+        await _kitAjustarSaldo(reg.kit, +reg.numKits, 'estorno_exclusao', {tipo:'estorno', kits:+reg.numKits, data:reg.data, quadraRegId:fid});
+      }
     }
     renderQuadraReg();
   }catch(e){alert('Erro ao excluir: '+e.message);}
