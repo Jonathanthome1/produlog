@@ -2398,19 +2398,11 @@
       </div>
       <div class="mc-section-header">Ações</div>
       <div class="mc-sector-grid">
-        <button class="mc-sector-card" style="border-left:3px solid #16a34a;" onclick="abrirProduzirKits()">
-          <div class="mc-sector-icon green">🏭</div>
-          <div class="mc-sector-info">
-            <div class="mc-sector-title">Produzir kits</div>
-            <div class="mc-sector-desc">Lançar kits produzidos → gera estoque</div>
-          </div>
-          <span class="mc-sector-arrow">›</span>
-        </button>
         <button class="mc-sector-card" onclick="iniciarNovoLancQuadra()">
           <div class="mc-sector-icon gold">📋</div>
           <div class="mc-sector-info">
-            <div class="mc-sector-title">Consumir kits (lançar produção)</div>
-            <div class="mc-sector-desc">Usar kits do estoque nos produtos</div>
+            <div class="mc-sector-title">Novo Lançamento</div>
+            <div class="mc-sector-desc">Registrar consumo de kits</div>
           </div>
           <span class="mc-sector-arrow">›</span>
         </button>
@@ -4712,7 +4704,6 @@ function goTo(id){
   if(id==='s-testes-edit'){ const b=document.getElementById('testes-edit-btn');if(b){b.textContent='Salvar alterações ✓';b.disabled=false;} }
   if(id==='s-testes-novo'){ const b=document.getElementById('testes-btn-salvar');if(b){b.textContent='Salvar teste ✓';b.disabled=false;} }
   if(id==='s-quadra-data'){ renderQuadraDateGrid(); }
-  if(id==='s-quadra-kits-prod') renderKitsProd();
   if(id==='s-quadra-kit'){ filtrarKitsQuadra(); }
   if(id==='s-quadra-lanc'){ const lc=document.getElementById('quadra-lanc-content'); if(lc&&!lc.innerHTML.trim())renderQuadraLanc(); else renderQuadraLanc(); }
   if(id==='s-quadra-reg') renderQuadraReg();
@@ -8886,10 +8877,6 @@ function renderQuadraLanc(){
   // Only build shell once
   if(!document.getElementById('quadra-num-kits')){
     let html=`
-    <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;padding:12px 14px;margin-bottom:12px;text-align:center;">
-      <div style="font-size:11px;color:#15803d;font-weight:600;text-transform:uppercase;letter-spacing:.04em;">Estoque de KIT em casa</div>
-      <div style="font-size:26px;font-weight:900;color:#16a34a;" id="quadra-saldo-kit">${_kitSaldo(quadraKitSel).toLocaleString('pt-BR')} <span style="font-size:14px;font-weight:700;">kits de ${quadraKitSel}</span></div>
-    </div>
     <div class="card" style="border-left:3px solid #92400e;margin-bottom:12px;">
       <div style="font-size:13px;font-weight:700;color:#92400e;margin-bottom:10px;">📋 ${quadraKitSel}</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
@@ -8982,22 +8969,18 @@ function atualizarResumoQuadra(){
   let totalKgProd=0;
   Object.values(quadraProdutosLanc).forEach(p=>{ totalKgProd+=p.qtdPacotes*(p.kgPacote||0); });
   const quebra=totalKgProd-totalEsperado;
-  // kits distribuídos entre os produtos e saldo do estoque
+  // kits distribuídos entre os produtos (para conferir com o total informado)
   const kitsDistribuidos=Object.values(quadraProdutosLanc).reduce((s,p)=>s+(p.kitsUsados||0),0);
-  const saldo=_kitSaldo(quadraKitSel);
   const somaBate=Math.abs(kitsDistribuidos-numKits)<0.01;
-  const passaSaldo=numKits>saldo;
   const resumoEl=document.getElementById('quadra-resumo-card');
   if(!resumoEl)return;
   if(numKits<=0&&totalKgProd<=0){resumoEl.innerHTML='';return;}
   const corQuebra=Math.abs(quebra)<0.01?'#2e7d32':quebra>0?'#2e7d32':'#c62828';
-  // avisos
+  // aviso se a soma dos produtos não bater com o total informado
   let avisos='';
-  if(passaSaldo){ avisos+='<div style="background:#fef2f2;border:1px solid #fecaca;color:#b91c1c;border-radius:8px;padding:8px 10px;font-size:12px;font-weight:700;margin-bottom:8px;">⚠ Estoque insuficiente: você tem '+saldo.toLocaleString('pt-BR')+' kits de '+quadraKitSel+' e está tentando usar '+numKits.toLocaleString('pt-BR')+'.</div>'; }
   if(numKits>0 && kitsDistribuidos>0 && !somaBate){ avisos+='<div style="background:#fffbeb;border:1px solid #fde68a;color:#b45309;border-radius:8px;padding:8px 10px;font-size:12px;font-weight:700;margin-bottom:8px;">⚠ A soma dos kits nos produtos ('+kitsDistribuidos.toLocaleString('pt-BR')+') não bate com os kits usados ('+numKits.toLocaleString('pt-BR')+').</div>'; }
   resumoEl.innerHTML=avisos+`<div class="card" style="border-left:3px solid var(--mc-dourado);margin-top:4px;margin-bottom:4px;">
     <div style="font-size:13px;font-weight:600;color:var(--mc-dourado);margin-bottom:8px;">📊 Resumo</div>
-    <div class="resumo-row"><span class="resumo-nome">Estoque de ${quadraKitSel}</span><span style="font-weight:700;color:${passaSaldo?'#c62828':'#16a34a'};">${saldo.toLocaleString('pt-BR')} kits</span></div>
     <div class="resumo-row"><span class="resumo-nome">Kits distribuídos / usados</span><span style="font-weight:700;color:${somaBate?'#16a34a':'#b45309'};">${kitsDistribuidos.toLocaleString('pt-BR')} / ${numKits.toLocaleString('pt-BR')}</span></div>
     ${numKits>0?`<div class="resumo-row"><span class="resumo-nome">Kits (${numKits}×${kgPorKit.toFixed(2)}kg)</span><span style="font-weight:700;">${(numKits*kgPorKit).toFixed(3)} kg</span></div>`:''}
     ${massaVelha>0?`<div class="resumo-row"><span class="resumo-nome">− Massa velha</span><span style="font-weight:700;color:var(--mc-azul);">-${massaVelha.toFixed(3)} kg</span></div>`:''}
@@ -9005,14 +8988,14 @@ function atualizarResumoQuadra(){
     <div class="resumo-row"><span class="resumo-nome">Produzido</span><span style="font-weight:700;color:#92400e;">${totalKgProd.toFixed(3)} kg</span></div>
     ${totalEsperado>0?`<div class="resumo-row"><span class="resumo-nome">Quebra</span><span style="font-weight:700;color:${corQuebra};">${quebra>0?'+':''}${quebra.toFixed(3)} kg</span></div>`:''}
   </div>`;
-  // controla o botão salvar: bloqueia se falta estoque OU a soma não bate
+  // controla o botão salvar: bloqueia só se a soma não bater
   const btnSalvar=document.getElementById('quadra-btn-salvar');
   if(btnSalvar){
-    const podeSalvar = numKits>0 && !passaSaldo && somaBate && kitsDistribuidos>0;
+    const podeSalvar = numKits>0 && somaBate && kitsDistribuidos>0;
     btnSalvar.disabled=!podeSalvar;
     btnSalvar.style.opacity=podeSalvar?'1':'0.5';
     btnSalvar.style.cursor=podeSalvar?'pointer':'not-allowed';
-    btnSalvar.textContent = passaSaldo ? 'Sem estoque suficiente' : (!somaBate&&kitsDistribuidos>0 ? 'A conta não bate' : 'Salvar lançamento ✓');
+    btnSalvar.textContent = (!somaBate&&kitsDistribuidos>0 ? 'A conta não bate' : 'Salvar lançamento ✓');
   }
 }
 
@@ -9023,12 +9006,6 @@ async function salvarQuadra(){
   if(numKits<=0){alert('Informe a quantidade de kits usados.');return;}
   if(!produtosArr.length){alert('Informe a produção de pelo menos um produto.');return;}
 
-  // valida saldo do estoque de kits (impede consumir mais do que tem)
-  const saldo=_kitSaldo(quadraKitSel);
-  if(numKits>saldo){
-    alert('Estoque insuficiente!\n\nVocê tem '+saldo.toLocaleString('pt-BR')+' kits de '+quadraKitSel+' em estoque, mas está tentando usar '+numKits.toLocaleString('pt-BR')+'.\n\nProduza mais kits antes (aba "Produzir kits") ou ajuste a quantidade.');
-    return;
-  }
   // BLOQUEIA se a soma dos kits por produto não bater com o total informado
   const kitsDistribuidos=produtosArr.reduce((s,p)=>s+(p.kitsUsados||0),0);
   if(Math.abs(kitsDistribuidos-numKits)>=0.01){
@@ -9073,9 +9050,6 @@ async function salvarQuadra(){
       });
     }
 
-    // subtrai os kits consumidos do estoque
-    await _kitAjustarSaldo(quadraKitSel, -numKits, 'consumo', {tipo:'consumo', kits:numKits, data:quadraDataSel, quadraRegId:ref.id});
-
     // confirmação do que foi lançado
     const totalPacotes=produtosArr.reduce((s,p)=>s+(p.qtdPacotes||0),0);
     let resumoMsg='✓ Lançamento efetuado com sucesso!\n\n';
@@ -9084,7 +9058,6 @@ async function salvarQuadra(){
     resumoMsg+='Kits consumidos: '+numKits.toLocaleString('pt-BR')+'\n';
     resumoMsg+='Total produzido: '+totalPacotes.toLocaleString('pt-BR')+' pacotes\n\n';
     resumoMsg+='Produtos:\n'+produtosArr.map(p=>'• '+p.nome+': '+(p.qtdPacotes||0).toLocaleString('pt-BR')+' pacotes').join('\n');
-    resumoMsg+='\n\nSaldo restante de '+quadraKitSel+': '+_kitSaldo(quadraKitSel).toLocaleString('pt-BR')+' kits.';
     alert(resumoMsg);
 
     goTo('s-quadra-home');
@@ -9132,10 +9105,7 @@ function renderQuadraReg(){
 async function excluirRegQuadra(fid){
   if(!window.adminMode){alert('Apenas o administrador pode excluir.');return;}
   const reg=quadraRegistros.find(r=>r.firestoreId===fid);
-  const kitsVoltam=reg&&reg.kit&&(+reg.numKits>0);
-  const msg='Excluir este lançamento?\nOs produtos serão removidos da embalagem.'+
-    (kitsVoltam?'\n\n✓ '+(+reg.numKits)+' kit(s) de '+reg.kit+' voltarão para o estoque.':'')+
-    '\n\nEssa ação não pode ser desfeita.';
+  const msg='Excluir este lançamento?\nOs produtos serão removidos da embalagem.\n\nEssa ação não pode ser desfeita.';
   if(!confirm(msg))return;
   try{
     await deleteDoc(doc(db,'quadraRegistros',fid));
@@ -9143,10 +9113,6 @@ async function excluirRegQuadra(fid){
     if(reg){
       const regsProd=registros.filter(r=>r.quadraRegId===fid);
       for(const r of regsProd) await deleteDoc(doc(db,'registros',r.firestoreId));
-      // devolve os kits consumidos de volta ao estoque
-      if(kitsVoltam){
-        await _kitAjustarSaldo(reg.kit, +reg.numKits, 'estorno_exclusao', {tipo:'estorno', kits:+reg.numKits, data:reg.data, quadraRegId:fid});
-      }
     }
     renderQuadraReg();
   }catch(e){alert('Erro ao excluir: '+e.message);}
