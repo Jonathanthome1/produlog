@@ -8634,17 +8634,27 @@ onSnapshot(collection(db,'quadraKitsEstoque'), snap=>{
     if(t==='s-quadra-kit' && typeof filtrarKitsQuadra==='function') filtrarKitsQuadra();
   }catch(e){ console.error('quadraKitsEstoque snap',e); }
 });
-function _kitSaldo(kit){ return +quadraKitsEstoque[kit]||0; }
+function _kitNormNome(s){ return String(s||'').toLowerCase().replace(/[\/\\\-]/g,' ').replace(/\s+/g,' ').trim(); }
+function _kitSaldo(kit){
+  if(quadraKitsEstoque[kit]!=null) return +quadraKitsEstoque[kit]||0;
+  // tolerante: acha o saldo mesmo que o nome tenha variação (barra/hífen, maiúsculas, espaços)
+  const alvo=_kitNormNome(kit);
+  const chave=Object.keys(quadraKitsEstoque).find(k=>_kitNormNome(k)===alvo);
+  return chave?(+quadraKitsEstoque[chave]||0):0;
+}
 function _kitDocId(kit){ return String(kit||'').replace(/[\/\\.#$\[\]]/g,'-').replace(/\s+/g,' ').trim(); }
 async function _kitAjustarSaldo(kit, delta, motivo, extra){
-  const id=_kitDocId(kit);
+  // usa o nome canônico já existente no estoque (se houver variante), para não duplicar documento
+  const alvo=_kitNormNome(kit);
+  const canon=Object.keys(quadraKitsEstoque).find(k=>_kitNormNome(k)===alvo) || kit;
+  const id=_kitDocId(canon);
   const novo=Math.max(0, _kitSaldo(kit)+delta);
   try{
-    await setDoc(doc(db,'quadraKitsEstoque',id), {kit, saldo:novo, atualizado:agora(), atualizadoData:hoje()}, {merge:true});
-    quadraKitsEstoque[kit]=novo;
+    await setDoc(doc(db,'quadraKitsEstoque',id), {kit:canon, saldo:novo, atualizado:agora(), atualizadoData:hoje()}, {merge:true});
+    quadraKitsEstoque[canon]=novo;
     // histórico
     const mv=doc(collection(db,'quadraKitsMov'));
-    await setDoc(mv, {kit, delta, motivo:motivo||'', data:hoje(), hora:agora(), por:_demAutor(), saldoResultante:novo, ...(extra||{})});
+    await setDoc(mv, {kit:canon, delta, motivo:motivo||'', data:hoje(), hora:agora(), por:_demAutor(), saldoResultante:novo, ...(extra||{})});
   }catch(e){ alert('Erro no estoque de kits: '+e.message); throw e; }
 }
 // kg de massa que 1 kit rende (da receita)
