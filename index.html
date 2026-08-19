@@ -45,6 +45,10 @@
 
       /* Radius */
       --r-sm: 6px; --r-md: 8px; --r-lg: 10px; --r-xl: 12px;
+      /* Sistema de espaçamento padrão (usar nas telas para consistência) */
+      --sp-xs: 4px; --sp-sm: 8px; --sp-md: 12px; --sp-lg: 16px; --sp-xl: 20px; --sp-2xl: 24px;
+      /* Sistema de tamanhos de fonte padrão */
+      --fs-xs: 11px; --fs-sm: 12px; --fs-md: 14px; --fs-lg: 16px; --fs-xl: 18px; --fs-2xl: 22px;
     }
     html, body {
       height: 100%;
@@ -303,8 +307,23 @@
     .app-frame {
       max-width: 100% !important;
       width: 100% !important;
+      margin: 0 auto !important;
       box-shadow: none !important;
       background: var(--bg-secondary) !important;
+    }
+    /* Só em tablets (tela média): centraliza numa faixa confortável.
+       Celular (estreito) e computador (largo) continuam em tela cheia. */
+    @media (min-width: 601px) and (max-width: 1024px) {
+      .app-frame {
+        max-width: 600px !important;
+        box-shadow: 0 0 40px rgba(0,0,0,0.08) !important;
+      }
+      /* Painéis de TV/mural continuam em tela cheia mesmo no tablet */
+      body:has(#s-tv.active) .app-frame,
+      body:has(#s-painel.active) .app-frame,
+      body:has(#s-painel-proto.active) .app-frame {
+        max-width: 100% !important;
+      }
     }
     /* Topbar e content com padding generoso */
     .topbar { padding-left: 40px !important; padding-right: 40px !important; }
@@ -969,7 +988,7 @@
       <div class="mc-brand"><div class="mc-brand-logo"></div><div class="mc-brand-text"><div class="mc-brand-name">Monte Castelo</div><div class="mc-brand-sub">Confeitaria</div></div></div>
       <div class="mc-divider-v"></div>
       <div class="mc-page-info"><div class="mc-page-title">📦 Estoque</div><div class="mc-page-sub">Massas e recheios · tempo real</div></div>
-      <div class="mc-header-actions"><button class="mc-act-btn-secondary" onclick="abrirDescarteEstoque('massa','Confeitaria')">🗑️ Descartar massa</button></div>
+      <div class="mc-header-actions"><button class="mc-act-btn-secondary" onclick="abrirDescarteEstoque('massa','Confeitaria')">🗑️ Descartar</button></div>
     </div>
     <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;"><div id="estoque-conf-list"></div></div>
   </div>
@@ -2868,7 +2887,18 @@
     <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;">
       <div class="agenda-aviso" style="display:none;"></div>
 
-      <button class="mc-sector-card" style="border-left:3px solid var(--mc-azul);margin-bottom:10px;" onclick="goTo('s-adm-g-setores')">
+      <div class="mc-section-header" style="margin-top:0;">🗂️ Cadastros</div>
+      <button class="mc-sector-card" style="border-left:4px solid var(--mc-cinza,#64748b);margin-bottom:10px;" onclick="goTo('s-adm-cadastros')">
+        <div class="mc-sector-icon" style="background:#e2e8f0;">🗂️</div>
+        <div class="mc-sector-info">
+          <div class="mc-sector-title">Cadastros &amp; Configurações</div>
+          <div class="mc-sector-desc">Produtos · Kits · Matéria-prima · Senhas · Ajustes</div>
+        </div>
+        <span class="mc-sector-arrow">›</span>
+      </button>
+
+      <div class="mc-section-header">📦 Produção</div>
+      <button class="mc-sector-card" style="border-left:4px solid var(--mc-azul);margin-bottom:10px;" onclick="goTo('s-adm-g-setores')">
         <div class="mc-sector-icon blue">🏭</div>
         <div class="mc-sector-info">
           <div class="mc-sector-title">Setores de Produção</div>
@@ -2877,7 +2907,7 @@
         <span class="mc-sector-arrow">›</span>
       </button>
 
-      <button class="mc-sector-card" style="border-left:3px solid var(--mc-verde);margin-bottom:10px;" onclick="goTo('s-adm-g-plan')">
+      <button class="mc-sector-card" style="border-left:4px solid var(--mc-verde);margin-bottom:10px;" onclick="goTo('s-adm-g-plan')">
         <div class="mc-sector-icon green">📋</div>
         <div class="mc-sector-info">
           <div class="mc-sector-title">Planejamento &amp; Produção <span class="hubc-plan" style="display:none;background:var(--mc-laranja);color:#fff;font-size:11px;font-weight:700;border-radius:99px;padding:1px 8px;margin-left:4px;align-items:center;">0</span></div>
@@ -2886,43 +2916,7 @@
         <span class="mc-sector-arrow">›</span>
       </button>
 
-      <button class="mc-sector-card" style="border-left:3px solid var(--mc-dourado);margin-bottom:10px;" onclick="goTo('s-adm-g-mp')">
-        <div class="mc-sector-icon" style="background:#fef3c7;">🧪</div>
-        <div class="mc-sector-info">
-          <div class="mc-sector-title">Matéria-Prima &amp; Estoque <span class="hubc-mp" style="display:none;background:var(--mc-roxo);color:#fff;font-size:11px;font-weight:700;border-radius:99px;padding:1px 8px;margin-left:4px;align-items:center;">0</span></div>
-          <div class="mc-sector-desc">Simulador · Rastreamento · Testes · Estoque · Contagem · Agenda</div>
-        </div>
-        <span class="mc-sector-arrow">›</span>
-      </button>
-
-      <button class="mc-sector-card" style="border-left:3px solid var(--mc-laranja);margin-bottom:10px;" onclick="goTo('s-adm-g-log')">
-        <div class="mc-sector-icon" style="background:#ffedd5;">🛒</div>
-        <div class="mc-sector-info">
-          <div class="mc-sector-title">Compras &amp; Logística <span class="hubc-log" style="display:none;background:var(--mc-azul);color:#fff;font-size:11px;font-weight:700;border-radius:99px;padding:1px 8px;margin-left:4px;align-items:center;">0</span></div>
-          <div class="mc-sector-desc">Pedidos de matéria-prima · Carregamentos · Códigos de barras</div>
-        </div>
-        <span class="mc-sector-arrow">›</span>
-      </button>
-
-      <button class="mc-sector-card" style="border-left:3px solid var(--mc-roxo);margin-bottom:10px;" onclick="goTo('s-adm-g-gestao')">
-        <div class="mc-sector-icon purple">✅</div>
-        <div class="mc-sector-info">
-          <div class="mc-sector-title">Gestão &amp; Tarefas <span class="hubc-gestao" style="display:none;background:var(--mc-vermelho);color:#fff;font-size:11px;font-weight:700;border-radius:99px;padding:1px 8px;margin-left:4px;align-items:center;">0</span></div>
-          <div class="mc-sector-desc">Demandas · Solicitações de receita · Status geral</div>
-        </div>
-        <span class="mc-sector-arrow">›</span>
-      </button>
-
-      <button class="mc-sector-card" style="border-left:3px solid var(--mc-roxo,#7c3aed);margin-bottom:10px;" onclick="_cdcModo='lista';goTo('s-cdc');renderCDC()">
-        <div class="mc-sector-icon" style="background:#ede9fe;">📊</div>
-        <div class="mc-sector-info">
-          <div class="mc-sector-title">Controle Diário Confeitaria</div>
-          <div class="mc-sector-desc">Massa, recheio, produzido, embalado e quebra por dia</div>
-        </div>
-        <span class="mc-sector-arrow">›</span>
-      </button>
-
-      <button class="mc-sector-card" style="border-left:3px solid var(--mc-azul,#2563eb);margin-bottom:10px;" onclick="goTo('s-cpm');renderCpm()">
+      <button class="mc-sector-card" style="border-left:4px solid var(--mc-azul,#2563eb);margin-bottom:10px;" onclick="goTo('s-cpm');renderCpm()">
         <div class="mc-sector-icon" style="background:#dbeafe;">🏭</div>
         <div class="mc-sector-info">
           <div class="mc-sector-title">Controle de Produção</div>
@@ -2931,7 +2925,16 @@
         <span class="mc-sector-arrow">›</span>
       </button>
 
-      <button class="mc-sector-card" style="border-left:3px solid var(--mc-vermelho);margin-bottom:10px;" onclick="goTo('s-la-decisao');renderLaDecisao()">
+      <button class="mc-sector-card" style="border-left:4px solid var(--mc-roxo,#7c3aed);margin-bottom:10px;" onclick="_cdcModo='lista';goTo('s-cdc');renderCDC()">
+        <div class="mc-sector-icon" style="background:#ede9fe;">📊</div>
+        <div class="mc-sector-info">
+          <div class="mc-sector-title">Controle Diário Confeitaria</div>
+          <div class="mc-sector-desc">Massa, recheio, produzido, embalado e quebra por dia</div>
+        </div>
+        <span class="mc-sector-arrow">›</span>
+      </button>
+
+      <button class="mc-sector-card" style="border-left:4px solid var(--mc-vermelho);margin-bottom:10px;" onclick="goTo('s-la-decisao');renderLaDecisao()">
         <div class="mc-sector-icon" style="background:#fee2e2;">⚖️</div>
         <div class="mc-sector-info">
           <div class="mc-sector-title">Liberação Antecipada <span class="la-badge" style="display:none;background:var(--mc-vermelho);color:#fff;font-size:11px;font-weight:700;border-radius:99px;padding:1px 8px;margin-left:4px;align-items:center;">0</span> <span class="la-badge-aj" style="display:none;background:var(--mc-laranja);color:#fff;font-size:11px;font-weight:700;border-radius:99px;padding:1px 8px;margin-left:4px;align-items:center;">0</span></div>
@@ -2940,11 +2943,49 @@
         <span class="mc-sector-arrow">›</span>
       </button>
 
-      <button class="mc-sector-card" style="border-left:3px solid var(--mc-indigo);margin-bottom:10px;" onclick="goTo('s-adm-g-rel')">
+      <button class="mc-sector-card" style="border-left:4px solid #0891b2;margin-bottom:10px;" onclick="goTo('s-ajref');renderAjRef()">
+        <div class="mc-sector-icon" style="background:#cffafe;">🔄</div>
+        <div class="mc-sector-info">
+          <div class="mc-sector-title">Ajustes de Refazimento</div>
+          <div class="mc-sector-desc">Conferir ajustes de entrada/saída pendentes por dia</div>
+        </div>
+        <span class="mc-sector-arrow">›</span>
+      </button>
+
+      <div class="mc-section-header">🛒 Suprimentos</div>
+      <button class="mc-sector-card" style="border-left:4px solid var(--mc-dourado);margin-bottom:10px;" onclick="goTo('s-adm-g-mp')">
+        <div class="mc-sector-icon" style="background:#fef3c7;">🧪</div>
+        <div class="mc-sector-info">
+          <div class="mc-sector-title">Matéria-Prima &amp; Estoque <span class="hubc-mp" style="display:none;background:var(--mc-roxo);color:#fff;font-size:11px;font-weight:700;border-radius:99px;padding:1px 8px;margin-left:4px;align-items:center;">0</span></div>
+          <div class="mc-sector-desc">Simulador · Rastreamento · Testes · Estoque · Contagem · Agenda</div>
+        </div>
+        <span class="mc-sector-arrow">›</span>
+      </button>
+
+      <button class="mc-sector-card" style="border-left:4px solid var(--mc-laranja);margin-bottom:10px;" onclick="goTo('s-adm-g-log')">
+        <div class="mc-sector-icon" style="background:#ffedd5;">🛒</div>
+        <div class="mc-sector-info">
+          <div class="mc-sector-title">Compras &amp; Logística <span class="hubc-log" style="display:none;background:var(--mc-azul);color:#fff;font-size:11px;font-weight:700;border-radius:99px;padding:1px 8px;margin-left:4px;align-items:center;">0</span></div>
+          <div class="mc-sector-desc">Pedidos de matéria-prima · Carregamentos · Códigos de barras</div>
+        </div>
+        <span class="mc-sector-arrow">›</span>
+      </button>
+
+      <div class="mc-section-header">📊 Gestão</div>
+      <button class="mc-sector-card" style="border-left:4px solid var(--mc-roxo);margin-bottom:10px;" onclick="goTo('s-adm-g-gestao')">
+        <div class="mc-sector-icon purple">✅</div>
+        <div class="mc-sector-info">
+          <div class="mc-sector-title">Gestão &amp; Tarefas <span class="hubc-gestao" style="display:none;background:var(--mc-vermelho);color:#fff;font-size:11px;font-weight:700;border-radius:99px;padding:1px 8px;margin-left:4px;align-items:center;">0</span></div>
+          <div class="mc-sector-desc">Demandas · Solicitações de receita · Status geral</div>
+        </div>
+        <span class="mc-sector-arrow">›</span>
+      </button>
+
+      <button class="mc-sector-card" style="border-left:4px solid var(--mc-indigo);margin-bottom:10px;" onclick="goTo('s-adm-g-rel')">
         <div class="mc-sector-icon indigo">📊</div>
         <div class="mc-sector-info">
           <div class="mc-sector-title">Relatórios &amp; Equipe</div>
-          <div class="mc-sector-desc">Relatórios · Presença · Cadastros e configurações</div>
+          <div class="mc-sector-desc">Relatórios · Presença · Manutenção</div>
         </div>
         <span class="mc-sector-arrow">›</span>
       </button>
@@ -3144,7 +3185,7 @@
       <button class="mc-header-back" onclick="goTo('s-adm-hub')">‹</button>
       <div class="mc-brand"><div class="mc-brand-logo"></div><div class="mc-brand-text"><div class="mc-brand-name">Monte Castelo</div><div class="mc-brand-sub">Admin</div></div></div>
       <div class="mc-divider-v"></div>
-      <div class="mc-page-info"><div class="mc-page-title">📊 Relatórios &amp; Equipe</div><div class="mc-page-sub">Dados, presença e cadastros</div></div>
+      <div class="mc-page-info"><div class="mc-page-title">📊 Relatórios &amp; Equipe</div><div class="mc-page-sub">Dados, presença e manutenção</div></div>
     </div>
     <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;">
       <button class="mc-sector-card" style="border-left:3px solid var(--mc-indigo);margin-bottom:10px;" onclick="goTo('s-adm')">
@@ -3155,11 +3196,6 @@
       <button class="mc-sector-card" style="border-left:3px solid var(--mc-azul);margin-bottom:10px;" onclick="goTo('s-adm-presencas')">
         <div class="mc-sector-icon blue">👥</div>
         <div class="mc-sector-info"><div class="mc-sector-title">Registros de Presença</div><div class="mc-sector-desc" id="adm-pres-emb-sub">Histórico da equipe</div></div>
-        <span class="mc-sector-arrow">›</span>
-      </button>
-      <button class="mc-sector-card" style="border-left:3px solid var(--mc-cinza);margin-bottom:10px;" onclick="goTo('s-adm-cadastros')">
-        <div class="mc-sector-icon" style="background:#e5e7eb;">⚙️</div>
-        <div class="mc-sector-info"><div class="mc-sector-title">Cadastros &amp; Configurações</div><div class="mc-sector-desc">Produtos, fichas, senhas e ajustes</div></div>
         <span class="mc-sector-arrow">›</span>
       </button>
       <button class="mc-sector-card" style="border-left:3px solid var(--mc-laranja);margin-bottom:10px;" onclick="goTo('s-manut-home')">
@@ -3226,15 +3262,8 @@
       <div class="mc-page-info"><div class="mc-page-title">🗂️ Cadastros & Configurações</div><div class="mc-page-sub">Bases, produtos e ajustes do sistema</div></div>
     </div>
     <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;">
-      <button class="mc-sector-card" style="border-left:3px solid var(--mc-verde);margin-bottom:10px;background:linear-gradient(135deg, var(--bg-primary) 0%, var(--mc-verde-claro) 100%);" onclick="goTo('s-adm-mr')">
-        <div class="mc-sector-icon green">🥄</div>
-        <div class="mc-sector-info">
-          <div class="mc-sector-title" style="color:#065f46;">Massas & Recheios</div>
-          <div class="mc-sector-desc">Tipos disponíveis nos lançamentos</div>
-        </div>
-        <span class="mc-sector-arrow" style="color:#065f46;">›</span>
-      </button>
-      <button class="mc-sector-card" style="border-left:3px solid var(--mc-azul);margin-bottom:10px;background:linear-gradient(135deg, var(--bg-primary) 0%, var(--mc-azul-claro) 100%);" onclick="goTo('s-adm-prod-conf')">
+      <div class="mc-section-header" style="margin-top:0;">📝 Produtos &amp; Receitas</div>
+      <button class="mc-sector-card" style="border-left:4px solid var(--mc-azul);margin-bottom:10px;background:linear-gradient(135deg, var(--bg-primary) 0%, var(--mc-azul-claro) 100%);" onclick="goTo('s-adm-prod-conf')">
         <div class="mc-sector-icon blue">🥐</div>
         <div class="mc-sector-info">
           <div class="mc-sector-title" style="color:var(--mc-azul);">Produtos da Confeitaria</div>
@@ -3242,15 +3271,25 @@
         </div>
         <span class="mc-sector-arrow" style="color:var(--mc-azul);">›</span>
       </button>
-      <button class="mc-sector-card" style="border-left:3px solid var(--mc-dourado);margin-bottom:10px;background:linear-gradient(135deg, var(--bg-primary) 0%, var(--mc-dourado-claro) 100%);" onclick="goTo('s-adm-kits')">
+      <button class="mc-sector-card" style="border-left:4px solid var(--mc-dourado);margin-bottom:10px;background:linear-gradient(135deg, var(--bg-primary) 0%, var(--mc-dourado-claro) 100%);" onclick="goTo('s-adm-kits')">
         <div class="mc-sector-icon gold">🍞</div>
         <div class="mc-sector-info">
-          <div class="mc-sector-title" style="color:#92400e;">Kits & Produtos (Quadra)</div>
+          <div class="mc-sector-title" style="color:#92400e;">Kits &amp; Produtos (Quadra)</div>
           <div class="mc-sector-desc">Cadastrar receitas e produtos da Quadra</div>
         </div>
         <span class="mc-sector-arrow" style="color:#92400e;">›</span>
       </button>
-      <button class="mc-sector-card" style="border-left:3px solid var(--mc-azul);margin-bottom:10px;" onclick="goTo('s-mp-home')">
+      <button class="mc-sector-card" style="border-left:4px solid var(--mc-verde);margin-bottom:10px;background:linear-gradient(135deg, var(--bg-primary) 0%, var(--mc-verde-claro) 100%);" onclick="goTo('s-adm-mr')">
+        <div class="mc-sector-icon green">🥄</div>
+        <div class="mc-sector-info">
+          <div class="mc-sector-title" style="color:#065f46;">Massas &amp; Recheios</div>
+          <div class="mc-sector-desc">Tipos disponíveis nos lançamentos</div>
+        </div>
+        <span class="mc-sector-arrow" style="color:#065f46;">›</span>
+      </button>
+
+      <div class="mc-section-header">📦 Insumos &amp; Contagem</div>
+      <button class="mc-sector-card" style="border-left:4px solid var(--mc-azul);margin-bottom:10px;" onclick="goTo('s-mp-home')">
         <div class="mc-sector-icon blue">🧪</div>
         <div class="mc-sector-info">
           <div class="mc-sector-title">Matérias-Primas</div>
@@ -3258,7 +3297,7 @@
         </div>
         <span class="mc-sector-arrow">›</span>
       </button>
-      <button class="mc-sector-card" style="border-left:3px solid #0891b2;margin-bottom:10px;background:linear-gradient(135deg, var(--bg-primary) 0%, #ecfeff 100%);" onclick="goTo('s-adm-contagem-itens')">
+      <button class="mc-sector-card" style="border-left:4px solid #0891b2;margin-bottom:10px;background:linear-gradient(135deg, var(--bg-primary) 0%, #ecfeff 100%);" onclick="goTo('s-adm-contagem-itens')">
         <div class="mc-sector-icon blue">📋</div>
         <div class="mc-sector-info">
           <div class="mc-sector-title" style="color:#0c4a6e;">Itens de Contagem</div>
@@ -3266,15 +3305,17 @@
         </div>
         <span class="mc-sector-arrow" style="color:#0c4a6e;">›</span>
       </button>
-      <button class="mc-sector-card" style="border-left:3px solid #92400e;margin-bottom:16px;background:linear-gradient(135deg, var(--bg-primary) 0%, var(--mc-dourado-claro) 100%);" onclick="goTo('s-adm-farinhas-cfg')">
+      <button class="mc-sector-card" style="border-left:4px solid #92400e;margin-bottom:10px;background:linear-gradient(135deg, var(--bg-primary) 0%, var(--mc-dourado-claro) 100%);" onclick="goTo('s-adm-farinhas-cfg')">
         <div class="mc-sector-icon gold">🌾</div>
         <div class="mc-sector-info">
-          <div class="mc-sector-title" style="color:#92400e;">Farinhas & Estoques</div>
+          <div class="mc-sector-title" style="color:#92400e;">Farinhas &amp; Estoques</div>
           <div class="mc-sector-desc">Tipos de farinha por estoque (Dentro, Quadra, Confeitaria)</div>
         </div>
         <span class="mc-sector-arrow" style="color:#92400e;">›</span>
       </button>
-      <button class="mc-sector-card" style="border-left:3px solid #dc2626;margin-bottom:16px;background:linear-gradient(135deg, var(--bg-primary) 0%, rgba(220, 38, 38, 0.1) 100%);" onclick="renderSenhasList()">
+
+      <div class="mc-section-header">🔐 Configurações</div>
+      <button class="mc-sector-card" style="border-left:4px solid #dc2626;margin-bottom:10px;background:linear-gradient(135deg, var(--bg-primary) 0%, rgba(220, 38, 38, 0.1) 100%);" onclick="renderSenhasList()">
         <div class="mc-sector-icon red">🔐</div>
         <div class="mc-sector-info">
           <div class="mc-sector-title" style="color:#dc2626;">Gerenciar Senhas</div>
@@ -3284,6 +3325,18 @@
       </button>
     </div>
   </div>
+
+  <!-- AJUSTES DE REFAZIMENTO -->
+  <div class="screen" id="s-ajref">
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="goTo('s-adm-hub')">‹</button>
+      <div class="mc-brand"><div class="mc-brand-logo"></div></div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info"><div class="mc-page-title">🔄 Ajustes de Refazimento</div><div class="mc-page-sub">Conferência de pendentes por dia</div></div>
+    </div>
+    <div style="flex:1;padding:16px;background:var(--bg-page);overflow-y:auto;" id="ajref-content"></div>
+  </div>
+
   <div class="screen" id="s-adm-buscar">
     <div class="mc-header">
       <button class="mc-header-back" onclick="goTo('s-adm-hub')">‹</button>
@@ -4734,6 +4787,7 @@ function goTo(id){
   if(id==='s-testes-edit'){ const b=document.getElementById('testes-edit-btn');if(b){b.textContent='Salvar alterações ✓';b.disabled=false;} }
   if(id==='s-testes-novo'){ const b=document.getElementById('testes-btn-salvar');if(b){b.textContent='Salvar teste ✓';b.disabled=false;} }
   if(id==='s-quadra-data'){ renderQuadraDateGrid(); }
+  if(id==='s-ajref') renderAjRef();
   if(id==='s-quadra-kit'){ filtrarKitsQuadra(); }
   if(id==='s-quadra-lanc'){ const lc=document.getElementById('quadra-lanc-content'); if(lc&&!lc.innerHTML.trim())renderQuadraLanc(); else renderQuadraLanc(); }
   if(id==='s-quadra-reg') renderQuadraReg();
@@ -11931,14 +11985,90 @@ function saldoEstoque(tipo,nome){
   return e?e.saldo:0;
 }
 
-function _estoqueItemCard(e,comAjuste,tipo){
+/* ══════════════════════════════════════════════════════════════════
+   VALIDADE DO RECHEIO (FIFO) — consome o mais antigo primeiro.
+   Descobre, do saldo que restou, qual a idade do lote mais antigo ainda
+   presente, para alertar o que está a vencer (3 dias) ou vencido (4+).
+   Regra: dia de produção = dia 0. Dia 3 = "a vencer". Dia 4+ = "vencido".
+   ══════════════════════════════════════════════════════════════════ */
+function _recheioValidade(nome){
+  const alvo=_normNome(nome);
+  // lotes de produção desse recheio, do mais antigo ao mais novo
+  const lotes = regRecheios
+    .filter(r=>r.recheio && _normNome(r.recheio)===alvo && (parseFloat(r.qtdKg)||0)>0)
+    .map(r=>({data:r.data, ts:r.timestamp||_dataParaTs(r.data), qtd:parseFloat(r.qtdKg)||0}))
+    .sort((a,b)=>(a.ts||0)-(b.ts||0));
+  if(!lotes.length) return null;
+  // consumo total do recheio (o quanto já foi usado)
+  const c=calcEstoqueMassasRecheios();
+  const e=c.recheios[alvo];
+  if(!e) return null;
+  let consumido = (e.consumo||0) + (e.descarte||0); // o que saiu de verdade
+  // FIFO: o consumo "come" os lotes mais antigos primeiro
+  const restantes=[];
+  for(const lote of lotes){
+    if(consumido>=lote.qtd-0.0001){ consumido-=lote.qtd; continue; } // lote todo consumido
+    const sobra = lote.qtd - Math.max(0,consumido);
+    consumido=0;
+    if(sobra>0.0001) restantes.push({data:lote.data, ts:lote.ts, qtd:sobra});
+  }
+  if(!restantes.length) return null; // nada em estoque
+  // idade do lote mais antigo que restou
+  const hoje=new Date(); hoje.setHours(0,0,0,0);
+  function idadeDias(dataBR){
+    const p=String(dataBR||'').split('/');
+    if(p.length!==3) return 0;
+    const d=new Date(Number(p[2]),Number(p[1])-1,Number(p[0])); d.setHours(0,0,0,0);
+    return Math.round((hoje-d)/(1000*60*60*24));
+  }
+  const maisAntigo=restantes[0];
+  const idade=idadeDias(maisAntigo.data);
+  // soma do que está "a vencer" (idade>=3) ou "vencido" (idade>=4)
+  let qtdAVencer=0, qtdVencido=0;
+  restantes.forEach(l=>{ const i=idadeDias(l.data); if(i>=4) qtdVencido+=l.qtd; else if(i===3) qtdAVencer+=l.qtd; });
+  let status='ok';
+  if(qtdVencido>0.0001) status='vencido';
+  else if(qtdAVencer>0.0001) status='avencer';
+  return {status, idade, qtdAVencer, qtdVencido, loteAntigo:maisAntigo.data, restantes};
+}
+function _dataParaTs(br){ const p=String(br||'').split('/'); return p.length===3?new Date(Number(p[2]),Number(p[1])-1,Number(p[0])).getTime():0; }
+
+function _estoqueItemCard(e,comAjuste,tipo,maxSaldo){
   const neg=e.saldo<-0.0001;
-  const cor=neg?'var(--mc-vermelho)':(e.saldo>0.0001?'var(--mc-verde)':'var(--text-secondary)');
-  return '<div class="card" style="margin-bottom:8px;border-left:3px solid '+cor+';cursor:pointer;" onclick="abrirMovEstoque(\''+tipo+'\',\''+escapeJsStr(e.nome)+'\')">'+
-    '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">'+
-    '<div style="flex:1;min-width:0;font-size:14px;font-weight:600;">'+e.nome+'</div>'+
-    '<div style="font-size:16px;font-weight:800;color:'+cor+';white-space:nowrap;">'+_fmtKg(e.saldo)+' kg</div></div>'+
-    '<div style="font-size:11px;color:var(--text-secondary);margin-top:3px;">Produzido '+_fmtKg(e.entrada)+' · Consumido '+_fmtKg(e.consumo)+' · Descarte '+_fmtKg(e.descarte)+(Math.abs(e.ajuste)>0.0001?(' · Ajuste '+(e.ajuste>0?'+':'')+_fmtKg(e.ajuste)):'')+' · toque p/ ver movimentação ›</div>'+
+  const corSaldo=neg?'var(--mc-vermelho)':(e.saldo>0.0001?'var(--mc-verde)':'var(--text-secondary)');
+  // barra proporcional ao maior saldo do grupo
+  const max=maxSaldo>0?maxSaldo:1;
+  const pct=Math.max(0,Math.min(100, (e.saldo/max)*100));
+  // validade (só recheio)
+  let val=null, borda=corSaldo, alerta='';
+  if(tipo==='recheio' && e.saldo>0.0001){
+    val=_recheioValidade(e.nome);
+    if(val && val.status==='vencido'){
+      borda='#dc2626';
+      alerta='<div style="margin-top:8px;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:7px 10px;display:flex;align-items:center;gap:8px;">'+
+        '<span style="font-size:18px;">🔴</span>'+
+        '<div><div style="font-size:13px;font-weight:800;color:#b91c1c;">'+_fmtKg(val.qtdVencido)+' kg VENCIDO</div>'+
+        '<div style="font-size:11px;color:#b91c1c;">Lote de '+val.loteAntigo+' · '+val.idade+' dias · descarte necessário</div></div></div>';
+    } else if(val && val.status==='avencer'){
+      borda='#d97706';
+      alerta='<div style="margin-top:8px;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:7px 10px;display:flex;align-items:center;gap:8px;">'+
+        '<span style="font-size:18px;">⚠️</span>'+
+        '<div><div style="font-size:13px;font-weight:800;color:#b45309;">'+_fmtKg(val.qtdAVencer)+' kg A VENCER HOJE</div>'+
+        '<div style="font-size:11px;color:#b45309;">Lote de '+val.loteAntigo+' · último dia de uso · consumir primeiro</div></div></div>';
+    }
+  }
+  const barraCor = borda==='#dc2626'?'#dc2626':(borda==='#d97706'?'#d97706':(neg?'var(--mc-vermelho)':'var(--mc-verde)'));
+  return '<div class="card" style="margin-bottom:10px;border-left:4px solid '+borda+';cursor:pointer;padding:12px 14px;" onclick="abrirMovEstoque(\''+tipo+'\',\''+escapeJsStr(e.nome)+'\')">'+
+    '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px;">'+
+      '<div style="flex:1;min-width:0;font-size:14px;font-weight:700;">'+e.nome+'</div>'+
+      '<div style="font-size:19px;font-weight:900;color:'+corSaldo+';white-space:nowrap;">'+_fmtKg(e.saldo)+' <span style="font-size:12px;font-weight:700;">kg</span></div>'+
+    '</div>'+
+    // barra proporcional
+    '<div style="height:8px;background:#eef2f7;border-radius:99px;overflow:hidden;">'+
+      '<div style="height:100%;width:'+pct+'%;background:'+barraCor+';border-radius:99px;transition:width .3s;"></div>'+
+    '</div>'+
+    '<div style="font-size:11px;color:var(--text-secondary);margin-top:6px;">Produzido '+_fmtKg(e.entrada)+' · Consumido '+_fmtKg(e.consumo)+' · Descarte '+_fmtKg(e.descarte)+(Math.abs(e.ajuste)>0.0001?(' · Ajuste '+(e.ajuste>0?'+':'')+_fmtKg(e.ajuste)):'')+'</div>'+
+    alerta+
     (comAjuste?'<button class="mc-act-btn-secondary" style="margin-top:8px;font-size:11px;padding:4px 10px;" onclick="event.stopPropagation();abrirAjusteEstoque(\''+tipo+'\',\''+escapeJsStr(e.nome)+'\')">Definir saldo</button>':'')+
     '</div>';
 }
@@ -11947,8 +12077,20 @@ function renderEstoqueView(mostrar,comAjuste){
   function sec(titulo,map,tipo){
     const itens=Object.values(map).filter(e=>(Math.abs(e.entrada)+Math.abs(e.consumo)+Math.abs(e.descarte)+Math.abs(e.ajuste))>0.0001)
       .sort((a,b)=>(a.saldo-b.saldo)||a.nome.localeCompare(b.nome,'pt-BR'));
+    const maxSaldo=Math.max(0,...itens.map(e=>e.saldo));
     let h='<div class="mc-section-header">'+titulo+' ('+itens.length+')</div>';
-    h+= itens.length? itens.map(e=>_estoqueItemCard(e,comAjuste,tipo)).join('') : '<div class="empty">Sem movimentação ainda.</div>';
+    // resumo de validade (só recheios)
+    if(tipo==='recheio' && itens.length){
+      let nVencido=0, nAVencer=0, kgVencido=0, kgAVencer=0;
+      itens.forEach(e=>{ if(e.saldo>0.0001){ const v=_recheioValidade(e.nome); if(v){ if(v.status==='vencido'){nVencido++;kgVencido+=v.qtdVencido;} else if(v.status==='avencer'){nAVencer++;kgAVencer+=v.qtdAVencer;} } }});
+      if(nVencido||nAVencer){
+        h+='<div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;">';
+        if(nVencido) h+='<div style="flex:1;min-width:130px;background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:10px 12px;text-align:center;"><div style="font-size:20px;font-weight:900;color:#dc2626;">🔴 '+_fmtKg(kgVencido)+' kg</div><div style="font-size:11px;color:#b91c1c;font-weight:700;">vencido ('+nVencido+' recheio'+(nVencido>1?'s':'')+')</div></div>';
+        if(nAVencer) h+='<div style="flex:1;min-width:130px;background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:10px 12px;text-align:center;"><div style="font-size:20px;font-weight:900;color:#d97706;">⚠️ '+_fmtKg(kgAVencer)+' kg</div><div style="font-size:11px;color:#b45309;font-weight:700;">a vencer hoje ('+nAVencer+')</div></div>';
+        h+='</div>';
+      }
+    }
+    h+= itens.length? itens.map(e=>_estoqueItemCard(e,comAjuste,tipo,maxSaldo)).join('') : '<div class="empty">Sem movimentação ainda.</div>';
     return h;
   }
   let html='';
@@ -15302,6 +15444,310 @@ function _cdcStatusDia(data){
   return {cor, rotulo, faltaEmbalar, qtdQuebra:comQuebra.length, conferido, nProdutos:linhas.length};
 }
 let _cdcConferidos={}; // data -> true (carregado do Firebase)
+
+/* ══════════════════════════════════════════════════════════════════
+   AJUSTES DE REFAZIMENTO — conferência de entrada/saída por código + dia
+   Cola o texto do ERP → agrupa por (código + dia) → mostra saldo ≠ 0.
+   Guarda só os pendentes no Firebase (coleção ajustesRefazimento).
+   ══════════════════════════════════════════════════════════════════ */
+let _ajRefPendentes = []; // [{cod, nome, data, saldo, entrada, saida}]
+let _ajRefResumo = [];    // [{cod, nome, entrada, saida, saldo}] soma total por produto
+let _ajRefInfo = null;    // {importadoEm, totalLinhas, totalGrupos, totalPendentes}
+let _ajRefResolvidos = {}; // "cod|data" -> true (marcados como resolvidos)
+let _ajRefAba = 'pendentes'; // 'pendentes' | 'resumo'
+function _ajRefSetAba(aba){ _ajRefAba=aba; renderAjRef(); }
+window._ajRefSetAba=_ajRefSetAba;
+
+function _ajRefChave(p){ return String(p.cod)+'|'+String(p.data); }
+
+async function _ajRefToggleResolvido(cod, data){
+  const chave = String(cod)+'|'+String(data);
+  if(_ajRefResolvidos[chave]) delete _ajRefResolvidos[chave];
+  else _ajRefResolvidos[chave] = true;
+  // atualiza a linha na tela na hora (sem re-render pesado)
+  renderAjRef();
+  // salva no Firebase (merge só do campo resolvidos)
+  try{
+    await setDoc(doc(db,'ajustesRefazimento','atual'), {resolvidos:_ajRefResolvidos}, {merge:true});
+  }catch(e){ console.error('ajRef resolvido',e); }
+}
+window._ajRefToggleResolvido=_ajRefToggleResolvido;
+
+// Listener em tempo real
+onSnapshot(doc(db,'ajustesRefazimento','atual'), snap=>{
+  try{
+    if(snap.exists()){
+      const d=snap.data();
+      _ajRefPendentes = d.pendentes||[];
+      _ajRefResumo = d.resumo||[];
+      _ajRefResolvidos = d.resolvidos||{};
+      _ajRefInfo = {importadoEm:d.importadoEm, totalLinhas:d.totalLinhas, totalGrupos:d.totalGrupos, totalPendentes:(d.pendentes||[]).length};
+    } else {
+      _ajRefPendentes=[]; _ajRefInfo=null; _ajRefResolvidos={}; _ajRefResumo=[];
+    }
+    if(document.querySelector('.screen.active')?.id==='s-ajref') renderAjRef();
+  }catch(e){ console.error('ajRef snap',e); }
+});
+
+// Converte data dd/mm/aaaa em número pra ordenar
+function _ajRefDataNum(br){ const p=String(br||'').split('/'); return p.length===3?Number(p[2]+p[1].padStart(2,'0')+p[0].padStart(2,'0')):0; }
+
+// Processa o texto colado do ERP
+function _ajRefProcessar(texto){
+  const linhas = texto.split('\n').map(l=>l.replace(/\r$/,'')).filter(l=>l.trim());
+  const grupos = {}; // "cod|data" -> {cod, nome, data, saldo, entrada, saida}
+  let totalLinhas=0, ignoradas=0;
+  linhas.forEach(l=>{
+    const c = l.split('\t');
+    if(c.length < 25){ ignoradas++; return; }
+    const cod = (c[1]||'').trim();
+    if(!cod || cod.toLowerCase()==='produto'){ ignoradas++; return; } // cabeçalho
+    const nome = (c[2]||'').trim();
+    const data = (c[12]||'').trim();
+    // coluna 25 (índice 24) = "Movimentada" (com sinal)
+    const movStr = (c[24]||'').trim().replace(/\./g,'').replace(',','.');
+    const mov = parseFloat(movStr);
+    if(isNaN(mov) || !data){ ignoradas++; return; }
+    totalLinhas++;
+    const chave = cod+'|'+data;
+    if(!grupos[chave]) grupos[chave]={cod, nome, data, saldo:0, entrada:0, saida:0};
+    grupos[chave].saldo += mov;
+    if(mov>=0) grupos[chave].entrada += mov; else grupos[chave].saida += Math.abs(mov);
+  });
+  const totalGrupos = Object.keys(grupos).length;
+  // pendentes = saldo diferente de zero
+  const pendentes = Object.values(grupos)
+    .filter(g=>Math.abs(g.saldo)>0.001)
+    .map(g=>({cod:g.cod, nome:g.nome, data:g.data, saldo:Math.round(g.saldo*1000)/1000, entrada:g.entrada, saida:g.saida}));
+  // resumo por produto = soma total por código (todas as datas juntas)
+  const porProd={}; // cod -> {cod, nome, entrada, saida, saldo}
+  Object.values(grupos).forEach(g=>{
+    if(!porProd[g.cod]) porProd[g.cod]={cod:g.cod, nome:g.nome, entrada:0, saida:0, saldo:0};
+    porProd[g.cod].entrada += g.entrada;
+    porProd[g.cod].saida += g.saida;
+    porProd[g.cod].saldo += g.saldo;
+  });
+  const resumo = Object.values(porProd).map(p=>({cod:p.cod, nome:p.nome, entrada:p.entrada, saida:p.saida, saldo:Math.round(p.saldo*1000)/1000}));
+  return {totalLinhas, totalGrupos, pendentes, resumo, ignoradas};
+}
+
+// Normaliza código para comparar ignorando zeros à esquerda ("06" == "6")
+function _ajRefNormCod(cod){
+  const c=String(cod==null?'':cod).trim();
+  // remove zeros à esquerda, mas mantém "0" se for só zero(s)
+  const semZero=c.replace(/^0+/,'');
+  return semZero===''?'0':semZero;
+}
+
+// Descobre se um código é pão (quadra) ou salgado/confeitaria, cruzando com os catálogos
+function _ajRefTipoProduto(cod){
+  const c=_ajRefNormCod(cod);
+  const naQuadra=(typeof QUADRA_PRODUTOS!=='undefined'?QUADRA_PRODUTOS:[]).some(p=>_ajRefNormCod(p.cod)===c);
+  if(naQuadra) return 'pao';
+  const naConf=(typeof PRODUTOS!=='undefined'?PRODUTOS:[]).some(p=>_ajRefNormCod(p.cod)===c);
+  if(naConf) return 'salgado';
+  return 'outro';
+}
+
+// Abre a caixa de colar
+function _ajRefAbrirImport(){
+  const ov=document.createElement('div');
+  ov.id='ajref-import-modal';
+  ov.style.cssText='position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:3000;display:flex;align-items:center;justify-content:center;padding:16px;';
+  ov.innerHTML='<div style="background:#fff;border-radius:16px;max-width:520px;width:100%;max-height:88vh;overflow:auto;padding:18px;">'+
+    '<div style="font-size:17px;font-weight:800;margin-bottom:4px;">🔄 Importar ajustes</div>'+
+    '<div style="font-size:12px;color:var(--text-secondary);margin-bottom:12px;">Cole abaixo a relação copiada do ERP (com todas as colunas, do jeito que sai). Pode colar com ou sem o cabeçalho.</div>'+
+    '<textarea id="ajref-textarea" placeholder="Cole aqui os dados do ERP..." style="width:100%;min-height:180px;font-size:11px;font-family:monospace;padding:10px;border-radius:8px;border:1px solid var(--border-md,#d1d5db);box-sizing:border-box;"></textarea>'+
+    '<div id="ajref-preview" style="font-size:12px;margin-top:8px;"></div>'+
+    '<div style="display:flex;gap:8px;margin-top:14px;">'+
+      '<button class="btn btn-secondary" style="flex:1;" onclick="document.getElementById(\'ajref-import-modal\').remove()">Cancelar</button>'+
+      '<button class="btn btn-primary" style="flex:1;" onclick="_ajRefConfirmarImport()">Processar e salvar</button>'+
+    '</div>'+
+  '</div>';
+  document.body.appendChild(ov);
+  // preview ao vivo
+  const ta=document.getElementById('ajref-textarea');
+  ta.addEventListener('input', ()=>{
+    const txt=ta.value.trim();
+    const prev=document.getElementById('ajref-preview');
+    if(!txt){ prev.innerHTML=''; return; }
+    const r=_ajRefProcessar(txt);
+    prev.innerHTML='<div style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;padding:8px 10px;color:#0c4a6e;">'+
+      '📋 '+r.totalLinhas+' movimentos lidos · '+r.totalGrupos+' grupos (código+dia) · <strong>'+r.pendentes.length+' pendente(s)</strong></div>';
+  });
+}
+window._ajRefAbrirImport=_ajRefAbrirImport;
+
+async function _ajRefConfirmarImport(){
+  const txt=(document.getElementById('ajref-textarea').value||'').trim();
+  if(!txt){ alert('Cole os dados do ERP primeiro.'); return; }
+  const r=_ajRefProcessar(txt);
+  if(r.totalLinhas===0){ alert('Não consegui ler nenhum movimento válido. Confira se colou com as colunas (separadas por tabulação).'); return; }
+  if(!confirm('Processado:\n\n'+r.totalLinhas+' movimentos lidos\n'+r.totalGrupos+' grupos (código + dia)\n'+r.pendentes.length+' pendente(s)\n\nIsso vai substituir a relação atual salva. Continuar?')) return;
+  try{
+    await setDoc(doc(db,'ajustesRefazimento','atual'), {
+      pendentes:r.pendentes,
+      resumo:r.resumo,
+      totalLinhas:r.totalLinhas,
+      totalGrupos:r.totalGrupos,
+      resolvidos:{},
+      importadoEm:new Date().toISOString(),
+      importadoPor:_demAutor()
+    });
+    document.getElementById('ajref-import-modal')?.remove();
+    alert('✓ Relação processada e salva!\n'+r.pendentes.length+' ajuste(s) pendente(s).');
+  }catch(e){ alert('Erro ao salvar: '+e.message); }
+}
+window._ajRefConfirmarImport=_ajRefConfirmarImport;
+
+async function _ajRefLimpar(){
+  if(!_ajRefPendentes.length && !_ajRefInfo){ alert('Não há dados para limpar.'); return; }
+  if(!confirm('Excluir TODA a relação atual de ajustes?\n\nUse isso quando for puxar uma relação nova do ERP.\nEssa ação não pode ser desfeita.')) return;
+  try{
+    await deleteDoc(doc(db,'ajustesRefazimento','atual'));
+    alert('✓ Relação apagada. Pode importar uma nova.');
+  }catch(e){ alert('Erro ao limpar: '+e.message); }
+}
+window._ajRefLimpar=_ajRefLimpar;
+
+function renderAjRef(){
+  const el=document.getElementById('ajref-content'); if(!el) return;
+  let h='';
+  // botões de ação
+  h+='<div style="display:flex;gap:8px;margin-bottom:14px;">'+
+    '<button class="btn btn-primary" style="flex:1;" onclick="_ajRefAbrirImport()">📋 Importar / Colar relação</button>'+
+    (_ajRefPendentes.length||_ajRefInfo?'<button class="btn btn-secondary" style="flex:0 0 auto;color:#dc2626;border:1px solid #fecaca;" onclick="_ajRefLimpar()">🗑️ Limpar</button>':'')+
+  '</div>';
+
+  if(!_ajRefInfo){
+    h+='<div class="empty" style="padding:40px 20px;text-align:center;color:var(--text-secondary);">'+
+      '<div style="font-size:40px;margin-bottom:10px;">🔄</div>'+
+      '<div style="font-weight:700;margin-bottom:6px;">Nenhuma relação importada</div>'+
+      '<div style="font-size:13px;">Clique em "Importar / Colar relação" e cole os dados do ERP.<br>O app confere os ajustes de entrada e saída por dia e mostra o que ficou pendente.</div>'+
+    '</div>';
+    el.innerHTML=h; return;
+  }
+
+  // abas
+  const abaBtn=(id,txt)=>{
+    const ativa=_ajRefAba===id;
+    return '<button onclick="_ajRefSetAba(\''+id+'\')" style="flex:1;padding:10px;border:none;border-radius:9px;cursor:pointer;font-size:13px;font-weight:700;background:'+(ativa?'var(--mc-azul)':'#fff')+';color:'+(ativa?'#fff':'var(--text-secondary)')+';border:1px solid '+(ativa?'var(--mc-azul)':'var(--border)')+';">'+txt+'</button>';
+  };
+  h+='<div style="display:flex;gap:8px;margin-bottom:14px;">'+
+    abaBtn('pendentes','📅 Pendentes por dia')+
+    abaBtn('resumo','📊 Resumo por produto')+
+  '</div>';
+
+  // resumo da importação (comum às duas abas)
+  const dt=_ajRefInfo.importadoEm?new Date(_ajRefInfo.importadoEm):null;
+  const dtTxt=dt?dt.toLocaleDateString('pt-BR')+' '+dt.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}):'';
+  h+='<div style="background:#f8fafc;border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin-bottom:14px;font-size:12px;color:var(--text-secondary);">'+
+    'Importado em '+dtTxt+' · '+(_ajRefInfo.totalLinhas||0)+' movimentos · '+(_ajRefInfo.totalGrupos||0)+' grupos'+
+  '</div>';
+
+  h += (_ajRefAba==='resumo') ? _ajRefRenderResumo() : _ajRefRenderPendentes();
+  el.innerHTML=h;
+}
+window.renderAjRef=renderAjRef;
+
+// ABA 1 — pendentes por dia
+function _ajRefRenderPendentes(){
+  if(!_ajRefPendentes.length){
+    return '<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;padding:24px;text-align:center;">'+
+      '<div style="font-size:40px;margin-bottom:8px;">✅</div>'+
+      '<div style="font-weight:800;color:#15803d;font-size:16px;">Tudo certo!</div>'+
+      '<div style="font-size:13px;color:#166534;margin-top:4px;">Nenhum ajuste pendente. Todas as entradas tiveram a saída correspondente no mesmo dia.</div>'+
+    '</div>';
+  }
+  const porDia={};
+  _ajRefPendentes.forEach(p=>{ (porDia[p.data]=porDia[p.data]||[]).push(p); });
+  const dias=Object.keys(porDia).sort((a,b)=>_ajRefDataNum(a)-_ajRefDataNum(b));
+  const totResolvidos = _ajRefPendentes.filter(p=>_ajRefResolvidos[String(p.cod)+'|'+String(p.data)]).length;
+  const totFalta = _ajRefPendentes.length - totResolvidos;
+  let h='<div style="background:'+(totFalta===0?'#f0fdf4':'#fef2f2')+';border:1px solid '+(totFalta===0?'#bbf7d0':'#fecaca')+';border-radius:10px;padding:10px 12px;margin-bottom:14px;text-align:center;">'+
+    '<span style="font-size:22px;font-weight:900;color:'+(totFalta===0?'#16a34a':'#dc2626')+';">'+totFalta+'</span>'+
+    '<span style="font-size:13px;color:'+(totFalta===0?'#166534':'#b91c1c')+';font-weight:600;"> pendente(s) em '+dias.length+' dia(s)</span>'+
+    (totResolvidos>0?'<div style="font-size:12px;color:#16a34a;font-weight:600;margin-top:2px;">✓ '+totResolvidos+' já resolvido(s)</div>':'')+
+  '</div>';
+  dias.forEach(dia=>{
+    const itens=porDia[dia].sort((a,b)=>String(a.cod).localeCompare(String(b.cod),undefined,{numeric:true}));
+    h+='<div style="margin-bottom:16px;">'+
+      '<div style="font-size:13px;font-weight:800;color:var(--mc-azul);margin-bottom:6px;padding-bottom:4px;border-bottom:2px solid var(--mc-azul-claro,#dbeafe);">📅 '+dia+' <span style="font-weight:600;color:var(--text-secondary);font-size:12px;">('+itens.length+')</span></div>';
+    itens.forEach(p=>{
+      const chave = String(p.cod)+'|'+String(p.data);
+      const resolvido = !!_ajRefResolvidos[chave];
+      const falta = p.saldo>0 ? 'FALTA DAR SAÍDA' : 'FALTA ENTRADA';
+      const cor = resolvido ? '#16a34a' : (p.saldo>0 ? '#dc2626' : '#d97706');
+      const bg = resolvido ? '#f0fdf4' : (p.saldo>0 ? '#fef2f2' : '#fffbeb');
+      const brd = resolvido ? '#16a34a' : cor;
+      const risco = resolvido ? 'text-decoration:line-through;opacity:.65;' : '';
+      h+='<div style="display:flex;align-items:center;gap:10px;background:'+bg+';border:1px solid '+brd+'33;border-radius:8px;padding:9px 11px;margin-bottom:6px;">'+
+        '<button onclick="_ajRefToggleResolvido(\''+escapeJsStr(String(p.cod))+'\',\''+escapeJsStr(String(p.data))+'\')" title="Marcar como resolvido" style="flex-shrink:0;width:26px;height:26px;border-radius:7px;border:2px solid '+(resolvido?'#16a34a':'#cbd5e1')+';background:'+(resolvido?'#16a34a':'#fff')+';color:#fff;cursor:pointer;font-size:15px;font-weight:900;display:flex;align-items:center;justify-content:center;line-height:1;">'+(resolvido?'✓':'')+'</button>'+
+        '<div style="min-width:0;flex:1;'+risco+'">'+
+          '<div style="font-size:13px;font-weight:700;">'+p.cod+' · <span style="font-weight:500;">'+(p.nome||'')+'</span></div>'+
+          '<div style="font-size:11px;color:var(--text-secondary);">Entrou '+p.entrada+' · Saiu '+p.saida+'</div>'+
+        '</div>'+
+        '<div style="flex-shrink:0;text-align:center;'+risco+'">'+
+          '<div style="font-size:11px;color:var(--text-secondary);">data</div>'+
+          '<div style="font-size:12px;font-weight:700;color:var(--mc-azul);">'+p.data+'</div>'+
+        '</div>'+
+        '<div style="text-align:right;flex-shrink:0;'+risco+'">'+
+          '<div style="font-size:17px;font-weight:900;color:'+cor+';">'+(p.saldo>0?'+':'')+p.saldo+'</div>'+
+          '<div style="font-size:10px;font-weight:700;color:'+cor+';">'+(resolvido?'RESOLVIDO':falta)+'</div>'+
+        '</div>'+
+      '</div>';
+    });
+    h+='</div>';
+  });
+  return h;
+}
+
+// ABA 2 — resumo por produto (soma total, tabelas lado a lado: Salgados | Pães)
+function _ajRefRenderResumo(){
+  if(!_ajRefResumo || !_ajRefResumo.length){
+    return '<div class="empty" style="padding:30px;text-align:center;color:var(--text-secondary);">Sem dados de resumo. Importe uma relação.</div>';
+  }
+  const grupos={pao:[], salgado:[], outro:[]};
+  _ajRefResumo.forEach(p=>{ grupos[_ajRefTipoProduto(p.cod)].push(p); });
+  Object.values(grupos).forEach(arr=>arr.sort((a,b)=>Math.abs(b.saldo)-Math.abs(a.saldo)));
+
+  // monta uma tabela para um grupo
+  const tabela=(titulo, emoji, arr, corHeader)=>{
+    if(!arr.length) return '';
+    let s='<div style="flex:1;min-width:260px;">'+
+      '<div style="background:'+corHeader+';color:#fff;font-weight:800;font-size:13px;padding:8px 12px;border-radius:9px 9px 0 0;text-align:center;">'+emoji+' '+titulo+' ('+arr.length+')</div>'+
+      '<table style="width:100%;border-collapse:collapse;font-size:12px;background:#fff;border:1px solid var(--border);border-top:none;border-radius:0 0 9px 9px;overflow:hidden;">'+
+      '<thead><tr style="background:#f1f5f9;">'+
+        '<th style="text-align:left;padding:6px 8px;font-weight:700;color:var(--text-secondary);width:44px;">Cód</th>'+
+        '<th style="text-align:left;padding:6px 8px;font-weight:700;color:var(--text-secondary);">Produto</th>'+
+        '<th style="text-align:right;padding:6px 8px;font-weight:700;color:var(--text-secondary);width:64px;">Saldo</th>'+
+      '</tr></thead><tbody>';
+    arr.forEach((p,i)=>{
+      const zero=Math.abs(p.saldo)<0.001;
+      const cor = zero?'#94a3b8':(p.saldo>0?'#2563eb':'#dc2626');
+      const peso = zero?'400':'800';
+      s+='<tr style="border-top:1px solid #f1f5f9;background:'+(i%2?'#fafbfc':'#fff')+';">'+
+        '<td style="padding:6px 8px;font-weight:700;color:var(--text-primary);">'+p.cod+'</td>'+
+        '<td style="padding:6px 8px;color:var(--text-primary);">'+(p.nome||'')+'</td>'+
+        '<td style="padding:6px 8px;text-align:right;font-weight:'+peso+';color:'+cor+';">'+(p.saldo>0?'+':'')+p.saldo+'</td>'+
+      '</tr>';
+    });
+    s+='</tbody></table></div>';
+    return s;
+  };
+
+  let h='<div style="font-size:12px;color:var(--text-secondary);margin-bottom:12px;">Soma de todos os ajustes por produto (todas as datas). Saldo negativo (vermelho) = saiu mais do que entrou. Ordenado pelos que mais destoaram.</div>';
+  // container flex: lado a lado quando cabe, empilha quando estreito (flex-wrap)
+  h+='<div style="display:flex;flex-wrap:wrap;gap:14px;align-items:flex-start;">';
+  h+=tabela('Salgados / Confeitaria','🥐',grupos.salgado,'var(--mc-azul)');
+  h+=tabela('Pães','🍞',grupos.pao,'#92400e');
+  h+='</div>';
+  if(grupos.outro.length){
+    h+='<div style="margin-top:14px;">'+tabela('Não identificados','❓',grupos.outro,'#dc2626')+'</div>';
+    h+='<div style="font-size:11px;color:#b91c1c;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:8px 10px;margin-top:8px;">⚠ Os produtos "não identificados" não foram encontrados no cadastro do app (nem quadra, nem confeitaria). Verifique o código.</div>';
+  }
+  return h;
+}
 
 function renderCDC(){
   const el=document.getElementById('cdc-content'); if(!el) return;
