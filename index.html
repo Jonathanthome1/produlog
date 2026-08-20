@@ -3297,6 +3297,14 @@
         </div>
         <span class="mc-sector-arrow">›</span>
       </button>
+      <button class="mc-sector-card" style="border-left:4px solid #059669;margin-bottom:10px;background:linear-gradient(135deg, var(--bg-primary) 0%, #ecfdf5 100%);" onclick="goTo('s-mp-precos')">
+        <div class="mc-sector-icon green">💰</div>
+        <div class="mc-sector-info">
+          <div class="mc-sector-title" style="color:#065f46;">Cadastro de Matéria Prima</div>
+          <div class="mc-sector-desc" id="mpp-card-sub">Valores por kg · importar e exportar planilha</div>
+        </div>
+        <span class="mc-sector-arrow" style="color:#065f46;">›</span>
+      </button>
       <button class="mc-sector-card" style="border-left:4px solid #0891b2;margin-bottom:10px;background:linear-gradient(135deg, var(--bg-primary) 0%, #ecfeff 100%);" onclick="goTo('s-adm-contagem-itens')">
         <div class="mc-sector-icon blue">📋</div>
         <div class="mc-sector-info">
@@ -3335,6 +3343,65 @@
       <div class="mc-page-info"><div class="mc-page-title">🔄 Ajustes de Refazimento</div><div class="mc-page-sub">Conferência de pendentes por dia</div></div>
     </div>
     <div style="flex:1;padding:16px;background:var(--bg-page);overflow-y:auto;" id="ajref-content"></div>
+  </div>
+
+  <!-- ===== CADASTRO DE MATÉRIA PRIMA (valores) ===== -->
+  <div class="screen" id="s-mp-precos">
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="goTo('s-adm-cadastros')">‹</button>
+      <div class="mc-brand">
+        <div class="mc-brand-logo"></div>
+        <div class="mc-brand-text">
+          <div class="mc-brand-name">Monte Castelo</div>
+          <div class="mc-brand-sub">Custos</div>
+        </div>
+      </div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info">
+        <div class="mc-page-title">💰 Cadastro de Matéria Prima</div>
+        <div class="mc-page-sub" id="mpp-sub">Valor por kg das matérias-primas</div>
+      </div>
+    </div>
+    <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;">
+
+      <div class="card" style="margin-bottom:12px;border-left:3px solid #059669;">
+        <div class="card-label" style="color:#065f46;">📊 Situação</div>
+        <div id="mpp-resumo" style="margin-top:8px;"></div>
+      </div>
+
+      <div class="card" style="margin-bottom:12px;">
+        <div class="card-label">📥 Planilha</div>
+        <div style="font-size:12px;color:var(--text-secondary);line-height:1.5;margin:6px 0 10px;">
+          A planilha precisa ter uma coluna de <strong>código</strong> e uma de <strong>valor</strong> (R$/kg).
+          As demais colunas são ignoradas. Baixe o modelo abaixo para já vir com os códigos certos.
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <label class="btn btn-primary" style="flex:1;min-width:150px;text-align:center;cursor:pointer;display:block;">📥 Importar planilha<input type="file" id="mpp-file" accept=".xlsx,.xls,.csv" style="display:none" onchange="mppImportar(this)"></label>
+          <button class="btn btn-secondary" style="flex:1;min-width:150px;" onclick="mppExportar()">📤 Baixar planilha atual</button>
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:12px;">
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;">
+          <div style="flex:2;min-width:150px;">
+            <div class="card-label">Buscar</div>
+            <input type="text" id="mpp-busca" placeholder="nome ou código..." oninput="mppRender()" />
+          </div>
+          <div style="flex:1;min-width:130px;">
+            <div class="card-label">Mostrar</div>
+            <select id="mpp-filtro" onchange="mppRender()">
+              <option value="usadas">Usadas em receitas</option>
+              <option value="sem">Sem valor</option>
+              <option value="com">Com valor</option>
+              <option value="todas">Todas</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div id="mpp-list"></div>
+      <div style="height:30px;"></div>
+    </div>
   </div>
 
   <div class="screen" id="s-adm-buscar">
@@ -4706,6 +4773,7 @@ function goTo(id){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
   window.scrollTo(0,0);
+  if(id==='s-mp-precos') mppRender();
   if(id==='s-conf-home') renderConfHome();
   if(id==='s-coz-home') renderCozHome();
   if(id==='s-sel-data') renderDateGrid('date-btn-grid',dataSel,'prod');
@@ -6166,6 +6234,8 @@ onSnapshot(collection(db,'materiasPrimas'), snap=>{
     if(sub) sub.textContent = materiasPrimas.length+' matéria(s)-prima(s)';
     const tela=document.getElementById('s-mp-home');
     if(tela && tela.classList.contains('active')) renderMP();
+    const telaP=document.getElementById('s-mp-precos');
+    if(telaP && telaP.classList.contains('active') && typeof mppRender==='function') mppRender();
   }catch(e){ console.error('materiasPrimas snap:',e); }
 });
 
@@ -6262,6 +6332,248 @@ async function importarMPSeed(){
 }
 
 window.renderMP=renderMP; window.salvarMP=salvarMP; window.editarMP=editarMP; window.cancelarEdicaoMP=cancelarEdicaoMP; window.excluirMP=excluirMP; window.importarMPSeed=importarMPSeed;
+
+// ===== CADASTRO DE MATÉRIA PRIMA · VALORES (precoKg em materiasPrimas) =====
+// O preço fica no próprio documento de materiasPrimas (id = código), campo
+// precoKg. É o que o app de Custos lê para calcular custo de receita.
+
+// parser tolerante: aceita número puro do Excel, "3,20", "1.234,56", "R$ 3,20", "3.20"
+function _mppNum(v){
+  if(v==null||v==='') return 0;
+  if(typeof v==='number') return isFinite(v)?v:0;
+  var s=String(v).replace(/r\$/ig,'').replace(/\s/g,'');
+  if(!s) return 0;
+  var temPonto=s.indexOf('.')>=0, temVirg=s.indexOf(',')>=0;
+  if(temPonto&&temVirg) s=s.replace(/\./g,'').replace(',','.');   // 1.234,56
+  else if(temVirg)      s=s.replace(',','.');                      // 3,20
+  var n=parseFloat(s);
+  return isFinite(n)?n:0;
+}
+function _mppFmt(v){ return (v||0).toLocaleString('pt-BR',{minimumFractionDigits:3,maximumFractionDigits:3}); }
+
+// quantas receitas usam cada MP (massasList + recheiosList)
+function _mppUso(){
+  var u={};
+  try{
+    (massasFirebase||[]).concat(recheiosFirebase||[]).forEach(function(r){
+      (Array.isArray(r.ingredientes)?r.ingredientes:[]).forEach(function(i){
+        var k=String(i.mpCodigo); u[k]=(u[k]||0)+1;
+      });
+    });
+  }catch(e){ console.error('_mppUso:',e); }
+  return u;
+}
+
+function mppRender(){
+  var el=document.getElementById('mpp-list'); if(!el) return;
+  var uso=_mppUso();
+  var totalUsadas=0, comValor=0, semValor=0, faltando=[];
+  materiasPrimas.forEach(function(m){
+    var k=String(m.codigo);
+    if(!uso[k]) return;
+    totalUsadas++;
+    if(_mppNum(m.precoKg)>0) comValor++; else { semValor++; faltando.push(m.nome||k); }
+  });
+
+  var res=document.getElementById('mpp-resumo');
+  if(res){
+    var pct=totalUsadas>0?Math.round(comValor/totalUsadas*100):0;
+    res.innerHTML=
+      '<div style="display:flex;gap:16px;flex-wrap:wrap;font-size:13px;">'+
+        '<div><div style="font-size:11px;color:var(--text-secondary);">USADAS EM RECEITAS</div><strong style="font-size:19px;">'+totalUsadas+'</strong></div>'+
+        '<div><div style="font-size:11px;color:var(--text-secondary);">COM VALOR</div><strong style="font-size:19px;color:#059669;">'+comValor+'</strong></div>'+
+        '<div><div style="font-size:11px;color:var(--text-secondary);">SEM VALOR</div><strong style="font-size:19px;color:'+(semValor>0?'var(--mc-vermelho)':'var(--text-secondary)')+';">'+semValor+'</strong></div>'+
+        '<div><div style="font-size:11px;color:var(--text-secondary);">COBERTURA</div><strong style="font-size:19px;">'+pct+'%</strong></div>'+
+      '</div>'+
+      (semValor>0
+        ? '<div style="margin-top:10px;padding:8px 10px;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;font-size:11.5px;color:#991b1b;line-height:1.5;">⚠ Sem valor, o custo dessas receitas fica subestimado: <strong>'+faltando.slice(0,8).map(function(n){return String(n);}).join(' · ')+(faltando.length>8?' e mais '+(faltando.length-8):'')+'</strong></div>'
+        : '<div style="margin-top:10px;padding:8px 10px;background:#ecfdf5;border:1px solid #a7f3d0;border-radius:8px;font-size:11.5px;color:#065f46;">✓ Todas as matérias-primas usadas em receitas têm valor cadastrado.</div>');
+  }
+  var sub=document.getElementById('mpp-sub');
+  if(sub) sub.textContent=comValor+' de '+totalUsadas+' com valor · '+materiasPrimas.length+' MP no total';
+  var cs=document.getElementById('mpp-card-sub');
+  if(cs) cs.textContent=comValor+'/'+totalUsadas+' com valor · importar e exportar planilha';
+
+  var busca=(document.getElementById('mpp-busca')?document.getElementById('mpp-busca').value:'').toLowerCase().trim();
+  var filtro=document.getElementById('mpp-filtro')?document.getElementById('mpp-filtro').value:'usadas';
+
+  var lista=materiasPrimas.filter(function(m){
+    var k=String(m.codigo), p=_mppNum(m.precoKg);
+    if(filtro==='usadas' && !uso[k]) return false;
+    if(filtro==='sem' && p>0) return false;
+    if(filtro==='com' && p<=0) return false;
+    if(busca && String(m.nome||'').toLowerCase().indexOf(busca)<0 && k.indexOf(busca)<0) return false;
+    return true;
+  });
+  lista.sort(function(a,b){
+    var ua=uso[String(a.codigo)]||0, ub=uso[String(b.codigo)]||0;
+    if(ub!==ua) return ub-ua;
+    return String(a.nome||'').localeCompare(String(b.nome||''),'pt-BR');
+  });
+
+  if(!lista.length){ el.innerHTML='<div class="empty">Nada encontrado.</div>'; return; }
+
+  el.innerHTML=lista.map(function(m){
+    var k=String(m.codigo), p=_mppNum(m.precoKg), n=uso[k]||0;
+    var quando=m.precoAtualizadoEm?String(m.precoAtualizadoEm).slice(0,10).split('-').reverse().join('/'):'';
+    return '<div class="card" style="margin-bottom:8px;display:flex;gap:10px;align-items:center;'+(p<=0&&n>0?'border-left:3px solid var(--mc-vermelho);':(p>0?'border-left:3px solid #059669;':''))+'">'+
+      '<div style="flex:1;min-width:0;">'+
+        '<div style="font-size:14px;font-weight:600;">'+String(m.nome||'—')+'</div>'+
+        '<div style="font-size:11.5px;color:var(--text-secondary);margin-top:2px;">Cód <strong>'+k+'</strong> · '+(m.unidade||'KG')+
+          (n>0?' · <span style="color:#059669;">'+n+' receita(s)</span>':' · não usada em receitas')+
+          (quando?' · atualizado '+quando:'')+'</div>'+
+      '</div>'+
+      '<div style="flex-shrink:0;width:118px;">'+
+        '<div class="card-label" style="font-size:10px;">R$ / '+(m.unidade==='UNIDADE'?'un':(m.unidade==='Litro'?'litro':'kg'))+'</div>'+
+        '<input type="text" inputmode="decimal" id="mpp-in-'+k+'" value="'+(p>0?_mppFmt(p):'')+'" placeholder="0,000" '+
+          'onchange="mppSalvarLinha(\''+k+'\',this)" style="text-align:right;font-weight:600;" />'+
+      '</div>'+
+    '</div>';
+  }).join('');
+}
+
+async function mppSalvarLinha(codigo, input){
+  var v=_mppNum(input.value);
+  var m=materiasPrimas.find(function(x){ return String(x.codigo)===String(codigo); });
+  if(!m){ alert('Matéria-prima '+codigo+' não encontrada.'); return; }
+  var antes=input.style.borderColor;
+  input.style.borderColor='#f59e0b';
+  try{
+    await setDoc(doc(db,'materiasPrimas',m.firestoreId), {
+      precoKg: v,
+      precoOrigem: 'manual',
+      precoAtualizadoEm: agora()
+    }, { merge:true });
+    input.value = v>0 ? _mppFmt(v) : '';
+    input.style.borderColor='#059669';
+    setTimeout(function(){ input.style.borderColor=antes||''; }, 1200);
+  }catch(e){
+    console.error('mppSalvarLinha:',e);
+    input.style.borderColor='var(--mc-vermelho)';
+    alert('Erro ao salvar o valor de '+(m.nome||codigo)+': '+e.message);
+  }
+}
+
+async function mppExportar(){
+  try{
+    await new Promise(function(res,rej){ if(window.XLSX){res();return;} var s=document.createElement('script'); s.src='https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js'; s.onload=res; s.onerror=rej; document.head.appendChild(s); });
+    var uso=_mppUso();
+    var lista=materiasPrimas.slice().sort(function(a,b){
+      var ua=uso[String(a.codigo)]||0, ub=uso[String(b.codigo)]||0;
+      if(ub!==ua) return ub-ua;
+      return String(a.nome||'').localeCompare(String(b.nome||''),'pt-BR');
+    });
+    var rows=lista.map(function(m){
+      var p=_mppNum(m.precoKg);
+      return {
+        'Codigo': String(m.codigo),
+        'Nome': m.nome||'',
+        'Unidade': m.unidade||'KG',
+        'Valor': p>0?p:'',
+        'Receitas': uso[String(m.codigo)]||0
+      };
+    });
+    var ws=XLSX.utils.json_to_sheet(rows, { header:['Codigo','Nome','Unidade','Valor','Receitas'] });
+    ws['!cols']=[{wch:10},{wch:48},{wch:10},{wch:12},{wch:10}];
+    var wb=XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Materias-Primas');
+    var hoje=new Date().toISOString().slice(0,10);
+    XLSX.writeFile(wb, 'materias-primas-valores-'+hoje+'.xlsx');
+  }catch(e){ console.error('mppExportar:',e); alert('Erro ao gerar a planilha: '+e.message); }
+}
+
+async function mppImportar(input){
+  var file=input.files&&input.files[0]; if(!file) return;
+  try{
+    await new Promise(function(res,rej){ if(window.XLSX){res();return;} var s=document.createElement('script'); s.src='https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js'; s.onload=res; s.onerror=rej; document.head.appendChild(s); });
+    var buf=await file.arrayBuffer();
+    var wb=XLSX.read(buf,{type:'array'});
+    var ws=wb.Sheets[wb.SheetNames[0]];
+    var rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
+    if(!rows.length){ alert('Planilha vazia.'); input.value=''; return; }
+
+    var nrm=function(s){ return String(s).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim(); };
+    var head=(rows[0]||[]).map(nrm);
+    var acha=function(){
+      for(var a=0;a<arguments.length;a++){
+        var alvo=arguments[a];
+        for(var i=0;i<head.length;i++){ if(head[i]===alvo) return i; }
+      }
+      for(var b=0;b<arguments.length;b++){
+        var alvo2=arguments[b];
+        for(var j=0;j<head.length;j++){ if(head[j].indexOf(alvo2)>=0) return j; }
+      }
+      return -1;
+    };
+    var cCod=acha('codigo','cod','código','item','material');
+    var cVal=acha('valor','preco','preço','preco kg','valor kg','custo','r$','vl');
+    var cNome=acha('nome','descricao','descrição','materia','produto');
+
+    if(cCod<0||cVal<0){
+      alert('Não encontrei as colunas necessárias.\n\nA planilha precisa ter uma coluna de código e uma de valor.\nCabeçalhos aceitos: Codigo / Cod  e  Valor / Preco / Custo.\n\nDica: use o botão "Baixar planilha atual" e edite a coluna Valor.');
+      input.value=''; return;
+    }
+
+    var mapa={}; materiasPrimas.forEach(function(m){ mapa[String(m.codigo).trim()]=m; });
+    var aplicar=[], naoEncontrados=[], semValor=0, iguais=0;
+
+    for(var i=1;i<rows.length;i++){
+      var r=rows[i]; if(!r) continue;
+      var cod=String(r[cCod]==null?'':r[cCod]).trim();
+      if(!cod) continue;
+      if(cod.indexOf('.')>=0 && /^\d+\.0+$/.test(cod)) cod=cod.split('.')[0]; // 14006.0 -> 14006
+      var val=_mppNum(r[cVal]);
+      var m=mapa[cod];
+      if(!m){
+        naoEncontrados.push(cod+(cNome>=0&&r[cNome]?' ('+String(r[cNome]).trim()+')':''));
+        continue;
+      }
+      if(val<=0){ semValor++; continue; }
+      if(Math.abs(_mppNum(m.precoKg)-val)<0.0005){ iguais++; continue; }
+      aplicar.push({ mp:m, valor:val, antes:_mppNum(m.precoKg) });
+    }
+
+    if(!aplicar.length){
+      alert('Nada a atualizar.\n\nLinhas lidas: '+(rows.length-1)+
+        '\nJá estavam com o mesmo valor: '+iguais+
+        '\nSem valor preenchido: '+semValor+
+        '\nCódigos não encontrados: '+naoEncontrados.length+
+        (naoEncontrados.length?'\n\n'+naoEncontrados.slice(0,15).join('\n')+(naoEncontrados.length>15?'\n...':''):''));
+      input.value=''; return;
+    }
+
+    var exemplos=aplicar.slice(0,10).map(function(a){
+      return '· '+(a.mp.nome||a.mp.codigo)+': '+(a.antes>0?_mppFmt(a.antes):'—')+' → '+_mppFmt(a.valor);
+    }).join('\n');
+
+    var msg='Confirmar a atualização?\n\n'+
+      'Valores a alterar: '+aplicar.length+'\n'+
+      'Sem mudança: '+iguais+'\n'+
+      'Sem valor na planilha (ignoradas): '+semValor+'\n'+
+      'Códigos não encontrados: '+naoEncontrados.length+'\n\n'+
+      exemplos+(aplicar.length>10?'\n... e mais '+(aplicar.length-10):'')+
+      (naoEncontrados.length?'\n\nNão encontrados (cadastre em Matérias-Primas primeiro):\n'+naoEncontrados.slice(0,10).join('\n')+(naoEncontrados.length>10?'\n...':''):'');
+
+    if(!confirm(msg)){ input.value=''; return; }
+
+    var ts=agora(), ok=0, erros=0;
+    for(var s0=0;s0<aplicar.length;s0+=40){
+      var lote=aplicar.slice(s0,s0+40).map(function(a){
+        return setDoc(doc(db,'materiasPrimas',a.mp.firestoreId),
+          { precoKg:a.valor, precoOrigem:'planilha', precoAtualizadoEm:ts }, { merge:true })
+          .then(function(){ ok++; })
+          .catch(function(e){ erros++; console.error('mppImportar item '+a.mp.codigo+':',e); });
+      });
+      await Promise.all(lote);
+    }
+    alert('✅ Importação concluída!\n\nAtualizadas: '+ok+(erros?'\nFalhas: '+erros+' (veja o console)':''));
+    mppRender();
+  }catch(e){ console.error('mppImportar:',e); alert('Erro ao importar: '+e.message); }
+  finally{ input.value=''; }
+}
+
+window.mppRender=mppRender; window.mppSalvarLinha=mppSalvarLinha; window.mppExportar=mppExportar; window.mppImportar=mppImportar;
+
 
 
 // ===== PRESENÇA =====
