@@ -1040,6 +1040,7 @@
     </div>
     <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;">
       <div id="estoque-admin-toggle"></div>
+      <div id="estoque-admin-ignorar"></div>
       <div id="estoque-admin-list"></div>
       <div id="estoque-admin-hist" style="margin-top:8px;"></div>
     </div>
@@ -2202,6 +2203,14 @@
     <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;">
       <div class="mc-section-header">Áreas</div>
       <div class="mc-sector-grid">
+        <button class="mc-sector-card" style="border-left:4px solid var(--mc-azul);" onclick="goTo('s-req-rafael');renderReqRafael()">
+          <div class="mc-sector-icon blue">📥</div>
+          <div class="mc-sector-info">
+            <div class="mc-sector-title">Requisições de Recebimento <span class="req-badge" style="display:none;background:var(--mc-vermelho);color:#fff;font-size:11px;font-weight:700;border-radius:99px;padding:1px 8px;margin-left:4px;align-items:center;">0</span></div>
+            <div class="mc-sector-desc" id="req-rafael-sub">Receber e conferir compras</div>
+          </div>
+          <span class="mc-sector-arrow">›</span>
+        </button>
         <button class="mc-sector-card" onclick="goTo('s-container-home')">
           <div class="mc-sector-icon green">🏭</div>
           <div class="mc-sector-info">
@@ -2228,6 +2237,28 @@
         </button>
       </div>
     </div>
+  </div>
+
+  <!-- REQUISIÇÕES — RAFAEL (recebimento) -->
+  <div class="screen" id="s-req-rafael">
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="goTo('s-rafael-home')">‹</button>
+      <div class="mc-brand"><div class="mc-brand-logo"></div></div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info"><div class="mc-page-title">📥 Requisições</div><div class="mc-page-sub">Receber e conferir compras</div></div>
+    </div>
+    <div style="flex:1;padding:16px;background:var(--bg-page);overflow-y:auto;" id="req-rafael-content"></div>
+  </div>
+
+  <!-- REQUISIÇÕES — ADMIN (acompanhamento) -->
+  <div class="screen" id="s-req-admin">
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="goTo('s-adm-g-log')">‹</button>
+      <div class="mc-brand"><div class="mc-brand-logo"></div></div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info"><div class="mc-page-title">📥 Requisições (acompanhamento)</div><div class="mc-page-sub">Recebimentos do Rafael</div></div>
+    </div>
+    <div style="flex:1;padding:16px;background:var(--bg-page);overflow-y:auto;" id="req-admin-content"></div>
   </div>
 
   <!-- FARINHAS HOME -->
@@ -3132,6 +3163,11 @@
       <button class="mc-sector-card" style="border-left:3px solid var(--mc-azul);margin-bottom:10px;" onclick="goTo('s-carreg')">
         <div class="mc-sector-icon blue">📦</div>
         <div class="mc-sector-info"><div class="mc-sector-title">Carregamentos <span class="carreg-badge" style="display:none;background:var(--mc-azul);color:#fff;font-size:11px;font-weight:700;border-radius:99px;padding:1px 8px;margin-left:4px;align-items:center;">0</span></div><div class="mc-sector-desc">Montar carga · conferência por bipagem</div></div>
+        <span class="mc-sector-arrow">›</span>
+      </button>
+      <button class="mc-sector-card" style="border-left:3px solid #0891b2;margin-bottom:10px;" onclick="goTo('s-req-admin');renderReqAdmin()">
+        <div class="mc-sector-icon" style="background:#cffafe;">📥</div>
+        <div class="mc-sector-info"><div class="mc-sector-title">Requisições (recebimento) <span class="req-badge" style="display:none;background:var(--mc-vermelho);color:#fff;font-size:11px;font-weight:700;border-radius:99px;padding:1px 8px;margin-left:4px;align-items:center;">0</span></div><div class="mc-sector-desc">Acompanhar o que o Rafael recebeu</div></div>
         <span class="mc-sector-arrow">›</span>
       </button>
       <button class="mc-sector-card" style="border-left:3px solid var(--mc-roxo);margin-bottom:10px;" onclick="goTo('s-eans')">
@@ -4957,6 +4993,8 @@ function goTo(id){
   if(id==='s-presenca-reg-emb') renderPresencaReg('emb');
   if(id==='s-contagem-home') renderContagemHome();
   if(id==='s-rafael-home'){ renderFarinhaHome(); }
+  if(id==='s-req-rafael'){ renderReqRafael(); }
+  if(id==='s-req-admin'){ renderReqAdmin(); }
   if(id==='s-container-home') renderContainerHome();
   if(id==='s-farinha-home') renderFarinhaHome();
   if(id==='s-farinha-lanc') renderFarinhaLanc();
@@ -12815,11 +12853,30 @@ const _ESTOQUE_IGNORAR_EXATO = new Set([
   'SALSICHA PENA BRANCA','DOCE DE LEITE FRIMESA','ACUCAR CRISTAL'
 ].map(s=>_normNome(s)));
 const _ESTOQUE_IGNORAR_PREFIXO = ['CHOCOLATE EM BARRA','GOIABADA FORNEAVEL'].map(s=>_normNome(s));
+// Lista editável (salva no Firebase) de itens ignorados pelo controle — some com os fixos acima
+let _estoqueIgnorarCustom = []; // array de nomes (originais, como o usuário digitou)
+onSnapshot(doc(db,'configuracoes','estoqueIgnorar'), snap=>{
+  try{ _estoqueIgnorarCustom = (snap.exists() && Array.isArray(snap.data().itens)) ? snap.data().itens : []; _refreshEstoqueScreens(); }catch(e){ console.error('ignorar snap',e); }
+});
 function _estoqueIgnorar(nome){
   const n=_normNome(nome);
   if(_ESTOQUE_IGNORAR_EXATO.has(n)) return true;
-  return _ESTOQUE_IGNORAR_PREFIXO.some(p=>n.startsWith(p));
+  if(_ESTOQUE_IGNORAR_PREFIXO.some(p=>n.startsWith(p))) return true;
+  if(_estoqueIgnorarCustom.some(x=>_normNome(x)===n)) return true;
+  return false;
 }
+async function _estoqueIgnorarAdd(nome){
+  const nn=(nome||'').trim(); if(!nn) return;
+  if(_estoqueIgnorarCustom.some(x=>_normNome(x)===_normNome(nn))){ alert('"'+nn+'" já está na lista.'); return; }
+  const novo=[..._estoqueIgnorarCustom, nn];
+  try{ await setDoc(doc(db,'configuracoes','estoqueIgnorar'),{itens:novo}); }catch(e){ alert('Erro ao salvar: '+e.message); }
+}
+async function _estoqueIgnorarRemove(nome){
+  const novo=_estoqueIgnorarCustom.filter(x=>_normNome(x)!==_normNome(nome));
+  try{ await setDoc(doc(db,'configuracoes','estoqueIgnorar'),{itens:novo}); }catch(e){ alert('Erro ao remover: '+e.message); }
+}
+window._estoqueIgnorarAdd=_estoqueIgnorarAdd;
+window._estoqueIgnorarRemove=_estoqueIgnorarRemove;
 
 function calcEstoqueMassasRecheios(){
   const norm=_normNome;
@@ -12979,6 +13036,35 @@ function renderEstoqueAdmin(){
       '</div>';
   }
   const list=document.getElementById('estoque-admin-list'); if(list) list.innerHTML=renderEstoqueView('ambos',true);
+  // seção de itens ignorados pelo controle
+  const ign=document.getElementById('estoque-admin-ignorar');
+  if(ign){
+    const fixos=[...Array.from(_ESTOQUE_IGNORAR_EXATO), ..._ESTOQUE_IGNORAR_PREFIXO.map(p=>p+'…')];
+    let h='<div class="card" style="border-left:3px solid #64748b;margin-bottom:14px;">'+
+      '<div style="font-weight:700;font-size:14px;margin-bottom:4px;">🚫 Itens fora do controle</div>'+
+      '<div style="font-size:12px;color:var(--text-secondary);margin-bottom:10px;">Estes itens não são verificados pelo controle de estoque (ex: matérias-primas compradas prontas). Use para tirar do controle recheios como goiabada.</div>';
+    if(_estoqueIgnorarCustom.length){
+      h+='<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;">';
+      _estoqueIgnorarCustom.forEach(nome=>{
+        h+='<span style="display:inline-flex;align-items:center;gap:6px;background:#f1f5f9;border:1px solid var(--border);border-radius:99px;padding:4px 6px 4px 12px;font-size:12px;font-weight:600;">'+nome+
+          '<button onclick="_estoqueIgnorarRemove(\''+escapeJsStr(nome)+'\')" title="Tirar da lista" style="border:none;background:#e2e8f0;color:#dc2626;width:20px;height:20px;border-radius:50%;cursor:pointer;font-weight:900;line-height:1;">×</button></span>';
+      });
+      h+='</div>';
+    } else {
+      h+='<div style="font-size:12px;color:var(--text-muted);margin-bottom:10px;">Nenhum item adicional ignorado.</div>';
+    }
+    const c=calcEstoqueMassasRecheios();
+    const nomesRecheio=Object.values(c.recheios).map(e=>e.nome);
+    h+='<div style="display:flex;gap:6px;">'+
+      '<input list="ign-datalist" id="ign-input" placeholder="Nome do recheio a ignorar..." style="flex:1;padding:8px 10px;border:1px solid var(--border-md,#d1d5db);border-radius:8px;font-size:13px;">'+
+      '<datalist id="ign-datalist">'+nomesRecheio.map(n=>'<option value="'+n.replace(/"/g,'&quot;')+'">').join('')+'</datalist>'+
+      '<button class="btn btn-primary" style="flex:0 0 auto;padding:8px 14px;" onclick="var v=document.getElementById(\'ign-input\').value;if(v){_estoqueIgnorarAdd(v);document.getElementById(\'ign-input\').value=\'\';}">Adicionar</button>'+
+    '</div>';
+    h+='<details style="margin-top:10px;"><summary style="font-size:11px;color:var(--text-muted);cursor:pointer;">Ver itens fixos do sistema ('+fixos.length+')</summary>'+
+      '<div style="font-size:11px;color:var(--text-secondary);margin-top:6px;line-height:1.6;">'+fixos.join(' · ')+'</div></details>';
+    h+='</div>';
+    ign.innerHTML=h;
+  }
   const hist=document.getElementById('estoque-admin-hist');
   if(hist){
     const movs=[...descartesEstoque.map(d=>({...d,_t:'descarte'})),...ajustesEstoque.map(a=>({...a,_t:'ajuste'}))]
@@ -13752,6 +13838,149 @@ onSnapshot(collection(db,'comprasFornecedores'), snap=>{ try{ comprasFornecedore
 onSnapshot(collection(db,'comprasMP'), snap=>{ try{ comprasMP=snap.docs.map(d=>({firestoreId:d.id,...d.data()})); const t=document.querySelector('.screen.active')?.id; if(t==='s-compras')renderCompras(); if(t==='s-compra-forn')compRenderLista(); }catch(e){console.error(e);} });
 onSnapshot(collection(db,'comprasPedidos'), snap=>{ try{ comprasPedidos=snap.docs.map(d=>({firestoreId:d.id,...d.data()})); const t=document.querySelector('.screen.active')?.id; if(t==='s-compras')renderCompras(); if(t==='s-compras-hist')renderComprasHist(); _compAtualizarBadge(); }catch(e){console.error(e);} });
 
+/* ══════════════ REQUISIÇÕES (recebimento do Rafael) ══════════════ */
+let requisicoes=[];
+onSnapshot(collection(db,'requisicoes'), snap=>{
+  try{
+    requisicoes=snap.docs.map(d=>({firestoreId:d.id,...d.data()}));
+    const t=document.querySelector('.screen.active')?.id;
+    if(t==='s-req-rafael') renderReqRafael();
+    if(t==='s-req-admin') renderReqAdmin();
+    _reqAtualizarBadge();
+  }catch(e){console.error('requisicoes snap',e);}
+});
+function _reqPendentes(){ return requisicoes.filter(r=>r.status!=='recebido' && r.status!=='cancelado'); }
+function _reqAtualizarBadge(){
+  const n=_reqPendentes().length;
+  document.querySelectorAll('.req-badge').forEach(el=>{ el.textContent=n; el.style.display=n>0?'inline-flex':'none'; });
+  const sub=document.getElementById('req-rafael-sub');
+  if(sub) sub.textContent = n>0 ? (n+' requisição(ões) para receber') : 'Nenhuma requisição pendente';
+}
+// Gera a requisição a partir de um pedido (chamado quando a OC é gerada)
+async function _reqGerarDoPedido(pedido){
+  if(!pedido || !(pedido.itens||[]).length) return;
+  // evita duplicar: se já existe requisição desse pedido, não cria outra
+  if(requisicoes.some(r=>r.pedidoId===pedido.firestoreId)) return;
+  const itens=(pedido.itens||[]).map(it=>({
+    codigo:it.codigo||'', nome:it.nome||it.produto||'', qtd:it.qtd||0, unidade:it.unidade||'',
+    kg:it.kg||0, precoKg:it.precoKg||0, total:it.total||0, obs:'', ok:true
+  }));
+  try{
+    await addDoc(collection(db,'requisicoes'),{
+      pedidoId:pedido.firestoreId,
+      fornecedorNome:pedido.fornecedorNome||'',
+      previsaoEntrega:pedido.previsaoEntrega||'',
+      itens,
+      status:'pendente',
+      criadoEm:hoje(), criadoEm2:agora(),
+      geradoPor:_demAutor()
+    });
+  }catch(e){ console.error('gerar requisicao',e); }
+}
+
+// card de uma requisição (usado nas duas telas)
+function _reqCard(r, editavel){
+  const recebido = r.status==='recebido';
+  const itens=r.itens||[];
+  const totalGeral=itens.reduce((s,it)=>s+(parseFloat(it.total)||0),0);
+  let h='<div class="card" style="margin-bottom:12px;border-left:4px solid '+(recebido?'var(--mc-verde)':'var(--mc-azul)')+';">'+
+    '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:8px;">'+
+      '<div><div style="font-size:15px;font-weight:800;">'+(r.fornecedorNome||'Fornecedor')+'</div>'+
+        '<div style="font-size:11px;color:var(--text-secondary);">Gerada em '+(r.criadoEm||'')+(r.previsaoEntrega?' · Previsão: '+r.previsaoEntrega:'')+'</div></div>'+
+      '<span style="flex-shrink:0;font-size:11px;font-weight:700;padding:3px 10px;border-radius:99px;background:'+(recebido?'rgba(22,163,74,.12)':'rgba(37,99,235,.12)')+';color:'+(recebido?'#16a34a':'#2563eb')+';">'+(recebido?'✓ Recebido':'Pendente')+'</span>'+
+    '</div>';
+  // itens
+  itens.forEach((it,idx)=>{
+    const temObs=it.obs&&it.obs.trim();
+    h+='<div style="border:1px solid '+(temObs?'#fde68a':'var(--border)')+';background:'+(temObs?'#fffbeb':'#fff')+';border-radius:8px;padding:8px 10px;margin-bottom:6px;">'+
+      '<div style="display:flex;justify-content:space-between;gap:8px;">'+
+        '<div style="flex:1;min-width:0;"><div style="font-size:13px;font-weight:700;">'+(it.nome||it.codigo||'item')+'</div>'+
+          '<div style="font-size:11px;color:var(--text-secondary);">'+_reqQtdTxt(it)+(it.total?(' · R$ '+_fmtNum(it.total)):'')+'</div></div>'+
+      '</div>';
+    if(editavel && !recebido){
+      h+='<input type="text" placeholder="Observação (se algo não bater)" value="'+(it.obs||'').replace(/"/g,'&quot;')+'" '+
+        'onchange="_reqSetObs(\''+r.firestoreId+'\','+idx+',this.value)" '+
+        'style="width:100%;margin-top:6px;font-size:12px;padding:6px 8px;border:1px solid var(--border-md,#d1d5db);border-radius:6px;box-sizing:border-box;">';
+    } else if(temObs){
+      h+='<div style="margin-top:6px;font-size:12px;color:#b45309;background:#fffbeb;border-radius:6px;padding:5px 8px;">⚠ '+it.obs+'</div>';
+    }
+    h+='</div>';
+  });
+  h+='<div style="text-align:right;font-size:13px;font-weight:800;margin-top:4px;">Total: R$ '+_fmtNum(totalGeral)+'</div>';
+  if(editavel && !recebido){
+    h+='<button class="btn btn-verde" style="width:100%;margin-top:10px;" onclick="_reqConfirmarRecebimento(\''+r.firestoreId+'\')">✓ Confirmar recebimento</button>';
+  } else if(recebido){
+    h+='<div style="font-size:11px;color:var(--text-secondary);margin-top:8px;">Recebido em '+(r.recebidoEm||'')+(r.recebidoPor?(' por '+r.recebidoPor):'')+'</div>';
+  }
+  h+='</div>';
+  return h;
+}
+function _reqQtdTxt(it){
+  if(it.kg&&parseFloat(it.kg)>0) return _fmtNum(it.qtd)+' '+(it.unidade||'')+' ('+_fmtNum(it.kg)+' kg)';
+  return _fmtNum(it.qtd)+' '+(it.unidade||'');
+}
+function _fmtNum(n){ return (parseFloat(n)||0).toLocaleString('pt-BR',{maximumFractionDigits:2}); }
+
+// salva observação de um item (edição local + persiste)
+async function _reqSetObs(reqId, idx, valor){
+  const r=requisicoes.find(x=>x.firestoreId===reqId); if(!r) return;
+  const itens=[...(r.itens||[])]; if(!itens[idx]) return;
+  itens[idx]={...itens[idx], obs:valor};
+  try{ await updateDoc(doc(db,'requisicoes',reqId),{itens}); }catch(e){ console.error('set obs',e); }
+}
+window._reqSetObs=_reqSetObs;
+
+async function _reqConfirmarRecebimento(reqId){
+  const r=requisicoes.find(x=>x.firestoreId===reqId); if(!r) return;
+  const comObs=(r.itens||[]).filter(it=>it.obs&&it.obs.trim()).length;
+  let msg='Confirmar o recebimento desta requisição de '+(r.fornecedorNome||'')+'?';
+  if(comObs) msg+='\n\n⚠ '+comObs+' item(ns) com observação de divergência.';
+  if(!confirm(msg)) return;
+  try{
+    await updateDoc(doc(db,'requisicoes',reqId),{status:'recebido', recebidoEm:hoje(), recebidoEm2:agora(), recebidoPor:_demAutor()});
+    alert('✓ Recebimento confirmado!');
+  }catch(e){ alert('Erro: '+e.message); }
+}
+window._reqConfirmarRecebimento=_reqConfirmarRecebimento;
+
+function renderReqRafael(){
+  const el=document.getElementById('req-rafael-content'); if(!el) return;
+  const pend=_reqPendentes().sort((a,b)=>(a.criadoEm2||0)-(b.criadoEm2||0));
+  let h='';
+  if(!pend.length){
+    h='<div class="empty" style="padding:40px 20px;text-align:center;color:var(--text-secondary);">'+
+      '<div style="font-size:40px;margin-bottom:10px;">📥</div>'+
+      '<div style="font-weight:700;">Nenhuma requisição pendente</div>'+
+      '<div style="font-size:13px;">Quando o comprador gerar uma ordem de compra, ela aparece aqui para você receber.</div></div>';
+  } else {
+    h='<div class="mc-section-header">Para receber ('+pend.length+')</div>';
+    h+=pend.map(r=>_reqCard(r,true)).join('');
+  }
+  // histórico (recebidas)
+  const receb=requisicoes.filter(r=>r.status==='recebido').sort((a,b)=>(b.recebidoEm2||0)-(a.recebidoEm2||0)).slice(0,20);
+  if(receb.length){
+    h+='<div class="mc-section-header" style="margin-top:20px;">Recebidas recentemente</div>';
+    h+=receb.map(r=>_reqCard(r,false)).join('');
+  }
+  el.innerHTML=h;
+}
+window.renderReqRafael=renderReqRafael;
+
+function renderReqAdmin(){
+  const el=document.getElementById('req-admin-content'); if(!el) return;
+  const pend=_reqPendentes().sort((a,b)=>(a.criadoEm2||0)-(b.criadoEm2||0));
+  const receb=requisicoes.filter(r=>r.status==='recebido').sort((a,b)=>(b.recebidoEm2||0)-(a.recebidoEm2||0)).slice(0,30);
+  let h='';
+  h+='<div class="mc-section-header">Aguardando recebimento ('+pend.length+')</div>';
+  h+= pend.length? pend.map(r=>_reqCard(r,false)).join('') : '<div class="empty">Nenhuma pendente.</div>';
+  if(receb.length){
+    h+='<div class="mc-section-header" style="margin-top:20px;">Recebidas</div>';
+    h+=receb.map(r=>_reqCard(r,false)).join('');
+  }
+  el.innerHTML=h;
+}
+window.renderReqAdmin=renderReqAdmin;
+
 function _fmtRS(n){ return 'R$ '+(Number(n)||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}); }
 const _compSeedFornecedores=[{"id": "f_MASTEREGGS", "nome": "MASTEREGGS", "codigo": "6437"}, {"id": "f_CINDREIA", "nome": "CINDREIA", "codigo": "412"}, {"id": "f_ITAIQUARA", "nome": "ITAIQUARA", "codigo": "4922"}, {"id": "f_ALIBEM", "nome": "ALIBEM", "codigo": "409"}, {"id": "f_AURORA", "nome": "AURORA", "codigo": "6695"}, {"id": "f_EXCELSIOR_ALIMENTOS_S_A", "nome": "EXCELSIOR ALIMENTOS S/A", "codigo": "4432"}, {"id": "f_NUTRIFRANGO", "nome": "NUTRIFRANGO", "codigo": "3071"}, {"id": "f_LATICINIOS_KIFORMAGGIO", "nome": "LATICINIOS KIFORMAGGIO", "codigo": "4748"}, {"id": "f_PETRY", "nome": "PETRY", "codigo": "24"}, {"id": "f_LATCO", "nome": "LATCO", "codigo": "1620"}, {"id": "f_ENTREMINAS", "nome": "ENTREMINAS", "codigo": "6817"}, {"id": "f_VALE_DO_PARDO", "nome": "VALE DO PARDO", "codigo": "6167"}, {"id": "f_SANTA_CLARA", "nome": "SANTA CLARA", "codigo": "438"}, {"id": "f_VIGOR", "nome": "VIGOR", "codigo": "4108"}, {"id": "f_SEARA_ALIMENTOS", "nome": "SEARA ALIMENTOS", "codigo": "5107"}, {"id": "f_COAMO", "nome": "COAMO", "codigo": "1775"}, {"id": "f_PAO_FORTE", "nome": "PÃO FORTE", "codigo": "431"}, {"id": "f_NATURAOVOS", "nome": "NATURAOVOS", "codigo": "435"}, {"id": "f_CISBRA", "nome": "CISBRA", "codigo": "1309"}, {"id": "f_MULTISOY", "nome": "MULTISOY", "codigo": "6666"}, {"id": "f_NUTRIMENTAL", "nome": "NUTRIMENTAL", "codigo": "2053"}, {"id": "f_DAXIA", "nome": "DAXIA", "codigo": "8036"}, {"id": "f_SOORO_RENNER", "nome": "SOORO RENNER", "codigo": "3772"}, {"id": "f_PODIUM_ANHUMAI", "nome": "PODIUM (ANHUMAI)", "codigo": "1332"}, {"id": "f_FECULARIA_DO_VALE", "nome": "FECULARIA DO VALE", "codigo": "1346"}, {"id": "f_G_MANFIO_CIA_LTDA", "nome": "G. MANFIO & CIA. LTDA.", "codigo": "6921"}, {"id": "f_CRISTIANE_ALMEIDA_ESPINDOLA", "nome": "CRISTIANE ALMEIDA ESPINDOLA", "codigo": ""}, {"id": "f_KEM_DISTRIBUIDORA", "nome": "KEM DISTRIBUIDORA", "codigo": "8219"}, {"id": "f_REFORPAN", "nome": "REFORPAN", "codigo": "2130"}, {"id": "f_EMULZINT", "nome": "EMULZINT", "codigo": "2583"}, {"id": "f_FRIMESA", "nome": "FRIMESA", "codigo": "2743"}, {"id": "f_LUNARDI", "nome": "LUNARDI", "codigo": "5013"}, {"id": "f_AGRA", "nome": "AGRA", "codigo": "410"}, {"id": "f_CALLEGARO", "nome": "CALLEGARO", "codigo": "5505"}, {"id": "f_MINERVA_FOODS", "nome": "MINERVA FOODS", "codigo": "8142"}, {"id": "f_MB_FOODS_PORCIONADO", "nome": "MB FOODS PORCIONADO", "codigo": "8222"}, {"id": "f_FORTUNCERES_MINERVA", "nome": "FORTUNCERES MINERVA", "codigo": "8142"}, {"id": "f_PEZZI", "nome": "PEZZI", "codigo": "2715"}, {"id": "f_FRITZ_E_FRIDA", "nome": "FRITZ E FRIDA", "codigo": "5768"}];
 const _compSeedItens=[{"mpid": "f_MASTEREGGS__14132", "codigo": "14132", "nome": "OVO EM GALÃO", "fornecedorId": "f_MASTEREGGS", "fornecedorNome": "MASTEREGGS", "unidade": "Bg", "kgPorUnidade": 5.0, "infoUM": "Bag c/ 5 Kg", "precoKg": 10.05}, {"mpid": "f_CINDREIA__14068", "codigo": "14068", "nome": "MARGARINA (COAMO)", "fornecedorId": "f_CINDREIA", "fornecedorNome": "CINDREIA", "unidade": "Bd", "kgPorUnidade": 14.5, "infoUM": "Balde c/ 14,5 kg", "precoKg": 10.0}, {"mpid": "f_CINDREIA__14029", "codigo": "14029", "nome": "CORANTE AMARELO GEMA", "fornecedorId": "f_CINDREIA", "fornecedorNome": "CINDREIA", "unidade": "Pct", "kgPorUnidade": 1.0, "infoUM": "Pacote c/ 500 gr", "precoKg": 25.8}, {"mpid": "f_CINDREIA__14055", "codigo": "14055", "nome": "FERMENTO EM PÓ", "fornecedorId": "f_CINDREIA", "fornecedorNome": "CINDREIA", "unidade": "Pct", "kgPorUnidade": 2.0, "infoUM": "Pacote c/ 2 kg", "precoKg": 30.0}, {"mpid": "f_CINDREIA__14030", "codigo": "14030", "nome": "CORANTE CARAMELO", "fornecedorId": "f_CINDREIA", "fornecedorNome": "CINDREIA", "unidade": "Gl", "kgPorUnidade": 25.0, "infoUM": "Galao c/ 25 Lt", "precoKg": 10.7}, {"mpid": "f_CINDREIA__14120", "codigo": "14120", "nome": "COLORAU", "fornecedorId": "f_CINDREIA", "fornecedorNome": "CINDREIA", "unidade": "Pct", "kgPorUnidade": 1.0, "infoUM": "Pacote c/ 1,03 Kg", "precoKg": 14.02}, {"mpid": "f_CINDREIA__14135", "codigo": "14135", "nome": "RECHEIO DOCE DE LEITE", "fornecedorId": "f_CINDREIA", "fornecedorNome": "CINDREIA", "unidade": "Bd", "kgPorUnidade": 4.0, "infoUM": "Balde c/ 4 kg", "precoKg": 23.44}, {"mpid": "f_CINDREIA__14075", "codigo": "14075", "nome": "MISTURA PRA CUCA ALEMA", "fornecedorId": "f_CINDREIA", "fornecedorNome": "CINDREIA", "unidade": "Pct", "kgPorUnidade": 5.0, "infoUM": "Pct c/ 5 Kg", "precoKg": 5.76}, {"mpid": "f_CINDREIA__14001", "codigo": "14001", "nome": "AMIDO DE MILHO PILAO SACO 25KG", "fornecedorId": "f_CINDREIA", "fornecedorNome": "CINDREIA", "unidade": "Sc", "kgPorUnidade": 25.0, "infoUM": "Fardo c/ 25 Kg", "precoKg": 4.49}, {"mpid": "f_CINDREIA__14103", "codigo": "14103", "nome": "REFORÇADOR (MELHORADOR)", "fornecedorId": "f_CINDREIA", "fornecedorNome": "CINDREIA", "unidade": "Pct", "kgPorUnidade": 5.0, "infoUM": "Pct c/ 5 Kg", "precoKg": 8.14}, {"mpid": "f_CINDREIA__14060", "codigo": "14060", "nome": "FRUTAS CRISTALIZADAS", "fornecedorId": "f_CINDREIA", "fornecedorNome": "CINDREIA", "unidade": "Cx", "kgPorUnidade": 10.0, "infoUM": "Caixa c/ 10 Kg", "precoKg": 12.6}, {"mpid": "f_CINDREIA__14021", "codigo": "14021", "nome": "CANELA", "fornecedorId": "f_CINDREIA", "fornecedorNome": "CINDREIA", "unidade": "Pct", "kgPorUnidade": 0.5, "infoUM": "Pacote c/ 500 Gr", "precoKg": 24.7}, {"mpid": "f_CINDREIA__14038", "codigo": "14038", "nome": "ERVA DOCE", "fornecedorId": "f_CINDREIA", "fornecedorNome": "CINDREIA", "unidade": "Kg", "kgPorUnidade": 1.0, "infoUM": "1 Kg", "precoKg": 32.61}, {"mpid": "f_CINDREIA__14042", "codigo": "14042", "nome": "ESSENCIA MANTEIGA", "fornecedorId": "f_CINDREIA", "fornecedorNome": "CINDREIA", "unidade": "Gl", "kgPorUnidade": 0.96, "infoUM": "Gl c/ 0,96 Lt", "precoKg": 23.77}, {"mpid": "f_CINDREIA__14081", "codigo": "14081", "nome": "NOZ MOSCADA", "fornecedorId": "f_CINDREIA", "fornecedorNome": "CINDREIA", "unidade": "Pct", "kgPorUnidade": 0.25, "infoUM": "Pacote c/ 250 Gr", "precoKg": 74.28}, {"mpid": "f_CINDREIA__14054", "codigo": "14054", "nome": "FERMENTO DOCE", "fornecedorId": "f_CINDREIA", "fornecedorNome": "CINDREIA", "unidade": "Cx", "kgPorUnidade": 25.0, "infoUM": "Caixa c/ 25 Kg (Pacote c/ 500 Gr)", "precoKg": 14.32}, {"mpid": "f_CINDREIA__14056", "codigo": "14056", "nome": "FERMENTO FLASHMANN", "fornecedorId": "f_CINDREIA", "fornecedorNome": "CINDREIA", "unidade": "Cx", "kgPorUnidade": 25.0, "infoUM": "Caixa c/ 25 Kg (Pacote c/ 500 Gr)", "precoKg": 14.34}, {"mpid": "f_CINDREIA__14040", "codigo": "14040", "nome": "ESSENCIA DE BAUNILHA", "fornecedorId": "f_CINDREIA", "fornecedorNome": "CINDREIA", "unidade": "Gl", "kgPorUnidade": 0.96, "infoUM": "Gl c/ 0,96 Lt", "precoKg": 16.05}, {"mpid": "f_CINDREIA__14059", "codigo": "14059", "nome": "FLOCOS DE BATATA", "fornecedorId": "f_CINDREIA", "fornecedorNome": "CINDREIA", "unidade": "SC", "kgPorUnidade": 25.0, "infoUM": "Saco c/ 25 Kg", "precoKg": 31.21}, {"mpid": "f_ITAIQUARA__14057", "codigo": "14057", "nome": "FERMENTO DOCE ITAIQUARA", "fornecedorId": "f_ITAIQUARA", "fornecedorNome": "ITAIQUARA", "unidade": "Cx", "kgPorUnidade": 25.0, "infoUM": "Caixa c/ 25 Kg", "precoKg": 13.52}, {"mpid": "f_ITAIQUARA__14077", "codigo": "14077", "nome": "MOLHO REFOGADO", "fornecedorId": "f_ITAIQUARA", "fornecedorNome": "ITAIQUARA", "unidade": "Cx", "kgPorUnidade": 16.4, "infoUM": "Caixa c/ 16,40 kg", "precoKg": 6.38}, {"mpid": "f_ITAIQUARA__14141", "codigo": "14141", "nome": "MOLHO BARBECUE LIZA", "fornecedorId": "f_ITAIQUARA", "fornecedorNome": "ITAIQUARA", "unidade": "pcts", "kgPorUnidade": 1.02, "infoUM": "Pacote com 1,02 kg", "precoKg": 11.5}, {"mpid": "f_ITAIQUARA__14088", "codigo": "14088", "nome": "PAPRICA DOCE", "fornecedorId": "f_ITAIQUARA", "fornecedorNome": "ITAIQUARA", "unidade": "Pct", "kgPorUnidade": 0.5, "infoUM": "Pacote com 0,5 kg", "precoKg": 29.44}, {"mpid": "f_ITAIQUARA__14001", "codigo": "14001", "nome": "AMIDO SACO 25KG", "fornecedorId": "f_ITAIQUARA", "fornecedorNome": "ITAIQUARA", "unidade": "SC", "kgPorUnidade": 25.0, "infoUM": "Saco c/ 25 kg", "precoKg": 4.68}, {"mpid": "f_ITAIQUARA__14019", "codigo": "14019", "nome": "CALDO DE GALINHA KNOR", "fornecedorId": "f_ITAIQUARA", "fornecedorNome": "ITAIQUARA", "unidade": "Cx", "kgPorUnidade": 10.0, "infoUM": "Caixa c/ 10 Kg", "precoKg": 19.0}, {"mpid": "f_ITAIQUARA__14018", "codigo": "14018", "nome": "CALDO DE CARNE KNOR", "fornecedorId": "f_ITAIQUARA", "fornecedorNome": "ITAIQUARA", "unidade": "Cx", "kgPorUnidade": 10.0, "infoUM": "Caixa c/ 10 Kg", "precoKg": 16.55}, {"mpid": "f_ITAIQUARA__14021", "codigo": "14021", "nome": "CANELA", "fornecedorId": "f_ITAIQUARA", "fornecedorNome": "ITAIQUARA", "unidade": "Sc", "kgPorUnidade": 25.0, "infoUM": "Fardo c/ 25 Kg", "precoKg": 95.0}, {"mpid": "f_ITAIQUARA__14004", "codigo": "14004", "nome": "AÇUCAR CRISTAL", "fornecedorId": "f_ITAIQUARA", "fornecedorNome": "ITAIQUARA", "unidade": "Cx", "kgPorUnidade": 25.0, "infoUM": "Caixa c/ 25 Kg", "precoKg": 3.5}, {"mpid": "f_ALIBEM__14067", "codigo": "14067", "nome": "LINGÜIÇA CALABRESA", "fornecedorId": "f_ALIBEM", "fornecedorNome": "ALIBEM", "unidade": "Kg", "kgPorUnidade": 1.0, "infoUM": "Pct de 2,5kgs", "precoKg": 16.0}, {"mpid": "f_ALIBEM__14139", "codigo": "14139", "nome": "LINGÜIÇA CALABRESA FINA", "fornecedorId": "f_ALIBEM", "fornecedorNome": "ALIBEM", "unidade": "Kg", "kgPorUnidade": 1.0, "infoUM": "Pct de 2kgs", "precoKg": 18.5}, {"mpid": "f_ALIBEM__14093", "codigo": "14093", "nome": "PRESUNTO", "fornecedorId": "f_ALIBEM", "fornecedorNome": "ALIBEM", "unidade": "Kg", "kgPorUnidade": 1.0, "infoUM": "", "precoKg": 16.8}, {"mpid": "f_ALIBEM__14113", "codigo": "14113", "nome": "SOBREPALETA SUINA", "fornecedorId": "f_ALIBEM", "fornecedorNome": "ALIBEM", "unidade": "Cx", "kgPorUnidade": 10.0, "infoUM": "Caixa c/ 10 Kg", "precoKg": 17.9}, {"mpid": "f_AURORA__14148", "codigo": "14148", "nome": "SALSICHA NOBRE", "fornecedorId": "f_AURORA", "fornecedorNome": "AURORA", "unidade": "CX", "kgPorUnidade": 12.0, "infoUM": "Caixa c/ 3kgs", "precoKg": 9.14}, {"mpid": "f_EXCELSIOR_ALIMENTOS_S_A__14093", "codigo": "14093", "nome": "PRESUNTO", "fornecedorId": "f_EXCELSIOR_ALIMENTOS_S_A", "fornecedorNome": "EXCELSIOR ALIMENTOS S/A", "unidade": "Kg", "kgPorUnidade": 1.0, "infoUM": "1 Kg", "precoKg": 16.56}, {"mpid": "f_EXCELSIOR_ALIMENTOS_S_A__14111", "codigo": "14111", "nome": "SALSICHA", "fornecedorId": "f_EXCELSIOR_ALIMENTOS_S_A", "fornecedorNome": "EXCELSIOR ALIMENTOS S/A", "unidade": "Cx", "kgPorUnidade": 12.0, "infoUM": "Caixa c/ 12 kg", "precoKg": 7.14}, {"mpid": "f_NUTRIFRANGO__14058", "codigo": "14058", "nome": "FILÉ DE PEITO DE FRANGO", "fornecedorId": "f_NUTRIFRANGO", "fornecedorNome": "NUTRIFRANGO", "unidade": "Cx", "kgPorUnidade": 18.0, "infoUM": "Caixa c/ 18 Kg", "precoKg": 13.1}, {"mpid": "f_NUTRIFRANGO__14034", "codigo": "14034", "nome": "SOBRECOXA", "fornecedorId": "f_NUTRIFRANGO", "fornecedorNome": "NUTRIFRANGO", "unidade": "Cx", "kgPorUnidade": 18.0, "infoUM": "Caixa c/ 18 Kg", "precoKg": 10.3}, {"mpid": "f_LATICINIOS_KIFORMAGGIO__14100", "codigo": "14100", "nome": "QUEIJO TROPICAL", "fornecedorId": "f_LATICINIOS_KIFORMAGGIO", "fornecedorNome": "LATICINIOS KIFORMAGGIO", "unidade": "Kg", "kgPorUnidade": 1.0, "infoUM": "1 Kg", "precoKg": 54.0}, {"mpid": "f_PETRY__14099", "codigo": "14099", "nome": "QUEIJO MUSSARELA", "fornecedorId": "f_PETRY", "fornecedorNome": "PETRY", "unidade": "Kg", "kgPorUnidade": 1.0, "infoUM": "1 Kg", "precoKg": 31.0}, {"mpid": "f_LATCO__14098", "codigo": "14098", "nome": "QUEIJO MINAS (MEIA CURA) - CRIOLO", "fornecedorId": "f_LATCO", "fornecedorNome": "LATCO", "unidade": "Kg", "kgPorUnidade": 1.0, "infoUM": "1 Kg", "precoKg": 48.95}, {"mpid": "f_ENTREMINAS__14153", "codigo": "14153", "nome": "REQUEIJÃO AMARILIS", "fornecedorId": "f_ENTREMINAS", "fornecedorNome": "ENTREMINAS", "unidade": "Bis", "kgPorUnidade": 1.8, "infoUM": "Bisnaga c/ 1,8 Kg", "precoKg": 5.55}, {"mpid": "f_VALE_DO_PARDO__14105", "codigo": "14105", "nome": "REQUEIJÃO VALE DO PARDO", "fornecedorId": "f_VALE_DO_PARDO", "fornecedorNome": "VALE DO PARDO", "unidade": "Cx", "kgPorUnidade": 14.4, "infoUM": "Caixa c/ 8x bags (1,8 Kg cada)", "precoKg": 6.1}, {"mpid": "f_SANTA_CLARA__14025", "codigo": "14025", "nome": "CHEDDAR", "fornecedorId": "f_SANTA_CLARA", "fornecedorNome": "SANTA CLARA", "unidade": "Pct", "kgPorUnidade": 1.8, "infoUM": "Bisnaga c/ 1,8 Kg", "precoKg": 18.02}, {"mpid": "f_SANTA_CLARA__14065", "codigo": "14065", "nome": "LEITE", "fornecedorId": "f_SANTA_CLARA", "fornecedorNome": "SANTA CLARA", "unidade": "Cx", "kgPorUnidade": 12.0, "infoUM": "Caixa c/ 12 Lt", "precoKg": 4.7}, {"mpid": "f_SANTA_CLARA__14121", "codigo": "14121", "nome": "NATA( CREME DE LEITE)", "fornecedorId": "f_SANTA_CLARA", "fornecedorNome": "SANTA CLARA", "unidade": "balde", "kgPorUnidade": 3.5, "infoUM": "Caixa c/ 12x Pote 300 Gr", "precoKg": 19.11}, {"mpid": "f_VIGOR__14147", "codigo": "14147", "nome": "MARGARINA  AMÉLIA 80% GORDURA", "fornecedorId": "f_VIGOR", "fornecedorNome": "VIGOR", "unidade": "Bd", "kgPorUnidade": 14.5, "infoUM": "Balde c/ 14,5 kg", "precoKg": 8.76}, {"mpid": "f_SEARA_ALIMENTOS__14069", "codigo": "14069", "nome": "MARGARINA FOLHADA", "fornecedorId": "f_SEARA_ALIMENTOS", "fornecedorNome": "SEARA ALIMENTOS", "unidade": "Cx", "kgPorUnidade": 12.0, "infoUM": "Caixa c/ 12 kg", "precoKg": 16.04}, {"mpid": "f_COAMO__14068", "codigo": "14068", "nome": "MARGARINA COAMO 80% PÃO DE QUEIJO", "fornecedorId": "f_COAMO", "fornecedorNome": "COAMO", "unidade": "Bd", "kgPorUnidade": 14.5, "infoUM": "Balde c/ 14,5 kg", "precoKg": 9.14}, {"mpid": "f_COAMO__14149", "codigo": "14149", "nome": "MARGARINA CREMOSA 60% GORDURA REFEITORIO", "fornecedorId": "f_COAMO", "fornecedorNome": "COAMO", "unidade": "Cx", "kgPorUnidade": 6.0, "infoUM": "Caixa com 12un de 500gr", "precoKg": 9.66}, {"mpid": "f_COAMO__14082", "codigo": "14082", "nome": "OLEO DE SOJA", "fornecedorId": "f_COAMO", "fornecedorNome": "COAMO", "unidade": "Cx", "kgPorUnidade": 18.0, "infoUM": "Caixa c/ 18 Lt (0,9 ml cada)", "precoKg": 8.8}, {"mpid": "f_PAO_FORTE__14003", "codigo": "14003", "nome": "AÇUCAR CONCENTRADO", "fornecedorId": "f_PAO_FORTE", "fornecedorNome": "PÃO FORTE", "unidade": "Kg", "kgPorUnidade": 1.0, "infoUM": "1 Kg", "precoKg": 169.0}, {"mpid": "f_PAO_FORTE__14083", "codigo": "14083", "nome": "OLEO EMULSIFICANTE", "fornecedorId": "f_PAO_FORTE", "fornecedorNome": "PÃO FORTE", "unidade": "Gl", "kgPorUnidade": 5.0, "infoUM": "Garrafa c/ 5 Lt", "precoKg": 31.8}, {"mpid": "f_PAO_FORTE__14107", "codigo": "14107", "nome": "RETARDADOR", "fornecedorId": "f_PAO_FORTE", "fornecedorNome": "PÃO FORTE", "unidade": "Cx", "kgPorUnidade": 5.0, "infoUM": "Caixa c/ 5 Kg cada", "precoKg": 22.0}, {"mpid": "f_NATURAOVOS__14085", "codigo": "14085", "nome": "OVO EM PÓ (DESIDRATADO)", "fornecedorId": "f_NATURAOVOS", "fornecedorNome": "NATURAOVOS", "unidade": "Kg", "kgPorUnidade": 1.0, "infoUM": "1 Kg", "precoKg": 50.5}, {"mpid": "f_CISBRA__14112", "codigo": "14112", "nome": "SEMENTE DE LINHAÇA", "fornecedorId": "f_CISBRA", "fornecedorNome": "CISBRA", "unidade": "Sc", "kgPorUnidade": 25.0, "infoUM": "Saco c/ 25 Kg", "precoKg": 9.5}, {"mpid": "f_CISBRA__14063", "codigo": "14063", "nome": "GRANOLA 7 CEREAIS", "fornecedorId": "f_CISBRA", "fornecedorNome": "CISBRA", "unidade": "Sc", "kgPorUnidade": 25.0, "infoUM": "Saco c/ 25 Kg", "precoKg": 9.15}, {"mpid": "f_MULTISOY__14096", "codigo": "14096", "nome": "PROTEINA TEXTURIZADA CARAMELO (CL4000-12)", "fornecedorId": "f_MULTISOY", "fornecedorNome": "MULTISOY", "unidade": "Sc", "kgPorUnidade": 12.0, "infoUM": "Saco c/ 20kg", "precoKg": 14.0}, {"mpid": "f_MULTISOY__14094", "codigo": "14094", "nome": "PROTEINA SABOR CEBOLA E SALSA (CLCS4000-10)", "fornecedorId": "f_MULTISOY", "fornecedorNome": "MULTISOY", "unidade": "Sc", "kgPorUnidade": 10.0, "infoUM": "Saco c/ 10 Kg", "precoKg": 18.9}, {"mpid": "f_MULTISOY__14095", "codigo": "14095", "nome": "PROTEINA SABOR PICANHA", "fornecedorId": "f_MULTISOY", "fornecedorNome": "MULTISOY", "unidade": "Sc", "kgPorUnidade": 10.0, "infoUM": "Saco c/ 10 Kg", "precoKg": 24.9}, {"mpid": "f_MULTISOY__14133", "codigo": "14133", "nome": "PROTEINA TEXTURIZADA NATURAL FRANGO (FNLG3000-10)", "fornecedorId": "f_MULTISOY", "fornecedorNome": "MULTISOY", "unidade": "Sc", "kgPorUnidade": 10.0, "infoUM": "Saco c/ 10 Kg", "precoKg": 20.9}, {"mpid": "f_MULTISOY__14097", "codigo": "14097", "nome": "PROTEINA SABOR PRESUNTO ( codigo FPPE3000-10 )", "fornecedorId": "f_MULTISOY", "fornecedorNome": "MULTISOY", "unidade": "Sc", "kgPorUnidade": 10.0, "infoUM": "Saco c/ 10 Kg", "precoKg": 22.0}, {"mpid": "f_MULTISOY__14134", "codigo": "14134", "nome": "PROTEINA TEXTURIZADA NATURAL RED BORDO", "fornecedorId": "f_MULTISOY", "fornecedorNome": "MULTISOY", "unidade": "Sc", "kgPorUnidade": 7.0, "infoUM": "Saco c/ 15 Kg", "precoKg": 17.85}, {"mpid": "f_NUTRIMENTAL__14059", "codigo": "14059", "nome": "FLOCOS DE BATATA", "fornecedorId": "f_NUTRIMENTAL", "fornecedorNome": "NUTRIMENTAL", "unidade": "Sc", "kgPorUnidade": 20.0, "infoUM": "Saco c/ 20 Kg", "precoKg": 23.69}, {"mpid": "f_DAXIA__14114", "codigo": "14114", "nome": "SORO DE LEITE EM PO", "fornecedorId": "f_DAXIA", "fornecedorNome": "DAXIA", "unidade": "Sc", "kgPorUnidade": 25.0, "infoUM": "Saco c/ 25 Kg", "precoKg": 12.5}, {"mpid": "f_SOORO_RENNER__14114", "codigo": "14114", "nome": "SORO DE LEITE EM PO", "fornecedorId": "f_SOORO_RENNER", "fornecedorNome": "SOORO RENNER", "unidade": "Sc", "kgPorUnidade": 25.0, "infoUM": "Saco c/ 25 Kg", "precoKg": 12.5}, {"mpid": "f_PODIUM_ANHUMAI__14073", "codigo": "14073", "nome": "MISTURA DE PÃO DE QUEIJO RECHEADO (6520)", "fornecedorId": "f_PODIUM_ANHUMAI", "fornecedorNome": "PODIUM (ANHUMAI)", "unidade": "Sc", "kgPorUnidade": 20.0, "infoUM": "Saco c/ 20 Kg", "precoKg": 7.6}, {"mpid": "f_PODIUM_ANHUMAI__14074", "codigo": "14074", "nome": "MISTURA PARA PÃO DE QUEIJO NORMAL (651)", "fornecedorId": "f_PODIUM_ANHUMAI", "fornecedorNome": "PODIUM (ANHUMAI)", "unidade": "Sc", "kgPorUnidade": 25.0, "infoUM": "Saco c/ 25 Kg", "precoKg": 6.38}, {"mpid": "f_PODIUM_ANHUMAI__14154", "codigo": "14154", "nome": "AMIDO NOVO PSE560", "fornecedorId": "f_PODIUM_ANHUMAI", "fornecedorNome": "PODIUM (ANHUMAI)", "unidade": "Kg", "kgPorUnidade": 1.0, "infoUM": "1 Kg", "precoKg": 6.39}, {"mpid": "f_PODIUM_ANHUMAI__3968", "codigo": "3968", "nome": "AMIDO ESPECIAL PODIUM 100", "fornecedorId": "f_PODIUM_ANHUMAI", "fornecedorNome": "PODIUM (ANHUMAI)", "unidade": "Sc", "kgPorUnidade": 25.0, "infoUM": "Saco c/ 25 Kg", "precoKg": 7.39}, {"mpid": "f_FECULARIA_DO_VALE__14092", "codigo": "14092", "nome": "POLVILHO", "fornecedorId": "f_FECULARIA_DO_VALE", "fornecedorNome": "FECULARIA DO VALE", "unidade": "Sc", "kgPorUnidade": 25.0, "infoUM": "Saco c/ 25 Kg", "precoKg": 7.2}, {"mpid": "f_G_MANFIO_CIA_LTDA__14019", "codigo": "14019", "nome": "CALDO DE GALINHA", "fornecedorId": "f_G_MANFIO_CIA_LTDA", "fornecedorNome": "G. MANFIO & CIA. LTDA.", "unidade": "Cx", "kgPorUnidade": 10.5, "infoUM": "Caixa c/ 10,5 kg"}, {"mpid": "f_CRISTIANE_ALMEIDA_ESPINDOLA__14046", "codigo": "14046", "nome": "FARINHA DE ROSCA", "fornecedorId": "f_CRISTIANE_ALMEIDA_ESPINDOLA", "fornecedorNome": "CRISTIANE ALMEIDA ESPINDOLA", "unidade": "Kg", "kgPorUnidade": 1.0, "infoUM": "1 Kg", "precoKg": 7.0}, {"mpid": "f_KEM_DISTRIBUIDORA__14155", "codigo": "14155", "nome": "SABOR A MI COM PIMENTA", "fornecedorId": "f_KEM_DISTRIBUIDORA", "fornecedorNome": "KEM DISTRIBUIDORA", "unidade": "Bd", "kgPorUnidade": 5.0, "infoUM": ""}, {"mpid": "f_REFORPAN__14062", "codigo": "14062", "nome": "GOTAS PINGO CHOCOLATE", "fornecedorId": "f_REFORPAN", "fornecedorNome": "REFORPAN", "unidade": "Cx", "kgPorUnidade": 10.0, "infoUM": "Caixa c/ 10kg", "precoKg": 20.83}, {"mpid": "f_REFORPAN__14630", "codigo": "14630", "nome": "CHOCOLATE EM BARRA 6gr", "fornecedorId": "f_REFORPAN", "fornecedorNome": "REFORPAN", "unidade": "Cx", "kgPorUnidade": 10.0, "infoUM": "Caixa c/ 10kg", "precoKg": 28.2}, {"mpid": "f_REFORPAN__14026", "codigo": "14026", "nome": "CHOCOLATE AO LEITE EM BARRA 24gr", "fornecedorId": "f_REFORPAN", "fornecedorNome": "REFORPAN", "unidade": "Cx", "kgPorUnidade": 10.0, "infoUM": "Caixa c/ 10kg", "precoKg": 21.49}, {"mpid": "f_EMULZINT__14150", "codigo": "14150", "nome": "OVAM25 Lubrificante para fins alimenticios (608419)", "fornecedorId": "f_EMULZINT", "fornecedorNome": "EMULZINT", "unidade": "Cx", "kgPorUnidade": 9.2, "infoUM": "Caixa com 9,2L", "precoKg": 32.96}, {"mpid": "f_EMULZINT__14061", "codigo": "14061", "nome": "GOIABADA", "fornecedorId": "f_EMULZINT", "fornecedorNome": "EMULZINT", "unidade": "Bd", "kgPorUnidade": 25.0, "infoUM": "Balde c/ 25 Kg", "precoKg": 17.66}, {"mpid": "f_FRIMESA__14035", "codigo": "14035", "nome": "DOCE DE LEITE", "fornecedorId": "f_FRIMESA", "fornecedorNome": "FRIMESA", "unidade": "Bd", "kgPorUnidade": 4.8, "infoUM": "Balde c/ 4,8 kg", "precoKg": 15.25}, {"mpid": "f_LUNARDI__14006", "codigo": "14006", "nome": "AIPIM", "fornecedorId": "f_LUNARDI", "fornecedorNome": "LUNARDI", "unidade": "Kg", "kgPorUnidade": 1.0, "infoUM": "1 Kg", "precoKg": 6.0}, {"mpid": "f_AGRA__14125", "codigo": "14125", "nome": "COXÃO DURO", "fornecedorId": "f_AGRA", "fornecedorNome": "AGRA", "unidade": "Kg", "kgPorUnidade": 1.0, "infoUM": "", "precoKg": 36.4}, {"mpid": "f_AGRA__14033", "codigo": "14033", "nome": "ACEM", "fornecedorId": "f_AGRA", "fornecedorNome": "AGRA", "unidade": "Kg", "kgPorUnidade": 1.0, "infoUM": "", "precoKg": 32.5}, {"mpid": "f_CALLEGARO__14125", "codigo": "14125", "nome": "COXÃO DURO", "fornecedorId": "f_CALLEGARO", "fornecedorNome": "CALLEGARO", "unidade": "Kg", "kgPorUnidade": 1.0, "infoUM": "1 Kg", "precoKg": 36.5}, {"mpid": "f_CALLEGARO__14033", "codigo": "14033", "nome": "ACEM", "fornecedorId": "f_CALLEGARO", "fornecedorNome": "CALLEGARO", "unidade": "Kg", "kgPorUnidade": 1.0, "infoUM": "1 Kg", "precoKg": 32.5}, {"mpid": "f_MINERVA_FOODS__14125", "codigo": "14125", "nome": "COXÃO DURO", "fornecedorId": "f_MINERVA_FOODS", "fornecedorNome": "MINERVA FOODS", "unidade": "Kg", "kgPorUnidade": 1.0, "infoUM": "1 Kg", "precoKg": 34.7}, {"mpid": "f_MINERVA_FOODS__14033", "codigo": "14033", "nome": "ACEM", "fornecedorId": "f_MINERVA_FOODS", "fornecedorNome": "MINERVA FOODS", "unidade": "Kg", "kgPorUnidade": 1.0, "infoUM": "1 Kg", "precoKg": 30.49}, {"mpid": "f_MB_FOODS_PORCIONADO__14125", "codigo": "14125", "nome": "COXÃO DURO", "fornecedorId": "f_MB_FOODS_PORCIONADO", "fornecedorNome": "MB FOODS PORCIONADO", "unidade": "Kg", "kgPorUnidade": 1.0, "infoUM": "1 Kg", "precoKg": 26.5}, {"mpid": "f_MB_FOODS_PORCIONADO__14033", "codigo": "14033", "nome": "ACEM EM CUBOS", "fornecedorId": "f_MB_FOODS_PORCIONADO", "fornecedorNome": "MB FOODS PORCIONADO", "unidade": "Kg", "kgPorUnidade": 1.0, "infoUM": "1 Kg", "precoKg": 32.5}, {"mpid": "f_FORTUNCERES_MINERVA__14125", "codigo": "14125", "nome": "COXÃO DURO", "fornecedorId": "f_FORTUNCERES_MINERVA", "fornecedorNome": "FORTUNCERES MINERVA", "unidade": "Kg", "kgPorUnidade": 1.0, "infoUM": "1 Kg", "precoKg": 33.99}, {"mpid": "f_FORTUNCERES_MINERVA__14033", "codigo": "14033", "nome": "ACEM", "fornecedorId": "f_FORTUNCERES_MINERVA", "fornecedorNome": "FORTUNCERES MINERVA", "unidade": "Kg", "kgPorUnidade": 1.0, "infoUM": "1 Kg", "precoKg": 28.99}, {"mpid": "f_PEZZI__14017", "codigo": "14017", "nome": "CAFÉ", "fornecedorId": "f_PEZZI", "fornecedorNome": "PEZZI", "unidade": "Cx", "kgPorUnidade": 10.0, "infoUM": "Caixa c/ 10 Kg", "precoKg": 69.98}, {"mpid": "f_PEZZI__14082", "codigo": "14082", "nome": "OLEO DE SOJA", "fornecedorId": "f_PEZZI", "fornecedorNome": "PEZZI", "unidade": "Cx", "kgPorUnidade": 18.0, "infoUM": "Caixa c/ 18 Lt (0,9 ml cada)", "precoKg": 7.21}, {"mpid": "f_PEZZI__14119", "codigo": "14119", "nome": "VINAGRE ALCOOL 750ML", "fornecedorId": "f_PEZZI", "fornecedorNome": "PEZZI", "unidade": "Gl", "kgPorUnidade": 0.75, "infoUM": "Gl c/ 750ml", "precoKg": 3.32}, {"mpid": "f_PEZZI__14005", "codigo": "14005", "nome": "AÇUCAR REFINADO", "fornecedorId": "f_PEZZI", "fornecedorNome": "PEZZI", "unidade": "Kg", "kgPorUnidade": 1.0, "infoUM": "1 Kg", "precoKg": 4.79}, {"mpid": "f_FRITZ_E_FRIDA__14109", "codigo": "14109", "nome": "SAL", "fornecedorId": "f_FRITZ_E_FRIDA", "fornecedorNome": "FRITZ E FRIDA", "unidade": "Kg", "kgPorUnidade": 1.0, "infoUM": "1 Kg", "precoKg": 2.19}, {"mpid": "f_FRITZ_E_FRIDA__14122", "codigo": "14122", "nome": "MASSA ESPAGUETE", "fornecedorId": "f_FRITZ_E_FRIDA", "fornecedorNome": "FRITZ E FRIDA", "unidade": "Fd", "kgPorUnidade": 10.0, "infoUM": "Fardo c/ 10 Kg", "precoKg": 5.48}, {"mpid": "f_FRITZ_E_FRIDA__14009", "codigo": "14009", "nome": "AMACIANTE DE CARNE", "fornecedorId": "f_FRITZ_E_FRIDA", "fornecedorNome": "FRITZ E FRIDA", "unidade": "Cx", "kgPorUnidade": 1.1, "infoUM": "Caixa c/ 10,1 Kg", "precoKg": 11.67}, {"mpid": "f_FRITZ_E_FRIDA__14110", "codigo": "14110", "nome": "SAL GROSSO", "fornecedorId": "f_FRITZ_E_FRIDA", "fornecedorNome": "FRITZ E FRIDA", "unidade": "Fd", "kgPorUnidade": 15.0, "infoUM": "Fardo c/ 15 Kg", "precoKg": 2.39}, {"mpid": "f_FRITZ_E_FRIDA__14122__2", "codigo": "14122", "nome": "MASSA PENNE", "fornecedorId": "f_FRITZ_E_FRIDA", "fornecedorNome": "FRITZ E FRIDA", "unidade": "Fd", "kgPorUnidade": 10.0, "infoUM": "Fardo c/ 10 Kg", "precoKg": 6.58}, {"mpid": "f_FRITZ_E_FRIDA__14010", "codigo": "14010", "nome": "ARROZ", "fornecedorId": "f_FRITZ_E_FRIDA", "fornecedorNome": "FRITZ E FRIDA", "unidade": "Fd", "kgPorUnidade": 10.0, "infoUM": "Fardo c/ 10 Kg", "precoKg": 3.89}, {"mpid": "f_FRITZ_E_FRIDA__14053", "codigo": "14053", "nome": "FEIJÃO PRETO", "fornecedorId": "f_FRITZ_E_FRIDA", "fornecedorNome": "FRITZ E FRIDA", "unidade": "Fd", "kgPorUnidade": 10.0, "infoUM": "Fardo c/ 10 Kg", "precoKg": 6.49}, {"mpid": "f_FRITZ_E_FRIDA__14004", "codigo": "14004", "nome": "AÇUCAR CRISTAL", "fornecedorId": "f_FRITZ_E_FRIDA", "fornecedorNome": "FRITZ E FRIDA", "unidade": "Fd", "kgPorUnidade": 10.0, "infoUM": "Fardo c/ 10 Kg", "precoKg": 3.39}, {"mpid": "f_FRITZ_E_FRIDA__14066", "codigo": "14066", "nome": "LENTILHA", "fornecedorId": "f_FRITZ_E_FRIDA", "fornecedorNome": "FRITZ E FRIDA", "unidade": "KG", "kgPorUnidade": 1.0, "infoUM": ""}, {"mpid": "f_FRITZ_E_FRIDA__14152", "codigo": "14152", "nome": "PIMENTA PRETA", "fornecedorId": "f_FRITZ_E_FRIDA", "fornecedorNome": "FRITZ E FRIDA", "unidade": "KG", "kgPorUnidade": 1.0, "infoUM": "", "precoKg": 69.98}, {"mpid": "f_FRITZ_E_FRIDA__14088", "codigo": "14088", "nome": "PAPRICA DOCE", "fornecedorId": "f_FRITZ_E_FRIDA", "fornecedorNome": "FRITZ E FRIDA", "unidade": "KG", "kgPorUnidade": 1.0, "infoUM": "", "precoKg": 34.76}, {"mpid": "f_FRITZ_E_FRIDA__14016", "codigo": "14016", "nome": "CACHAÇA", "fornecedorId": "f_FRITZ_E_FRIDA", "fornecedorNome": "FRITZ E FRIDA", "unidade": "L", "kgPorUnidade": 0.81, "infoUM": "Garrafa", "precoKg": 9.77}, {"mpid": "f_FRITZ_E_FRIDA__14020", "codigo": "14020", "nome": "CALDO DE LEGUMES", "fornecedorId": "f_FRITZ_E_FRIDA", "fornecedorNome": "FRITZ E FRIDA", "unidade": "CX", "kgPorUnidade": 10.1, "infoUM": "", "precoKg": 14.94}, {"mpid": "f_FRITZ_E_FRIDA__14076", "codigo": "14076", "nome": "MOLHO INGLES", "fornecedorId": "f_FRITZ_E_FRIDA", "fornecedorNome": "FRITZ E FRIDA", "unidade": "BALDE", "kgPorUnidade": 1.0, "infoUM": "", "precoKg": 6.88}, {"mpid": "f_FRITZ_E_FRIDA__14022", "codigo": "14022", "nome": "CATCHUP", "fornecedorId": "f_FRITZ_E_FRIDA", "fornecedorNome": "FRITZ E FRIDA", "unidade": "BALDE", "kgPorUnidade": 3.0, "infoUM": "", "precoKg": 11.96}, {"mpid": "f_FRITZ_E_FRIDA__14080", "codigo": "14080", "nome": "MOSTARDA", "fornecedorId": "f_FRITZ_E_FRIDA", "fornecedorNome": "FRITZ E FRIDA", "unidade": "BALDE", "kgPorUnidade": 3.0, "infoUM": "", "precoKg": 10.29}, {"mpid": "f_FRITZ_E_FRIDA__14119", "codigo": "14119", "nome": "VINAGRE ALCOOL 750ML", "fornecedorId": "f_FRITZ_E_FRIDA", "fornecedorNome": "FRITZ E FRIDA", "unidade": "UN", "kgPorUnidade": 0.75, "infoUM": "", "precoKg": 2.79}, {"mpid": "f_FRITZ_E_FRIDA__14021", "codigo": "14021", "nome": "CANELA", "fornecedorId": "f_FRITZ_E_FRIDA", "fornecedorNome": "FRITZ E FRIDA", "unidade": "KG", "kgPorUnidade": 1.0, "infoUM": "", "precoKg": 90.98}, {"mpid": "f_FRITZ_E_FRIDA__14001", "codigo": "14001", "nome": "AMIDO DE MILHO SACO 25KG", "fornecedorId": "f_FRITZ_E_FRIDA", "fornecedorNome": "FRITZ E FRIDA", "unidade": "SC", "kgPorUnidade": 25.0, "infoUM": "", "precoKg": 5.4}, {"mpid": "f_FRITZ_E_FRIDA__14045", "codigo": "14045", "nome": "FARINHA DE MILHO MEDIA", "fornecedorId": "f_FRITZ_E_FRIDA", "fornecedorNome": "FRITZ E FRIDA", "unidade": "Kg", "kgPorUnidade": 1.0, "infoUM": "", "precoKg": 3.39}, {"mpid": "f_FRITZ_E_FRIDA__14050", "codigo": "14050", "nome": "FARINHA MANDIOCA", "fornecedorId": "f_FRITZ_E_FRIDA", "fornecedorNome": "FRITZ E FRIDA", "unidade": "KG", "kgPorUnidade": 0.5, "infoUM": "", "precoKg": 3.39}];
@@ -14241,8 +14470,14 @@ async function compConfirmarComprador(){
 }
 async function compConcluirOC(){
   if(!_compPedido.firestoreId){ alert('Salve o pedido primeiro.'); return; }
-  if(!confirm('Confirmar que a ORDEM DE COMPRA foi gerada? O pedido será concluído e arquivado no histórico da semana.')) return;
-  try{ await updateDoc(doc(db,'comprasPedidos',_compPedido.firestoreId),{status:'oc_gerada', ocEm:hoje(), ocPor:_demAutor(), atualizadoEm:agora()}); alert('📄 Ordem de compra registrada! Processo concluído e arquivado.'); goTo('s-compras'); }catch(e){ alert('Erro: '+e.message); }
+  if(!confirm('Confirmar que a ORDEM DE COMPRA foi gerada? O pedido será concluído e arquivado no histórico da semana.\n\nUma requisição de recebimento será gerada para o Rafael.')) return;
+  try{
+    await updateDoc(doc(db,'comprasPedidos',_compPedido.firestoreId),{status:'oc_gerada', ocEm:hoje(), ocPor:_demAutor(), atualizadoEm:agora()});
+    // gera a requisição de recebimento para o Rafael
+    await _reqGerarDoPedido({..._compPedido, status:'oc_gerada'});
+    alert('📄 Ordem de compra registrada! Requisição gerada para o Rafael receber.');
+    goTo('s-compras');
+  }catch(e){ alert('Erro: '+e.message); }
 }
 async function compReabrir(){
   if(!_compPedido.firestoreId)return;
