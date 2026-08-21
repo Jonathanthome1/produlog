@@ -3473,6 +3473,20 @@
         </div>
       </div>
 
+      <div class="card" style="margin-bottom:12px;border-left:3px solid var(--mc-laranja);">
+        <div class="card-label" style="color:var(--mc-laranja);">🔗 Vincular produtos às embalagens</div>
+        <div style="font-size:12px;color:var(--text-secondary);line-height:1.5;margin:6px 0 10px;">
+          Em vez de abrir produto por produto, mande uma planilha com <strong>produto</strong> e <strong>embalagem</strong>
+          (código ou nome, tanto faz) e uma coluna opcional de <strong>quantidade por pacote</strong>.
+          Baixe o modelo abaixo — ele já vem com todos os produtos e o vínculo atual de cada um.
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <label class="btn btn-primary" style="flex:1;min-width:150px;text-align:center;cursor:pointer;display:block;">🔗 Importar vínculos<input type="file" id="emb-vinc-file" accept=".xlsx,.xls,.csv" style="display:none" onchange="embImportarVinculos(this)"></label>
+          <button class="btn btn-secondary" style="flex:1;min-width:150px;" onclick="embExportarVinculos()">📤 Baixar modelo de vínculo</button>
+        </div>
+        <div id="emb-vinc-resumo" style="margin-top:10px;"></div>
+      </div>
+
       <div class="card" style="margin-bottom:12px;">
         <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;">
           <div style="flex:2;min-width:150px;">
@@ -6916,8 +6930,136 @@ async function embImportar(input){
   finally{ input.value=''; }
 }
 
+// ---- vínculo produto -> embalagem, em lote por planilha ----
+function _embNorm(s){ return String(s==null?'':s).normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\s+/g,' ').trim().toUpperCase(); }
+function _embCodLimpo(v){
+  var c=String(v==null?'':v).trim();
+  if(c.indexOf('.')>=0 && /^\d+\.0+$/.test(c)) c=c.split('.')[0];
+  return c;
+}
+async function embExportarVinculos(){
+  try{
+    await new Promise((res,rej)=>{ if(window.XLSX){res();return;} const s=document.createElement('script'); s.src='https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js'; s.onload=res; s.onerror=rej; document.head.appendChild(s); });
+    const lista=(produtosConfFirebase||[]).slice().sort((a,b)=>String(a.nome||'').localeCompare(String(b.nome||''),'pt-BR'));
+    const rows=lista.map(p=>{
+      const e=embalagensList.find(x=>String(x.codigo)===String(p.embalagemCod||''));
+      return {
+        'Cod Produto': String(p.cod||''),
+        'Produto': p.nome||'',
+        'Cod Embalagem': String(p.embalagemCod||''),
+        'Embalagem': e?e.nome:'',
+        'Qtd por Pacote': (parseFloat(p.embalagemQtd)>0?parseFloat(p.embalagemQtd):'')
+      };
+    });
+    const ws=XLSX.utils.json_to_sheet(rows,{header:['Cod Produto','Produto','Cod Embalagem','Embalagem','Qtd por Pacote']});
+    ws['!cols']=[{wch:12},{wch:44},{wch:14},{wch:34},{wch:14}];
+    const wb=XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb,ws,'Vinculos');
+    XLSX.writeFile(wb,'vinculo-produto-embalagem-'+new Date().toISOString().slice(0,10)+'.xlsx');
+  }catch(e){ console.error('embExportarVinculos:',e); alert('Erro ao gerar a planilha: '+e.message); }
+}
+async function embImportarVinculos(input){
+  const file=input.files&&input.files[0]; if(!file) return;
+  try{
+    await new Promise((res,rej)=>{ if(window.XLSX){res();return;} const s=document.createElement('script'); s.src='https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js'; s.onload=res; s.onerror=rej; document.head.appendChild(s); });
+    const buf=await file.arrayBuffer();
+    const wb=XLSX.read(buf,{type:'array'});
+    const rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,defval:''});
+    if(!rows.length){ alert('Planilha vazia.'); input.value=''; return; }
+
+    const nrm=s=>String(s).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
+    const head=(rows[0]||[]).map(nrm);
+    const acha=function(){
+      for(let a=0;a<arguments.length;a++){ for(let i=0;i<head.length;i++){ if(head[i]===arguments[a]) return i; } }
+      for(let b=0;b<arguments.length;b++){ for(let j=0;j<head.length;j++){ if(head[j].indexOf(arguments[b])>=0) return j; } }
+      return -1;
+    };
+    const cPCod=acha('cod produto','codigo produto','cod prod','codigo','cod','item');
+    const cPNome=acha('produto','nome produto','descricao produto','nome');
+    const cECod=acha('cod embalagem','codigo embalagem','cod emb');
+    const cENome=acha('embalagem','saco','caixa','tipo embalagem');
+    const cQtd=acha('qtd por pacote','qtd','quantidade','qtde','un por pacote');
+
+    if(cPCod<0 && cPNome<0){ alert('Não achei como identificar o produto.\n\nA planilha precisa ter uma coluna de código OU de nome do produto.'); input.value=''; return; }
+    if(cECod<0 && cENome<0){ alert('Não achei como identificar a embalagem.\n\nA planilha precisa ter uma coluna "Cod Embalagem" OU "Embalagem".'); input.value=''; return; }
+
+    // índices de busca
+    const porCodP={}, porNomeP={};
+    (produtosConfFirebase||[]).forEach(p=>{
+      if(p.cod!=null && String(p.cod).trim()!=='') porCodP[String(p.cod).trim()]=p;
+      if(p.nome) porNomeP[_embNorm(p.nome)]=p;
+    });
+    const porCodE={}, porNomeE={};
+    embalagensList.forEach(e=>{
+      porCodE[String(e.codigo).trim()]=e;
+      if(e.nome) porNomeE[_embNorm(e.nome)]=e;
+    });
+
+    const aplicar=[]; const semProduto=[], semEmb=[]; let iguais=0, vazias=0;
+
+    for(let i=1;i<rows.length;i++){
+      const r=rows[i]; if(!r) continue;
+      const pcod=cPCod>=0?_embCodLimpo(r[cPCod]):'';
+      const pnome=cPNome>=0?String(r[cPNome]||'').trim():'';
+      if(!pcod && !pnome) continue;
+      const p=(pcod&&porCodP[pcod]) || (pnome&&porNomeP[_embNorm(pnome)]) || null;
+      if(!p){ semProduto.push(pcod||pnome); continue; }
+
+      const ecod=cECod>=0?_embCodLimpo(r[cECod]):'';
+      const enome=cENome>=0?String(r[cENome]||'').trim():'';
+      if(!ecod && !enome){ vazias++; continue; }
+      const e=(ecod&&porCodE[ecod]) || (enome&&porNomeE[_embNorm(enome)]) || null;
+      if(!e){ semEmb.push((ecod||enome)+'  (produto '+(p.nome||pcod)+')'); continue; }
+
+      let qtd=cQtd>=0?_embNum(r[cQtd]):0;
+      if(!(qtd>0)) qtd=parseFloat(p.embalagemQtd)>0?parseFloat(p.embalagemQtd):1;
+
+      const jaCod=String(p.embalagemCod||''), jaQtd=parseFloat(p.embalagemQtd)||0;
+      if(jaCod===String(e.codigo) && Math.abs(jaQtd-qtd)<0.0001){ iguais++; continue; }
+      aplicar.push({ p:p, e:e, qtd:qtd, antes:jaCod?( (porCodE[jaCod]||{}).nome || jaCod ):'—' });
+    }
+
+    if(!aplicar.length){
+      alert('Nada a vincular.\n\nLinhas lidas: '+(rows.length-1)+
+        '\nJá estavam iguais: '+iguais+
+        '\nSem embalagem preenchida: '+vazias+
+        '\nProdutos não encontrados: '+semProduto.length+
+        '\nEmbalagens não encontradas: '+semEmb.length+
+        (semProduto.length?'\n\nPRODUTOS:\n'+semProduto.slice(0,10).join('\n'):'')+
+        (semEmb.length?'\n\nEMBALAGENS:\n'+semEmb.slice(0,10).join('\n'):''));
+      input.value=''; return;
+    }
+
+    let msg='Confirmar os vínculos?\n\nA aplicar: '+aplicar.length+
+      '\nSem mudança: '+iguais+
+      '\nSem embalagem na planilha: '+vazias+
+      '\nProdutos não encontrados: '+semProduto.length+
+      '\nEmbalagens não encontradas: '+semEmb.length+'\n\n'+
+      aplicar.slice(0,12).map(a=>'· '+(a.p.nome||a.p.cod)+': '+a.antes+' → '+a.e.nome+(a.qtd!==1?' ×'+a.qtd:'')).join('\n')+
+      (aplicar.length>12?'\n... e mais '+(aplicar.length-12):'');
+    if(semProduto.length) msg+='\n\nPRODUTOS NÃO ENCONTRADOS:\n'+semProduto.slice(0,8).join('\n')+(semProduto.length>8?'\n...':'');
+    if(semEmb.length) msg+='\n\nEMBALAGENS NÃO ENCONTRADAS (cadastre primeiro):\n'+semEmb.slice(0,8).join('\n')+(semEmb.length>8?'\n...':'');
+    if(!confirm(msg)){ input.value=''; return; }
+
+    const ts=agora(); let ok=0, erros=0;
+    for(let s0=0;s0<aplicar.length;s0+=40){
+      await Promise.all(aplicar.slice(s0,s0+40).map(a=>
+        setDoc(doc(db,'produtosConfeitaria',a.p.firestoreId),
+          { embalagemCod:String(a.e.codigo), embalagemQtd:a.qtd, atualizadoEm:ts }, { merge:true })
+          .then(()=>{ok++;}).catch(err=>{erros++;console.error('embImportarVinculos '+a.p.cod+':',err);})
+      ));
+    }
+    const res=document.getElementById('emb-vinc-resumo');
+    if(res) res.innerHTML='<div style="padding:8px 10px;background:#ecfdf5;border:1px solid #a7f3d0;border-radius:8px;font-size:11.5px;color:#065f46;">✓ '+ok+' vínculo(s) aplicado(s)'+(erros?' · '+erros+' falha(s)':'')+'</div>';
+    alert('✅ Pronto!\n\nVínculos aplicados: '+ok+(erros?'\nFalhas: '+erros+' (veja o console)':''));
+    embRender();
+  }catch(e){ console.error('embImportarVinculos:',e); alert('Erro ao importar: '+e.message); }
+  finally{ input.value=''; }
+}
+
 window.embRender=embRender; window.embAdicionar=embAdicionar; window.embSalvarLinha=embSalvarLinha;
 window.embExcluir=embExcluir; window.embExportar=embExportar; window.embImportar=embImportar;
+window.embExportarVinculos=embExportarVinculos; window.embImportarVinculos=embImportarVinculos;
 
 
 
