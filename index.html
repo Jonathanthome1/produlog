@@ -3305,6 +3305,14 @@
         </div>
         <span class="mc-sector-arrow" style="color:#065f46;">›</span>
       </button>
+      <button class="mc-sector-card" style="border-left:4px solid #7c3aed;margin-bottom:10px;background:linear-gradient(135deg, var(--bg-primary) 0%, #f5f3ff 100%);" onclick="goTo('s-emb')">
+        <div class="mc-sector-icon purple">📦</div>
+        <div class="mc-sector-info">
+          <div class="mc-sector-title" style="color:#5b21b6;">Cadastro de Embalagens</div>
+          <div class="mc-sector-desc" id="emb-card-sub">Sacos, caixas e bandejas · valores e planilha</div>
+        </div>
+        <span class="mc-sector-arrow" style="color:#5b21b6;">›</span>
+      </button>
       <button class="mc-sector-card" style="border-left:4px solid #0891b2;margin-bottom:10px;background:linear-gradient(135deg, var(--bg-primary) 0%, #ecfeff 100%);" onclick="goTo('s-adm-contagem-itens')">
         <div class="mc-sector-icon blue">📋</div>
         <div class="mc-sector-info">
@@ -3400,6 +3408,95 @@
       </div>
 
       <div id="mpp-list"></div>
+      <div style="height:30px;"></div>
+    </div>
+  </div>
+
+  <!-- ===== CADASTRO DE EMBALAGENS ===== -->
+  <div class="screen" id="s-emb">
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="goTo('s-adm-cadastros')">‹</button>
+      <div class="mc-brand">
+        <div class="mc-brand-logo"></div>
+        <div class="mc-brand-text">
+          <div class="mc-brand-name">Monte Castelo</div>
+          <div class="mc-brand-sub">Custos</div>
+        </div>
+      </div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info">
+        <div class="mc-page-title">📦 Cadastro de Embalagens</div>
+        <div class="mc-page-sub" id="emb-sub">Sacos, caixas, bandejas e etiquetas</div>
+      </div>
+    </div>
+    <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;">
+
+      <div class="card" style="margin-bottom:12px;border-left:3px solid #7c3aed;">
+        <div class="card-label" style="color:#5b21b6;">📊 Situação</div>
+        <div id="emb-resumo" style="margin-top:8px;"></div>
+      </div>
+
+      <div class="card" style="margin-bottom:12px;border-left:3px solid var(--mc-azul);">
+        <div class="card-label">➕ Nova embalagem</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px;">
+          <div><div class="card-label" style="font-size:10px;">CÓDIGO</div><input type="text" id="emb-novo-cod" placeholder="ex: 20101" /></div>
+          <div><div class="card-label" style="font-size:10px;">TIPO</div>
+            <select id="emb-novo-tipo">
+              <option value="SACO">Saco</option>
+              <option value="CAIXA">Caixa</option>
+              <option value="BANDEJA">Bandeja</option>
+              <option value="ETIQUETA">Etiqueta</option>
+              <option value="FILME">Filme</option>
+              <option value="OUTRO">Outro</option>
+            </select>
+          </div>
+        </div>
+        <div style="margin-top:10px;"><div class="card-label" style="font-size:10px;">NOME</div><input type="text" id="emb-novo-nome" placeholder="EX: SACO 31X31" /></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px;">
+          <div><div class="card-label" style="font-size:10px;">UNIDADE</div>
+            <select id="emb-novo-un"><option value="UN">Unidade</option><option value="MIL">Milheiro</option><option value="KG">Quilo</option><option value="M">Metro</option></select>
+          </div>
+          <div><div class="card-label" style="font-size:10px;">VALOR R$ (opcional)</div><input type="text" inputmode="decimal" id="emb-novo-preco" placeholder="0,000" /></div>
+        </div>
+        <button class="btn btn-primary" style="width:100%;margin-top:12px;" onclick="embAdicionar()">Adicionar ✓</button>
+      </div>
+
+      <div class="card" style="margin-bottom:12px;">
+        <div class="card-label">📥 Planilha</div>
+        <div style="font-size:12px;color:var(--text-secondary);line-height:1.5;margin:6px 0 10px;">
+          Precisa de uma coluna de <strong>código</strong> e uma de <strong>valor</strong>. Se tiver coluna de <strong>nome</strong>,
+          as embalagens que ainda não existirem podem ser criadas na importação.
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <label class="btn btn-primary" style="flex:1;min-width:150px;text-align:center;cursor:pointer;display:block;">📥 Importar planilha<input type="file" id="emb-file" accept=".xlsx,.xls,.csv" style="display:none" onchange="embImportar(this)"></label>
+          <button class="btn btn-secondary" style="flex:1;min-width:150px;" onclick="embExportar()">📤 Baixar planilha atual</button>
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:12px;">
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;">
+          <div style="flex:2;min-width:150px;">
+            <div class="card-label">Buscar</div>
+            <input type="text" id="emb-busca" placeholder="nome ou código..." oninput="embRender()" />
+          </div>
+          <div style="flex:1;min-width:130px;">
+            <div class="card-label">Mostrar</div>
+            <select id="emb-filtro" onchange="embRender()">
+              <option value="">Todas</option>
+              <option value="sem">Sem valor</option>
+              <option value="com">Com valor</option>
+              <option value="SACO">Só sacos</option>
+              <option value="CAIXA">Só caixas</option>
+              <option value="BANDEJA">Só bandejas</option>
+              <option value="ETIQUETA">Só etiquetas</option>
+              <option value="FILME">Só filmes</option>
+              <option value="OUTRO">Só outros</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div id="emb-list"></div>
       <div style="height:30px;"></div>
     </div>
   </div>
@@ -4774,6 +4871,7 @@ function goTo(id){
   document.getElementById(id).classList.add('active');
   window.scrollTo(0,0);
   if(id==='s-mp-precos') mppRender();
+  if(id==='s-emb') embRender();
   if(id==='s-conf-home') renderConfHome();
   if(id==='s-coz-home') renderCozHome();
   if(id==='s-sel-data') renderDateGrid('date-btn-grid',dataSel,'prod');
@@ -6573,6 +6671,255 @@ async function mppImportar(input){
 }
 
 window.mppRender=mppRender; window.mppSalvarLinha=mppSalvarLinha; window.mppExportar=mppExportar; window.mppImportar=mppImportar;
+
+// ===== CADASTRO DE EMBALAGENS (coleção 'embalagens', id = código) =====
+// Base de sacos/caixas/bandejas com valor unitário. O app de Custos lê daqui
+// para compor o custo de embalagem por pacote.
+let embalagensList=[];
+onSnapshot(collection(db,'embalagens'), snap=>{
+  embalagensList=snap.docs.map(d=>({firestoreId:d.id,...d.data()}));
+  const tela=document.getElementById('s-emb');
+  if(tela && tela.classList.contains('active')) embRender();
+}, err=>console.error('embalagens:',err));
+
+function _embNum(v){
+  if(v==null||v==='') return 0;
+  if(typeof v==='number') return isFinite(v)?v:0;
+  var s=String(v).replace(/r\$/ig,'').replace(/\s/g,'');
+  if(!s) return 0;
+  var temPonto=s.indexOf('.')>=0, temVirg=s.indexOf(',')>=0;
+  if(temPonto&&temVirg) s=s.replace(/\./g,'').replace(',','.');
+  else if(temVirg)      s=s.replace(',','.');
+  var n=parseFloat(s);
+  return isFinite(n)?n:0;
+}
+function _embFmt(v){ return (v||0).toLocaleString('pt-BR',{minimumFractionDigits:3,maximumFractionDigits:3}); }
+
+function embRender(){
+  const el=document.getElementById('emb-list'); if(!el) return;
+  let comValor=0, semValor=0;
+  embalagensList.forEach(e=>{ if(_embNum(e.precoUn)>0) comValor++; else semValor++; });
+
+  const res=document.getElementById('emb-resumo');
+  if(res){
+    const total=embalagensList.length;
+    const pct=total>0?Math.round(comValor/total*100):0;
+    res.innerHTML=
+      '<div style="display:flex;gap:16px;flex-wrap:wrap;font-size:13px;">'+
+        '<div><div style="font-size:11px;color:var(--text-secondary);">CADASTRADAS</div><strong style="font-size:19px;">'+total+'</strong></div>'+
+        '<div><div style="font-size:11px;color:var(--text-secondary);">COM VALOR</div><strong style="font-size:19px;color:#059669;">'+comValor+'</strong></div>'+
+        '<div><div style="font-size:11px;color:var(--text-secondary);">SEM VALOR</div><strong style="font-size:19px;color:'+(semValor>0?'var(--mc-vermelho)':'var(--text-secondary)')+';">'+semValor+'</strong></div>'+
+        '<div><div style="font-size:11px;color:var(--text-secondary);">COBERTURA</div><strong style="font-size:19px;">'+pct+'%</strong></div>'+
+      '</div>'+
+      (total===0
+        ? '<div style="margin-top:10px;padding:8px 10px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;font-size:11.5px;color:#1e40af;">Nenhuma embalagem cadastrada ainda. Use o formulário abaixo ou importe uma planilha.</div>'
+        : (semValor>0
+          ? '<div style="margin-top:10px;padding:8px 10px;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;font-size:11.5px;color:#991b1b;">⚠ '+semValor+' embalagem(ns) sem valor — o custo de embalagem dos produtos que a usam fica subestimado.</div>'
+          : '<div style="margin-top:10px;padding:8px 10px;background:#ecfdf5;border:1px solid #a7f3d0;border-radius:8px;font-size:11.5px;color:#065f46;">✓ Todas as embalagens têm valor cadastrado.</div>'));
+  }
+  const sub=document.getElementById('emb-sub');
+  if(sub) sub.textContent=comValor+' de '+embalagensList.length+' com valor';
+  const cs=document.getElementById('emb-card-sub');
+  if(cs) cs.textContent=embalagensList.length+' cadastrada(s) · '+comValor+' com valor';
+
+  const busca=(document.getElementById('emb-busca')?document.getElementById('emb-busca').value:'').toLowerCase().trim();
+  const filtro=document.getElementById('emb-filtro')?document.getElementById('emb-filtro').value:'';
+
+  let lista=embalagensList.filter(e=>{
+    const p=_embNum(e.precoUn);
+    if(filtro==='sem' && p>0) return false;
+    if(filtro==='com' && p<=0) return false;
+    if(filtro && ['SACO','CAIXA','BANDEJA','ETIQUETA','FILME','OUTRO'].indexOf(filtro)>=0 && (e.tipo||'OUTRO')!==filtro) return false;
+    if(busca && String(e.nome||'').toLowerCase().indexOf(busca)<0 && String(e.codigo||'').indexOf(busca)<0) return false;
+    return true;
+  });
+  lista.sort((a,b)=>String(a.nome||'').localeCompare(String(b.nome||''),'pt-BR'));
+
+  if(!lista.length){ el.innerHTML='<div class="empty">Nada encontrado.</div>'; return; }
+
+  const CORES={SACO:'#0891b2',CAIXA:'#b45309',BANDEJA:'#7c3aed',ETIQUETA:'#059669',FILME:'#0284c7',OUTRO:'#6b7280'};
+  el.innerHTML=lista.map(e=>{
+    const k=String(e.codigo), p=_embNum(e.precoUn), tipo=e.tipo||'OUTRO';
+    const quando=e.precoAtualizadoEm?String(e.precoAtualizadoEm).slice(0,10).split('-').reverse().join('/'):'';
+    return '<div class="card" style="margin-bottom:8px;display:flex;gap:10px;align-items:center;border-left:3px solid '+(p>0?'#059669':'var(--mc-vermelho)')+';">'+
+      '<div style="flex:1;min-width:0;">'+
+        '<div style="font-size:14px;font-weight:600;">'+String(e.nome||'—')+
+          ' <span style="font-size:10px;font-weight:600;padding:1px 6px;border-radius:10px;background:'+CORES[tipo]+'22;color:'+CORES[tipo]+';">'+tipo+'</span></div>'+
+        '<div style="font-size:11.5px;color:var(--text-secondary);margin-top:2px;">Cód <strong>'+k+'</strong> · '+(e.unidade||'UN')+
+          (quando?' · atualizado '+quando:'')+'</div>'+
+      '</div>'+
+      '<div style="flex-shrink:0;width:112px;">'+
+        '<div class="card-label" style="font-size:10px;">R$ / '+(e.unidade||'UN')+'</div>'+
+        '<input type="text" inputmode="decimal" value="'+(p>0?_embFmt(p):'')+'" placeholder="0,000" '+
+          'onchange="embSalvarLinha(\''+k+'\',this)" style="text-align:right;font-weight:600;" />'+
+      '</div>'+
+      '<button onclick="embExcluir(\''+k+'\',event)" title="Excluir" style="background:none;border:1px solid #ef9a9a;color:#c62828;font-size:13px;padding:5px 8px;border-radius:6px;cursor:pointer;flex-shrink:0;">🗑</button>'+
+    '</div>';
+  }).join('');
+}
+
+async function embAdicionar(){
+  const cod=(document.getElementById('emb-novo-cod').value||'').trim();
+  const nome=(document.getElementById('emb-novo-nome').value||'').trim().toUpperCase();
+  const tipo=document.getElementById('emb-novo-tipo').value;
+  const un=document.getElementById('emb-novo-un').value;
+  const preco=_embNum(document.getElementById('emb-novo-preco').value);
+  if(!cod){ alert('Digite o código da embalagem'); return; }
+  if(!nome){ alert('Digite o nome da embalagem'); return; }
+  if(embalagensList.some(e=>String(e.codigo)===cod)){ alert('Já existe uma embalagem com o código '+cod); return; }
+  try{
+    await setDoc(doc(db,'embalagens',cod), {
+      codigo:cod, nome:nome, tipo:tipo, unidade:un,
+      precoUn:preco, precoOrigem:preco>0?'manual':'', precoAtualizadoEm:preco>0?agora():'',
+      ativo:true, atualizadoEm:agora()
+    });
+    document.getElementById('emb-novo-cod').value='';
+    document.getElementById('emb-novo-nome').value='';
+    document.getElementById('emb-novo-preco').value='';
+    embRender();
+  }catch(e){ console.error('embAdicionar:',e); alert('Erro ao cadastrar: '+e.message); }
+}
+
+async function embSalvarLinha(codigo, input){
+  const v=_embNum(input.value);
+  const e=embalagensList.find(x=>String(x.codigo)===String(codigo));
+  if(!e){ alert('Embalagem '+codigo+' não encontrada.'); return; }
+  const antes=input.style.borderColor;
+  input.style.borderColor='#f59e0b';
+  try{
+    await setDoc(doc(db,'embalagens',e.firestoreId), {
+      precoUn:v, precoOrigem:'manual', precoAtualizadoEm:agora()
+    }, { merge:true });
+    input.value = v>0 ? _embFmt(v) : '';
+    input.style.borderColor='#059669';
+    setTimeout(()=>{ input.style.borderColor=antes||''; }, 1200);
+  }catch(err){
+    console.error('embSalvarLinha:',err);
+    input.style.borderColor='var(--mc-vermelho)';
+    alert('Erro ao salvar: '+err.message);
+  }
+}
+
+async function embExcluir(codigo, ev){
+  if(ev) ev.stopPropagation();
+  const e=embalagensList.find(x=>String(x.codigo)===String(codigo));
+  if(!e) return;
+  if(!confirm('Excluir a embalagem "'+(e.nome||codigo)+'"?\n\nProdutos que usam esta embalagem no app de Custos ficam sem custo de embalagem.')) return;
+  try{
+    await deleteDoc(doc(db,'embalagens',e.firestoreId));
+    embRender();
+  }catch(err){ console.error('embExcluir:',err); alert('Erro ao excluir: '+err.message); }
+}
+
+async function embExportar(){
+  try{
+    await new Promise((res,rej)=>{ if(window.XLSX){res();return;} const s=document.createElement('script'); s.src='https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js'; s.onload=res; s.onerror=rej; document.head.appendChild(s); });
+    const lista=embalagensList.slice().sort((a,b)=>String(a.nome||'').localeCompare(String(b.nome||''),'pt-BR'));
+    const rows=lista.map(e=>({
+      'Codigo': String(e.codigo), 'Nome': e.nome||'', 'Tipo': e.tipo||'OUTRO',
+      'Unidade': e.unidade||'UN', 'Valor': _embNum(e.precoUn)>0?_embNum(e.precoUn):''
+    }));
+    const ws=XLSX.utils.json_to_sheet(rows,{header:['Codigo','Nome','Tipo','Unidade','Valor']});
+    ws['!cols']=[{wch:10},{wch:40},{wch:12},{wch:10},{wch:12}];
+    const wb=XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb,ws,'Embalagens');
+    XLSX.writeFile(wb,'embalagens-'+new Date().toISOString().slice(0,10)+'.xlsx');
+  }catch(e){ console.error('embExportar:',e); alert('Erro ao gerar a planilha: '+e.message); }
+}
+
+async function embImportar(input){
+  const file=input.files&&input.files[0]; if(!file) return;
+  try{
+    await new Promise((res,rej)=>{ if(window.XLSX){res();return;} const s=document.createElement('script'); s.src='https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js'; s.onload=res; s.onerror=rej; document.head.appendChild(s); });
+    const buf=await file.arrayBuffer();
+    const wb=XLSX.read(buf,{type:'array'});
+    const rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,defval:''});
+    if(!rows.length){ alert('Planilha vazia.'); input.value=''; return; }
+
+    const nrm=s=>String(s).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
+    const head=(rows[0]||[]).map(nrm);
+    const acha=function(){
+      for(let a=0;a<arguments.length;a++){ for(let i=0;i<head.length;i++){ if(head[i]===arguments[a]) return i; } }
+      for(let b=0;b<arguments.length;b++){ for(let j=0;j<head.length;j++){ if(head[j].indexOf(arguments[b])>=0) return j; } }
+      return -1;
+    };
+    const cCod=acha('codigo','cod','código','item');
+    const cVal=acha('valor','preco','preço','custo','r$','vl');
+    const cNome=acha('nome','descricao','descrição','embalagem','produto');
+    const cTipo=acha('tipo','grupo','categoria');
+    const cUn=acha('unidade','un','medida');
+
+    if(cCod<0||cVal<0){
+      alert('Não encontrei as colunas necessárias.\n\nA planilha precisa ter uma coluna de código e uma de valor.\nCabeçalhos aceitos: Codigo / Cod  e  Valor / Preco / Custo.\n\nDica: use "Baixar planilha atual" e edite a coluna Valor.');
+      input.value=''; return;
+    }
+
+    const mapa={}; embalagensList.forEach(e=>{ mapa[String(e.codigo).trim()]=e; });
+    const atualizar=[], criar=[]; let iguais=0, semValor=0;
+
+    for(let i=1;i<rows.length;i++){
+      const r=rows[i]; if(!r) continue;
+      let cod=String(r[cCod]==null?'':r[cCod]).trim();
+      if(!cod) continue;
+      if(cod.indexOf('.')>=0 && /^\d+\.0+$/.test(cod)) cod=cod.split('.')[0];
+      const val=_embNum(r[cVal]);
+      const e=mapa[cod];
+      if(!e){
+        const nome=cNome>=0?String(r[cNome]||'').trim().toUpperCase():'';
+        if(!nome){ continue; }
+        criar.push({ codigo:cod, nome:nome,
+          tipo:(cTipo>=0?String(r[cTipo]||'').trim().toUpperCase():'')||'OUTRO',
+          unidade:(cUn>=0?String(r[cUn]||'').trim().toUpperCase():'')||'UN', valor:val });
+        continue;
+      }
+      if(val<=0){ semValor++; continue; }
+      if(Math.abs(_embNum(e.precoUn)-val)<0.0005){ iguais++; continue; }
+      atualizar.push({ e:e, valor:val, antes:_embNum(e.precoUn) });
+    }
+
+    if(!atualizar.length && !criar.length){
+      alert('Nada a fazer.\n\nLinhas lidas: '+(rows.length-1)+
+        '\nJá estavam com o mesmo valor: '+iguais+
+        '\nSem valor preenchido: '+semValor+
+        (cNome<0?'\n\nA planilha não tem coluna de nome, então embalagens novas não podem ser criadas.':''));
+      input.value=''; return;
+    }
+
+    let msg='Confirmar?\n\n';
+    if(atualizar.length){
+      msg+='ATUALIZAR VALOR ('+atualizar.length+'):\n'+
+        atualizar.slice(0,8).map(a=>'· '+(a.e.nome||a.e.codigo)+': '+(a.antes>0?_embFmt(a.antes):'—')+' → '+_embFmt(a.valor)).join('\n')+
+        (atualizar.length>8?'\n... e mais '+(atualizar.length-8):'')+'\n\n';
+    }
+    if(criar.length){
+      msg+='CRIAR NOVAS ('+criar.length+'):\n'+
+        criar.slice(0,8).map(c=>'· '+c.codigo+' — '+c.nome+(c.valor>0?' ('+_embFmt(c.valor)+')':'')).join('\n')+
+        (criar.length>8?'\n... e mais '+(criar.length-8):'')+'\n\n';
+    }
+    msg+='Sem mudança: '+iguais+'\nSem valor na planilha: '+semValor;
+    if(!confirm(msg)){ input.value=''; return; }
+
+    const ts=agora();
+    let ok=0, erros=0;
+    const tarefas=[]
+      .concat(atualizar.map(a=>()=>setDoc(doc(db,'embalagens',a.e.firestoreId),
+        { precoUn:a.valor, precoOrigem:'planilha', precoAtualizadoEm:ts }, { merge:true })))
+      .concat(criar.map(c=>()=>setDoc(doc(db,'embalagens',c.codigo),
+        { codigo:c.codigo, nome:c.nome, tipo:c.tipo, unidade:c.unidade, precoUn:c.valor,
+          precoOrigem:'planilha', precoAtualizadoEm:ts, ativo:true, atualizadoEm:ts }, { merge:true })));
+    for(let s0=0;s0<tarefas.length;s0+=40){
+      await Promise.all(tarefas.slice(s0,s0+40).map(t=>t().then(()=>{ok++;}).catch(err=>{erros++;console.error('embImportar:',err);})));
+    }
+    alert('✅ Importação concluída!\n\nAtualizadas: '+atualizar.length+'\nCriadas: '+criar.length+(erros?'\nFalhas: '+erros:''));
+    embRender();
+  }catch(e){ console.error('embImportar:',e); alert('Erro ao importar: '+e.message); }
+  finally{ input.value=''; }
+}
+
+window.embRender=embRender; window.embAdicionar=embAdicionar; window.embSalvarLinha=embSalvarLinha;
+window.embExcluir=embExcluir; window.embExportar=embExportar; window.embImportar=embImportar;
+
+
 
 
 
