@@ -7099,6 +7099,149 @@ window.embRender=embRender; window.embAdicionar=embAdicionar; window.embSalvarLi
 window.embExcluir=embExcluir; window.embExportar=embExportar; window.embImportar=embImportar;
 window.embExportarVinculos=embExportarVinculos; window.embImportarVinculos=embImportarVinculos;
 
+// ===== IMPORTAR DADOS DOS PRODUTOS DA QUADRA POR PLANILHA =====
+// Preenche em lote kg/pacote, unidades por pacote e gramaturas. Só mexe nas
+// colunas que existirem na planilha: o que não vier fica como está.
+function _qgNum(v){
+  if(v==null||v==='') return null;
+  if(typeof v==='number') return isFinite(v)?v:null;
+  var s=String(v).replace(/kg|gr|g\b/ig,'').replace(/\s/g,'');
+  if(!s) return null;
+  var tp=s.indexOf('.')>=0, tv=s.indexOf(',')>=0;
+  if(tp&&tv) s=s.replace(/\./g,'').replace(',','.');
+  else if(tv) s=s.replace(',','.');
+  var n=parseFloat(s);
+  return isFinite(n)?n:null;
+}
+function _qgCod(v){
+  var c=String(v==null?'':v).trim();
+  if(c.indexOf('.')>=0 && /^\d+\.0+$/.test(c)) c=c.split('.')[0];
+  return c;
+}
+async function quadraExportarModelo(){
+  try{
+    await new Promise((res,rej)=>{ if(window.XLSX){res();return;} const s=document.createElement('script'); s.src='https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js'; s.onload=res; s.onerror=rej; document.head.appendChild(s); });
+    const lista=(produtosCustom||[]).slice().sort((a,b)=>String(a.nome||'').localeCompare(String(b.nome||''),'pt-BR'));
+    const rows=lista.map(p=>({
+      'Cod': String(p.cod||''),
+      'Produto': p.nome||'',
+      'Kit': p.kit||'',
+      'Kg por pacote': (parseFloat(p.kgPacote)>0?parseFloat(p.kgPacote):''),
+      'Un por pacote': (parseFloat(p.qtdPct)>0?parseFloat(p.qtdPct):''),
+      'Massa gr': (parseFloat(p.grMassa)>0?parseFloat(p.grMassa):''),
+      'Recheio1 gr': (parseFloat(p.grRecheio)>0?parseFloat(p.grRecheio):''),
+      'Recheio2 gr': (parseFloat(p.grRecheio2)>0?parseFloat(p.grRecheio2):'')
+    }));
+    const ws=XLSX.utils.json_to_sheet(rows,{header:['Cod','Produto','Kit','Kg por pacote','Un por pacote','Massa gr','Recheio1 gr','Recheio2 gr']});
+    ws['!cols']=[{wch:10},{wch:44},{wch:30},{wch:14},{wch:14},{wch:12},{wch:13},{wch:13}];
+    const wb=XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb,ws,'Produtos Quadra');
+    XLSX.writeFile(wb,'produtos-quadra-'+new Date().toISOString().slice(0,10)+'.xlsx');
+  }catch(e){ console.error('quadraExportarModelo:',e); alert('Erro ao gerar a planilha: '+e.message); }
+}
+async function quadraImportarDados(input){
+  const file=input.files&&input.files[0]; if(!file) return;
+  try{
+    await new Promise((res,rej)=>{ if(window.XLSX){res();return;} const s=document.createElement('script'); s.src='https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js'; s.onload=res; s.onerror=rej; document.head.appendChild(s); });
+    const buf=await file.arrayBuffer();
+    const wb=XLSX.read(buf,{type:'array'});
+    const rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,defval:''});
+    if(!rows.length){ alert('Planilha vazia.'); input.value=''; return; }
+
+    const nrm=s=>String(s).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
+    const head=(rows[0]||[]).map(nrm);
+    const acha=function(){
+      for(let a=0;a<arguments.length;a++){ for(let i=0;i<head.length;i++){ if(head[i]===arguments[a]) return i; } }
+      for(let b=0;b<arguments.length;b++){ for(let j=0;j<head.length;j++){ if(head[j].indexOf(arguments[b])>=0) return j; } }
+      return -1;
+    };
+    const cCod=acha('cod','codigo','código','id');
+    const cNome=acha('produto','nome','descricao','descrição');
+    const cKg=acha('kg por pacote','kg pacote','kgpacote','kg/pacote','kg');
+    const cUn=acha('un por pacote','unidades por pacote','un pacote','unidades','qtd por pacote','un/pacote');
+    const cM=acha('massa gr','massa','gramatura massa','gr massa');
+    const cR1=acha('recheio1 gr','recheio 1','recheio1','recheio');
+    const cR2=acha('recheio2 gr','recheio 2','recheio2');
+
+    if(cCod<0 && cNome<0){ alert('Não achei como identificar o produto.\n\nA planilha precisa de uma coluna de código OU de nome.'); input.value=''; return; }
+    const campos=[];
+    if(cKg>=0) campos.push('kgPacote');
+    if(cUn>=0) campos.push('qtdPct');
+    if(cM>=0)  campos.push('grMassa');
+    if(cR1>=0) campos.push('grRecheio');
+    if(cR2>=0) campos.push('grRecheio2');
+    if(!campos.length){
+      alert('Nenhuma coluna de dado encontrada.\n\nA planilha precisa ter ao menos uma destas:\nKg por pacote · Un por pacote · Massa gr · Recheio1 gr · Recheio2 gr\n\nDica: use "Baixar planilha atual".');
+      input.value=''; return;
+    }
+
+    const porCod={}, porNome={};
+    (produtosCustom||[]).forEach(p=>{
+      if(p.cod!=null && String(p.cod).trim()!=='') porCod[String(p.cod).trim()]=p;
+      if(p.nome) porNome[_normNome(p.nome)]=p;
+    });
+
+    const aplicar=[], naoAchados=[]; let semMudanca=0;
+    for(let i=1;i<rows.length;i++){
+      const r=rows[i]; if(!r) continue;
+      const pcod=cCod>=0?_qgCod(r[cCod]):'';
+      const pnome=cNome>=0?String(r[cNome]||'').trim():'';
+      if(!pcod && !pnome) continue;
+      const p=(pcod&&porCod[pcod]) || (pnome&&porNome[_normNome(pnome)]) || null;
+      if(!p){ naoAchados.push(pcod||pnome); continue; }
+
+      const novo={}, muda=[];
+      const par=[[cKg,'kgPacote','Kg/pct'],[cUn,'qtdPct','Un/pct'],
+                 [cM,'grMassa','Massa'],[cR1,'grRecheio','Rech1'],[cR2,'grRecheio2','Rech2']];
+      par.forEach(([col,campo,rot])=>{
+        if(col<0) return;
+        const v=_qgNum(r[col]);
+        if(v==null) return;                                  // célula vazia não apaga o que existe
+        const atual=parseFloat(p[campo])||0;
+        if(Math.abs(atual-v)<0.0001) return;
+        novo[campo]=v;
+        muda.push(rot+': '+(atual||'—')+' → '+v);
+      });
+      if(!Object.keys(novo).length){ semMudanca++; continue; }
+      aplicar.push({p:p, novo:novo, resumo:muda.join(', ')});
+    }
+
+    if(!aplicar.length){
+      alert('Nada a atualizar.\n\nLinhas lidas: '+(rows.length-1)+
+        '\nJá estavam iguais: '+semMudanca+
+        '\nProdutos não encontrados: '+naoAchados.length+
+        (naoAchados.length?'\n\n'+naoAchados.slice(0,12).join('\n'):''));
+      input.value=''; return;
+    }
+
+    let msg='Confirmar a atualização?\n\nColunas encontradas: '+campos.join(', ')+
+      '\nProdutos a alterar: '+aplicar.length+
+      '\nSem mudança: '+semMudanca+
+      '\nNão encontrados: '+naoAchados.length+'\n\n'+
+      aplicar.slice(0,12).map(a=>'· '+(a.p.nome||a.p.cod)+'\n    '+a.resumo).join('\n')+
+      (aplicar.length>12?'\n... e mais '+(aplicar.length-12):'');
+    if(naoAchados.length) msg+='\n\nNÃO ENCONTRADOS:\n'+naoAchados.slice(0,8).join('\n')+(naoAchados.length>8?'\n...':'');
+    if(!confirm(msg)){ input.value=''; return; }
+
+    const ts=new Date().toISOString();
+    let ok=0, erros=0;
+    for(let s0=0;s0<aplicar.length;s0+=40){
+      await Promise.all(aplicar.slice(s0,s0+40).map(a=>
+        setDoc(doc(db,'quadraProdutosCustom',a.p.firestoreId),
+          Object.assign({}, a.novo, {atualizadoEm:ts}), {merge:true})
+          .then(()=>{ok++;}).catch(e=>{erros++;console.error('quadraImportarDados '+a.p.nome+':',e);})
+      ));
+    }
+    alert('✅ Pronto!\n\nProdutos atualizados: '+ok+(erros?'\nFalhas: '+erros:''));
+    if(typeof renderAdmKits==='function') renderAdmKits();
+  }catch(e){ console.error('quadraImportarDados:',e); alert('Erro ao importar: '+e.message); }
+  finally{ input.value=''; }
+}
+window.quadraExportarModelo=quadraExportarModelo;
+window.quadraImportarDados=quadraImportarDados;
+
+
+
 
 
 
@@ -11409,6 +11552,26 @@ function renderAdmKits(){
   const kitsHardcoded=Object.keys(QUADRA_KITS_RECEITAS).filter(k=>!kitsCustom.some(c=>c.nome===k)).length;
   const prodsHardcoded=QUADRA_PRODUTOS.filter(p=>!produtosCustom.some(c=>c.nome===p.nome)).length;
   let html='';
+
+  // Importar dados dos produtos por planilha (kg/pacote, unidades, gramaturas)
+  (function(){
+    const tot=(produtosCustom||[]).length;
+    const semGr=(produtosCustom||[]).filter(p=>!(parseFloat(p.grMassa)>0)).length;
+    const semKg=(produtosCustom||[]).filter(p=>!(parseFloat(p.kgPacote)>0)).length;
+    html+='<div class="card" style="margin-bottom:14px;border-left:3px solid var(--mc-laranja);">'+
+      '<div class="card-label" style="color:var(--mc-laranja);">📗 Preencher por planilha</div>'+
+      '<div style="font-size:12px;color:var(--text-secondary);line-height:1.5;margin:6px 0 10px;">'+
+        'Kg por pacote, unidades por pacote e gramaturas de todos os produtos de uma vez. '+
+        'Baixe o modelo (já vem preenchido com o que existe), edite e importe. '+
+        'Coluna em branco não apaga o que já está lá.'+
+        (tot? ' <strong>'+tot+'</strong> produto(s) · <strong>'+semGr+'</strong> sem gramatura · <strong>'+semKg+'</strong> sem kg/pacote.' : '')+
+      '</div>'+
+      '<div style="display:flex;gap:8px;flex-wrap:wrap;">'+
+        '<label class="btn btn-primary" style="flex:1;min-width:150px;text-align:center;cursor:pointer;display:block;">📥 Importar planilha<input type="file" accept=".xlsx,.xls,.csv" style="display:none" onchange="quadraImportarDados(this)"></label>'+
+        '<button class="btn btn-secondary" style="flex:1;min-width:150px;" onclick="quadraExportarModelo()">📤 Baixar planilha atual</button>'+
+      '</div>'+
+      '</div>';
+  })();
 
   // Card de importação/vínculo dos kits da Quadra (some quando todos vinculados)
   if(typeof KITS_QUADRA_SEED!=='undefined'){
