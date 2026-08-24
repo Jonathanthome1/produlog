@@ -8258,11 +8258,17 @@ window.renderSenhasList = () => {
   let html = '';
   Object.keys(NOMES).forEach(setor => {
     const nome = NOMES[setor];
+    const senhaAtual = (typeof PINS!=='undefined' && PINS[setor]!=null) ? PINS[setor] : '—';
+    const inputId = 'senha-val-'+setor;
     html += `
-      <div style="background:white;padding:16px;border-radius:8px;border-left:3px solid var(--mc-azul);display:flex;justify-content:space-between;align-items:center;">
-        <div>
+      <div style="background:white;padding:16px;border-radius:8px;border-left:3px solid var(--mc-azul);display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;">
+        <div style="min-width:0;">
           <div style="font-weight:600;font-size:16px;margin-bottom:4px;">${nome}</div>
-          <div style="font-size:13px;color:var(--text-secondary);">Setor: <code style="background:var(--bg-page);padding:2px 6px;border-radius:4px;">${setor}</code></div>
+          <div style="font-size:13px;color:var(--text-secondary);display:flex;align-items:center;gap:8px;">
+            Senha atual:
+            <code id="${inputId}" data-senha="${String(senhaAtual).replace(/"/g,'&quot;')}" data-visivel="0" style="background:var(--bg-page);padding:2px 10px;border-radius:4px;font-size:14px;letter-spacing:1px;">••••</code>
+            <button onclick="_toggleSenhaVisivel('${inputId}')" title="Mostrar/ocultar" style="border:0;background:transparent;cursor:pointer;font-size:15px;padding:2px;">👁️</button>
+          </div>
         </div>
         <button onclick="abrirEditarSenha('${setor}')" style="padding:10px 16px;background:var(--mc-azul);color:white;border:0;border-radius:6px;cursor:pointer;font-weight:600;">✏️ Alterar</button>
       </div>
@@ -8272,12 +8278,22 @@ window.renderSenhasList = () => {
   goTo('s-adm-senhas');
 };
 
+window._toggleSenhaVisivel = (id) => {
+  const el = document.getElementById(id); if(!el) return;
+  const vis = el.getAttribute('data-visivel')==='1';
+  if(vis){ el.textContent='••••'; el.setAttribute('data-visivel','0'); }
+  else { el.textContent = el.getAttribute('data-senha'); el.setAttribute('data-visivel','1'); }
+};
+
 window.abrirEditarSenha = (setor) => {
   setorEmEdicao = setor;
   document.getElementById('editar-senha-titulo').textContent = '🔐 Alterar senha de ' + NOMES[setor];
   document.getElementById('editar-senha-setor').textContent = NOMES[setor];
-  document.getElementById('editar-senha-input').value = '';
-  document.getElementById('editar-senha-input').focus();
+  const atual = (typeof PINS!=='undefined' && PINS[setor]!=null) ? PINS[setor] : '';
+  const inp = document.getElementById('editar-senha-input');
+  inp.value = '';
+  inp.placeholder = atual ? ('Senha atual: '+atual) : 'Nova senha';
+  inp.focus();
   goTo('s-adm-editar-senha');
 };
 
