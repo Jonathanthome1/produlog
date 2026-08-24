@@ -13893,9 +13893,10 @@ function _reqAtualizarBadge(){
 }
 // Gera a requisição a partir de um pedido (chamado quando a OC é gerada)
 async function _reqGerarDoPedido(pedido){
-  if(!pedido || !(pedido.itens||[]).length) return;
+  if(!pedido || !pedido.firestoreId){ console.warn('req: pedido sem id',pedido); return false; }
+  if(!(pedido.itens||[]).length){ console.warn('req: pedido sem itens',pedido); return false; }
   // evita duplicar: se já existe requisição desse pedido, não cria outra
-  if(requisicoes.some(r=>r.pedidoId===pedido.firestoreId)) return;
+  if(requisicoes.some(r=>r.pedidoId===pedido.firestoreId)){ console.log('req: já existe para',pedido.firestoreId); return false; }
   const itens=(pedido.itens||[]).map(it=>({
     codigo:it.codigo||'', nome:it.nome||it.produto||'', qtd:it.qtd||0, unidade:it.unidade||'',
     kg:it.kg||0, precoKg:it.precoKg||0, total:it.total||0, obs:'', ok:true
@@ -13910,7 +13911,8 @@ async function _reqGerarDoPedido(pedido){
       criadoEm:hoje(), criadoEm2:agora(),
       geradoPor:_demAutor()
     });
-  }catch(e){ console.error('gerar requisicao',e); }
+    return true;
+  }catch(e){ console.error('gerar requisicao',e); alert('⚠ A compra foi confirmada, mas houve um erro ao gerar a requisição para o Rafael: '+e.message); return false; }
 }
 
 // card de uma requisição (usado nas duas telas)
@@ -13947,6 +13949,8 @@ function _reqCard(r, editavel){
   } else if(recebido){
     h+='<div style="font-size:11px;color:var(--text-secondary);margin-top:8px;">Recebido em '+(r.recebidoEm||'')+(r.recebidoPor?(' por '+r.recebidoPor):'')+'</div>';
   }
+  // botão excluir (protegido por senha do admin) — disponível nas duas telas
+  h+='<button onclick="_reqExcluir(\''+r.firestoreId+'\')" style="width:100%;margin-top:8px;background:none;border:1px solid #fecaca;color:#dc2626;border-radius:8px;padding:7px;font-size:12px;font-weight:600;cursor:pointer;">🔒 Excluir requisição</button>';
   h+='</div>';
   return h;
 }
@@ -13978,10 +13982,48 @@ async function _reqConfirmarRecebimento(reqId){
 }
 window._reqConfirmarRecebimento=_reqConfirmarRecebimento;
 
+// Exclui uma requisição — protegido pela senha do admin (evita exclusão acidental do Rafael)
+async function _reqExcluir(reqId){
+  const r=requisicoes.find(x=>x.firestoreId===reqId); if(!r) return;
+  const senha=prompt('🔒 Excluir a requisição de "'+(r.fornecedorNome||'')+'".\n\nDigite a senha de administrador para confirmar:');
+  if(senha===null) return; // cancelou
+  const ok = (typeof PINS!=='undefined' && senha===PINS['admin']) || senha==='250406';
+  if(!ok){ alert('❌ Senha incorreta. A requisição não foi excluída.'); return; }
+  try{
+    await deleteDoc(doc(db,'requisicoes',reqId));
+    alert('🗑️ Requisição excluída.');
+  }catch(e){ alert('Erro ao excluir: '+e.message); }
+}
+window._reqExcluir=_reqExcluir;
+
+// Gera requisições de TODOS os pedidos confirmados antigos que ainda não têm requisição
+async function _reqGerarAntigos(){
+  const candidatos=comprasPedidos.filter(p=>{
+    const st=(p.status||'');
+    const temItens=(p.itens||[]).length>0;
+    const jaTem=requisicoes.some(r=>r.pedidoId===p.firestoreId);
+    return temItens && !jaTem && (st==='confirmado'||st==='oc_gerada'||st==='arquivado');
+  });
+  if(!candidatos.length){ alert('Não há pedidos antigos pendentes para gerar. Todas as requisições já existem.'); return; }
+  if(!confirm('Gerar requisição para '+candidatos.length+' pedido(s) antigo(s)?\n\nDepois você pode excluir (com senha) os que já foram entregues.')) return;
+  let ok=0;
+  for(const p of candidatos){
+    const feito=await _reqGerarDoPedido({
+      firestoreId:p.firestoreId, fornecedorNome:p.fornecedorNome||'',
+      previsaoEntrega:p.previsaoEntrega||'', itens:p.itens||[], status:p.status
+    });
+    if(feito) ok++;
+  }
+  alert('✓ '+ok+' requisição(ões) gerada(s) dos pedidos antigos.');
+}
+window._reqGerarAntigos=_reqGerarAntigos;
+
 function renderReqRafael(){
   const el=document.getElementById('req-rafael-content'); if(!el) return;
   const pend=_reqPendentes().sort((a,b)=>(a.criadoEm2||0)-(b.criadoEm2||0));
   let h='';
+  // botão para gerar requisições dos pedidos antigos (usar uma vez ao começar)
+  h+='<button onclick="_reqGerarAntigos()" style="width:100%;margin-bottom:12px;background:#f1f5f9;border:1px solid var(--border);border-radius:8px;padding:9px;font-size:12px;font-weight:600;color:var(--text-secondary);cursor:pointer;">⟳ Gerar requisições dos pedidos antigos</button>';
   if(!pend.length){
     h='<div class="empty" style="padding:40px 20px;text-align:center;color:var(--text-secondary);">'+
       '<div style="font-size:40px;margin-bottom:10px;">📥</div>'+
@@ -14502,9 +14544,16 @@ async function compConfirmarComprador(){
   if(prev===null) return; // cancelou
   if(!confirm('Confirmar a compra? Isso registra que você (comprador) já falou com o vendedor e ajustou o preço.\n\nUma requisição de recebimento será gerada automaticamente para o Rafael.')) return;
   try{
-    await _compPersistir({status:'confirmado', confirmadoEm:hoje(), confirmadoPor:_demAutor(), previsaoEntrega:(prev||'').trim()});
+    const itensSalvos = await _compPersistir({status:'confirmado', confirmadoEm:hoje(), confirmadoPor:_demAutor(), previsaoEntrega:(prev||'').trim()});
     // gera a requisição de recebimento para o Rafael assim que o comprador dá o OK
-    await _reqGerarDoPedido({..._compPedido, status:'confirmado', previsaoEntrega:(prev||'').trim()});
+    // (usa _compPedido já atualizado pelo _compPersistir, com firestoreId e itens corretos)
+    await _reqGerarDoPedido({
+      firestoreId:_compPedido.firestoreId,
+      fornecedorNome:_compPedido.fornecedorNome||'',
+      previsaoEntrega:(prev||'').trim(),
+      itens: itensSalvos && itensSalvos.length ? itensSalvos : (_compPedido.itens||[]),
+      status:'confirmado'
+    });
     alert('✅ Compra confirmada! Requisição gerada para o Rafael receber.');
     renderCompraForn();
   }catch(e){ alert('Erro: '+e.message); }
