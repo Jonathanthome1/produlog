@@ -8950,6 +8950,18 @@ function semanaLabel(semStr){
   const fmt=d=>d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});
   return `Semana ${wk}/${yr} (${fmt(mon)} – ${fmt(sab)})`;
 }
+// Semana SEGUINTE (a de entrega) — pedido feito numa semana, entrega na próxima
+function semanaEntregaLabel(semStr){
+  if(!semStr)return'';
+  const mon=_segundaDaSemana(semStr);
+  const monProx=new Date(mon); monProx.setDate(mon.getDate()+7); // +1 semana
+  const sabProx=new Date(monProx); sabProx.setDate(monProx.getDate()+5);
+  const fmt=d=>d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});
+  // número da semana seguinte
+  const oneJan=new Date(monProx.getFullYear(),0,1);
+  const numSemana=Math.ceil((((monProx-oneJan)/86400000)+oneJan.getDay()+1)/7);
+  return `Entrega semana ${numSemana}/${monProx.getFullYear()} (${fmt(monProx)} – ${fmt(sabProx)})`;
+}
 // Lista de semanas para os seletores: passadas/futuras (±) + todas que já têm plano
 function _semanasOpcoes(){
   const set=new Set();
@@ -14428,9 +14440,9 @@ function compRenderFooter(){
            '<button class="btn btn-secondary" style="flex:1;" onclick="compExportar()">📲 Enviar ao vendedor</button>';
     linha2='<button class="btn btn-secondary" style="width:100%;margin-top:6px;border-color:var(--mc-azul);color:var(--mc-azul);" onclick="compConfirmarComprador()">✅ Confirmar compra (comprador)</button>';
   } else if(st==='confirmado'){
-    linha1='<button class="btn btn-secondary" style="flex:1;" onclick="compExportar()">📄 Gerar/enviar OC</button>'+
-           '<button class="btn btn-primary" style="flex:1;background:var(--mc-verde);" onclick="compConcluirOC()">✅ OC gerada</button>';
-    linha2='<button class="btn btn-secondary" style="width:100%;margin-top:6px;font-size:12px;" onclick="compReabrir()">↩️ Voltar p/ solicitado</button>';
+    linha1='<button class="btn btn-secondary" style="flex:1;" onclick="compExportar()">📄 Gerar/enviar OC</button>';
+    linha2='<div style="text-align:center;font-size:12px;color:var(--mc-verde);font-weight:700;margin-top:6px;">✅ Compra confirmada · requisição gerada para o Rafael</div>'+
+           '<button class="btn btn-secondary" style="width:100%;margin-top:6px;font-size:12px;" onclick="compReabrir()">↩️ Voltar p/ solicitado</button>';
   } else {
     linha1='<button class="btn btn-secondary" style="flex:1;" onclick="compExportar()">📲 Exportar OC</button>'+
            '<button class="btn btn-secondary" style="flex:1;" onclick="compReabrir()">↩️ Reabrir</button>';
@@ -14488,17 +14500,23 @@ async function compConfirmarComprador(){
   const sug = _compPedido.previsaoEntrega || _compProximaEntrega(f.diaEntrega) || '';
   const prev = prompt('📦 Previsão de entrega\n\nPode ser um dia (ex: 08/06/2026) ou um intervalo (ex: 10/06 - 12/06).'+(f.diaEntrega?'\n\nEntrega fixa do fornecedor: '+f.diaEntrega:''), sug);
   if(prev===null) return; // cancelou
-  if(!confirm('Confirmar a compra? Isso registra que você (comprador) já falou com o vendedor e ajustou o preço. O responsável poderá gerar a ordem de compra.')) return;
-  try{ await _compPersistir({status:'confirmado', confirmadoEm:hoje(), confirmadoPor:_demAutor(), previsaoEntrega:(prev||'').trim()}); alert('✅ Compra confirmada! Liberado para gerar a OC.'); renderCompraForn(); }catch(e){ alert('Erro: '+e.message); }
+  if(!confirm('Confirmar a compra? Isso registra que você (comprador) já falou com o vendedor e ajustou o preço.\n\nUma requisição de recebimento será gerada automaticamente para o Rafael.')) return;
+  try{
+    await _compPersistir({status:'confirmado', confirmadoEm:hoje(), confirmadoPor:_demAutor(), previsaoEntrega:(prev||'').trim()});
+    // gera a requisição de recebimento para o Rafael assim que o comprador dá o OK
+    await _reqGerarDoPedido({..._compPedido, status:'confirmado', previsaoEntrega:(prev||'').trim()});
+    alert('✅ Compra confirmada! Requisição gerada para o Rafael receber.');
+    renderCompraForn();
+  }catch(e){ alert('Erro: '+e.message); }
 }
 async function compConcluirOC(){
   if(!_compPedido.firestoreId){ alert('Salve o pedido primeiro.'); return; }
-  if(!confirm('Confirmar que a ORDEM DE COMPRA foi gerada? O pedido será concluído e arquivado no histórico da semana.\n\nUma requisição de recebimento será gerada para o Rafael.')) return;
+  if(!confirm('Confirmar que a ORDEM DE COMPRA foi gerada? O pedido será concluído e arquivado no histórico da semana.')) return;
   try{
     await updateDoc(doc(db,'comprasPedidos',_compPedido.firestoreId),{status:'oc_gerada', ocEm:hoje(), ocPor:_demAutor(), atualizadoEm:agora()});
-    // gera a requisição de recebimento para o Rafael
+    // garante que a requisição exista (não duplica: só cria se ainda não houver)
     await _reqGerarDoPedido({..._compPedido, status:'oc_gerada'});
-    alert('📄 Ordem de compra registrada! Requisição gerada para o Rafael receber.');
+    alert('📄 Ordem de compra registrada! Processo concluído e arquivado.');
     goTo('s-compras');
   }catch(e){ alert('Erro: '+e.message); }
 }
@@ -17928,15 +17946,26 @@ function renderComprasHist(){
   chavesSem.forEach(sem=>{
     const arr=porSem[sem]; const totSem=arr.reduce((s,p)=>s+(p.totalRS||0),0);
     html+='<div style="display:flex;justify-content:space-between;align-items:center;margin:14px 0 8px;">'+
-      '<div style="font-size:13px;font-weight:800;color:var(--mc-roxo);">📅 '+(sem!=='(sem semana)'&&typeof semanaLabel==='function'?semanaLabel(sem):sem)+'</div>'+
+      '<div style="font-size:13px;font-weight:800;color:var(--mc-roxo);">📅 '+(sem!=='(sem semana)'&&typeof semanaEntregaLabel==='function'?semanaEntregaLabel(sem):sem)+'</div>'+
       '<div style="font-size:12px;font-weight:700;color:var(--mc-verde);">'+_fmtRS(totSem)+'</div></div>';
-    html+=arr.map(p=>{ const si=_compStatusInfo(p.status); const podeExcluir=(window.adminMode===true); return '<div class="card" style="margin-bottom:8px;">'+
+    html+=arr.map(p=>{ const si=_compStatusInfo(p.status); const podeExcluir=(window.adminMode===true);
+      // status de recebimento (cruzando com as requisições do Rafael)
+      const req = (typeof requisicoes!=='undefined') ? requisicoes.find(r=>r.pedidoId===p.firestoreId) : null;
+      let entregaTag='';
+      if(req){
+        if(req.status==='recebido') entregaTag='<span style="font-size:10px;font-weight:700;color:#16a34a;background:rgba(22,163,74,.12);border-radius:99px;padding:2px 8px;">✓ Recebido '+(req.recebidoEm||'')+'</span>';
+        else entregaTag='<span style="font-size:10px;font-weight:700;color:#d97706;background:rgba(217,119,6,.12);border-radius:99px;padding:2px 8px;">⏳ Aguardando recebimento</span>';
+      }
+      const prev = p.previsaoEntrega ? ('<span style="font-size:11px;color:var(--mc-azul);font-weight:600;">🚚 Entrega: '+p.previsaoEntrega+'</span>') : '';
+      return '<div class="card" style="margin-bottom:8px;">'+
       '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">'+
       '<div style="flex:1;min-width:0;cursor:pointer;" onclick="compAbrirPedido(\''+p.fornecedorId+'\')"><div style="font-size:14px;font-weight:700;">'+(p.fornecedorNome||'')+'</div>'+
       '<div style="font-size:11px;color:var(--text-secondary);">'+(p.criadoEm||'')+' · '+(p.itens||[]).length+' itens · '+_fmtKg(p.totalKg||0)+' kg</div></div>'+
       '<div style="text-align:right;cursor:pointer;" onclick="compAbrirPedido(\''+p.fornecedorId+'\')"><span style="font-size:10px;font-weight:700;color:'+si.cor+';background:'+si.bg+';border-radius:99px;padding:2px 8px;">'+si.emoji+' '+si.label+'</span><div style="font-size:14px;font-weight:700;color:var(--mc-verde);margin-top:3px;">'+_fmtRS(p.totalRS||0)+'</div></div>'+
       (podeExcluir?'<button onclick="compExcluirPedido(\''+p.firestoreId+'\')" title="Excluir (admin)" style="background:none;border:none;color:var(--mc-vermelho);font-size:16px;cursor:pointer;flex-shrink:0;">🗑</button>':'')+
-      '</div></div>'; }).join('');
+      '</div>'+
+      ((prev||entregaTag)?('<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:8px;padding-top:8px;border-top:1px solid var(--border);">'+prev+entregaTag+'</div>'):'')+
+      '</div>'; }).join('');
   });
   el.innerHTML=html;
 }
