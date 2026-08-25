@@ -14022,6 +14022,7 @@ function renderReqRafael(){
   const el=document.getElementById('req-rafael-content'); if(!el) return;
   const pend=_reqPendentes().sort((a,b)=>(a.criadoEm2||0)-(b.criadoEm2||0));
   let h='';
+  h+='<div style="text-align:center;font-size:10px;color:#94a3b8;margin-bottom:8px;">v2 · requisições</div>';
   // botão para gerar requisições dos pedidos antigos (usar uma vez ao começar)
   h+='<button onclick="_reqGerarAntigos()" style="width:100%;margin-bottom:12px;background:#f1f5f9;border:1px solid var(--border);border-radius:8px;padding:9px;font-size:12px;font-weight:600;color:var(--text-secondary);cursor:pointer;">⟳ Gerar requisições dos pedidos antigos</button>';
   if(!pend.length){
