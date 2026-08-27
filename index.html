@@ -9964,14 +9964,14 @@ function atualizarResumoQuadra(){
     ${totalEsperado>0?`<div class="resumo-row"><span class="resumo-nome">Diferença</span><span style="font-weight:700;color:${corQuebra};">${quebra>0?'+':''}${quebra.toFixed(2)} kg</span></div>`:''}
     ${totalEsperado>0?`<div style="margin-top:8px;padding:8px 10px;border-radius:8px;font-size:12px;font-weight:700;text-align:center;background:${kgBate?'#f0fdf4':'#fffbeb'};color:${kgBate?'#15803d':'#b45309'};border:1px solid ${kgBate?'#bbf7d0':'#fde68a'};">${kgBate?'✓ O peso produzido bate com os kits consumidos':'⚠ O peso produzido ainda não bate com os kits ('+(quebra>0?'sobra':'falta')+' '+Math.abs(quebra).toFixed(2)+' kg)'}</div>`:''}
   </div>`;
-  // controla o botão salvar: bloqueia só se o peso não bater
+  // controla o botão salvar: libera sempre que houver kits e pacotes (não trava por diferença)
   const btnSalvar=document.getElementById('quadra-btn-salvar');
   if(btnSalvar){
-    const podeSalvar = numKits>0 && totalPacotes>0 && kgBate;
+    const podeSalvar = numKits>0 && totalPacotes>0;
     btnSalvar.disabled=!podeSalvar;
     btnSalvar.style.opacity=podeSalvar?'1':'0.5';
     btnSalvar.style.cursor=podeSalvar?'pointer':'not-allowed';
-    btnSalvar.textContent = (numKits>0 && totalPacotes>0 && !kgBate ? 'A conta não bate (kg)' : 'Salvar lançamento ✓');
+    btnSalvar.textContent = (podeSalvar && !kgBate ? 'Salvar mesmo com diferença ✓' : 'Salvar lançamento ✓');
   }
 }
 
@@ -9989,11 +9989,15 @@ async function salvarQuadra(){
   const totalProduzido=produtosArr.reduce((s,p)=>s+(p.qtdPacotes||0)*(p.kgPacote||0),0);
   const quebra=totalProduzido-totalEsperado;
 
-  // BLOQUEIA se o peso produzido não bate com o esperado dos kits
+  // Não bloqueia: se o peso não bater, apenas confirma antes de lançar
   const tolerancia=Math.max(1, totalEsperado*0.02);
   if(totalEsperado>0 && Math.abs(quebra)>tolerancia){
-    alert('Não é possível lançar: o peso não bate.\n\nEsperado pelos kits: '+totalEsperado.toFixed(2)+' kg\nProduzido (pacotes × peso): '+totalProduzido.toFixed(2)+' kg\nDiferença: '+(quebra>0?'+':'')+quebra.toFixed(2)+' kg\n\nAjuste os pacotes até o peso bater com os kits consumidos (tolerância de '+tolerancia.toFixed(2)+' kg).');
-    return;
+    const msg='⚠ A conta não bateu exatamente.\n\n'+
+      'Esperado pelos kits: '+totalEsperado.toFixed(2)+' kg\n'+
+      'Produzido (pacotes × peso): '+totalProduzido.toFixed(2)+' kg\n'+
+      'Diferença: '+(quebra>0?'+':'')+quebra.toFixed(2)+' kg ('+(quebra>0?'sobra':'falta')+')\n\n'+
+      'Deseja lançar mesmo assim?';
+    if(!confirm(msg)) return;
   }
 
   const btn=document.getElementById('quadra-btn-salvar');
@@ -18673,46 +18677,133 @@ function renderAcompCoz(){
   const el=document.getElementById('acomp-coz-content'); if(!el) return;
   const dados=_acCalcularCoz();
   if(!dados.semana){ el.innerHTML=_acCozSeletorSemanaHtml()+'<div class="empty" style="padding:30px;">Nenhum plano encontrado para esta semana.</div>'; return; }
+  const semana=dados.semana;
   const DIAS=['Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
-  const corStatus={verde:'#16a34a',adiantado:'#2563eb',atrasado:'#d97706',vermelho:'#dc2626',parcial:'#d97706',cinza:'#94a3b8'};
-  const labelStatus={verde:'no prazo',adiantado:'adiantado',atrasado:'atrasado',vermelho:'atrasado',parcial:'parcial',cinza:'a fazer'};
 
-  // resumo geral
+  // Reorganizar por DIA (igual à confeitaria): { dia -> [{recheio, status, qtdPlan, mostrado, fonteLabel}] }
+  const porDia={}; DIAS.forEach(d=>porDia[d]=[]);
+  let datasDia={};
+  dados.recheios.forEach(rc=>{
+    rc.dias.forEach(d=>{
+      porDia[d.dia].push({recheio:rc.nome, status:d.status, qtdPlan:d.qtdPlan, prodNoDia:d.prodNoDia, aloc:d.aloc, mostrado:d.mostrado, fonteLabel:d.fonteLabel});
+      datasDia[d.dia]=d.dateBR;
+    });
+  });
+
+  // Resumo geral
   const totP=dados.recheios.reduce((s,r)=>s+r.totalPlan,0);
   const totF=dados.recheios.reduce((s,r)=>s+r.totalAloc,0);
   const pctGeral=totP>0?Math.round(totF/totP*100):0;
   const nPend=dados.recheios.filter(r=>r.pendente).length;
 
   let html=_acCozSeletorSemanaHtml()+'<div style="font-size:12px;color:var(--text-secondary);margin-bottom:8px;">📅 '+dados.semanaLabel+'</div>';
+
+  // Excessos (produziu muito acima do plano) — replicado da confeitaria
+  const excessos=dados.recheios.filter(r=>r.totalPlan>0 && r.totalProduzido>r.totalPlan*1.5)
+    .map(r=>({nome:r.nome, prod:r.totalProduzido, plan:r.totalPlan, pct:Math.round(r.totalProduzido/r.totalPlan*100)}));
+  if(excessos.length){
+    html+='<div class="card" style="border-left:3px solid #d97706;background:rgba(217,119,6,.06);margin-bottom:12px;">'+
+      '<div style="font-size:14px;font-weight:700;color:#b45309;margin-bottom:6px;">⚠️ Produzido muito acima do plano (+50%)</div>'+
+      excessos.sort((a,b)=>b.pct-a.pct).map(e=>'<div style="display:flex;justify-content:space-between;font-size:13px;padding:3px 0;border-bottom:1px dashed var(--border);"><span>'+e.nome+'</span><strong style="color:#b45309;white-space:nowrap;">'+_acCozFmtKg(e.prod)+' / '+_acCozFmtKg(e.plan)+' kg ('+e.pct+'%)</strong></div>').join('')+
+      '</div>';
+  }
+
+  // Progresso da semana
   html+='<div class="card" style="margin-bottom:12px;">'+
     '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;"><div style="font-size:14px;font-weight:700;">Progresso da semana</div><div style="font-size:18px;font-weight:800;color:'+(pctGeral>=100?'#16a34a':'var(--mc-azul)')+';">'+pctGeral+'%</div></div>'+
     '<div style="height:10px;background:var(--bg-page);border-radius:5px;overflow:hidden;"><div style="height:100%;width:'+Math.max(pctGeral,2)+'%;background:'+(pctGeral>=100?'#16a34a':'var(--mc-azul)')+';border-radius:5px;"></div></div>'+
     '<div style="font-size:11px;color:var(--text-secondary);margin-top:4px;">'+_acCozFmtKg(totF)+' de '+_acCozFmtKg(totP)+' kg · '+(nPend?('<strong style="color:var(--mc-vermelho);">'+nPend+' recheio(s) com atraso</strong>'):'sem atrasos 🎉')+'</div>'+
     '</div>';
 
-  if(!dados.recheios.length){
-    html+='<div class="empty" style="padding:20px;">Nenhum recheio previsto no plano desta semana.</div>';
-    el.innerHTML=html; return;
-  }
+  // Produção TOTAL de recheio da semana (real, inclui acima e fora do plano)
+  (function(){
+    const monW=_acMondayOfWeek(semana); const weekBR=new Set();
+    for(let i=0;i<6;i++){ const d=new Date(monW); d.setDate(monW.getDate()+i); weekBR.add(d.toLocaleDateString('pt-BR')); }
+    let totKg=0; const porTipo={};
+    regRecheios.forEach(r=>{ if(!weekBR.has(r.data)) return; const kg=parseFloat(r.qtdKg)||0; if(kg<=0) return; totKg+=kg; const t=r.recheio||'Sem nome'; porTipo[t]=(porTipo[t]||0)+kg; });
+    const chaves=Object.keys(porTipo).sort((a,b)=>porTipo[b]-porTipo[a]);
+    const chips=chaves.map(c=>{ const pc=totKg>0?Math.round(porTipo[c]/totKg*100):0; return '<div style="flex:1;min-width:100px;background:var(--bg-page);border-radius:8px;padding:8px 10px;text-align:center;"><div style="font-size:16px;font-weight:800;color:var(--mc-azul);">'+_acCozFmtKg(porTipo[c])+'</div><div style="font-size:11px;color:var(--text-secondary);">'+c+' · '+pc+'%</div></div>'; }).join('');
+    html+='<div class="card" style="margin-bottom:12px;">'+
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;"><div style="font-size:14px;font-weight:700;">🥄 Produção total da semana</div><div style="font-size:18px;font-weight:800;color:var(--mc-verde);">'+_acCozFmtKg(totKg)+' <span style="font-size:12px;font-weight:600;color:var(--text-secondary);">kg</span></div></div>'+
+      (chips?('<div style="display:flex;flex-wrap:wrap;gap:8px;">'+chips+'</div>'):'<div style="font-size:12px;color:var(--text-secondary);">Sem produção de recheio lançada nesta semana.</div>')+
+      '<div style="font-size:10px;color:var(--text-muted);margin-top:6px;">Total real produzido de recheio (inclui acima do plano e fora do plano).</div>'+
+      '</div>';
+  })();
 
-  dados.recheios.forEach(rc=>{
-    const pct=rc.totalPlan>0?Math.round(rc.totalAloc/rc.totalPlan*100):0;
-    html+='<div class="card" style="margin-bottom:10px;border-left:4px solid '+(rc.pendente?'var(--mc-vermelho)':'var(--mc-verde)')+';">'+
-      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">'+
-        '<div style="font-size:14px;font-weight:700;">'+rc.nome+'</div>'+
-        '<div style="font-size:13px;font-weight:800;color:'+(pct>=100?'#16a34a':'var(--mc-azul)')+';">'+_acCozFmtKg(rc.totalAloc)+' / '+_acCozFmtKg(rc.totalPlan)+' kg</div>'+
+  // Presença da Cozinha na semana
+  (function(){
+    if(typeof presencas==='undefined') return;
+    const monW=_acMondayOfWeek(semana); const weekBR=new Set();
+    for(let i=0;i<6;i++){ const d=new Date(monW); d.setDate(monW.getDate()+i); weekBR.add(d.toLocaleDateString('pt-BR')); }
+    const regs=Object.values(presencas||{}).filter(p=>p.setor_key==='coz' && weekBR.has(p.data));
+    if(!regs.length) return;
+    let somaPres=0, somaEsc=0, nDias=0;
+    const porData={};
+    regs.forEach(p=>{ porData[p.data]=porData[p.data]||{pres:0,esc:0}; porData[p.data].pres+=(p.presentes!=null?p.presentes:(p.lista?p.lista.filter(x=>x.presente).length:0)); porData[p.data].esc+=(p.escalados!=null?p.escalados:(p.lista?p.lista.length:0)); });
+    Object.values(porData).forEach(d=>{ somaPres+=d.pres; somaEsc+=d.esc; nDias++; });
+    if(!nDias) return;
+    const mediaPres=somaPres/nDias, mediaEsc=somaEsc/nDias;
+    const chips=Object.keys(porData).sort((a,b)=>_dataParaTs(a)-_dataParaTs(b)).map(dt=>{ const d=porData[dt]; return '<div style="flex:1;min-width:70px;background:var(--bg-page);border-radius:8px;padding:6px 8px;text-align:center;"><div style="font-size:14px;font-weight:800;color:var(--mc-azul);">'+d.pres+'/'+d.esc+'</div><div style="font-size:10px;color:var(--text-secondary);">'+dt.slice(0,5)+'</div></div>'; }).join('');
+    html+='<div class="card" style="margin-bottom:12px;">'+
+      '<div style="font-size:14px;font-weight:700;margin-bottom:8px;">👥 Presença da Cozinha</div>'+
+      '<div style="display:flex;flex-wrap:wrap;gap:6px;">'+chips+'</div>'+
+      '<div style="font-size:10px;color:var(--text-muted);margin-top:6px;">Média de '+mediaPres.toLocaleString('pt-BR',{maximumFractionDigits:1})+' presentes de '+mediaEsc.toLocaleString('pt-BR',{maximumFractionDigits:1})+' escalados nos '+nDias+' dia(s) com registro.</div>'+
       '</div>';
-    // dias
-    rc.dias.forEach(d=>{
-      const cor=corStatus[d.status]||'#94a3b8';
-      html+='<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:5px 0;border-top:1px dashed var(--border);">'+
-        '<div style="font-size:12px;color:var(--text-secondary);min-width:70px;">'+d.dia+'</div>'+
-        '<div style="flex:1;font-size:12px;">'+_acCozFmtKg(d.mostrado)+' / '+_acCozFmtKg(d.qtdPlan)+' kg'+(d.fonteLabel?' <span style="color:'+cor+';font-size:11px;">('+d.fonteLabel+')</span>':'')+'</div>'+
-        '<span style="font-size:10px;font-weight:700;color:'+cor+';background:'+cor+'1a;border-radius:99px;padding:2px 8px;white-space:nowrap;">'+(labelStatus[d.status]||'')+'</span>'+
+  })();
+
+  // Legenda
+  html+='<div style="display:flex;flex-wrap:wrap;gap:8px 12px;font-size:11px;color:var(--text-secondary);margin-bottom:10px;">'+
+    '<span>🟢 no dia</span><span>🔵 adiantado</span><span>🟠 atrasado</span><span>🔴 pendente</span><span>⚪ aguardando</span></div>';
+
+  // Render por DIA
+  const _statusInfo=(st)=>({
+    verde:{emoji:'🟢',cor:'#16a34a',bg:'rgba(22,163,74,.08)',label:'No prazo'},
+    adiantado:{emoji:'🔵',cor:'#2563eb',bg:'rgba(37,99,235,.08)',label:'Adiantado'},
+    atrasado:{emoji:'🟠',cor:'#d97706',bg:'rgba(217,119,6,.08)',label:'Atrasado'},
+    vermelho:{emoji:'🔴',cor:'#dc2626',bg:'rgba(220,38,38,.08)',label:'Pendente'},
+    parcial:{emoji:'🟠',cor:'#d97706',bg:'rgba(217,119,6,.08)',label:'Parcial'},
+    cinza:{emoji:'⚪',cor:'#94a3b8',bg:'rgba(148,163,184,.08)',label:'Aguardando'}
+  }[st]||{emoji:'⚪',cor:'#94a3b8',bg:'rgba(148,163,184,.08)',label:''});
+
+  const hoje0=new Date(); hoje0.setHours(0,0,0,0);
+  const hojeBR=hoje0.toLocaleDateString('pt-BR');
+  let algumDia=false;
+
+  DIAS.forEach(dia=>{
+    let itens=(porDia[dia]||[]).slice();
+    if(!itens.length) return;
+    algumDia=true;
+    const ordem={vermelho:0,atrasado:1,parcial:2,cinza:3,adiantado:4,verde:5};
+    itens.sort((a,b)=>(((ordem[a.status]??9)-(ordem[b.status]??9))||a.recheio.localeCompare(b.recheio,'pt-BR')));
+    const totDiaPlan=itens.reduce((s,i)=>s+i.qtdPlan,0);
+    const totDiaFeito=itens.reduce((s,i)=>s+i.aloc,0);
+    const pctDiaGeral=totDiaPlan>0?Math.round(totDiaFeito/totDiaPlan*100):0;
+    const feitosN=itens.filter(i=>i.status==='verde'||i.status==='atrasado'||i.status==='adiantado').length;
+    const isHoje=datasDia[dia]===hojeBR;
+    html+='<div style="margin-top:14px;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center;">'+
+      '<div style="font-size:15px;font-weight:800;">'+dia+' <span style="font-size:12px;font-weight:500;color:var(--text-secondary);">'+(datasDia[dia]||'').slice(0,5)+(isHoje?' · hoje':'')+'</span></div>'+
+      '<div style="font-size:12px;font-weight:700;color:'+(pctDiaGeral>=100?'#16a34a':'var(--mc-azul)')+';">'+feitosN+'/'+itens.length+' · '+pctDiaGeral+'%</div>'+
       '</div>';
-    });
-    html+='</div>';
+    html+=itens.map(it=>{
+      const si=_statusInfo(it.status);
+      const pct=it.qtdPlan>0?Math.round(it.mostrado/it.qtdPlan*100):0;
+      let label=si.label;
+      if(it.fonteLabel){
+        if(it.status==='adiantado') label='⏩ Adiantado — produção de '+it.fonteLabel;
+        else if(it.status==='parcial') label='⏩ Adiantado parcial — produção de '+it.fonteLabel;
+        else if(it.status==='atrasado') label='⏰ Feito atrasado — produção de '+it.fonteLabel;
+      }
+      return '<div style="background:'+si.bg+';border:1px solid '+si.cor+';border-radius:10px;padding:10px 12px;margin-bottom:6px;">'+
+        '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">'+
+        '<div style="flex:1;min-width:0;"><div style="font-size:14px;font-weight:600;">'+si.emoji+' '+it.recheio+'</div>'+
+        '<div style="font-size:11px;color:var(--text-secondary);margin-top:2px;">'+label+'</div></div>'+
+        '<div style="text-align:right;white-space:nowrap;"><div style="font-size:12px;color:var(--text-secondary);">Plano: <strong>'+_acCozFmtKg(it.qtdPlan)+' kg</strong></div>'+
+        '<div style="font-size:13px;font-weight:700;color:'+si.cor+';">Feito: '+_acCozFmtKg(it.mostrado)+' kg ('+pct+'%)</div></div>'+
+        '</div></div>';
+    }).join('');
   });
+
+  if(!algumDia) html+='<div class="empty">Nenhum recheio previsto no plano desta semana.</div>';
   el.innerHTML=html;
 }
 window.renderAcompCoz=renderAcompCoz;
