@@ -2350,19 +2350,8 @@
     </div>
     <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;">
       <div class="mc-section-header">Selecione o produto</div>
-      <button class="home-btn" style="border-left-color:#059669;" onclick="abrirContainerItem('Calabresa')"><div class="hb-icon" style="background:#ecfdf5;">📦</div><div style="flex:1;"><div class="hb-title">Calabresa</div><div class="hb-desc" id="container-badge-Calabresa">Verificando...</div></div><span style="color:var(--text-secondary);font-size:20px;">›</span></button>
-      <button class="home-btn" style="border-left-color:#059669;" onclick="abrirContainerItem('Calabresa Fina')"><div class="hb-icon" style="background:#ecfdf5;">📦</div><div style="flex:1;"><div class="hb-title">Calabresa Fina</div><div class="hb-desc" id="container-badge-Calabresa-Fina">Verificando...</div></div><span style="color:var(--text-secondary);font-size:20px;">›</span></button>
-      <button class="home-btn" style="border-left-color:#059669;" onclick="abrirContainerItem('Coxão')"><div class="hb-icon" style="background:#ecfdf5;">📦</div><div style="flex:1;"><div class="hb-title">Coxão</div><div class="hb-desc" id="container-badge-Coxão">Verificando...</div></div><span style="color:var(--text-secondary);font-size:20px;">›</span></button>
-      <button class="home-btn" style="border-left-color:#059669;" onclick="abrirContainerItem('Acem')"><div class="hb-icon" style="background:#ecfdf5;">📦</div><div style="flex:1;"><div class="hb-title">Acem</div><div class="hb-desc" id="container-badge-Acem">Verificando...</div></div><span style="color:var(--text-secondary);font-size:20px;">›</span></button>
-      <button class="home-btn" style="border-left-color:#059669;" onclick="abrirContainerItem('Presunto')"><div class="hb-icon" style="background:#ecfdf5;">📦</div><div style="flex:1;"><div class="hb-title">Presunto</div><div class="hb-desc" id="container-badge-Presunto">Verificando...</div></div><span style="color:var(--text-secondary);font-size:20px;">›</span></button>
-      <button class="home-btn" style="border-left-color:#059669;" onclick="abrirContainerItem('Salsicha Excelsior')"><div class="hb-icon" style="background:#ecfdf5;">📦</div><div style="flex:1;"><div class="hb-title">Salsicha Excelsior</div><div class="hb-desc" id="container-badge-Salsicha-Excelsior">Verificando...</div></div><span style="color:var(--text-secondary);font-size:20px;">›</span></button>
-      <button class="home-btn" style="border-left-color:#059669;" onclick="abrirContainerItem('Aurora Pena Branca')"><div class="hb-icon" style="background:#ecfdf5;">📦</div><div style="flex:1;"><div class="hb-title">Aurora Pena Branca</div><div class="hb-desc" id="container-badge-Aurora-Pena-Branca">Verificando...</div></div><span style="color:var(--text-secondary);font-size:20px;">›</span></button>
-      <button class="home-btn" style="border-left-color:#059669;" onclick="abrirContainerItem('Queijo Parmesão')"><div class="hb-icon" style="background:#ecfdf5;">📦</div><div style="flex:1;"><div class="hb-title">Queijo Parmesão</div><div class="hb-desc" id="container-badge-Queijo-Parmesão">Verificando...</div></div><span style="color:var(--text-secondary);font-size:20px;">›</span></button>
-      <button class="home-btn" style="border-left-color:#059669;" onclick="abrirContainerItem('Queijo Mussarela')"><div class="hb-icon" style="background:#ecfdf5;">📦</div><div style="flex:1;"><div class="hb-title">Queijo Mussarela</div><div class="hb-desc" id="container-badge-Queijo-Mussarela">Verificando...</div></div><span style="color:var(--text-secondary);font-size:20px;">›</span></button>
-      <button class="home-btn" style="border-left-color:#059669;" onclick="abrirContainerItem('Queijo Meia Cura')"><div class="hb-icon" style="background:#ecfdf5;">📦</div><div style="flex:1;"><div class="hb-title">Queijo Meia Cura</div><div class="hb-desc" id="container-badge-Queijo-Meia-Cura">Verificando...</div></div><span style="color:var(--text-secondary);font-size:20px;">›</span></button>
-      <button class="home-btn" style="border-left-color:#059669;" onclick="abrirContainerItem('Requeijão Vale do Pardo')"><div class="hb-icon" style="background:#ecfdf5;">📦</div><div style="flex:1;"><div class="hb-title">Requeijão Vale do Pardo</div><div class="hb-desc" id="container-badge-Requeijão-Vale-do-Pardo">Verificando...</div></div><span style="color:var(--text-secondary);font-size:20px;">›</span></button>
-      <button class="home-btn" style="border-left-color:#059669;" onclick="abrirContainerItem('Requeijão Amarílis')"><div class="hb-icon" style="background:#ecfdf5;">📦</div><div style="flex:1;"><div class="hb-title">Requeijão Amarílis</div><div class="hb-desc" id="container-badge-Requeijão-Amarílis">Verificando...</div></div><span style="color:var(--text-secondary);font-size:20px;">›</span></button>
-      <button class="home-btn" style="border-left-color:#059669;" onclick="abrirContainerItem('Cheddar')"><div class="hb-icon" style="background:#ecfdf5;">📦</div><div style="flex:1;"><div class="hb-title">Cheddar</div><div class="hb-desc" id="container-badge-Cheddar">Verificando...</div></div><span style="color:var(--text-secondary);font-size:20px;">›</span></button>
+      <div id="container-home-lista"></div>
+      <button class="btn btn-secondary" style="width:100%;margin-top:12px;" onclick="_contAbrirGerenciar()">⚙️ Gerenciar itens do container</button>
     </div>
   </div>
 
@@ -9289,10 +9278,13 @@ async function salvarPlano(){
 
 
 // ===== ESTOQUE CONTAINER =====
-const CONTAINER_ITENS = ['Calabresa','Calabresa Fina','Coxão','Acem','Presunto',
+// lista PADRÃO — usada só enquanto o Firebase não tiver uma lista salva
+const CONTAINER_ITENS_PADRAO = ['Calabresa','Calabresa Fina','Coxão','Acem','Presunto',
   'Salsicha Excelsior','Aurora Pena Branca','Queijo Parmesão',
   'Queijo Mussarela','Queijo Meia Cura','Requeijão Vale do Pardo',
   'Requeijão Amarílis','Cheddar'];
+// lista EM USO — pode ser editada pela tela "Gerenciar itens do container"
+let CONTAINER_ITENS = CONTAINER_ITENS_PADRAO.slice();
 
 let containerLotes = []; // Firestore collection 'containerLotes'
 let containerMovs  = []; // Firestore collection 'containerMovs'
@@ -9313,6 +9305,29 @@ onSnapshot(collection(db,'containerMovs'), snap=>{
   }catch(e){ console.error('containerMovs snap:',e); }
 });
 
+// lista de itens salva no Firebase (configuracoes/containerItens)
+onSnapshot(doc(db,'configuracoes','containerItens'), snap=>{
+  try{
+    const d=snap.data();
+    // se já existe lista salva (mesmo vazia), ela manda; senão usa a padrão
+    if(d && Array.isArray(d.lista)){
+      CONTAINER_ITENS = d.lista.map(x=>String(x||'').trim()).filter(Boolean);
+    }else{
+      CONTAINER_ITENS = CONTAINER_ITENS_PADRAO.slice();
+    }
+    const t=document.querySelector('.screen.active')?.id;
+    if(t==='s-container-home') renderContainerHome();
+    if(document.getElementById('cont-ger-modal')) _contRenderGerenciar();
+  }catch(e){ console.error('containerItens snap:',e); }
+});
+
+async function _contSalvarItens(lista){
+  try{
+    await setDoc(doc(db,'configuracoes','containerItens'),{lista, atualizadoEm:agora()});
+    return true;
+  }catch(e){ alert('Erro ao salvar a lista: '+e.message); return false; }
+}
+
 function estoqueAtualItem(item){
   // Sum all lotes saldo
   return containerLotes
@@ -9321,15 +9336,173 @@ function estoqueAtualItem(item){
 }
 
 function renderContainerHome(){
-  CONTAINER_ITENS.forEach(function(item){
-    const el=document.getElementById('container-badge-'+item.replace(/ /g,'-'));
-    if(!el)return;
+  const el=document.getElementById('container-home-lista');
+  if(!el) return;
+  if(!CONTAINER_ITENS.length){
+    el.innerHTML='<div class="empty" style="padding:30px 16px;text-align:center;color:var(--text-secondary);">'+
+      '<div style="font-size:34px;margin-bottom:8px;">📦</div>'+
+      '<div style="font-weight:700;margin-bottom:4px;">Nenhum item cadastrado</div>'+
+      '<div style="font-size:13px;">Use "Gerenciar itens do container" para cadastrar.</div>'+
+    '</div>';
+    return;
+  }
+  el.innerHTML = CONTAINER_ITENS.map(function(item){
     const total=estoqueAtualItem(item);
     const lotes=containerLotes.filter(l=>l.item===item&&(l.saldo||0)>0).length;
-    if(total>0) el.textContent=total.toFixed(2)+' kg · '+lotes+' lote(s)';
-    else el.textContent='Sem estoque';
-  });
+    const desc = total>0 ? (total.toFixed(2)+' kg · '+lotes+' lote(s)') : 'Sem estoque';
+    return '<button class="home-btn" style="border-left-color:#059669;" onclick="abrirContainerItem(\''+escapeJsStr(item)+'\')">'+
+      '<div class="hb-icon" style="background:#ecfdf5;">📦</div>'+
+      '<div style="flex:1;"><div class="hb-title">'+item+'</div>'+
+      '<div class="hb-desc">'+desc+'</div></div>'+
+      '<span style="color:var(--text-secondary);font-size:20px;">›</span></button>';
+  }).join('');
 }
+
+/* ══════════════════════════════════════════════════════════════════
+   GERENCIAR ITENS DO CONTAINER — cadastrar / renomear / excluir
+   A lista fica em configuracoes/containerItens {lista:[...]}.
+   Excluir um item NÃO apaga lotes nem movimentos: só tira da lista.
+   ══════════════════════════════════════════════════════════════════ */
+function _contAbrirGerenciar(){
+  const ov=document.createElement('div');
+  ov.id='cont-ger-modal';
+  ov.style.cssText='position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:3000;display:flex;align-items:center;justify-content:center;padding:16px;';
+  ov.innerHTML='<div style="background:#fff;border-radius:16px;max-width:480px;width:100%;max-height:88vh;display:flex;flex-direction:column;">'+
+    '<div style="padding:18px 18px 10px;">'+
+      '<div style="font-size:17px;font-weight:800;">⚙️ Itens do container</div>'+
+      '<div style="font-size:12px;color:var(--text-secondary);margin-top:2px;">Cadastre ou remova os produtos que o Rafael controla.</div>'+
+    '</div>'+
+    '<div id="cont-ger-body" style="flex:1;overflow-y:auto;padding:0 18px;"></div>'+
+    '<div style="padding:12px 18px 18px;">'+
+      '<button class="btn btn-secondary" style="width:100%;" onclick="document.getElementById(\'cont-ger-modal\').remove()">Fechar</button>'+
+    '</div>'+
+  '</div>';
+  document.body.appendChild(ov);
+  _contRenderGerenciar();
+}
+window._contAbrirGerenciar=_contAbrirGerenciar;
+
+function _contRenderGerenciar(){
+  const el=document.getElementById('cont-ger-body'); if(!el) return;
+  let h='';
+
+  // adicionar novo item — campo em linha inteira (nomes longos cabem)
+  h+='<div style="margin-bottom:16px;">'+
+    '<label style="display:block;font-size:12px;font-weight:600;color:var(--text-secondary);margin-bottom:5px;">Nome do novo item</label>'+
+    '<input type="text" id="cont-ger-novo" placeholder="Ex: Requeijão Vale do Pardo" autocomplete="off" onkeydown="if(event.key===\'Enter\')_contAddItem()" style="width:100%;padding:13px 14px;min-height:48px;border:1px solid var(--border-md,#d1d5db);border-radius:9px;font-size:16px;font-family:inherit;box-sizing:border-box;">'+
+    '<button class="btn btn-primary" style="width:100%;margin-top:8px;" onclick="_contAddItem()">+ Adicionar item</button>'+
+  '</div>';
+
+  // itens da lista atual
+  if(!CONTAINER_ITENS.length){
+    h+='<div style="font-size:13px;color:var(--text-secondary);padding:14px 0;">Nenhum item cadastrado ainda.</div>';
+  }else{
+    h+='<div style="font-size:12px;font-weight:700;color:var(--text-secondary);margin-bottom:6px;">NA LISTA ('+CONTAINER_ITENS.length+')</div>';
+    CONTAINER_ITENS.forEach(function(item,i){
+      const saldo=estoqueAtualItem(item);
+      h+='<div style="border:1px solid var(--border);border-radius:9px;padding:10px 12px;margin-bottom:6px;">'+
+        '<div style="font-size:14px;font-weight:700;line-height:1.3;word-break:break-word;">'+item+'</div>'+
+        '<div style="display:flex;align-items:center;gap:8px;margin-top:6px;">'+
+          '<div style="flex:1;min-width:0;font-size:11px;color:'+(saldo>0?'#059669':'var(--text-secondary)')+';">'+(saldo>0?saldo.toFixed(2)+' kg em estoque':'sem estoque')+'</div>'+
+          '<button title="Renomear" onclick="_contRenomearItem('+i+')" style="flex:0 0 auto;background:#fff;border:1px solid var(--border);border-radius:7px;padding:6px 12px;cursor:pointer;font-size:13px;font-family:inherit;">✏️</button>'+
+          '<button title="Excluir" onclick="_contExcluirItem('+i+')" style="flex:0 0 auto;background:none;border:1px solid #fecaca;color:#dc2626;border-radius:7px;padding:6px 12px;cursor:pointer;font-size:13px;font-family:inherit;">🗑</button>'+
+        '</div>'+
+      '</div>';
+    });
+  }
+
+  // itens que têm histórico mas saíram da lista (permite trazer de volta)
+  const naLista={}; CONTAINER_ITENS.forEach(x=>naLista[_normNome(x)]=1);
+  const fora=[];
+  containerLotes.forEach(function(l){
+    const n=(l.item||'').trim();
+    if(n && !naLista[_normNome(n)] && !fora.some(f=>_normNome(f)===_normNome(n))) fora.push(n);
+  });
+  if(fora.length){
+    h+='<div style="font-size:12px;font-weight:700;color:var(--text-secondary);margin:16px 0 6px;">FORA DA LISTA, MAS COM HISTÓRICO</div>';
+    fora.forEach(function(item){
+      const saldo=estoqueAtualItem(item);
+      h+='<div style="border:1px dashed var(--border-md,#d1d5db);border-radius:9px;padding:10px 12px;margin-bottom:6px;opacity:.85;">'+
+        '<div style="font-size:14px;font-weight:700;line-height:1.3;word-break:break-word;">'+item+'</div>'+
+        '<div style="display:flex;align-items:center;gap:8px;margin-top:6px;">'+
+          '<div style="flex:1;min-width:0;font-size:11px;color:'+(saldo>0?'#d97706':'var(--text-secondary)')+';">'+(saldo>0?saldo.toFixed(2)+' kg ainda em estoque':'histórico zerado')+'</div>'+
+          '<button onclick="_contRestaurarItem(\''+escapeJsStr(item)+'\')" style="flex:0 0 auto;background:#ecfdf5;border:1px solid #a7f3d0;color:#059669;border-radius:7px;padding:6px 12px;cursor:pointer;font-size:13px;font-weight:700;font-family:inherit;">+ Voltar</button>'+
+        '</div>'+
+      '</div>';
+    });
+  }
+
+  h+='<div style="font-size:11px;color:var(--text-secondary);margin-top:14px;line-height:1.5;">Excluir um item só o tira da lista — as entradas e saídas já lançadas continuam salvas e o item pode voltar depois.</div>';
+  el.innerHTML=h;
+}
+window._contRenderGerenciar=_contRenderGerenciar;
+
+async function _contAddItem(){
+  const inp=document.getElementById('cont-ger-novo'); if(!inp) return;
+  const nome=(inp.value||'').trim();
+  if(!nome){ alert('Digite o nome do item.'); return; }
+  if(CONTAINER_ITENS.some(x=>_normNome(x)===_normNome(nome))){ alert('"'+nome+'" já está na lista.'); return; }
+  const nova=CONTAINER_ITENS.concat([nome]);
+  if(await _contSalvarItens(nova)){ inp.value=''; }
+}
+window._contAddItem=_contAddItem;
+
+async function _contRestaurarItem(nome){
+  if(CONTAINER_ITENS.some(x=>_normNome(x)===_normNome(nome))) return;
+  await _contSalvarItens(CONTAINER_ITENS.concat([nome]));
+}
+window._contRestaurarItem=_contRestaurarItem;
+
+function _contRenomearItem(i){
+  const antigo=CONTAINER_ITENS[i]; if(antigo===undefined) return;
+  const ov=document.createElement('div');
+  ov.id='cont-ren-modal';
+  ov.style.cssText='position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:3100;display:flex;align-items:center;justify-content:center;padding:16px;';
+  ov.innerHTML='<div style="background:#fff;border-radius:16px;max-width:460px;width:100%;padding:18px;">'+
+    '<div style="font-size:17px;font-weight:800;margin-bottom:12px;">✏️ Renomear item</div>'+
+    '<label style="display:block;font-size:12px;font-weight:600;color:var(--text-secondary);margin-bottom:5px;">Nome do item</label>'+
+    '<input type="text" id="cont-ren-input" autocomplete="off" onkeydown="if(event.key===\'Enter\')_contSalvarRenome('+i+')" style="width:100%;padding:13px 14px;min-height:48px;border:1px solid var(--border-md,#d1d5db);border-radius:9px;font-size:16px;font-family:inherit;box-sizing:border-box;margin-bottom:14px;">'+
+    '<div style="display:flex;gap:8px;">'+
+      '<button class="btn btn-secondary" style="flex:1;" onclick="document.getElementById(\'cont-ren-modal\').remove()">Cancelar</button>'+
+      '<button class="btn btn-primary" style="flex:1;" onclick="_contSalvarRenome('+i+')">Salvar</button>'+
+    '</div>'+
+  '</div>';
+  document.body.appendChild(ov);
+  const inp=document.getElementById('cont-ren-input');
+  if(inp){ inp.value=antigo; inp.focus(); inp.setSelectionRange(inp.value.length,inp.value.length); }
+}
+window._contRenomearItem=_contRenomearItem;
+
+async function _contSalvarRenome(i){
+  const antigo=CONTAINER_ITENS[i]; if(antigo===undefined) return;
+  const inp=document.getElementById('cont-ren-input'); if(!inp) return;
+  const novo=(inp.value||'').trim();
+  if(!novo){ alert('Digite o nome do item.'); return; }
+  if(novo===antigo){ document.getElementById('cont-ren-modal')?.remove(); return; }
+  if(CONTAINER_ITENS.some((x,j)=>j!==i && _normNome(x)===_normNome(novo))){ alert('Já existe um item com esse nome.'); return; }
+  const lotes=containerLotes.filter(l=>l.item===antigo);
+  if(lotes.length && !confirm('Existem '+lotes.length+' lote(s) lançados como "'+antigo+'".\n\nEles serão renomeados junto para "'+novo+'". Confirmar?')) return;
+  const nova=CONTAINER_ITENS.slice(); nova[i]=novo;
+  if(!(await _contSalvarItens(nova))) return;
+  document.getElementById('cont-ren-modal')?.remove();
+  // renomeia também os lotes já lançados, pra não perder o histórico
+  try{
+    for(const l of lotes){ await updateDoc(doc(db,'containerLotes',l.firestoreId),{item:novo}); }
+  }catch(e){ alert('A lista foi salva, mas houve erro ao renomear os lotes: '+e.message); }
+}
+window._contSalvarRenome=_contSalvarRenome;
+
+async function _contExcluirItem(i){
+  const item=CONTAINER_ITENS[i]; if(item===undefined) return;
+  const saldo=estoqueAtualItem(item);
+  if(saldo>0){
+    alert('❌ "'+item+'" ainda tem '+saldo.toFixed(2)+' kg em estoque.\n\nZere os lotes (ou exclua-os na tela do item) antes de tirar da lista.');
+    return;
+  }
+  if(!confirm('Tirar "'+item+'" da lista do container?\n\nO histórico de entradas e saídas continua salvo e o item pode voltar depois.')) return;
+  await _contSalvarItens(CONTAINER_ITENS.filter((x,j)=>j!==i));
+}
+window._contExcluirItem=_contExcluirItem;
 
 function abrirContainerItem(item){
   containerItemAtivo=item;
@@ -16901,9 +17074,10 @@ function _ajmAbrirNovo(){
     '<div style="font-size:17px;font-weight:800;margin-bottom:12px;">🔧 Novo ajuste de estoque</div>'+
     '<label style="font-size:12px;font-weight:600;color:var(--text-secondary);">Data</label>'+
     '<input type="date" id="ajm-data" style="width:100%;padding:9px;border:1px solid var(--border-md,#d1d5db);border-radius:8px;font-size:14px;box-sizing:border-box;margin-bottom:10px;">'+
-    '<label style="font-size:12px;font-weight:600;color:var(--text-secondary);">Código do produto</label>'+
-    '<input type="text" id="ajm-cod" inputmode="numeric" oninput="_ajmPreviewNome()" placeholder="Ex: 119" style="width:100%;padding:9px;border:1px solid var(--border-md,#d1d5db);border-radius:8px;font-size:14px;box-sizing:border-box;">'+
-    '<div id="ajm-nome-preview" style="font-size:12px;color:var(--mc-azul);font-weight:600;margin:4px 0 10px;min-height:16px;"></div>'+
+    '<label style="font-size:12px;font-weight:600;color:var(--text-secondary);">Código <u>ou</u> nome do produto</label>'+
+    '<input type="text" id="ajm-cod" autocomplete="off" oninput="_ajmPreviewNome()" placeholder="Ex: 119  ou  coxinha" style="width:100%;padding:13px 14px;min-height:48px;border:1px solid var(--border-md,#d1d5db);border-radius:9px;font-size:16px;font-family:inherit;box-sizing:border-box;">'+
+    '<div id="ajm-nome-preview" style="font-size:12px;color:var(--mc-azul);font-weight:600;margin:4px 0 0;min-height:16px;"></div>'+
+    '<div id="ajm-sug" style="margin:4px 0 10px;"></div>'+
     '<div style="display:flex;gap:8px;margin-bottom:10px;">'+
       '<div style="flex:1;"><label style="font-size:12px;font-weight:600;color:var(--text-secondary);">Qtd ajustada (+/−)</label>'+
         '<input type="number" id="ajm-qtd" step="any" placeholder="+50 ou -30" style="width:100%;padding:9px;border:1px solid var(--border-md,#d1d5db);border-radius:8px;font-size:14px;box-sizing:border-box;"></div>'+
@@ -16924,22 +17098,91 @@ function _ajmAbrirNovo(){
 }
 window._ajmAbrirNovo=_ajmAbrirNovo;
 
+// catálogo unificado (confeitaria + quadra) para buscar produto por código OU nome
+function _ajmCatalogo(){
+  const out=[];
+  const add=(p)=>{ if(p && p.cod!=null && String(p.cod).trim()!=='') out.push({cod:String(p.cod).trim(), nome:(p.nome||'').trim()}); };
+  (typeof QUADRA_PRODUTOS!=='undefined'?QUADRA_PRODUTOS:[]).forEach(add);
+  (typeof PRODUTOS!=='undefined'?PRODUTOS:[]).forEach(add);
+  // remove duplicados pelo código normalizado
+  const vistos={}; const uni=[];
+  out.forEach(p=>{ const k=_ajRefNormCod(p.cod); if(!vistos[k]){ vistos[k]=1; uni.push(p); } });
+  return uni;
+}
+
+// procura produtos pelo texto digitado (código ou pedaço do nome)
+function _ajmBuscarProdutos(txt){
+  const q=(txt||'').trim();
+  if(!q) return [];
+  const cat=_ajmCatalogo();
+  const qn=_normNome(q);
+  // se for só número, prioriza código
+  if(/^\d+$/.test(q)){
+    const exato=cat.filter(p=>_ajRefNormCod(p.cod)===_ajRefNormCod(q));
+    const comeca=cat.filter(p=>_ajRefNormCod(p.cod)!==_ajRefNormCod(q) && _ajRefNormCod(p.cod).startsWith(_ajRefNormCod(q)));
+    return exato.concat(comeca).slice(0,8);
+  }
+  if(qn.length<2) return [];
+  const comeca=[], contem=[];
+  cat.forEach(p=>{
+    const n=_normNome(p.nome);
+    if(!n) return;
+    if(n.startsWith(qn)) comeca.push(p);
+    else if(n.includes(qn)) contem.push(p);
+  });
+  return comeca.concat(contem).slice(0,8);
+}
+
+function _ajmEscolherProduto(cod){
+  const inp=document.getElementById('ajm-cod');
+  if(inp) inp.value=cod;
+  _ajmPreviewNome();
+  const s=document.getElementById('ajm-sug'); if(s) s.innerHTML='';
+}
+window._ajmEscolherProduto=_ajmEscolherProduto;
+
 function _ajmPreviewNome(){
-  const cod=(document.getElementById('ajm-cod').value||'').trim();
-  const nome=_ajmNomeProduto(cod);
-  const el=document.getElementById('ajm-nome-preview');
-  if(el) el.textContent = cod ? (nome||'⚠ produto não encontrado no cadastro') : '';
+  const txt=(document.getElementById('ajm-cod').value||'').trim();
+  const prev=document.getElementById('ajm-nome-preview');
+  const sug=document.getElementById('ajm-sug');
+  if(sug) sug.innerHTML='';
+  if(!txt){ if(prev) prev.textContent=''; return; }
+
+  // código exato? mostra o nome direto
+  const nomeDireto=/^\d+$/.test(txt)?_ajmNomeProduto(txt):'';
+  if(nomeDireto){ if(prev){ prev.style.color='var(--mc-azul)'; prev.textContent='✓ '+nomeDireto; } return; }
+
+  const achados=_ajmBuscarProdutos(txt);
+  if(!achados.length){
+    if(prev){ prev.style.color='#d97706'; prev.textContent='⚠ produto não encontrado no cadastro'; }
+    return;
+  }
+  if(prev){ prev.style.color='var(--text-secondary)'; prev.textContent=achados.length+' produto(s) — toque para escolher:'; }
+  if(sug){
+    sug.innerHTML=achados.map(p=>
+      '<button type="button" onclick="_ajmEscolherProduto(\''+escapeJsStr(p.cod)+'\')" style="display:block;width:100%;text-align:left;background:#fff;border:1px solid var(--border);border-radius:8px;padding:7px 10px;margin-bottom:4px;cursor:pointer;font-size:13px;font-family:inherit;">'+
+        '<strong style="color:var(--mc-azul);">'+p.cod+'</strong> · '+p.nome+
+      '</button>'
+    ).join('');
+  }
 }
 window._ajmPreviewNome=_ajmPreviewNome;
 
 async function _ajmSalvar(){
   const dataISO=document.getElementById('ajm-data').value;
-  const cod=(document.getElementById('ajm-cod').value||'').trim();
+  let cod=(document.getElementById('ajm-cod').value||'').trim();
   const qtd=parseFloat(document.getElementById('ajm-qtd').value);
   const sistema=parseFloat(document.getElementById('ajm-sistema').value);
   const obs=(document.getElementById('ajm-obs').value||'').trim();
   if(!dataISO){ alert('Informe a data.'); return; }
-  if(!cod){ alert('Informe o código do produto.'); return; }
+  if(!cod){ alert('Informe o código ou o nome do produto.'); return; }
+  // se digitou nome em vez de código, resolve pelo cadastro
+  if(!/^\d+$/.test(cod)){
+    const achados=_ajmBuscarProdutos(cod);
+    if(achados.length===1){ cod=achados[0].cod; }
+    else if(achados.length>1){ alert('Encontrei '+achados.length+' produtos com esse nome.\n\nToque em um da lista de sugestões para escolher.'); return; }
+    else { alert('Produto não encontrado no cadastro.\n\nDigite o código ou parte do nome de um produto cadastrado.'); return; }
+  }
   if(isNaN(qtd)){ alert('Informe a quantidade ajustada (pode ser negativa).'); return; }
   // converte data aaaa-mm-dd -> dd/mm/aaaa
   const [y,m,dd]=dataISO.split('-'); const dataBR=dd+'/'+m+'/'+y;
@@ -16955,6 +17198,39 @@ async function _ajmSalvar(){
   }catch(e){ alert('Erro ao salvar: '+e.message); }
 }
 window._ajmSalvar=_ajmSalvar;
+
+// ── editar a observação de um ajuste JÁ lançado ─────────────────
+function _ajmEditarObs(id){
+  const a=_ajmLista.find(x=>x.firestoreId===id); if(!a) return;
+  const ov=document.createElement('div');
+  ov.id='ajm-obs-modal';
+  ov.style.cssText='position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:3000;display:flex;align-items:center;justify-content:center;padding:16px;';
+  const obsAtual=(a.obs||'').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  ov.innerHTML='<div style="background:#fff;border-radius:16px;max-width:460px;width:100%;padding:18px;">'+
+    '<div style="font-size:17px;font-weight:800;margin-bottom:4px;">✏️ Editar observação</div>'+
+    '<div style="font-size:12px;color:var(--text-secondary);margin-bottom:12px;">'+a.cod+' · '+(a.nome||'')+' · '+a.data+'</div>'+
+    '<textarea id="ajm-obs-edit" rows="4" placeholder="Explique o motivo do ajuste..." style="width:100%;padding:9px;border:1px solid var(--border-md,#d1d5db);border-radius:8px;font-size:14px;box-sizing:border-box;margin-bottom:14px;">'+obsAtual+'</textarea>'+
+    '<div style="display:flex;gap:8px;">'+
+      '<button class="btn btn-secondary" style="flex:1;" onclick="document.getElementById(\'ajm-obs-modal\').remove()">Cancelar</button>'+
+      '<button class="btn btn-primary" style="flex:1;" onclick="_ajmSalvarObs(\''+escapeJsStr(id)+'\')">Salvar</button>'+
+    '</div>'+
+  '</div>';
+  document.body.appendChild(ov);
+  const ta=document.getElementById('ajm-obs-edit'); if(ta){ ta.focus(); ta.setSelectionRange(ta.value.length,ta.value.length); }
+}
+window._ajmEditarObs=_ajmEditarObs;
+
+async function _ajmSalvarObs(id){
+  const ta=document.getElementById('ajm-obs-edit'); if(!ta) return;
+  const nova=(ta.value||'').trim();
+  try{
+    await updateDoc(doc(db,'ajustesEstoqueManual',id),{
+      obs:nova, obsEditadaEm:agora(), obsEditadaPor:_demAutor()
+    });
+    document.getElementById('ajm-obs-modal')?.remove();
+  }catch(e){ alert('Erro ao salvar observação: '+e.message); }
+}
+window._ajmSalvarObs=_ajmSalvarObs;
 
 async function _ajmToggleResolvido(id){
   const a=_ajmLista.find(x=>x.firestoreId===id); if(!a) return;
@@ -16999,9 +17275,12 @@ function _ajmListaHtml(){
         '</div>'+
         '<div style="text-align:right;flex-shrink:0;"><div style="font-size:17px;font-weight:900;color:'+corQtd+';">'+(pos?'+':'')+_fmtNum(a.qtdAjuste)+'</div></div>'+
       '</div>'+
-      (a.obs?('<div style="font-size:12px;color:var(--text-secondary);background:var(--bg-page);border-radius:6px;padding:6px 8px;margin-top:6px;">'+a.obs+'</div>'):'')+
+      (a.obs
+        ? ('<div style="font-size:12px;color:var(--text-secondary);background:var(--bg-page);border-radius:6px;padding:6px 8px;margin-top:6px;">'+a.obs+(a.obsEditadaEm?'<span style="font-size:10px;opacity:.7;"> (editada)</span>':'')+'</div>')
+        : '<div style="font-size:12px;color:var(--text-secondary);font-style:italic;opacity:.7;margin-top:6px;">sem observação</div>')+
       '<div style="display:flex;gap:8px;margin-top:8px;align-items:center;">'+
         '<button onclick="_ajmToggleResolvido(\''+a.firestoreId+'\')" style="flex:1;font-size:12px;font-weight:700;padding:6px;border-radius:7px;cursor:pointer;border:1px solid '+(a.resolvido?'#16a34a':'#cbd5e1')+';background:'+(a.resolvido?'#16a34a':'#fff')+';color:'+(a.resolvido?'#fff':'var(--text-secondary)')+';">'+(a.resolvido?'✓ Resolvido':'Marcar resolvido')+'</button>'+
+        '<button onclick="_ajmEditarObs(\''+a.firestoreId+'\')" title="Editar observação" style="flex:0 0 auto;background:#fff;border:1px solid var(--border);color:var(--text-secondary);border-radius:7px;padding:6px 10px;cursor:pointer;font-size:12px;">✏️</button>'+
         '<button onclick="_ajmExcluir(\''+a.firestoreId+'\')" title="Excluir (admin)" style="flex:0 0 auto;background:none;border:1px solid #fecaca;color:#dc2626;border-radius:7px;padding:6px 10px;cursor:pointer;font-size:12px;">🔒 🗑</button>'+
       '</div>'+
     '</div>';
