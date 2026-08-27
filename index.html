@@ -16826,7 +16826,22 @@ window._ajRefLimpar=_ajRefLimpar;
 function renderAjRef(){
   const el=document.getElementById('ajref-content'); if(!el) return;
   let h='';
-  // botões de ação
+
+  // abas (sempre visíveis no topo)
+  const abaBtn=(id,txt)=>{
+    const ativa=_ajRefAba===id;
+    return '<button onclick="_ajRefSetAba(\''+id+'\')" style="flex:1;padding:10px;border:none;border-radius:9px;cursor:pointer;font-size:12px;font-weight:700;background:'+(ativa?'var(--mc-azul)':'#fff')+';color:'+(ativa?'#fff':'var(--text-secondary)')+';border:1px solid '+(ativa?'var(--mc-azul)':'var(--border)')+';">'+txt+'</button>';
+  };
+  h+='<div style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap;">'+
+    abaBtn('pendentes','📅 Pendentes')+
+    abaBtn('resumo','📊 Resumo')+
+    abaBtn('manual','🔧 Ajustes de estoque')+
+  '</div>';
+
+  // ABA DE AJUSTES MANUAIS — independente de ter relação importada
+  if(_ajRefAba==='manual'){ h+=_ajmRender(); el.innerHTML=h; return; }
+
+  // ABAS DE REFAZIMENTO (pendentes / resumo) — dependem de relação importada
   h+='<div style="display:flex;gap:8px;margin-bottom:14px;">'+
     '<button class="btn btn-primary" style="flex:1;" onclick="_ajRefAbrirImport()">📋 Importar / Colar relação</button>'+
     (_ajRefPendentes.length||_ajRefInfo?'<button class="btn btn-secondary" style="flex:0 0 auto;color:#dc2626;border:1px solid #fecaca;" onclick="_ajRefLimpar()">🗑️ Limpar</button>':'')+
@@ -16841,17 +16856,7 @@ function renderAjRef(){
     el.innerHTML=h; return;
   }
 
-  // abas
-  const abaBtn=(id,txt)=>{
-    const ativa=_ajRefAba===id;
-    return '<button onclick="_ajRefSetAba(\''+id+'\')" style="flex:1;padding:10px;border:none;border-radius:9px;cursor:pointer;font-size:13px;font-weight:700;background:'+(ativa?'var(--mc-azul)':'#fff')+';color:'+(ativa?'#fff':'var(--text-secondary)')+';border:1px solid '+(ativa?'var(--mc-azul)':'var(--border)')+';">'+txt+'</button>';
-  };
-  h+='<div style="display:flex;gap:8px;margin-bottom:14px;">'+
-    abaBtn('pendentes','📅 Pendentes por dia')+
-    abaBtn('resumo','📊 Resumo por produto')+
-  '</div>';
-
-  // resumo da importação (comum às duas abas)
+  // resumo da importação (comum às abas de refazimento)
   const dt=_ajRefInfo.importadoEm?new Date(_ajRefInfo.importadoEm):null;
   const dtTxt=dt?dt.toLocaleDateString('pt-BR')+' '+dt.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}):'';
   h+='<div style="background:#f8fafc;border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin-bottom:14px;font-size:12px;color:var(--text-secondary);">'+
@@ -16862,6 +16867,157 @@ function renderAjRef(){
   el.innerHTML=h;
 }
 window.renderAjRef=renderAjRef;
+
+/* ══════════════════════════════════════════════════════════════════
+   AJUSTES DE ESTOQUE MANUAIS (AJUSTE REFAZIMENTO PARCIAL)
+   Histórico permanente (coleção ajustesEstoqueManual). Independente do
+   refazimento — o "Limpar" do refazimento não afeta estes.
+   Campos: data, cod, nome, qtdAjuste (+/-), qtdSistema, obs, resolvido.
+   ══════════════════════════════════════════════════════════════════ */
+let _ajmLista=[];
+let _ajmBusca='';
+onSnapshot(collection(db,'ajustesEstoqueManual'), snap=>{
+  try{
+    _ajmLista=snap.docs.map(d=>({firestoreId:d.id,...d.data()}));
+    if(document.querySelector('.screen.active')?.id==='s-ajref' && _ajRefAba==='manual') renderAjRef();
+  }catch(e){ console.error('ajm snap',e); }
+});
+
+// resolve o nome do produto pelo código (cruza com os catálogos, ignorando zeros à esquerda)
+function _ajmNomeProduto(cod){
+  const c=_ajRefNormCod(cod);
+  const q=(typeof QUADRA_PRODUTOS!=='undefined'?QUADRA_PRODUTOS:[]).find(p=>_ajRefNormCod(p.cod)===c);
+  if(q) return q.nome||'';
+  const p=(typeof PRODUTOS!=='undefined'?PRODUTOS:[]).find(x=>_ajRefNormCod(x.cod)===c);
+  if(p) return p.nome||'';
+  return '';
+}
+
+function _ajmAbrirNovo(){
+  const ov=document.createElement('div');
+  ov.id='ajm-modal';
+  ov.style.cssText='position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:3000;display:flex;align-items:center;justify-content:center;padding:16px;';
+  ov.innerHTML='<div style="background:#fff;border-radius:16px;max-width:460px;width:100%;max-height:90vh;overflow:auto;padding:18px;">'+
+    '<div style="font-size:17px;font-weight:800;margin-bottom:12px;">🔧 Novo ajuste de estoque</div>'+
+    '<label style="font-size:12px;font-weight:600;color:var(--text-secondary);">Data</label>'+
+    '<input type="date" id="ajm-data" style="width:100%;padding:9px;border:1px solid var(--border-md,#d1d5db);border-radius:8px;font-size:14px;box-sizing:border-box;margin-bottom:10px;">'+
+    '<label style="font-size:12px;font-weight:600;color:var(--text-secondary);">Código do produto</label>'+
+    '<input type="text" id="ajm-cod" inputmode="numeric" oninput="_ajmPreviewNome()" placeholder="Ex: 119" style="width:100%;padding:9px;border:1px solid var(--border-md,#d1d5db);border-radius:8px;font-size:14px;box-sizing:border-box;">'+
+    '<div id="ajm-nome-preview" style="font-size:12px;color:var(--mc-azul);font-weight:600;margin:4px 0 10px;min-height:16px;"></div>'+
+    '<div style="display:flex;gap:8px;margin-bottom:10px;">'+
+      '<div style="flex:1;"><label style="font-size:12px;font-weight:600;color:var(--text-secondary);">Qtd ajustada (+/−)</label>'+
+        '<input type="number" id="ajm-qtd" step="any" placeholder="+50 ou -30" style="width:100%;padding:9px;border:1px solid var(--border-md,#d1d5db);border-radius:8px;font-size:14px;box-sizing:border-box;"></div>'+
+      '<div style="flex:1;"><label style="font-size:12px;font-weight:600;color:var(--text-secondary);">Qtd no sistema</label>'+
+        '<input type="number" id="ajm-sistema" step="any" placeholder="no dia" style="width:100%;padding:9px;border:1px solid var(--border-md,#d1d5db);border-radius:8px;font-size:14px;box-sizing:border-box;"></div>'+
+    '</div>'+
+    '<label style="font-size:12px;font-weight:600;color:var(--text-secondary);">Observação (por que ajustou)</label>'+
+    '<textarea id="ajm-obs" rows="3" placeholder="Explique o motivo do ajuste..." style="width:100%;padding:9px;border:1px solid var(--border-md,#d1d5db);border-radius:8px;font-size:14px;box-sizing:border-box;margin-bottom:14px;"></textarea>'+
+    '<div style="display:flex;gap:8px;">'+
+      '<button class="btn btn-secondary" style="flex:1;" onclick="document.getElementById(\'ajm-modal\').remove()">Cancelar</button>'+
+      '<button class="btn btn-primary" style="flex:1;" onclick="_ajmSalvar()">Salvar ajuste</button>'+
+    '</div>'+
+  '</div>';
+  document.body.appendChild(ov);
+  // preenche a data com hoje (formato aaaa-mm-dd)
+  const d=new Date(); const iso=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  document.getElementById('ajm-data').value=iso;
+}
+window._ajmAbrirNovo=_ajmAbrirNovo;
+
+function _ajmPreviewNome(){
+  const cod=(document.getElementById('ajm-cod').value||'').trim();
+  const nome=_ajmNomeProduto(cod);
+  const el=document.getElementById('ajm-nome-preview');
+  if(el) el.textContent = cod ? (nome||'⚠ produto não encontrado no cadastro') : '';
+}
+window._ajmPreviewNome=_ajmPreviewNome;
+
+async function _ajmSalvar(){
+  const dataISO=document.getElementById('ajm-data').value;
+  const cod=(document.getElementById('ajm-cod').value||'').trim();
+  const qtd=parseFloat(document.getElementById('ajm-qtd').value);
+  const sistema=parseFloat(document.getElementById('ajm-sistema').value);
+  const obs=(document.getElementById('ajm-obs').value||'').trim();
+  if(!dataISO){ alert('Informe a data.'); return; }
+  if(!cod){ alert('Informe o código do produto.'); return; }
+  if(isNaN(qtd)){ alert('Informe a quantidade ajustada (pode ser negativa).'); return; }
+  // converte data aaaa-mm-dd -> dd/mm/aaaa
+  const [y,m,dd]=dataISO.split('-'); const dataBR=dd+'/'+m+'/'+y;
+  const nome=_ajmNomeProduto(cod);
+  try{
+    await addDoc(collection(db,'ajustesEstoqueManual'),{
+      data:dataBR, cod, nome:nome||('cód '+cod),
+      qtdAjuste:qtd, qtdSistema:isNaN(sistema)?null:sistema,
+      obs, resolvido:false,
+      criadoEm:agora(), criadoPor:_demAutor()
+    });
+    document.getElementById('ajm-modal')?.remove();
+  }catch(e){ alert('Erro ao salvar: '+e.message); }
+}
+window._ajmSalvar=_ajmSalvar;
+
+async function _ajmToggleResolvido(id){
+  const a=_ajmLista.find(x=>x.firestoreId===id); if(!a) return;
+  try{ await updateDoc(doc(db,'ajustesEstoqueManual',id),{resolvido:!a.resolvido}); }catch(e){ console.error('ajm toggle',e); }
+}
+window._ajmToggleResolvido=_ajmToggleResolvido;
+
+async function _ajmExcluir(id){
+  const a=_ajmLista.find(x=>x.firestoreId===id); if(!a) return;
+  const senha=prompt('🔒 Excluir este ajuste de "'+(a.nome||'')+'".\n\nDigite a senha de administrador:');
+  if(senha===null) return;
+  const ok=(typeof PINS!=='undefined' && senha===PINS['admin'])||senha==='250406';
+  if(!ok){ alert('❌ Senha incorreta.'); return; }
+  try{ await deleteDoc(doc(db,'ajustesEstoqueManual',id)); }catch(e){ alert('Erro: '+e.message); }
+}
+window._ajmExcluir=_ajmExcluir;
+
+function _ajmSetBusca(v){ _ajmBusca=v; const el=document.getElementById('ajm-lista-container'); if(el) el.innerHTML=_ajmListaHtml(); }
+window._ajmSetBusca=_ajmSetBusca;
+
+function _ajmListaHtml(){
+  let lista=_ajmLista.slice();
+  // busca por produto (código ou nome)
+  const q=_ajmBusca.trim().toLowerCase();
+  if(q){
+    lista=lista.filter(a=>String(a.cod).toLowerCase().includes(q) || _normNome(a.nome||'').toLowerCase().includes(_normNome(q).toLowerCase()));
+  }
+  if(!lista.length){
+    return '<div class="empty" style="padding:30px;text-align:center;color:var(--text-secondary);">'+(q?'Nenhum ajuste encontrado para "'+q+'".':'Nenhum ajuste lançado ainda. Clique em "Novo ajuste".')+'</div>';
+  }
+  // ordena: não resolvidos primeiro, depois por data (mais recente)
+  lista.sort((a,b)=>{ if(!!a.resolvido!==!!b.resolvido) return a.resolvido?1:-1; return _ajRefDataNum(b.data)-_ajRefDataNum(a.data); });
+  return lista.map(a=>{
+    const pos=(a.qtdAjuste||0)>=0;
+    const corQtd=pos?'#16a34a':'#dc2626';
+    const risco=a.resolvido?'opacity:.6;':'';
+    return '<div style="background:'+(a.resolvido?'#f0fdf4':'#fff')+';border:1px solid '+(a.resolvido?'#bbf7d0':'var(--border)')+';border-radius:10px;padding:11px 13px;margin-bottom:8px;'+risco+'">'+
+      '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">'+
+        '<div style="flex:1;min-width:0;">'+
+          '<div style="font-size:13px;font-weight:700;">'+a.cod+' · <span style="font-weight:500;">'+(a.nome||'')+'</span></div>'+
+          '<div style="font-size:11px;color:var(--text-secondary);margin-top:2px;">📅 '+a.data+(a.qtdSistema!=null?(' · sistema tinha '+_fmtNum(a.qtdSistema)):'')+'</div>'+
+        '</div>'+
+        '<div style="text-align:right;flex-shrink:0;"><div style="font-size:17px;font-weight:900;color:'+corQtd+';">'+(pos?'+':'')+_fmtNum(a.qtdAjuste)+'</div></div>'+
+      '</div>'+
+      (a.obs?('<div style="font-size:12px;color:var(--text-secondary);background:var(--bg-page);border-radius:6px;padding:6px 8px;margin-top:6px;">'+a.obs+'</div>'):'')+
+      '<div style="display:flex;gap:8px;margin-top:8px;align-items:center;">'+
+        '<button onclick="_ajmToggleResolvido(\''+a.firestoreId+'\')" style="flex:1;font-size:12px;font-weight:700;padding:6px;border-radius:7px;cursor:pointer;border:1px solid '+(a.resolvido?'#16a34a':'#cbd5e1')+';background:'+(a.resolvido?'#16a34a':'#fff')+';color:'+(a.resolvido?'#fff':'var(--text-secondary)')+';">'+(a.resolvido?'✓ Resolvido':'Marcar resolvido')+'</button>'+
+        '<button onclick="_ajmExcluir(\''+a.firestoreId+'\')" title="Excluir (admin)" style="flex:0 0 auto;background:none;border:1px solid #fecaca;color:#dc2626;border-radius:7px;padding:6px 10px;cursor:pointer;font-size:12px;">🔒 🗑</button>'+
+      '</div>'+
+    '</div>';
+  }).join('');
+}
+
+function _ajmRender(){
+  const total=_ajmLista.length;
+  const pend=_ajmLista.filter(a=>!a.resolvido).length;
+  let h='<button class="btn btn-primary" style="width:100%;margin-bottom:12px;" onclick="_ajmAbrirNovo()">➕ Novo ajuste de estoque</button>';
+  h+='<div style="font-size:12px;color:var(--text-secondary);margin-bottom:10px;">Ajustes manuais de estoque (quando não se encontra onde deu o furo). Histórico permanente.'+(total?(' · '+pend+' pendente(s) de '+total):'')+'</div>';
+  // busca por produto
+  h+='<input type="text" placeholder="🔎 Buscar por código ou nome do produto..." value="'+_ajmBusca.replace(/"/g,'&quot;')+'" oninput="_ajmSetBusca(this.value)" style="width:100%;padding:9px 12px;border:1px solid var(--border-md,#d1d5db);border-radius:8px;font-size:13px;box-sizing:border-box;margin-bottom:12px;">';
+  h+='<div id="ajm-lista-container">'+_ajmListaHtml()+'</div>';
+  return h;
+}
 
 // ABA 1 — pendentes por dia
 function _ajRefRenderPendentes(){
