@@ -18297,6 +18297,85 @@ async function elevCancelar(){
 }
 window.elevCancelar=elevCancelar;
 
+/* ── SOM DO ALERTA (só no Painel TV) ──────────────────────────────
+   Depois que a cozinha avisa, o app espera X segundos (ajustável na
+   tela da confeitaria) e começa a apitar até alguém confirmar.
+   O navegador só libera áudio depois de um toque na tela, então o
+   painel mostra um aviso "toque para ativar o som" enquanto não houver. */
+let _elevSomLigado=true, _elevAtrasoSeg=60;
+let _elevAudioCtx=null, _elevSomTimer=null;
+
+onSnapshot(doc(db,'configuracoes','elevadorSom'), snap=>{
+  try{
+    const d=snap.data()||{};
+    _elevSomLigado = d.ligado!==false;
+    _elevAtrasoSeg = Number(d.atrasoSeg)>0 ? Number(d.atrasoSeg) : 60;
+    elevAtualizarTelas();
+  }catch(e){ console.error('elevadorSom snap',e); }
+});
+
+async function elevSetSom(ligado,atrasoSeg){
+  try{
+    await setDoc(doc(db,'configuracoes','elevadorSom'),
+      {ligado:!!ligado, atrasoSeg:Number(atrasoSeg)||60, atualizadoEm:agora()},{merge:true});
+  }catch(e){ alert('Erro ao salvar: '+e.message); }
+}
+window.elevSetSom=elevSetSom;
+
+function _elevAudioPronto(){ return !!_elevAudioCtx && _elevAudioCtx.state==='running'; }
+
+// libera o áudio no primeiro toque da pessoa (exigência do navegador)
+function _elevLiberarAudio(){
+  try{
+    const AC=window.AudioContext||window.webkitAudioContext;
+    if(!AC) return;
+    if(!_elevAudioCtx) _elevAudioCtx=new AC();
+    if(_elevAudioCtx.state!=='running'){ _elevAudioCtx.resume().then(()=>_elevRenderTV()); }
+  }catch(e){}
+}
+document.addEventListener('pointerdown',_elevLiberarAudio);
+
+// apito curto, três pulsos — gerado no próprio app, sem arquivo de áudio
+function _elevApitar(){
+  if(!_elevAudioPronto()) return;
+  const ctx=_elevAudioCtx, t0=ctx.currentTime;
+  for(let i=0;i<3;i++){
+    const ini=t0+i*0.28;
+    const osc=ctx.createOscillator(), g=ctx.createGain();
+    osc.type='square';
+    osc.frequency.setValueAtTime(i%2?1050:840, ini);
+    g.gain.setValueAtTime(0.0001, ini);
+    g.gain.exponentialRampToValueAtTime(0.30, ini+0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001, ini+0.20);
+    osc.connect(g); g.connect(ctx.destination);
+    osc.start(ini); osc.stop(ini+0.22);
+  }
+}
+
+function _elevSomTick(){
+  const a=elevPendente();
+  const naTV=document.querySelector('.screen.active')?.id==='s-tv';
+  if(!a || !naTV || !_elevSomLigado){ _elevPararSom(); return; }
+  if(Date.now()-(a.ts||0) < _elevAtrasoSeg*1000) return; // ainda na carência
+  _elevApitar();
+}
+function _elevIniciarSom(){ if(!_elevSomTimer) _elevSomTimer=setInterval(_elevSomTick,4000); }
+function _elevPararSom(){ if(_elevSomTimer){ clearInterval(_elevSomTimer); _elevSomTimer=null; } }
+
+// cartão de ajuste, no acompanhamento da confeitaria
+function elevConfigCard(){
+  const opts=[['30','30 seg'],['60','1 min'],['120','2 min'],['300','5 min']];
+  const btn=(txt,ativo,fn)=>'<button onclick="'+fn+'" style="background:'+(ativo?'var(--mc-azul,#2563eb)':'#fff')+';color:'+(ativo?'#fff':'var(--text-secondary)')+';border:1px solid '+(ativo?'var(--mc-azul,#2563eb)':'var(--border)')+';border-radius:99px;padding:6px 12px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;">'+txt+'</button>';
+  return '<div class="card" style="margin-bottom:12px;">'+
+    '<div style="font-size:13px;font-weight:700;margin-bottom:2px;">🔔 Apito do elevador no Painel TV</div>'+
+    '<div style="font-size:11px;color:var(--text-secondary);margin-bottom:8px;">Tempo de espera antes de começar a apitar. O apito só para quando alguém confirmar a retirada.</div>'+
+    '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;">'+
+      opts.map(([v,l])=>btn(l, String(_elevAtrasoSeg)===v, "elevSetSom("+(_elevSomLigado?'true':'false')+","+v+")")).join('')+
+    '</div>'+
+    btn(_elevSomLigado?'🔊 Apito ligado':'🔇 Apito desligado', _elevSomLigado, "elevSetSom("+(_elevSomLigado?'false':'true')+","+_elevAtrasoSeg+")")+
+    '</div>';
+}
+
 function _elevInjectStyles(){
   if(document.getElementById('elev-anim-styles')) return;
   const s=document.createElement('style'); s.id='elev-anim-styles';
@@ -18310,10 +18389,21 @@ function _elevInjectStyles(){
 function _elevRenderTV(){
   const el=document.getElementById('tv-elevador'); if(!el) return;
   const a=elevPendente();
-  if(!a){ if(el.innerHTML){ el.innerHTML=''; el.removeAttribute('data-sig'); } return; }
-  if(el.getAttribute('data-sig')===a.firestoreId) return; // já pisca por este aviso
-  el.setAttribute('data-sig',a.firestoreId);
+  if(!a){
+    _elevPararSom();
+    if(el.innerHTML){ el.innerHTML=''; el.removeAttribute('data-sig'); }
+    return;
+  }
+  _elevIniciarSom();
+  // a assinatura inclui o estado do som: se o áudio for liberado, redesenha
+  // para tirar o aviso "toque para ativar o som"
+  const sig=a.firestoreId+'|'+(_elevSomLigado?'s':'-')+(_elevAudioPronto()?'1':'0');
+  if(el.getAttribute('data-sig')===sig) return; // já pisca por este aviso
+  el.setAttribute('data-sig',sig);
   _elevInjectStyles();
+  const avisoSom=(_elevSomLigado && !_elevAudioPronto())
+    ? '<div style="font-size:13px;color:#b45309;font-weight:700;margin-top:10px;background:#fef3c7;border-radius:8px;padding:8px;">🔇 Toque na tela uma vez para ativar o apito</div>'
+    : '';
   el.innerHTML=
     '<div style="position:absolute;inset:0;background:#dc2626;animation:elevBlink 1s ease-in-out infinite;pointer-events:none;"></div>'+
     '<div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);pointer-events:auto;'+
@@ -18322,6 +18412,7 @@ function _elevRenderTV(){
       '<div style="font-size:54px;line-height:1;">🛗</div>'+
       '<div style="font-size:42px;font-weight:900;color:#b91c1c;line-height:1.05;margin-top:10px;letter-spacing:-1px;">RECHEIO NO<br>ELEVADOR</div>'+
       '<div style="font-size:15px;color:#64748b;font-weight:600;margin-top:12px;">avisado às '+_elevHoraCurta(a.hora)+' pela '+(a.avisadoPor||'Cozinha')+'</div>'+
+      avisoSom+
       '<button onclick="elevRetirar()" style="margin-top:20px;width:100%;background:#16a34a;border:none;color:#fff;font-size:22px;font-weight:900;padding:16px;border-radius:14px;cursor:pointer;font-family:inherit;">✓ JÁ RETIREI</button>'+
     '</div>';
 }
@@ -20159,7 +20250,7 @@ function renderAcomp(){
   });
 
   if(!algumDia) html+='<div class="empty">Nenhum produto nesse filtro.</div>';
-  html+=elevHistoricoHtml(6);
+  html+=elevConfigCard()+elevHistoricoHtml(6);
   el.innerHTML=html;
 }
 window.renderAcomp=renderAcomp; window.setAcBusca=setAcBusca; window.toggleAcPend=toggleAcPend;
