@@ -4227,6 +4227,7 @@
   <div class="screen" id="s-tv" style="background:linear-gradient(160deg,#eef4ff 0%,#faf7f0 100%);">
     <div style="width:100%;height:100%;" id="tv-content"></div>
     <div id="tv-elevador" style="position:fixed;inset:0;z-index:60;pointer-events:none;"></div>
+    <div id="tv-som" style="position:fixed;left:16px;bottom:16px;z-index:61;"></div>
   </div>
 
   <!-- ESTOQUE EMBALAGEM -->
@@ -18260,6 +18261,7 @@ function _elevHoraCurta(s){ return String(s||'').slice(-5); }
 
 function elevAtualizarTelas(){
   _elevRenderTV();
+  _elevRenderBotaoSom();
   if(_acDragAtivo) return;
   const t=document.querySelector('.screen.active')?.id;
   if(t==='s-acomp') renderAcomp();
@@ -18322,35 +18324,105 @@ async function elevSetSom(ligado,atrasoSeg){
 }
 window.elevSetSom=elevSetSom;
 
-function _elevAudioPronto(){ return !!_elevAudioCtx && _elevAudioCtx.state==='running'; }
+function _elevAudioPronto(){
+  if(_elevAudioCtx && _elevAudioCtx.state==='running') return true;
+  return _elevFallbackOk;   // TV sem Web Audio, usando <audio>
+}
 
-// libera o áudio no primeiro toque da pessoa (exigência do navegador)
+/* Caminho alternativo: alguns navegadores de TV não têm Web Audio.
+   Geramos um WAV curto na memória e tocamos por um <audio> normal. */
+let _elevFallbackOk=false, _elevAudioEl=null;
+function _elevWavApito(){
+  const sr=8000, dur=1.0, n=Math.floor(sr*dur);
+  const buf=new Uint8Array(44+n), dv=new DataView(buf.buffer);
+  const txt=(off,s)=>{ for(let i=0;i<s.length;i++) buf[off+i]=s.charCodeAt(i); };
+  txt(0,'RIFF'); dv.setUint32(4,36+n,true); txt(8,'WAVEfmt ');
+  dv.setUint32(16,16,true); dv.setUint16(20,1,true); dv.setUint16(22,1,true);
+  dv.setUint32(24,sr,true); dv.setUint32(28,sr,true);
+  dv.setUint16(32,1,true); dv.setUint16(34,8,true);
+  txt(36,'data'); dv.setUint32(40,n,true);
+  for(let i=0;i<n;i++){
+    const t=i/sr, pulso=Math.floor(t/0.28), dentro=(t%0.28)<0.2;
+    if(pulso>2 || !dentro){ buf[44+i]=128; continue; }
+    const f=pulso%2?1050:840;
+    buf[44+i]=128+(Math.sin(2*Math.PI*f*t)>0?70:-70);
+  }
+  let bin=''; for(let i=0;i<buf.length;i++) bin+=String.fromCharCode(buf[i]);
+  return 'data:audio/wav;base64,'+btoa(bin);
+}
+
+// libera o áudio a partir de QUALQUER interação — inclusive tecla do controle
+// remoto da TV, que não dispara toque nem clique de mouse
 function _elevLiberarAudio(){
   try{
     const AC=window.AudioContext||window.webkitAudioContext;
-    if(!AC) return;
-    if(!_elevAudioCtx) _elevAudioCtx=new AC();
-    if(_elevAudioCtx.state!=='running'){ _elevAudioCtx.resume().then(()=>_elevRenderTV()); }
+    if(AC){
+      if(!_elevAudioCtx) _elevAudioCtx=new AC();
+      if(_elevAudioCtx.state!=='running'){
+        _elevAudioCtx.resume().then(()=>{ _elevRenderTV(); _elevRenderBotaoSom(); });
+      }
+      return;
+    }
+    if(!_elevAudioEl){
+      if(!window.Audio) return;   // navegador sem áudio nenhum
+      _elevAudioEl=new window.Audio(_elevWavApito());
+      _elevAudioEl.volume=1;
+    }
+    const p=_elevAudioEl.play();
+    if(p && p.then) p.then(()=>{ _elevAudioEl.pause(); _elevAudioEl.currentTime=0; _elevFallbackOk=true; _elevRenderTV(); _elevRenderBotaoSom(); }).catch(()=>{});
+    else { _elevFallbackOk=true; }
   }catch(e){}
 }
-document.addEventListener('pointerdown',_elevLiberarAudio);
+['pointerdown','click','touchstart','keydown'].forEach(ev=>
+  document.addEventListener(ev,_elevLiberarAudio,true));
 
 // apito curto, três pulsos — gerado no próprio app, sem arquivo de áudio
 function _elevApitar(){
-  if(!_elevAudioPronto()) return;
-  const ctx=_elevAudioCtx, t0=ctx.currentTime;
-  for(let i=0;i<3;i++){
-    const ini=t0+i*0.28;
-    const osc=ctx.createOscillator(), g=ctx.createGain();
-    osc.type='square';
-    osc.frequency.setValueAtTime(i%2?1050:840, ini);
-    g.gain.setValueAtTime(0.0001, ini);
-    g.gain.exponentialRampToValueAtTime(0.30, ini+0.02);
-    g.gain.exponentialRampToValueAtTime(0.0001, ini+0.20);
-    osc.connect(g); g.connect(ctx.destination);
-    osc.start(ini); osc.stop(ini+0.22);
+  if(_elevAudioCtx && _elevAudioCtx.state==='running'){
+    const ctx=_elevAudioCtx, t0=ctx.currentTime;
+    for(let i=0;i<3;i++){
+      const ini=t0+i*0.28;
+      const osc=ctx.createOscillator(), g=ctx.createGain();
+      osc.type='square';
+      osc.frequency.setValueAtTime(i%2?1050:840, ini);
+      g.gain.setValueAtTime(0.0001, ini);
+      g.gain.exponentialRampToValueAtTime(0.30, ini+0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, ini+0.20);
+      osc.connect(g); g.connect(ctx.destination);
+      osc.start(ini); osc.stop(ini+0.22);
+    }
+    return;
+  }
+  if(_elevFallbackOk && _elevAudioEl){
+    try{ _elevAudioEl.currentTime=0; _elevAudioEl.play(); }catch(e){}
   }
 }
+
+// Botão fixo no canto do Painel TV. Fica visível enquanto o navegador não
+// liberar o áudio — no modo ?tv=1 ninguém toca na tela, então sem isso o
+// apito nunca sairia.
+function _elevRenderBotaoSom(){
+  const el=document.getElementById('tv-som'); if(!el) return;
+  const precisa = _elevSomLigado && !_elevAudioPronto();
+  const sig = precisa?'1':'0';
+  if(el.getAttribute('data-sig')===sig) return;
+  el.setAttribute('data-sig',sig);
+  el.innerHTML = precisa
+    ? '<button onclick="elevAtivarSom()" style="background:#f59e0b;border:none;color:#fff;font-size:16px;font-weight:800;padding:12px 20px;border-radius:12px;cursor:pointer;font-family:inherit;box-shadow:0 4px 14px rgba(0,0,0,.2);">🔇 Ativar som do alerta</button>'
+    : '';
+}
+
+// clique/toque/tecla libera o áudio e toca um apito de teste
+function elevAtivarSom(){
+  _elevLiberarAudio();
+  setTimeout(()=>{
+    _elevApitar();
+    _elevRenderBotaoSom();
+    _elevRenderTV();
+    if(!_elevAudioPronto()) alert('Este navegador não liberou o som.\n\nTente clicar em qualquer lugar da tela e depois no botão de novo. Se não funcionar, o navegador da TV pode estar com o som bloqueado nas configurações.');
+  },300);
+}
+window.elevAtivarSom=elevAtivarSom;
 
 function _elevSomTick(){
   const a=elevPendente();
@@ -18986,10 +19058,11 @@ function _tvClock(){ const c=document.getElementById('tv-clock'); if(c){ const n
 function _tvTick(){
   _tvTickN++;
   _tvClock();
+  if(typeof _elevRenderBotaoSom==='function') _elevRenderBotaoSom();
   if(_tvTickN%5===0){ _tvMsgIdx++; const m=document.getElementById('tv-msg'); if(m) m.textContent=TV_MSGS[_tvMsgIdx%TV_MSGS.length]; }
   if(!_tvPaused && _tvTickN%15===0){ _tvView++; renderTV(); } // troca de visão a cada 15s (se não pausado)
 }
-function iniciarTV(){ if(_tvInterval) clearInterval(_tvInterval); _tvTickN=0; _tvInterval=setInterval(_tvTick,1000); renderTV(); _elevRenderTV(); }
+function iniciarTV(){ if(_tvInterval) clearInterval(_tvInterval); _tvTickN=0; _tvInterval=setInterval(_tvTick,1000); renderTV(); _elevRenderTV(); _elevRenderBotaoSom(); }
 function pararTV(){ if(_tvInterval){ clearInterval(_tvInterval); _tvInterval=null; } }
 function sairTV(){ if(window._tvLinkMode){ return; } const manter=(typeof _mcPref==='function' && _mcPref('mc_tela_cheia')==='1'); if(document.fullscreenElement && !manter){ try{document.exitFullscreen();}catch(e){} } pararTV(); goTo(window.adminMode?'s-adm-hub':'s-conf-home'); }
 function tvFullscreen(){ mcToggleTelaCheia(); }
