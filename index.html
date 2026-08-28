@@ -4809,7 +4809,7 @@ function _entrarModoTvLink(){
   const loading=document.getElementById('loading'); if(loading) loading.style.display='none';
   goTo('s-tv');
   // tenta tela cheia (alguns navegadores exigem toque; então também tentamos no 1º toque)
-  const fs=()=>{ const s=document.getElementById('s-tv'); if(s && !document.fullscreenElement){ (s.requestFullscreen||s.webkitRequestFullscreen||function(){}).call(s); } };
+  const fs=()=>{ const e=document.documentElement; if(!document.fullscreenElement){ (e.requestFullscreen||e.webkitRequestFullscreen||function(){}).call(e); } };
   setTimeout(fs, 400);
   document.addEventListener('click', function _once(){ fs(); document.removeEventListener('click', _once); }, {once:true});
 }
@@ -4939,6 +4939,7 @@ function goTo(id){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
   window.scrollTo(0,0);
+  if(typeof mcGarantirTelaCheia==='function') mcGarantirTelaCheia();
   if(id==='s-mp-precos') mppRender();
   if(id==='s-emb') embRender();
   if(id==='s-conf-home') renderConfHome();
@@ -18191,26 +18192,39 @@ function mcRenderExibicao(){
 }
 window.mcRenderExibicao=mcRenderExibicao;
 
+// Mantém a tela cheia ligada. O navegador derruba o modo em várias situações
+// (sair do painel TV, alguns gestos do sistema, troca de app). Como só é
+// possível reentrar a partir de um toque, deixamos um "vigia" armado: no
+// próximo toque em qualquer lugar, o app volta para tela cheia sozinho.
+let _mcVigiaArmado=false;
+function mcGarantirTelaCheia(){
+  if(_mcPref('mc_tela_cheia')!=='1') return;
+  if(mcTelaCheiaAtiva() || !mcTelaCheiaSuportada()) return;
+  if(_mcVigiaArmado) return;
+  _mcVigiaArmado=true;
+  const voltar=()=>{
+    document.removeEventListener('pointerdown',voltar,true);
+    _mcVigiaArmado=false;
+    if(_mcPref('mc_tela_cheia')!=='1' || mcTelaCheiaAtiva()) return;
+    if(typeof _acDragAtivo!=='undefined' && _acDragAtivo){ mcGarantirTelaCheia(); return; }
+    const e=document.documentElement;
+    try{ (e.requestFullscreen||e.webkitRequestFullscreen).call(e); }catch(_){}
+    setTimeout(mcGarantirTelaCheia, 400); // se não entrou, arma de novo
+  };
+  document.addEventListener('pointerdown',voltar,true);
+}
+window.mcGarantirTelaCheia=mcGarantirTelaCheia;
+
 // aplica as preferências salvas assim que o app abre
 (function mcExibicaoInit(){
   try{
     if(_mcPref('mc_largura_total')==='1') document.body.classList.add('mc-largura-total');
   }catch(e){}
-  // o navegador só entra em tela cheia a partir de um toque da pessoa,
-  // então se ficou ligado, reativa no primeiro toque depois de abrir
-  if(_mcPref('mc_tela_cheia')==='1'){
-    const reativar=()=>{
-      document.removeEventListener('pointerdown',reativar);
-      if(!mcTelaCheiaAtiva() && mcTelaCheiaSuportada()){
-        const e=document.documentElement;
-        try{ (e.requestFullscreen||e.webkitRequestFullscreen).call(e); }catch(_){}
-      }
-    };
-    document.addEventListener('pointerdown',reativar);
-  }
   ['fullscreenchange','webkitfullscreenchange'].forEach(ev=>
-    document.addEventListener(ev, mcRenderExibicao));
+    document.addEventListener(ev, ()=>{ mcRenderExibicao(); mcGarantirTelaCheia(); }));
+  document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) mcGarantirTelaCheia(); });
   mcRenderExibicao();
+  mcGarantirTelaCheia();
 })();
 
 /* ══════════════════════════════════════════════════════════════════
@@ -18886,8 +18900,8 @@ function _tvTick(){
 }
 function iniciarTV(){ if(_tvInterval) clearInterval(_tvInterval); _tvTickN=0; _tvInterval=setInterval(_tvTick,1000); renderTV(); _elevRenderTV(); }
 function pararTV(){ if(_tvInterval){ clearInterval(_tvInterval); _tvInterval=null; } }
-function sairTV(){ if(window._tvLinkMode){ return; } if(document.fullscreenElement){ try{document.exitFullscreen();}catch(e){} } pararTV(); goTo(window.adminMode?'s-adm-hub':'s-conf-home'); }
-function tvFullscreen(){ const s=document.getElementById('s-tv'); if(!document.fullscreenElement){ (s.requestFullscreen||s.webkitRequestFullscreen||function(){}).call(s); } else { try{document.exitFullscreen();}catch(e){} } }
+function sairTV(){ if(window._tvLinkMode){ return; } const manter=(typeof _mcPref==='function' && _mcPref('mc_tela_cheia')==='1'); if(document.fullscreenElement && !manter){ try{document.exitFullscreen();}catch(e){} } pararTV(); goTo(window.adminMode?'s-adm-hub':'s-conf-home'); }
+function tvFullscreen(){ mcToggleTelaCheia(); }
 window.sairTV=sairTV; window.tvFullscreen=tvFullscreen; window.renderTV=renderTV; window.iniciarTV=iniciarTV; window.pararTV=pararTV;
 
 function _tvConfetti(){
