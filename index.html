@@ -348,6 +348,14 @@
     }
     .content > .home-btn { margin-bottom: 12px; }
   }
+  /* Largura total: opção do aparelho (rodapé da tela inicial). Vence a faixa
+     de 600px do tablet porque tem seletor mais específico. */
+  body.mc-largura-total .app-frame {
+    max-width: 100% !important;
+    width: 100% !important;
+    box-shadow: none !important;
+  }
+
   @media (min-width: 1024px) {
     /* Grids 2 cols for hub home pages */
     #s-inicio .content,
@@ -875,7 +883,8 @@
           <span class="mc-sector-arrow">›</span>
         </button>
       </div>
-      <div style="text-align:center;margin-top:24px;font-size:11px;color:var(--text-muted);">Monte Castelo Panificadora · v6.0</div>
+      <div id="mc-exibicao-box" style="margin-top:22px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap;"></div>
+      <div style="text-align:center;margin-top:16px;font-size:11px;color:var(--text-muted);">Monte Castelo Panificadora · v6.0</div>
     </div>
   </div>
 
@@ -3739,7 +3748,7 @@
       <div class="card" style="margin-bottom:12px;">
         <div class="card-label" style="margin-bottom:8px;">Adicionar ingrediente (da base de Matérias-Primas)</div>
         <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
-          <select id="receita-mp-sel" style="flex:2;min-width:150px;font-size:13px;padding:9px;border-radius:8px;border:1px solid var(--border-md,#d1d5db);"></select>
+          <select id="receita-mp-sel" style="flex:1 1 100%;width:100%;font-size:16px;padding:12px;min-height:48px;border-radius:8px;border:1px solid var(--border-md,#d1d5db);font-family:inherit;box-sizing:border-box;"></select>
           <input type="number" id="receita-mp-kg" step="0.001" placeholder="kg" inputmode="decimal" style="flex:1;min-width:70px;font-size:13px;padding:9px;border-radius:8px;border:1px solid var(--border-md,#d1d5db);" />
           <button class="mc-act-btn-secondary" style="padding:9px 12px;" onclick="addReceitaIng()">+ Add</button>
         </div>
@@ -4217,6 +4226,7 @@
   <!-- MODO TV — PAINEL DE PRODUÇÃO -->
   <div class="screen" id="s-tv" style="background:linear-gradient(160deg,#eef4ff 0%,#faf7f0 100%);">
     <div style="width:100%;height:100%;" id="tv-content"></div>
+    <div id="tv-elevador" style="position:fixed;inset:0;z-index:60;pointer-events:none;"></div>
   </div>
 
   <!-- ESTOQUE EMBALAGEM -->
@@ -4965,6 +4975,7 @@ function goTo(id){
   if(id==='s-alt-admin') renderAltAdmin();
   if(id==='s-acomp') renderAcomp();
   if(id==='s-acomp-coz') renderAcompCoz();
+  if(id==='s-inicio' && typeof mcRenderExibicao==='function') mcRenderExibicao();
   if(id==='s-demandas') renderDemandas();
   if(id==='s-tv') iniciarTV(); else pararTV();
   if(id==='s-carreg') renderCarreg();
@@ -11824,7 +11835,7 @@ function renderKitForm(){
       const selCod=ing.mpCodigo||'';
       const kgVal=(ing.qtd!=null?ing.qtd:(ing.kg!=null?ing.kg:''));
       html+='<div style="display:flex;gap:6px;margin-bottom:6px;align-items:center;">';
-      html+='<select onchange="atualizarKitIng('+i+',\'mp\',this.value)" style="flex:2;min-width:120px;font-size:13px;padding:8px;border-radius:6px;border:1px solid var(--border-md);">'+opt(selCod)+'</select>';
+      html+='<select onchange="atualizarKitIng('+i+',\'mp\',this.value)" style="flex:1 1 100%;font-size:16px;padding:11px;min-height:46px;border-radius:8px;border:1px solid var(--border-md);font-family:inherit;box-sizing:border-box;">'+opt(selCod)+'</select>';
       html+='<input type="number" placeholder="kg" value="'+(kgVal===''?'':kgVal)+'" step="0.001" inputmode="decimal" oninput="atualizarKitIng('+i+',\'qtd\',this.value)" style="flex:1;min-width:64px;font-size:13px;padding:8px;border-radius:6px;border:1px solid var(--border-md);" />';
       html+='<span style="font-size:12px;color:var(--text-secondary);">kg</span>';
       html+='<button onclick="removerIngrediente('+i+')" style="background:none;border:1px solid var(--mc-vermelho);color:var(--mc-vermelho);border-radius:6px;padding:6px 10px;font-size:13px;cursor:pointer;" title="Remover">×</button>';
@@ -11953,8 +11964,8 @@ function renderProdutoForm(){
   html+='<div class="card" style="padding:14px;margin-bottom:10px;">';
   html+='<div class="card-label">Detalhes do produto</div>';
   html+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px;">';
-  html+='<div><label style="font-size:11px;color:var(--text-secondary);">Kg por pacote</label><input type="number" id="prod-kgpct" value="'+(p.kgPacote||'')+'" step="0.001" placeholder="Ex: 1.0" style="width:100%;font-size:14px;padding:8px;border-radius:6px;border:1px solid var(--border-md);" /></div>';
-  html+='<div><label style="font-size:11px;color:var(--text-secondary);">Unidades por pacote</label><input type="number" id="prod-qtdpct" value="'+(p.qtdPct||'')+'" placeholder="Ex: 40" style="width:100%;font-size:14px;padding:8px;border-radius:6px;border:1px solid var(--border-md);" /></div>';
+  html+='<div><label style="font-size:11px;color:var(--text-secondary);">Kg por pacote</label><input type="number" id="prod-kgpct" value="'+(p.kgPacote||'')+'" step="0.001" placeholder="Ex: 1.0" style="width:100%;font-size:16px;padding:11px;border-radius:8px;border:1px solid var(--border-md);box-sizing:border-box;" /></div>';
+  html+='<div><label style="font-size:11px;color:var(--text-secondary);">Unidades por pacote</label><input type="number" id="prod-qtdpct" value="'+(p.qtdPct||'')+'" placeholder="Ex: 40" style="width:100%;font-size:16px;padding:11px;border-radius:8px;border:1px solid var(--border-md);box-sizing:border-box;" /></div>';
   html+='</div>';
   html+='</div>';
 
@@ -11962,9 +11973,9 @@ function renderProdutoForm(){
   html+='<div class="card-label">Gramatura padrão por unidade (gr)</div>';
   html+='<div style="font-size:11px;color:var(--text-secondary);margin-top:4px;margin-bottom:8px;">Para o controle de quebra. Se o produto não tem recheio, deixe 0.</div>';
   html+='<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;">';
-  html+='<div><label style="font-size:11px;color:var(--text-secondary);">Massa (gr/un)</label><input type="number" id="prod-grmassa" value="'+(p.grMassa||'')+'" step="0.01" style="width:100%;font-size:14px;padding:8px;border-radius:6px;border:1px solid var(--border-md);" /></div>';
-  html+='<div><label style="font-size:11px;color:var(--text-secondary);">Recheio 1 (gr/un)</label><input type="number" id="prod-grr1" value="'+(p.grRecheio||'')+'" step="0.01" style="width:100%;font-size:14px;padding:8px;border-radius:6px;border:1px solid var(--border-md);" /></div>';
-  html+='<div><label style="font-size:11px;color:var(--text-secondary);">Recheio 2 (gr/un)</label><input type="number" id="prod-grr2" value="'+(p.grRecheio2||'')+'" step="0.01" style="width:100%;font-size:14px;padding:8px;border-radius:6px;border:1px solid var(--border-md);" /></div>';
+  html+='<div><label style="font-size:11px;color:var(--text-secondary);">Massa (gr/un)</label><input type="number" id="prod-grmassa" value="'+(p.grMassa||'')+'" step="0.01" style="width:100%;font-size:16px;padding:11px;border-radius:8px;border:1px solid var(--border-md);box-sizing:border-box;" /></div>';
+  html+='<div><label style="font-size:11px;color:var(--text-secondary);">Recheio 1 (gr/un)</label><input type="number" id="prod-grr1" value="'+(p.grRecheio||'')+'" step="0.01" style="width:100%;font-size:16px;padding:11px;border-radius:8px;border:1px solid var(--border-md);box-sizing:border-box;" /></div>';
+  html+='<div><label style="font-size:11px;color:var(--text-secondary);">Recheio 2 (gr/un)</label><input type="number" id="prod-grr2" value="'+(p.grRecheio2||'')+'" step="0.01" style="width:100%;font-size:16px;padding:11px;border-radius:8px;border:1px solid var(--border-md);box-sizing:border-box;" /></div>';
   html+='</div>';
   html+='</div>';
 
@@ -12187,11 +12198,11 @@ function renderProdConfForm(){
   // Classe de produção
   html+='<div class="card" style="padding:14px;margin-bottom:10px;border-left:3px solid var(--mc-azul);">';
   html+='<div class="card-label" style="color:var(--mc-azul);">🏷️ Classe de produção</div>';
-  html+='<div style="display:flex;gap:8px;margin-top:6px;">';
-  html+='<select id="pc-classe" style="flex:1;font-size:14px;padding:9px;border-radius:6px;border:1px solid var(--border-md);"><option value="">— Sem classe —</option>';
+  html+='<div style="margin-top:6px;">';
+  html+='<select id="pc-classe" style="width:100%;font-size:16px;padding:12px;min-height:48px;border-radius:8px;border:1px solid var(--border-md);font-family:inherit;box-sizing:border-box;"><option value="">— Sem classe —</option>';
   classesProducao.forEach(c=>{ html+='<option value="'+c.replace(/"/g,'&quot;')+'"'+(p.classe===c?' selected':'')+'>'+c+'</option>'; });
   html+='</select>';
-  html+='<button type="button" class="btn btn-secondary" style="white-space:nowrap;" onclick="novaClasseProducao()">+ Nova</button>';
+  html+='<button type="button" class="btn btn-secondary" style="width:100%;margin-top:8px;" onclick="novaClasseProducao()">+ Nova classe</button>';
   html+='</div>';
   html+='<div style="font-size:11px;color:var(--text-secondary);margin-top:4px;">Ex: Mesa, Fritos, Usifood — usado para filtrar e ordenar o plano</div>';
   html+='</div>';
@@ -12199,52 +12210,52 @@ function renderProdConfForm(){
   html+='<div class="card" style="padding:14px;margin-bottom:10px;">';
   html+='<div class="card-label">Quantidade por pacote</div>';
   html+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:6px;">';
-  html+='<div><label style="font-size:11px;color:var(--text-secondary);">Unidades por pacote</label><input type="number" id="pc-qtdpct" value="'+(p.qtdPct||'')+'" placeholder="Ex: 30" style="width:100%;font-size:14px;padding:8px;border-radius:6px;border:1px solid var(--border-md);" /></div>';
-  html+='<div><label style="font-size:11px;color:var(--text-secondary);">Peso total do pacote (g)</label><input type="number" id="pc-pesopct" value="'+(p.pesoPct||'')+'" step="0.01" placeholder="Ex: 1500" style="width:100%;font-size:14px;padding:8px;border-radius:6px;border:1px solid var(--border-md);" /></div>';
+  html+='<div><label style="font-size:11px;color:var(--text-secondary);">Unidades por pacote</label><input type="number" id="pc-qtdpct" value="'+(p.qtdPct||'')+'" placeholder="Ex: 30" style="width:100%;font-size:16px;padding:11px;border-radius:8px;border:1px solid var(--border-md);box-sizing:border-box;" /></div>';
+  html+='<div><label style="font-size:11px;color:var(--text-secondary);">Peso total do pacote (g)</label><input type="number" id="pc-pesopct" value="'+(p.pesoPct||'')+'" step="0.01" placeholder="Ex: 1500" style="width:100%;font-size:16px;padding:11px;border-radius:8px;border:1px solid var(--border-md);box-sizing:border-box;" /></div>';
   html+='</div>';
   html+='</div>';
 
   // Massa
   html+='<div class="card" style="padding:14px;margin-bottom:10px;border-left:3px solid var(--mc-verde);">';
   html+='<div class="card-label" style="color:var(--mc-verde);">🌾 Massa</div>';
-  html+='<div style="display:grid;grid-template-columns:2fr 1fr;gap:10px;margin-top:8px;">';
-  html+='<div><label style="font-size:11px;color:var(--text-secondary);">Tipo de massa</label><select id="pc-tipomassa" style="width:100%;font-size:14px;padding:8px;border-radius:6px;border:1px solid var(--border-md);"><option value="">— Sem massa —</option>';
+  html+='<div style="margin-top:8px;">';
+  html+='<div><label style="font-size:11px;color:var(--text-secondary);">Tipo de massa</label><select id="pc-tipomassa" style="width:100%;font-size:16px;padding:12px;min-height:48px;border-radius:8px;border:1px solid var(--border-md);font-family:inherit;box-sizing:border-box;"><option value="">— Sem massa —</option>';
   MASSAS.forEach(m=>{ html+='<option value="'+m.replace(/"/g,'&quot;')+'"'+(_normNome(p.tipoMassa)===_normNome(m)?' selected':'')+'>'+m+'</option>'; });
   html+='</select></div>';
-  html+='<div><label style="font-size:11px;color:var(--text-secondary);">Gramatura (gr/un)</label><input type="number" id="pc-grmassa" value="'+(p.grMassa||'')+'" step="0.01" style="width:100%;font-size:14px;padding:8px;border-radius:6px;border:1px solid var(--border-md);" /></div>';
+  html+='<div style="margin-top:10px;max-width:220px;"><label style="font-size:11px;color:var(--text-secondary);">Gramatura (gr/un)</label><input type="number" id="pc-grmassa" value="'+(p.grMassa||'')+'" step="0.01" style="width:100%;font-size:16px;padding:11px;border-radius:8px;border:1px solid var(--border-md);box-sizing:border-box;" /></div>';
   html+='</div>';
   html+='</div>';
 
   // Recheio 1
   html+='<div class="card" style="padding:14px;margin-bottom:10px;border-left:3px solid var(--mc-laranja);">';
   html+='<div class="card-label" style="color:var(--mc-laranja);">🥄 Recheio 1</div>';
-  html+='<div style="display:grid;grid-template-columns:2fr 1fr;gap:10px;margin-top:8px;">';
-  html+='<div><label style="font-size:11px;color:var(--text-secondary);">Tipo de recheio</label><select id="pc-tiporecheio" style="width:100%;font-size:14px;padding:8px;border-radius:6px;border:1px solid var(--border-md);"><option value="">— Sem recheio —</option>';
+  html+='<div style="margin-top:8px;">';
+  html+='<div><label style="font-size:11px;color:var(--text-secondary);">Tipo de recheio</label><select id="pc-tiporecheio" style="width:100%;font-size:16px;padding:12px;min-height:48px;border-radius:8px;border:1px solid var(--border-md);font-family:inherit;box-sizing:border-box;"><option value="">— Sem recheio —</option>';
   html+=_optionsRecheioAgrupadas(p.tipoRecheio);
   html+='</select></div>';
-  html+='<div><label style="font-size:11px;color:var(--text-secondary);">Gramatura (gr/un)</label><input type="number" id="pc-grrecheio" value="'+(p.grRecheio||'')+'" step="0.01" style="width:100%;font-size:14px;padding:8px;border-radius:6px;border:1px solid var(--border-md);" /></div>';
+  html+='<div style="margin-top:10px;max-width:220px;"><label style="font-size:11px;color:var(--text-secondary);">Gramatura (gr/un)</label><input type="number" id="pc-grrecheio" value="'+(p.grRecheio||'')+'" step="0.01" style="width:100%;font-size:16px;padding:11px;border-radius:8px;border:1px solid var(--border-md);box-sizing:border-box;" /></div>';
   html+='</div>';
   html+='</div>';
 
   // Recheio 2
   html+='<div class="card" style="padding:14px;margin-bottom:10px;border-left:3px solid var(--mc-roxo);">';
   html+='<div class="card-label" style="color:var(--mc-roxo);">🥄 Recheio 2 (opcional)</div>';
-  html+='<div style="display:grid;grid-template-columns:2fr 1fr;gap:10px;margin-top:8px;">';
-  html+='<div><label style="font-size:11px;color:var(--text-secondary);">Tipo de recheio</label><select id="pc-tiporecheio2" style="width:100%;font-size:14px;padding:8px;border-radius:6px;border:1px solid var(--border-md);"><option value="">— Sem 2º recheio —</option>';
+  html+='<div style="margin-top:8px;">';
+  html+='<div><label style="font-size:11px;color:var(--text-secondary);">Tipo de recheio</label><select id="pc-tiporecheio2" style="width:100%;font-size:16px;padding:12px;min-height:48px;border-radius:8px;border:1px solid var(--border-md);font-family:inherit;box-sizing:border-box;"><option value="">— Sem 2º recheio —</option>';
   html+=_optionsRecheioAgrupadas(p.tipoRecheio2);
   html+='</select></div>';
-  html+='<div><label style="font-size:11px;color:var(--text-secondary);">Gramatura (gr/un)</label><input type="number" id="pc-grrecheio2" value="'+(p.grRecheio2||'')+'" step="0.01" style="width:100%;font-size:14px;padding:8px;border-radius:6px;border:1px solid var(--border-md);" /></div>';
+  html+='<div style="margin-top:10px;max-width:220px;"><label style="font-size:11px;color:var(--text-secondary);">Gramatura (gr/un)</label><input type="number" id="pc-grrecheio2" value="'+(p.grRecheio2||'')+'" step="0.01" style="width:100%;font-size:16px;padding:11px;border-radius:8px;border:1px solid var(--border-md);box-sizing:border-box;" /></div>';
   html+='</div>';
   html+='</div>';
 
   // Embalagem
   html+='<div class="card" style="padding:14px;margin-bottom:10px;border-left:3px solid #0891b2;">';
   html+='<div class="card-label" style="color:#0e7490;">\u{1F4E6} Embalagem</div>';
-  html+='<div style="display:grid;grid-template-columns:2fr 1fr;gap:10px;margin-top:8px;">';
-  html+='<div><label style="font-size:11px;color:var(--text-secondary);">Embalagem usada</label><select id="pc-embcod" style="width:100%;font-size:14px;padding:8px;border-radius:6px;border:1px solid var(--border-md);"><option value="">\u2014 Sem embalagem \u2014</option>';
+  html+='<div style="margin-top:8px;">';
+  html+='<div><label style="font-size:11px;color:var(--text-secondary);">Embalagem usada</label><select id="pc-embcod" style="width:100%;font-size:16px;padding:12px;min-height:48px;border-radius:8px;border:1px solid var(--border-md);font-family:inherit;box-sizing:border-box;"><option value="">\u2014 Sem embalagem \u2014</option>';
   html+=_optionsEmbalagens(p.embalagemCod);
   html+='</select></div>';
-  html+='<div><label style="font-size:11px;color:var(--text-secondary);">Qtd. por pacote</label><input type="number" id="pc-embqtd" value="'+(p.embalagemQtd!=null&&p.embalagemQtd!==''?p.embalagemQtd:1)+'" step="0.01" min="0" style="width:100%;font-size:14px;padding:8px;border-radius:6px;border:1px solid var(--border-md);" /></div>';
+  html+='<div style="margin-top:10px;max-width:220px;"><label style="font-size:11px;color:var(--text-secondary);">Qtd. por pacote</label><input type="number" id="pc-embqtd" value="'+(p.embalagemQtd!=null&&p.embalagemQtd!==''?p.embalagemQtd:1)+'" step="0.01" min="0" style="width:100%;font-size:16px;padding:11px;border-radius:8px;border:1px solid var(--border-md);box-sizing:border-box;" /></div>';
   html+='</div>';
   html+='<div style="font-size:11px;color:var(--text-secondary);margin-top:8px;line-height:1.5;">Quantas unidades da embalagem cada pacote consome. O app de Custos multiplica pelo valor cadastrado em <strong>Cadastro de Embalagens</strong>.'+
         (embalagensList.length?'':' <span style="color:var(--mc-vermelho);">Nenhuma embalagem cadastrada ainda.</span>')+'</div>';
@@ -13980,7 +13991,7 @@ function renderDemandaDet(){
   html+='<textarea oninput="demSet(\'descricao\',this.value)" placeholder="Detalhes da demanda..." style="width:100%;min-height:80px;font-size:14px;padding:10px;border-radius:8px;border:1px solid var(--border-md,#d1d5db);box-sizing:border-box;font-family:inherit;resize:vertical;">'+(d.descricao||'')+'</textarea>';
   // categoria
   html+='<div class="card-label" style="margin-top:10px;">Categoria</div>';
-  html+='<div style="display:flex;gap:8px;"><select onchange="demSet(\'categoria\',this.value)" style="flex:1;font-size:14px;padding:9px;border-radius:8px;border:1px solid var(--border-md,#d1d5db);">'+catOpts+'</select><button class="btn btn-secondary" style="white-space:nowrap;" onclick="novaCategoriaDemanda()">+ Nova</button></div>';
+  html+='<div style="display:flex;gap:8px;flex-wrap:wrap;"><select onchange="demSet(\'categoria\',this.value)" style="flex:1 1 100%;font-size:16px;padding:11px;min-height:46px;border-radius:8px;border:1px solid var(--border-md,#d1d5db);font-family:inherit;box-sizing:border-box;">'+catOpts+'</select><button class="btn btn-secondary" style="white-space:nowrap;" onclick="novaCategoriaDemanda()">+ Nova</button></div>';
   // status + prioridade
   html+='<div style="display:flex;gap:10px;margin-top:10px;">';
   html+='<div style="flex:1;"><div class="card-label">Status</div><select onchange="demSet(\'status\',this.value)" style="width:100%;font-size:14px;padding:9px;border-radius:8px;border:1px solid var(--border-md,#d1d5db);">'+
@@ -17987,6 +17998,7 @@ onSnapshot(collection(db,'acompProdStatus'), snap=>{
     snap.docs.forEach(d=> acPlayStatus[d.id]=d.data());
     const _t=document.querySelector('.screen.active')?.id;
     if(_t==='s-acomp') renderAcomp();
+    if(_t==='s-acomp-coz') renderAcompCoz();
     if(_t==='s-tv') renderTV();
   }catch(e){ console.error('acompProdStatus snap',e); }
 });
@@ -18047,15 +18059,24 @@ function acPlayFinalizar(semana,dia,produto){
 }
 window.acPlayFinalizar=acPlayFinalizar;
 
-// quem pode apagar histórico de play: admin ou encarregado do setor (conf/quadra)
+// A cozinha usa o MESMO motor de tempo da confeitaria; o prefixo evita que um
+// recheio e um produto de mesmo nome dividam o mesmo cronômetro.
+const AC_COZ_PREF='@COZ@ ';
+function acCozPlayNome(recheio){ return AC_COZ_PREF+recheio; }
+
+// quem pode apagar histórico de play: admin ou encarregado do setor
 function acPlayPodeApagar(){
-  return window.adminMode || ['admin','conf','quadra'].includes(window.setorAtual);
+  return window.adminMode || ['admin','conf','confeitaria','quadra','coz','cozinha'].includes(window.setorAtual);
 }
 async function acPlayApagar(semana,dia,produto){
   if(!acPlayPodeApagar()) return;
   if(!confirm('Apagar o histórico de tempo (play/pausa/manutenção) deste produto?\n\nIsso zera o cronômetro e permite iniciar de novo. Não afeta a produção lançada.')) return;
   const id=acPlayId(semana,dia,produto);
-  try{ await deleteDoc(doc(db,'acompProdStatus',id)); delete acPlayStatus[id]; renderAcomp(); }
+  try{
+    await deleteDoc(doc(db,'acompProdStatus',id)); delete acPlayStatus[id];
+    const t=document.querySelector('.screen.active')?.id;
+    if(t==='s-acomp-coz') renderAcompCoz(); else renderAcomp();
+  }
   catch(e){ alert('Erro: '+e.message); }
 }
 window.acPlayApagar=acPlayApagar;
@@ -18115,7 +18136,475 @@ function acPlayControle(semana,dia,produto,pct){
 
 
 
-// ===================== AGENDA DE CONTAGENS (aviso 3 dias antes) =====================
+/* ══════════════════════════════════════════════════════════════════
+   EXIBIÇÃO — tela cheia e largura total
+   Preferência POR APARELHO (localStorage), não do sistema: cada tablet
+   ou celular guarda a sua. Botões no rodapé da tela inicial.
+   ══════════════════════════════════════════════════════════════════ */
+function _mcPref(chave,valor){
+  try{
+    if(valor===undefined) return localStorage.getItem(chave);
+    localStorage.setItem(chave,valor); return valor;
+  }catch(e){ return null; }
+}
+
+function mcTelaCheiaAtiva(){
+  return !!(document.fullscreenElement||document.webkitFullscreenElement);
+}
+function mcTelaCheiaSuportada(){
+  const e=document.documentElement;
+  return !!(e.requestFullscreen||e.webkitRequestFullscreen);
+}
+
+function mcToggleTelaCheia(){
+  const e=document.documentElement;
+  if(mcTelaCheiaAtiva()){
+    _mcPref('mc_tela_cheia','0');
+    try{ (document.exitFullscreen||document.webkitExitFullscreen).call(document); }catch(_){}
+    return;
+  }
+  if(!mcTelaCheiaSuportada()){
+    alert('Este navegador não deixa o app entrar em tela cheia.\n\nNo iPad/iPhone, use o botão de compartilhar do Safari e escolha "Adicionar à Tela de Início". O app abre sem a barra do navegador.');
+    return;
+  }
+  _mcPref('mc_tela_cheia','1');
+  try{ (e.requestFullscreen||e.webkitRequestFullscreen).call(e); }catch(err){ alert('Não foi possível entrar em tela cheia: '+err.message); }
+}
+window.mcToggleTelaCheia=mcToggleTelaCheia;
+
+function mcToggleLarguraTotal(){
+  const novo = document.body.classList.contains('mc-largura-total') ? '0' : '1';
+  _mcPref('mc_largura_total',novo);
+  document.body.classList.toggle('mc-largura-total', novo==='1');
+  mcRenderExibicao();
+}
+window.mcToggleLarguraTotal=mcToggleLarguraTotal;
+
+function mcRenderExibicao(){
+  const el=document.getElementById('mc-exibicao-box'); if(!el) return;
+  const cheia=mcTelaCheiaAtiva();
+  const larga=document.body.classList.contains('mc-largura-total');
+  const btn=(txt,ativo,fn)=>'<button onclick="'+fn+'" style="background:'+(ativo?'var(--mc-azul,#2563eb)':'var(--bg-primary,#fff)')+';color:'+(ativo?'#fff':'var(--text-secondary)')+';border:1px solid '+(ativo?'var(--mc-azul,#2563eb)':'var(--border)')+';border-radius:99px;padding:8px 16px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;">'+txt+'</button>';
+  el.innerHTML =
+    btn(cheia?'⛶ Sair da tela cheia':'⛶ Tela cheia', cheia, 'mcToggleTelaCheia()')+
+    btn(larga?'↔ Usando toda a largura':'↔ Usar toda a largura', larga, 'mcToggleLarguraTotal()');
+}
+window.mcRenderExibicao=mcRenderExibicao;
+
+// aplica as preferências salvas assim que o app abre
+(function mcExibicaoInit(){
+  try{
+    if(_mcPref('mc_largura_total')==='1') document.body.classList.add('mc-largura-total');
+  }catch(e){}
+  // o navegador só entra em tela cheia a partir de um toque da pessoa,
+  // então se ficou ligado, reativa no primeiro toque depois de abrir
+  if(_mcPref('mc_tela_cheia')==='1'){
+    const reativar=()=>{
+      document.removeEventListener('pointerdown',reativar);
+      if(!mcTelaCheiaAtiva() && mcTelaCheiaSuportada()){
+        const e=document.documentElement;
+        try{ (e.requestFullscreen||e.webkitRequestFullscreen).call(e); }catch(_){}
+      }
+    };
+    document.addEventListener('pointerdown',reativar);
+  }
+  ['fullscreenchange','webkitfullscreenchange'].forEach(ev=>
+    document.addEventListener(ev, mcRenderExibicao));
+  mcRenderExibicao();
+})();
+
+/* ══════════════════════════════════════════════════════════════════
+   RECHEIO NO ELEVADOR — aviso da COZINHA para a CONFEITARIA
+   Um botão só, sem escolher recheio. O Painel TV pisca sem parar até
+   alguém da confeitaria confirmar a retirada (no painel OU no celular).
+   Guarda o horário de quem avisou e de quem retirou.
+   Coleção: elevadorAvisos
+   ══════════════════════════════════════════════════════════════════ */
+let elevAvisos=[];
+
+onSnapshot(collection(db,'elevadorAvisos'), snap=>{
+  try{
+    elevAvisos=snap.docs.map(d=>({firestoreId:d.id,...d.data()}))
+      .sort((a,b)=>(b.ts||0)-(a.ts||0));
+    elevAtualizarTelas();
+  }catch(e){ console.error('elevadorAvisos snap',e); }
+});
+
+// quem avisou/retirou é o SETOR logado — NÃO o nome guardado no aparelho
+function _elevSetor(){
+  const s=window.setorAtual||'';
+  const lbl={confeitaria:'Confeitaria',conf:'Confeitaria',cozinha:'Cozinha',coz:'Cozinha',
+    quadra:'Quadra',embalagem:'Embalagem',expedicao:'Expedição',admin:'Admin'}[s];
+  if(lbl) return lbl;
+  if(window._tvLinkMode) return 'Painel TV';
+  if(window.adminMode) return 'Admin';
+  return s||'—';
+}
+
+function elevPendente(){ return elevAvisos.find(a=>a.status!=='retirado')||null; }
+function _elevHoraCurta(s){ return String(s||'').slice(-5); }
+
+function elevAtualizarTelas(){
+  _elevRenderTV();
+  if(_acDragAtivo) return;
+  const t=document.querySelector('.screen.active')?.id;
+  if(t==='s-acomp') renderAcomp();
+  if(t==='s-acomp-coz') renderAcompCoz();
+}
+
+async function elevAvisar(){
+  if(elevPendente()){ alert('Já existe um aviso ativo aguardando a retirada.'); return; }
+  if(!confirm('Avisar a confeitaria que tem recheio no elevador?\n\nO painel do chão de fábrica vai piscar até alguém confirmar a retirada.')) return;
+  try{
+    await addDoc(collection(db,'elevadorAvisos'),{
+      status:'pendente', avisadoPor:_elevSetor(),
+      data:hoje(), hora:agora(), ts:Date.now()
+    });
+  }catch(e){ alert('Erro ao avisar: '+e.message); }
+}
+window.elevAvisar=elevAvisar;
+
+async function elevRetirar(){
+  const a=elevPendente(); if(!a) return;
+  try{
+    await updateDoc(doc(db,'elevadorAvisos',a.firestoreId),{
+      status:'retirado', retiradoPor:_elevSetor(),
+      retiradoEm:agora(), retiradoTs:Date.now()
+    });
+  }catch(e){ alert('Erro ao confirmar: '+e.message); }
+}
+window.elevRetirar=elevRetirar;
+
+async function elevCancelar(){
+  const a=elevPendente(); if(!a) return;
+  if(!confirm('Cancelar o aviso? Use quando o botão foi apertado por engano.')) return;
+  try{ await deleteDoc(doc(db,'elevadorAvisos',a.firestoreId)); }
+  catch(e){ alert('Erro: '+e.message); }
+}
+window.elevCancelar=elevCancelar;
+
+function _elevInjectStyles(){
+  if(document.getElementById('elev-anim-styles')) return;
+  const s=document.createElement('style'); s.id='elev-anim-styles';
+  s.textContent='@keyframes elevBlink{0%,100%{opacity:0}50%{opacity:.55}}'+
+    '@keyframes elevBar{0%,100%{transform:translate(-50%,-50%) scale(1);box-shadow:0 10px 40px rgba(0,0,0,.3)}50%{transform:translate(-50%,-50%) scale(1.04);box-shadow:0 14px 60px rgba(220,38,38,.55)}}';
+  document.head.appendChild(s);
+}
+
+// camada que pisca sobre o Painel TV. Fica FORA do #tv-content, então a
+// animação não reinicia quando o painel troca de visão a cada 15s.
+function _elevRenderTV(){
+  const el=document.getElementById('tv-elevador'); if(!el) return;
+  const a=elevPendente();
+  if(!a){ if(el.innerHTML){ el.innerHTML=''; el.removeAttribute('data-sig'); } return; }
+  if(el.getAttribute('data-sig')===a.firestoreId) return; // já pisca por este aviso
+  el.setAttribute('data-sig',a.firestoreId);
+  _elevInjectStyles();
+  el.innerHTML=
+    '<div style="position:absolute;inset:0;background:#dc2626;animation:elevBlink 1s ease-in-out infinite;pointer-events:none;"></div>'+
+    '<div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);pointer-events:auto;'+
+      'background:#fff;border:6px solid #dc2626;border-radius:24px;padding:26px 30px;text-align:center;'+
+      'animation:elevBar 1s ease-in-out infinite;width:min(520px,78vw);box-sizing:border-box;">'+
+      '<div style="font-size:54px;line-height:1;">🛗</div>'+
+      '<div style="font-size:42px;font-weight:900;color:#b91c1c;line-height:1.05;margin-top:10px;letter-spacing:-1px;">RECHEIO NO<br>ELEVADOR</div>'+
+      '<div style="font-size:15px;color:#64748b;font-weight:600;margin-top:12px;">avisado às '+_elevHoraCurta(a.hora)+' pela '+(a.avisadoPor||'Cozinha')+'</div>'+
+      '<button onclick="elevRetirar()" style="margin-top:20px;width:100%;background:#16a34a;border:none;color:#fff;font-size:22px;font-weight:900;padding:16px;border-radius:14px;cursor:pointer;font-family:inherit;">✓ JÁ RETIREI</button>'+
+    '</div>';
+}
+
+// faixa no topo do acompanhamento da CONFEITARIA — confirmar pelo celular
+function elevBannerConf(){
+  const a=elevPendente();
+  if(!a) return '';
+  return '<div style="background:#fef2f2;border:2px solid #dc2626;border-radius:12px;padding:14px;margin-bottom:12px;text-align:center;">'+
+    '<div style="font-size:17px;font-weight:900;color:#b91c1c;">🛗 Recheio no elevador</div>'+
+    '<div style="font-size:12px;color:var(--text-secondary);margin-top:3px;">avisado às '+_elevHoraCurta(a.hora)+' pela '+(a.avisadoPor||'Cozinha')+'</div>'+
+    '<button onclick="elevRetirar()" style="margin-top:10px;width:100%;background:#16a34a;border:none;color:#fff;border-radius:10px;padding:13px;font-size:15px;font-weight:800;cursor:pointer;font-family:inherit;">✓ Já retirei do elevador</button>'+
+    '</div>';
+}
+
+// botão único no topo da tela da COZINHA
+function elevBotaoCoz(){
+  const a=elevPendente();
+  if(a){
+    return '<div style="background:#fef2f2;border:2px solid #dc2626;border-radius:12px;padding:12px;margin-bottom:12px;">'+
+      '<div style="font-size:15px;font-weight:800;color:#b91c1c;">🛗 Recheio no elevador</div>'+
+      '<div style="font-size:12px;color:var(--text-secondary);margin-top:3px;">avisado às '+_elevHoraCurta(a.hora)+' · aguardando a confeitaria retirar</div>'+
+      '<button onclick="elevCancelar()" style="margin-top:8px;background:#fff;border:1px solid #fecaca;color:#b91c1c;border-radius:8px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">cancelar aviso</button>'+
+      '</div>';
+  }
+  return '<button onclick="elevAvisar()" style="width:100%;background:#f59e0b;border:none;color:#fff;border-radius:12px;padding:15px;font-size:16px;font-weight:800;cursor:pointer;font-family:inherit;margin-bottom:12px;">🛗 Avisar: recheio no elevador</button>';
+}
+
+// histórico: hora do aviso, hora da retirada e quanto tempo esperou
+function elevHistoricoHtml(limite){
+  const feitos=elevAvisos.filter(a=>a.status==='retirado').slice(0,limite||8);
+  if(!feitos.length) return '';
+  const linhas=feitos.map(a=>{
+    let espera='', lento=false;
+    if(a.ts!=null && a.retiradoTs!=null){
+      const min=Math.max(0,Math.round((a.retiradoTs-a.ts)/60000));
+      lento=min>15;
+      espera=min<60?(min+' min'):(Math.floor(min/60)+'h'+String(min%60).padStart(2,'0'));
+    }
+    return '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 0;border-top:1px dashed var(--border);">'+
+      '<div style="flex:1;min-width:0;font-size:12px;">'+
+        '<div><strong>'+_elevHoraCurta(a.hora)+'</strong> <span style="color:var(--text-secondary);">'+(a.avisadoPor||'Cozinha')+'</span>'+
+        ' → <strong>'+_elevHoraCurta(a.retiradoEm)+'</strong> <span style="color:var(--text-secondary);">'+(a.retiradoPor||'Confeitaria')+'</span></div>'+
+        '<div style="font-size:10px;color:var(--text-muted);">'+(a.data||'')+'</div>'+
+      '</div>'+
+      (espera?'<span style="flex:0 0 auto;font-size:11px;font-weight:700;color:'+(lento?'#b45309':'#16a34a')+';">'+espera+'</span>':'')+
+      '</div>';
+  }).join('');
+  return '<div class="card" style="margin-bottom:12px;">'+
+    '<div style="font-size:13px;font-weight:700;">🛗 Últimas retiradas do elevador</div>'+
+    linhas+
+    '<div style="font-size:10px;color:var(--text-muted);margin-top:6px;">hora do aviso → hora da retirada · tempo de espera</div>'+
+    '</div>';
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   ADIANTAR PRODUÇÃO — puxar um produto para um dia ANTERIOR
+   O plano da semana NÃO muda. O que muda é onde o produto aparece no
+   acompanhamento (e, junto, a necessidade de recheio da cozinha).
+   acompAntecipacoes/{semana__diaOriginal__produto} = {diaNovo,...}
+   ══════════════════════════════════════════════════════════════════ */
+const AC_DIAS_SEM=['Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
+let acAntecipacoes={}; // id -> {semana,diaOriginal,diaNovo,produto,...}
+
+onSnapshot(collection(db,'acompAntecipacoes'), snap=>{
+  try{
+    acAntecipacoes={};
+    snap.docs.forEach(d=> acAntecipacoes[d.id]=d.data());
+    if(_acDragAtivo) return;
+    const t=document.querySelector('.screen.active')?.id;
+    if(t==='s-acomp') renderAcomp();
+    if(t==='s-acomp-coz') renderAcompCoz();
+  }catch(e){ console.error('acompAntecipacoes snap',e); }
+});
+
+function acAntecId(semana,diaOriginal,produto){
+  return _acSafeSeg(semana)+'__'+_acSafeSeg(diaOriginal)+'__'+_acSafeSeg(_normNome(produto));
+}
+
+// para onde esse produto foi adiantado? (null = continua no dia do plano)
+function acAntecDia(semana,diaOriginal,produto){
+  const a=acAntecipacoes[acAntecId(semana,diaOriginal,produto)];
+  if(!a || !a.diaNovo) return null;
+  // só vale se for mesmo um dia anterior e existir na semana
+  const iO=AC_DIAS_SEM.indexOf(diaOriginal), iN=AC_DIAS_SEM.indexOf(a.diaNovo);
+  if(iO<0 || iN<0 || iN>=iO) return null;
+  return a.diaNovo;
+}
+
+async function acAntecSalvar(semana,diaOriginal,produto,diaNovo){
+  const id=acAntecId(semana,diaOriginal,produto);
+  try{
+    await setDoc(doc(db,'acompAntecipacoes',id),
+      { semana, diaOriginal, diaNovo, produto, produtoNorm:_normNome(produto),
+        autor:_demAutor(), quando:agora() }, {merge:true});
+  }catch(e){ alert('Erro ao adiantar: '+e.message); }
+}
+
+async function acAntecDesfazer(semana,diaOriginal,produto){
+  if(!confirm('Devolver "'+produto+'" para '+diaOriginal+'?')) return;
+  const id=acAntecId(semana,diaOriginal,produto);
+  try{ await deleteDoc(doc(db,'acompAntecipacoes',id)); delete acAntecipacoes[id]; renderAcomp(); }
+  catch(e){ alert('Erro: '+e.message); }
+}
+window.acAntecDesfazer=acAntecDesfazer;
+
+// modal para escolher o dia — só dias ANTERIORES ao do plano
+function acAntecAbrir(semana,diaOriginal,produto){
+  if(!acPrioPodeOrdenar()) return;
+  const iO=AC_DIAS_SEM.indexOf(diaOriginal);
+  const atual=acAntecDia(semana,diaOriginal,produto);
+  const anteriores=AC_DIAS_SEM.slice(0,Math.max(iO,0));
+  if(!anteriores.length){ alert('Segunda-feira já é o primeiro dia da semana — não há dia anterior.'); return; }
+  const ov=document.createElement('div');
+  ov.id='ac-antec-modal';
+  ov.style.cssText='position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:3200;display:flex;align-items:center;justify-content:center;padding:16px;';
+  ov.innerHTML='<div style="background:#fff;border-radius:16px;max-width:420px;width:100%;padding:18px;">'+
+    '<div style="font-size:17px;font-weight:800;margin-bottom:2px;">⏪ Adiantar produção</div>'+
+    '<div style="font-size:12px;color:var(--text-secondary);margin-bottom:14px;">'+produto+' · planejado para '+diaOriginal+(atual?(' · hoje está na '+atual):'')+'</div>'+
+    anteriores.map(d=>{
+      const ehAtual=(d===atual);
+      return '<button onclick="acAntecEscolher(\''+semana+'\',\''+diaOriginal+'\',\''+escapeJsStr(produto)+'\',\''+d+'\')" '+
+      'style="display:block;width:100%;text-align:left;background:'+(ehAtual?'rgba(37,99,235,.10)':'#fff')+';border:1px solid '+(ehAtual?'#2563eb':'var(--border)')+';border-radius:9px;padding:13px 14px;margin-bottom:7px;cursor:pointer;font-size:15px;font-weight:600;font-family:inherit;">Produzir na '+d+(ehAtual?' <span style="font-size:11px;font-weight:700;color:#1d4ed8;">· atual</span>':'')+'</button>';
+    }).join('')+
+    (atual?'<button onclick="acAntecEscolher(\''+semana+'\',\''+diaOriginal+'\',\''+escapeJsStr(produto)+'\',\'\')" style="display:block;width:100%;text-align:left;background:#fff;border:1px solid var(--border);border-radius:9px;padding:13px 14px;margin-bottom:7px;cursor:pointer;font-size:15px;font-weight:600;font-family:inherit;">↩ Devolver para '+diaOriginal+' <span style="font-size:11px;font-weight:400;color:var(--text-secondary);">(dia do plano)</span></button>':'')+
+    '<div style="font-size:11px;color:var(--text-secondary);margin:10px 0 14px;line-height:1.5;">O plano da semana não muda. O produto passa a aparecer no dia escolhido, marcado como adiantado, e a cozinha recebe a necessidade de recheio nesse mesmo dia.</div>'+
+    '<button class="btn btn-secondary" style="width:100%;" onclick="document.getElementById(\'ac-antec-modal\').remove()">Cancelar</button>'+
+  '</div>';
+  document.body.appendChild(ov);
+}
+window.acAntecAbrir=acAntecAbrir;
+
+async function acAntecEscolher(semana,diaOriginal,produto,diaNovo){
+  document.getElementById('ac-antec-modal')?.remove();
+  if(!diaNovo){ // devolver para o dia do plano
+    const id=acAntecId(semana,diaOriginal,produto);
+    try{ await deleteDoc(doc(db,'acompAntecipacoes',id)); delete acAntecipacoes[id]; renderAcomp(); }
+    catch(e){ alert('Erro: '+e.message); }
+    return;
+  }
+  await acAntecSalvar(semana,diaOriginal,produto,diaNovo);
+}
+window.acAntecEscolher=acAntecEscolher;
+
+/* ══════════════════════════════════════════════════════════════════
+   PRIORIDADES DO PLANO — a CONFEITARIA dita, a COZINHA segue
+   A confeitaria arrasta os produtos de um dia; a ordem fica salva em
+   acompPrioridades/{semana__dia} = {ordem:[nomeNormalizado,...]}.
+   O acompanhamento da cozinha lê essa mesma ordem e coloca cada
+   recheio na posição do produto MAIS prioritário que o consome.
+   ══════════════════════════════════════════════════════════════════ */
+let acPrioridades = {};   // id -> {semana,dia,ordem:[...]}
+let _acDragAtivo = false; // trava o re-render enquanto o dedo arrasta
+
+onSnapshot(collection(db,'acompPrioridades'), snap=>{
+  try{
+    acPrioridades={};
+    snap.docs.forEach(d=> acPrioridades[d.id]=d.data());
+    if(_acDragAtivo) return;
+    const t=document.querySelector('.screen.active')?.id;
+    if(t==='s-acomp') renderAcomp();
+    if(t==='s-acomp-coz') renderAcompCoz();
+  }catch(e){ console.error('acompPrioridades snap',e); }
+});
+
+function acPrioId(semana,dia){ return _acSafeSeg(semana)+'__'+_acSafeSeg(dia); }
+
+function acPrioOrdem(semana,dia){
+  const d=acPrioridades[acPrioId(semana,dia)];
+  return (d && Array.isArray(d.ordem)) ? d.ordem : [];
+}
+
+// posição de um produto na ordem salva (9999 = ainda não priorizado)
+function acPrioPos(semana,dia,nome){
+  const i=acPrioOrdem(semana,dia).indexOf(_normNome(nome));
+  return i<0 ? 9999 : i;
+}
+
+// ordena mantendo a ordem original para quem ainda não foi priorizado
+function acPrioOrdenar(semana,dia,lista,getNome){
+  return lista.map((it,idx)=>({it,idx}))
+    .sort((a,b)=>{
+      const pa=acPrioPos(semana,dia,getNome(a.it)), pb=acPrioPos(semana,dia,getNome(b.it));
+      if(pa!==pb) return pa-pb;
+      return a.idx-b.idx;
+    })
+    .map(x=>x.it);
+}
+
+// quem pode reordenar: confeitaria ou admin
+function acPrioPodeOrdenar(){
+  return window.adminMode===true || ['confeitaria','conf','admin'].includes(window.setorAtual);
+}
+
+async function acPrioSalvar(semana,dia,nomes){
+  const id=acPrioId(semana,dia);
+  const ordem=nomes.map(n=>_normNome(n)).filter(Boolean);
+  // cache local imediato — a tela já mostra a nova numeração antes do Firebase responder
+  acPrioridades[id]={...(acPrioridades[id]||{}), semana, dia, ordem};
+  try{
+    await setDoc(doc(db,'acompPrioridades',id),
+      { semana, dia, ordem, atualizadoEm:agora(), autor:_demAutor() }, {merge:true});
+  }catch(e){ alert('Erro ao salvar a prioridade: '+e.message); }
+}
+
+async function acPrioLimpar(semana,dia){
+  if(!acPrioPodeOrdenar()) return;
+  if(!confirm('Limpar a ordem de prioridade de '+dia+'?\n\nOs produtos voltam à ordem automática (pendentes primeiro) e a cozinha acompanha.')) return;
+  const id=acPrioId(semana,dia);
+  try{ await deleteDoc(doc(db,'acompPrioridades',id)); delete acPrioridades[id]; renderAcomp(); }
+  catch(e){ alert('Erro: '+e.message); }
+}
+window.acPrioLimpar=acPrioLimpar;
+
+// selo com o número da prioridade
+function acPrioBadge(n){
+  return '<span style="flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;min-width:22px;height:22px;border-radius:11px;background:var(--mc-azul,#2563eb);color:#fff;font-size:12px;font-weight:800;padding:0 6px;">'+n+'</span>';
+}
+
+// alça de arrastar (só aparece para quem pode reordenar)
+function acPrioAlca(){
+  return '<span data-ac-handle="1" onclick="event.stopPropagation();" title="Segure e arraste para mudar a prioridade" '+
+    'style="flex:0 0 auto;touch-action:none;cursor:grab;user-select:none;-webkit-user-select:none;font-size:17px;line-height:1;color:var(--text-muted,#94a3b8);padding:4px 6px;margin:-4px 0;">⠿</span>';
+}
+
+/* arrastar por toque (pointer events) — funciona em celular, tablet e PC.
+   O listener é registrado UMA vez e usa delegação, então continua valendo
+   depois de qualquer re-render da tela. */
+(function acPrioDragInit(){
+  let st=null;
+
+  function limparEstilo(el){
+    el.style.transform=''; el.style.boxShadow=''; el.style.opacity='';
+    el.style.zIndex=''; el.style.position=''; el.style.transition='';
+  }
+
+  document.addEventListener('pointerdown', function(e){
+    const h = e.target && e.target.closest ? e.target.closest('[data-ac-handle]') : null;
+    if(!h) return;
+    const item = h.closest('[data-ac-item]');
+    const cont = item && item.closest('[data-ac-lista]');
+    if(!item || !cont) return;
+    e.preventDefault(); e.stopPropagation();
+    _acDragAtivo=true;
+    st={item, cont, startY:e.clientY};
+    item.style.transition='none';
+    item.style.position='relative';
+    item.style.zIndex='50';
+    item.style.opacity='0.95';
+    item.style.boxShadow='0 8px 20px rgba(15,23,42,.22)';
+    try{ h.setPointerCapture(e.pointerId); }catch(_){}
+  }, true);
+
+  document.addEventListener('pointermove', function(e){
+    if(!st) return;
+    e.preventDefault();
+    const dy=e.clientY-st.startY;
+    st.item.style.transform='translateY('+dy+'px)';
+    const irmaos=Array.from(st.cont.querySelectorAll('[data-ac-item]')).filter(x=>x!==st.item);
+    const r=st.item.getBoundingClientRect();
+    const meu=r.top+r.height/2;
+    for(const s of irmaos){
+      const rs=s.getBoundingClientRect();
+      const dele=rs.top+rs.height/2;
+      const itemDepois = !!(s.compareDocumentPosition(st.item) & Node.DOCUMENT_POSITION_FOLLOWING);
+      const itemAntes  = !!(s.compareDocumentPosition(st.item) & Node.DOCUMENT_POSITION_PRECEDING);
+      if((meu < dele && itemDepois) || (meu > dele && itemAntes)){
+        // onde o card está AGORA na tela (já com o deslocamento do dedo)
+        const topoVisual=r.top;
+        if(meu < dele) st.cont.insertBefore(st.item, s);
+        else st.cont.insertBefore(st.item, s.nextSibling);
+        // depois de trocar de lugar, recoloca o card exatamente sob o dedo:
+        // sem isso ele "escapa" e cada troca engole a altura de um card
+        st.item.style.transform='';
+        const topoNovo=st.item.getBoundingClientRect().top;
+        const resto=topoVisual-topoNovo;
+        st.startY=e.clientY-resto;
+        st.item.style.transform='translateY('+resto+'px)';
+        break;
+      }
+    }
+  }, {passive:false});
+
+  function soltar(){
+    if(!st) return;
+    const cont=st.cont, item=st.item;
+    limparEstilo(item);
+    const nomes=Array.from(cont.querySelectorAll('[data-ac-item]')).map(x=>x.getAttribute('data-ac-item'));
+    const semana=cont.getAttribute('data-ac-semana'), dia=cont.getAttribute('data-ac-dia');
+    st=null; _acDragAtivo=false;
+    if(semana && dia && nomes.length) acPrioSalvar(semana,dia,nomes);
+  }
+  document.addEventListener('pointerup', soltar);
+  document.addEventListener('pointercancel', soltar);
+})();
+
+
 let agendaContagens=[];
 const AGENDA_ANTEC=3; // dias de antecedência do aviso
 
@@ -18395,7 +18884,7 @@ function _tvTick(){
   if(_tvTickN%5===0){ _tvMsgIdx++; const m=document.getElementById('tv-msg'); if(m) m.textContent=TV_MSGS[_tvMsgIdx%TV_MSGS.length]; }
   if(!_tvPaused && _tvTickN%15===0){ _tvView++; renderTV(); } // troca de visão a cada 15s (se não pausado)
 }
-function iniciarTV(){ if(_tvInterval) clearInterval(_tvInterval); _tvTickN=0; _tvInterval=setInterval(_tvTick,1000); renderTV(); }
+function iniciarTV(){ if(_tvInterval) clearInterval(_tvInterval); _tvTickN=0; _tvInterval=setInterval(_tvTick,1000); renderTV(); _elevRenderTV(); }
 function pararTV(){ if(_tvInterval){ clearInterval(_tvInterval); _tvInterval=null; } }
 function sairTV(){ if(window._tvLinkMode){ return; } if(document.fullscreenElement){ try{document.exitFullscreen();}catch(e){} } pararTV(); goTo(window.adminMode?'s-adm-hub':'s-conf-home'); }
 function tvFullscreen(){ const s=document.getElementById('s-tv'); if(!document.fullscreenElement){ (s.requestFullscreen||s.webkitRequestFullscreen||function(){}).call(s); } else { try{document.exitFullscreen();}catch(e){} } }
@@ -18868,28 +19357,57 @@ let acompObsList=[];
 onSnapshot(collection(db,'acompObs'), snap=>{
   try{
     acompObsList=snap.docs.map(d=>({firestoreId:d.id,...d.data()}));
-    if(document.querySelector('.screen.active')?.id==='s-acomp') renderAcomp();
+    if(_acDragAtivo) return;
+    const t=document.querySelector('.screen.active')?.id;
+    if(t==='s-acomp') renderAcomp();
+    if(t==='s-acomp-coz') renderAcompCoz();
   }catch(e){ console.error('acompObs snap',e); }
 });
 function _acObsDoc(semana,dia,produto){
   const pn=_normNome(produto);
   return acompObsList.find(o=>o.semana===semana && o.dia===dia && (o.produtoNorm||_normNome(o.produto||''))===pn)||null;
 }
-async function acEditarObs(semana,dia,produto){
-  const existente=_acObsDoc(semana,dia,produto);
-  const raw=prompt('Observação para "'+produto+'" ('+dia+'):\n(deixe vazio para remover)', existente?existente.texto:'');
-  if(raw===null) return;
-  const txt=raw.trim();
+/* Observação do acompanhamento. 'chave' é o que identifica a linha
+   (na cozinha vem com o prefixo interno); 'rotulo' é o nome que a
+   pessoa vê no título. Serve para confeitaria e cozinha. */
+function acEditarObs(semana,dia,chave,rotulo){
+  const nome=rotulo||chave;
+  const existente=_acObsDoc(semana,dia,chave);
+  const ov=document.createElement('div');
+  ov.id='ac-obs-modal';
+  ov.style.cssText='position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:3200;display:flex;align-items:center;justify-content:center;padding:16px;';
+  const txtAtual=(existente?existente.texto:'').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  ov.innerHTML='<div style="background:#fff;border-radius:16px;max-width:460px;width:100%;padding:18px;">'+
+    '<div style="font-size:17px;font-weight:800;margin-bottom:2px;">📝 Observação</div>'+
+    '<div style="font-size:12px;color:var(--text-secondary);margin-bottom:12px;">'+nome+' · '+dia+'</div>'+
+    '<textarea id="ac-obs-txt" rows="4" placeholder="Ex: massa demorou a chegar, forno 3 parado..." style="width:100%;padding:12px;border:1px solid var(--border-md,#d1d5db);border-radius:9px;font-size:16px;font-family:inherit;box-sizing:border-box;margin-bottom:14px;">'+txtAtual+'</textarea>'+
+    '<div style="display:flex;gap:8px;">'+
+      '<button class="btn btn-secondary" style="flex:1;" onclick="document.getElementById(\'ac-obs-modal\').remove()">Cancelar</button>'+
+      '<button class="btn btn-primary" style="flex:1;" onclick="acSalvarObs(\''+semana+'\',\''+dia+'\',\''+escapeJsStr(chave)+'\')">Salvar</button>'+
+    '</div>'+
+    (existente?'<div style="font-size:10px;color:var(--text-muted);margin-top:10px;text-align:center;">Apague o texto e salve para remover a observação.</div>':'')+
+  '</div>';
+  document.body.appendChild(ov);
+  const ta=document.getElementById('ac-obs-txt');
+  if(ta){ ta.focus(); ta.setSelectionRange(ta.value.length,ta.value.length); }
+}
+window.acEditarObs=acEditarObs;
+
+async function acSalvarObs(semana,dia,chave){
+  const ta=document.getElementById('ac-obs-txt'); if(!ta) return;
+  const txt=(ta.value||'').trim();
+  const existente=_acObsDoc(semana,dia,chave);
   try{
     if(existente){
       if(!txt){ await deleteDoc(doc(db,'acompObs',existente.firestoreId)); }
       else { await updateDoc(doc(db,'acompObs',existente.firestoreId),{texto:txt, autor:_demAutor(), atualizadoEm:agora()}); }
     } else if(txt){
-      await addDoc(collection(db,'acompObs'),{semana, dia, produto, produtoNorm:_normNome(produto), texto:txt, autor:_demAutor(), data:hoje(), hora:agora(), ts:Date.now()});
+      await addDoc(collection(db,'acompObs'),{semana, dia, produto:chave, produtoNorm:_normNome(chave), texto:txt, autor:_demAutor(), data:hoje(), hora:agora(), ts:Date.now()});
     }
+    document.getElementById('ac-obs-modal')?.remove();
   }catch(e){ alert('Erro ao salvar observação: '+e.message); }
 }
-window.acEditarObs=acEditarObs;
+window.acSalvarObs=acSalvarObs;
 
 /* ═══ QUEBRAS por produto na SEMANA inteira (reusa a lógica do Controle Diário) ═══
    Agrupa todos os registros do produto na semana (qualquer dia) e calcula:
@@ -19031,19 +19549,33 @@ function _acCalcularCoz(){
 
   // META por tipo de recheio e por dia (calculada do plano de produtos)
   // recMap[tipoRecheio] = {nome, plano:{dia->kg}}
-  const recMap={};
-  function addRec(tipo, dia, kg){
+  // usoPorDia[dia][recheioNormalizado] = [nomes dos produtos que pedem esse recheio]
+  const recMap={}, usoPorDia={}, antecPorDia={};
+  function addRec(tipo, dia, kg, produtoNome, diaPlano){
     if(!tipo || kg<=0) return;
     if(!recMap[tipo]) recMap[tipo]={nome:tipo, plano:{}};
     recMap[tipo].plano[dia]=(recMap[tipo].plano[dia]||0)+kg;
+    if(produtoNome){
+      const k=_normNome(tipo);
+      usoPorDia[dia]=usoPorDia[dia]||{};
+      usoPorDia[dia][k]=usoPorDia[dia][k]||[];
+      if(!usoPorDia[dia][k].includes(produtoNome)) usoPorDia[dia][k].push(produtoNome);
+      if(diaPlano && diaPlano!==dia){
+        antecPorDia[dia]=antecPorDia[dia]||{};
+        antecPorDia[dia][k]=antecPorDia[dia][k]||[];
+        if(!antecPorDia[dia][k].includes(diaPlano)) antecPorDia[dia][k].push(diaPlano);
+      }
+    }
   }
   DIAS.forEach(d=>{
     (itens[d]||[]).forEach(it=>{
       const nome=it.nome||it.produtoNome||''; if(!nome) return;
       const prod=PRODUTOS.find(p=>p.nome===nome); if(!prod) return;
       const un=(parseInt(it.qtdPacotes||it.qtd)||0)*(prod.qtdPct||1); if(un<=0) return;
-      if(prod.tipoRecheio && prod.grRecheio>0) addRec(prod.tipoRecheio, d, prod.grRecheio*un/1000);
-      if(prod.tipoRecheio2 && prod.grRecheio2>0) addRec(prod.tipoRecheio2, d, prod.grRecheio2*un/1000);
+      // se a confeitaria adiantou o produto, o recheio é necessário no dia novo
+      const dEfetivo=acAntecDia(semStr,d,nome)||d;
+      if(prod.tipoRecheio && prod.grRecheio>0) addRec(prod.tipoRecheio, dEfetivo, prod.grRecheio*un/1000, nome, d);
+      if(prod.tipoRecheio2 && prod.grRecheio2>0) addRec(prod.tipoRecheio2, dEfetivo, prod.grRecheio2*un/1000, nome, d);
     });
   });
 
@@ -19092,7 +19624,7 @@ function _acCalcularCoz(){
     return {nome:rc.nome,dias,totalPlan,totalProduzido,totalAloc,pendente};
   }).sort((a,b)=>{ if(a.pendente!==b.pendente) return a.pendente?-1:1; return a.nome.localeCompare(b.nome,'pt-BR'); });
 
-  return {semana:semStr, semanaLabel:semanaLabel(semStr), recheios, diasInfo};
+  return {semana:semStr, semanaLabel:semanaLabel(semStr), recheios, diasInfo, usoPorDia, antecPorDia};
 }
 
 function _acCozSeletorSemanaHtml(){
@@ -19111,7 +19643,7 @@ function _acCozFmtKg(n){ return (Math.round((n||0)*100)/100).toLocaleString('pt-
 function renderAcompCoz(){
   const el=document.getElementById('acomp-coz-content'); if(!el) return;
   const dados=_acCalcularCoz();
-  if(!dados.semana){ el.innerHTML=_acCozSeletorSemanaHtml()+'<div class="empty" style="padding:30px;">Nenhum plano encontrado para esta semana.</div>'; return; }
+  if(!dados.semana){ el.innerHTML=elevBotaoCoz()+_acCozSeletorSemanaHtml()+'<div class="empty" style="padding:30px;">Nenhum plano encontrado para esta semana.</div>'+elevHistoricoHtml(6); return; }
   const semana=dados.semana;
   const DIAS=['Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
 
@@ -19131,7 +19663,7 @@ function renderAcompCoz(){
   const pctGeral=totP>0?Math.round(totF/totP*100):0;
   const nPend=dados.recheios.filter(r=>r.pendente).length;
 
-  let html=_acCozSeletorSemanaHtml()+'<div style="font-size:12px;color:var(--text-secondary);margin-bottom:8px;">📅 '+dados.semanaLabel+'</div>';
+  let html=elevBotaoCoz()+_acCozSeletorSemanaHtml()+'<div style="font-size:12px;color:var(--text-secondary);margin-bottom:8px;">📅 '+dados.semanaLabel+'</div>';
 
   // Excessos (produziu muito acima do plano) — replicado da confeitaria
   const excessos=dados.recheios.filter(r=>r.totalPlan>0 && r.totalProduzido>r.totalPlan*1.5)
@@ -19210,6 +19742,27 @@ function renderAcompCoz(){
     algumDia=true;
     const ordem={vermelho:0,atrasado:1,parcial:2,cinza:3,adiantado:4,verde:5};
     itens.sort((a,b)=>(((ordem[a.status]??9)-(ordem[b.status]??9))||a.recheio.localeCompare(b.recheio,'pt-BR')));
+
+    // PRIORIDADE HERDADA: cada recheio assume a posição do produto mais
+    // prioritário que o consome naquele dia (ordem definida pela confeitaria)
+    const usoDia=(dados.usoPorDia||{})[dia]||{};
+    const puxadoPor={};
+    const prioDoRecheio=(nomeRecheio)=>{
+      const produtos=usoDia[_normNome(nomeRecheio)]||[];
+      let melhor=9999, quem='';
+      produtos.forEach(nm=>{ const p=acPrioPos(semana,dia,nm); if(p<melhor){ melhor=p; quem=nm; } });
+      puxadoPor[nomeRecheio]=(melhor<9999)?quem:'';
+      return melhor;
+    };
+    const prioCache={};
+    itens.forEach(it=>{ prioCache[it.recheio]=prioDoRecheio(it.recheio); });
+    itens=itens.map((it,idx)=>({it,idx})).sort((a,b)=>{
+      const pa=prioCache[a.it.recheio], pb=prioCache[b.it.recheio];
+      if(pa!==pb) return pa-pb;
+      return a.idx-b.idx;
+    }).map(x=>x.it);
+    const temPrio=acPrioOrdem(semana,dia).length>0;
+
     const totDiaPlan=itens.reduce((s,i)=>s+i.qtdPlan,0);
     const totDiaFeito=itens.reduce((s,i)=>s+i.aloc,0);
     const pctDiaGeral=totDiaPlan>0?Math.round(totDiaFeito/totDiaPlan*100):0;
@@ -19219,7 +19772,7 @@ function renderAcompCoz(){
       '<div style="font-size:15px;font-weight:800;">'+dia+' <span style="font-size:12px;font-weight:500;color:var(--text-secondary);">'+(datasDia[dia]||'').slice(0,5)+(isHoje?' · hoje':'')+'</span></div>'+
       '<div style="font-size:12px;font-weight:700;color:'+(pctDiaGeral>=100?'#16a34a':'var(--mc-azul)')+';">'+feitosN+'/'+itens.length+' · '+pctDiaGeral+'%</div>'+
       '</div>';
-    html+=itens.map(it=>{
+    html+=itens.map((it,ordIdx)=>{
       const si=_statusInfo(it.status);
       const pct=it.qtdPlan>0?Math.round(it.mostrado/it.qtdPlan*100):0;
       let label=si.label;
@@ -19228,17 +19781,34 @@ function renderAcompCoz(){
         else if(it.status==='parcial') label='⏩ Adiantado parcial — produção de '+it.fonteLabel;
         else if(it.status==='atrasado') label='⏰ Feito atrasado — produção de '+it.fonteLabel;
       }
-      return '<div style="background:'+si.bg+';border:1px solid '+si.cor+';border-radius:10px;padding:10px 12px;margin-bottom:6px;">'+
+      const quem=puxadoPor[it.recheio]||'';
+      const linhaPrio = (temPrio && quem)
+        ? '<div style="font-size:10px;color:var(--mc-azul);margin-top:3px;">🔗 prioridade puxada por <strong>'+quem+'</strong></div>'
+        : '';
+      const vindos=((dados.antecPorDia||{})[dia]||{})[_normNome(it.recheio)]||[];
+      const linhaAntec = vindos.length
+        ? '<div style="font-size:11px;font-weight:700;color:#1d4ed8;margin-top:5px;background:rgba(37,99,235,.10);border:1px dashed #2563eb;border-radius:7px;padding:4px 8px;">⏪ Inclui produção adiantada de '+vindos.map(d=>d.toLowerCase()).join(', ')+'</div>'
+        : '';
+      const chaveObs=acCozPlayNome(it.recheio);
+      const obsDoc=_acObsDoc(semana,dia,chaveObs);
+      const obsHtml = obsDoc
+        ? '<div style="font-size:11px;color:var(--mc-roxo);margin-top:4px;background:rgba(124,58,237,.08);border-radius:6px;padding:4px 7px;">📝 '+obsDoc.texto+' <span style="color:var(--text-muted);">— '+(obsDoc.autor||'')+'</span></div>'
+        : '<div style="font-size:10px;color:var(--text-muted);margin-top:3px;">📝 toque para adicionar observação</div>';
+      return '<div onclick="acEditarObs(\''+semana+'\',\''+dia+'\',\''+escapeJsStr(chaveObs)+'\',\''+escapeJsStr(it.recheio)+'\')" style="cursor:pointer;background:'+si.bg+';border:1px solid '+si.cor+';border-radius:10px;padding:10px 12px;margin-bottom:6px;">'+
         '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">'+
+        acPrioBadge(ordIdx+1)+
         '<div style="flex:1;min-width:0;"><div style="font-size:14px;font-weight:600;">'+si.emoji+' '+it.recheio+'</div>'+
         '<div style="font-size:11px;color:var(--text-secondary);margin-top:2px;">'+label+'</div></div>'+
         '<div style="text-align:right;white-space:nowrap;"><div style="font-size:12px;color:var(--text-secondary);">Plano: <strong>'+_acCozFmtKg(it.qtdPlan)+' kg</strong></div>'+
         '<div style="font-size:13px;font-weight:700;color:'+si.cor+';">Feito: '+_acCozFmtKg(it.mostrado)+' kg ('+pct+'%)</div></div>'+
-        '</div></div>';
+        '</div>'+linhaPrio+linhaAntec+obsHtml+
+        acPlayControle(semana,dia,chaveObs,pct)+
+        '</div>';
     }).join('');
   });
 
   if(!algumDia) html+='<div class="empty">Nenhum recheio previsto no plano desta semana.</div>';
+  html+=elevHistoricoHtml(6);
   el.innerHTML=html;
 }
 window.renderAcompCoz=renderAcompCoz;
@@ -19359,6 +19929,7 @@ function setAcAba(a){ _acAba=a; renderAcomp(); }
 window.setAcAba=setAcAba;
 
 function renderAcomp(){
+  if(_acDragAtivo) return; // não redesenha enquanto o dedo está arrastando
   const el=document.getElementById('acomp-content'); if(!el) return;
   // barra de abas — a aba Perdas só aparece para confeitaria/admin
   const podePerdas = (window.setorAtual==='conf' || window.setorAtual==='admin' || window.adminMode);
@@ -19380,10 +19951,18 @@ function renderAcomp(){
   // Reorganizar por DIA: { dia -> [{produto, status, qtdPlan, prodNoDia, dateBR}] }
   const DIAS=['Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
   const porDia={}; DIAS.forEach(d=>porDia[d]=[]);
+  const saiuDe={}; // dia do plano -> produtos adiantados para outro dia
   let datasDia={};
+  (dados.diasInfo||[]).forEach(di=>{ datasDia[di.dia]=di.dateBR; });
   dados.produtos.forEach(p=>{
     p.dias.forEach(d=>{
-      porDia[d.dia].push({produto:p.nome, status:d.status, qtdPlan:d.qtdPlan, prodNoDia:d.prodNoDia, aloc:d.aloc, mostrado:d.mostrado, fonteLabel:d.fonteLabel});
+      // se a confeitaria adiantou, o card aparece no dia novo (o plano não muda)
+      const novo=acAntecDia(semana,d.dia,p.nome);
+      const diaMostrar=novo||d.dia;
+      if(novo){ (saiuDe[d.dia]=saiuDe[d.dia]||[]).push({produto:p.nome, para:novo}); }
+      porDia[diaMostrar].push({produto:p.nome, status:d.status, qtdPlan:d.qtdPlan, prodNoDia:d.prodNoDia,
+        aloc:d.aloc, mostrado:d.mostrado, fonteLabel:d.fonteLabel,
+        diaPlano:d.dia, adiantado:!!novo});
       datasDia[d.dia]=d.dateBR;
     });
   });
@@ -19396,7 +19975,7 @@ function renderAcomp(){
   const pctGeral=totP>0?Math.round(totF/totP*100):0;
   const nPend=dados.produtos.filter(p=>p.pendente).length;
 
-  let html=_abasPrefix+_acSeletorSemanaHtml()+'<div style="font-size:12px;color:var(--text-secondary);margin-bottom:8px;">📅 '+dados.semanaLabel+'</div>';
+  let html=_abasPrefix+elevBannerConf()+_acSeletorSemanaHtml()+'<div style="font-size:12px;color:var(--text-secondary);margin-bottom:8px;">📅 '+dados.semanaLabel+'</div>';
   if((dados.excessos||[]).length){
     html+='<div class="card" style="border-left:3px solid #d97706;background:rgba(217,119,6,.06);margin-bottom:12px;">'+
       '<div style="font-size:14px;font-weight:700;color:#b45309;margin-bottom:6px;">⚠️ Produzido muito acima do plano (+50%)</div>'+
@@ -19468,11 +20047,18 @@ function renderAcomp(){
     let extras=(extrasDia[dia]||[]).slice();
     if(qn){ itens=itens.filter(it=>_normNome(it.produto).includes(qn)); extras=extras.filter(e=>_normNome(e.produto).includes(qn)); }
     if(_acSoPend){ itens=itens.filter(it=>it.status==='vermelho'); extras=[]; }
-    if(!itens.length && !extras.length) return;
+    if(!itens.length && !extras.length && !(saiuDe[dia]||[]).length) return;
     algumDia=true;
 
     const ordem={vermelho:0,atrasado:1,parcial:2,cinza:3,adiantado:4,verde:5};
     itens.sort((a,b)=>(((ordem[a.status]??9)-(ordem[b.status]??9))||a.produto.localeCompare(b.produto,'pt-BR')));
+    // prioridade definida pela confeitaria manda na ordem; o resto segue o status
+    itens=acPrioOrdenar(semana,dia,itens,it=>it.produto);
+    const temPrio=acPrioOrdem(semana,dia).length>0;
+    // com filtro ligado a lista está incompleta: arrastar apagaria a posição
+    // dos produtos escondidos, então o arrasto fica travado até limpar o filtro
+    const filtrado=!!qn || _acSoPend;
+    const podeArrastar=acPrioPodeOrdenar() && itens.length>1 && !filtrado;
 
     const totDiaPlan=itens.reduce((s,i)=>s+i.qtdPlan,0);
     const totDiaFeito=itens.reduce((s,i)=>s+i.aloc,0);
@@ -19485,7 +20071,23 @@ function renderAcomp(){
       (itens.length?'<div style="font-size:12px;font-weight:700;color:'+(pctDiaGeral>=100?'#16a34a':'var(--mc-azul)')+';">'+feitosN+'/'+itens.length+' · '+pctDiaGeral+'%</div>':'')+
       '</div>';
 
-    html+=itens.map(it=>{
+    if(podeArrastar){
+      html+='<div style="font-size:10px;color:var(--text-muted);margin-bottom:6px;display:flex;justify-content:space-between;align-items:center;gap:8px;">'+
+        '<span>⠿ segure e arraste para definir a prioridade — a cozinha acompanha</span>'+
+        (temPrio?'<button onclick="acPrioLimpar(\''+semana+'\',\''+dia+'\')" style="flex:0 0 auto;background:none;border:1px solid var(--border);color:var(--text-secondary);border-radius:6px;padding:3px 8px;font-size:10px;cursor:pointer;font-family:inherit;">limpar ordem</button>':'')+
+        '</div>';
+    } else if(filtrado && acPrioPodeOrdenar() && itens.length>1){
+      html+='<div style="font-size:10px;color:var(--text-muted);margin-bottom:6px;">🔒 limpe o filtro para poder reordenar a prioridade</div>';
+    }
+
+    if((saiuDe[dia]||[]).length){
+      html+='<div style="font-size:11px;color:#1d4ed8;background:rgba(37,99,235,.08);border:1px dashed #93c5fd;border-radius:8px;padding:6px 9px;margin-bottom:6px;">'+
+        '⏩ Adiantado para outro dia: '+saiuDe[dia].map(x=>x.produto+' (→ '+x.para.toLowerCase()+')').join(' · ')+
+        '</div>';
+    }
+
+    html+='<div data-ac-lista="1" data-ac-semana="'+semana+'" data-ac-dia="'+dia+'">';
+    html+=itens.map((it,ordIdx)=>{
       const si=_acStatusInfo(it.status);
       const pct=it.qtdPlan>0?Math.round(it.mostrado/it.qtdPlan*100):0;
       let label=si.label;
@@ -19494,21 +20096,43 @@ function renderAcomp(){
         else if(it.status==='parcial') label='⏩ Adiantado parcial — produção de '+it.fonteLabel;
         else if(it.status==='atrasado') label='⏰ Feito atrasado — produção de '+it.fonteLabel;
       }
-      const obsDoc=_acObsDoc(semana,dia,it.produto);
+      // obs e cronômetro ficam ancorados no DIA DO PLANO: assim não se perdem
+      // quando o produto é adiantado para outro dia (nem quando é devolvido)
+      const obsDoc=_acObsDoc(semana,it.diaPlano,it.produto);
       const obsHtml = obsDoc
         ? '<div style="font-size:11px;color:var(--mc-roxo);margin-top:4px;background:rgba(124,58,237,.08);border-radius:6px;padding:4px 7px;">📝 '+obsDoc.texto+' <span style="color:var(--text-muted);">— '+(obsDoc.autor||'')+'</span></div>'
         : '<div style="font-size:10px;color:var(--text-muted);margin-top:3px;">📝 toque para adicionar observação</div>';
-      return '<div onclick="acEditarObs(\''+semana+'\',\''+dia+'\',\''+escapeJsStr(it.produto)+'\')" style="cursor:pointer;background:'+si.bg+';border:1px solid '+si.cor+';border-radius:10px;padding:10px 12px;margin-bottom:6px;">'+
+
+      // faixa de adiantamento + botão de adiantar (só confeitaria/admin)
+      let antecHtml='';
+      if(it.adiantado){
+        const args="'"+semana+"','"+it.diaPlano+"','"+escapeJsStr(it.produto)+"'";
+        antecHtml='<div style="margin-top:5px;background:rgba(37,99,235,.10);border:1px dashed #2563eb;border-radius:7px;padding:5px 8px;">'+
+          '<div style="font-size:11px;font-weight:700;color:#1d4ed8;">⏪ Adiantado de '+it.diaPlano.toLowerCase()+' para '+dia.toLowerCase()+'</div>'+
+          (acPrioPodeOrdenar()
+            ? '<div style="display:flex;gap:6px;margin-top:5px;flex-wrap:wrap;">'+
+                '<button onclick="event.stopPropagation();acAntecDesfazer('+args+')" style="background:#fff;border:1px solid #93c5fd;color:#1d4ed8;border-radius:6px;padding:4px 10px;font-size:10px;font-weight:700;cursor:pointer;font-family:inherit;">↩ devolver para '+it.diaPlano.toLowerCase()+'</button>'+
+                '<button onclick="event.stopPropagation();acAntecAbrir('+args+')" style="background:none;border:1px solid #93c5fd;color:#1d4ed8;border-radius:6px;padding:4px 10px;font-size:10px;cursor:pointer;font-family:inherit;">trocar de dia</button>'+
+              '</div>'
+            : '')+
+          '</div>';
+      } else if(acPrioPodeOrdenar() && DIAS.indexOf(it.diaPlano)>0){
+        antecHtml='<div style="margin-top:5px;"><button onclick="event.stopPropagation();acAntecAbrir(\''+semana+'\',\''+it.diaPlano+'\',\''+escapeJsStr(it.produto)+'\')" style="background:none;border:1px solid var(--border);color:var(--text-secondary);border-radius:6px;padding:3px 9px;font-size:10px;cursor:pointer;font-family:inherit;">⏪ adiantar para outro dia</button></div>';
+      }
+      return '<div data-ac-item="'+String(it.produto).replace(/"/g,'&quot;')+'" onclick="acEditarObs(\''+semana+'\',\''+it.diaPlano+'\',\''+escapeJsStr(it.produto)+'\')" style="cursor:pointer;background:'+si.bg+';border:1px solid '+si.cor+';border-radius:10px;padding:10px 12px;margin-bottom:6px;">'+
         '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">'+
+        (podeArrastar?acPrioAlca():'')+
+        acPrioBadge(ordIdx+1)+
         '<div style="flex:1;min-width:0;"><div style="font-size:14px;font-weight:600;">'+si.emoji+' '+it.produto+'</div>'+
         '<div style="font-size:11px;color:var(--text-secondary);margin-top:2px;">'+label+'</div></div>'+
         '<div style="text-align:right;white-space:nowrap;"><div style="font-size:12px;color:var(--text-secondary);">Plano: <strong>'+it.qtdPlan.toLocaleString('pt-BR')+'</strong></div>'+
         '<div style="font-size:13px;font-weight:700;color:'+si.cor+';">Feito: '+it.mostrado.toLocaleString('pt-BR')+' ('+pct+'%)</div>'+
         _acIconesQuebra(semana, it.produto)+'</div>'+
-        '</div>'+obsHtml+
-        acPlayControle(semana,dia,it.produto,pct)+
+        '</div>'+obsHtml+antecHtml+
+        acPlayControle(semana,it.diaPlano,it.produto,pct)+
         '</div>';
     }).join('');
+    html+='</div>';
 
     html+=extras.map(e=>{
       const si=_acStatusInfo('extra');
@@ -19521,6 +20145,7 @@ function renderAcomp(){
   });
 
   if(!algumDia) html+='<div class="empty">Nenhum produto nesse filtro.</div>';
+  html+=elevHistoricoHtml(6);
   el.innerHTML=html;
 }
 window.renderAcomp=renderAcomp; window.setAcBusca=setAcBusca; window.toggleAcPend=toggleAcPend;
