@@ -18541,6 +18541,67 @@ function elevHistoricoHtml(limite){
 }
 
 /* ══════════════════════════════════════════════════════════════════
+   AVISO DE PRIORIDADE — a COZINHA precisa confirmar que viu
+   Quando a confeitaria muda a ordem do dia (ou adianta um produto),
+   fica um aviso piscando no acompanhamento da cozinha até alguém
+   confirmar. Um aviso por dia: mexer várias vezes não vira spam.
+   Coleção: prioridadeAvisos
+   ══════════════════════════════════════════════════════════════════ */
+let prioAvisos={};
+
+onSnapshot(collection(db,'prioridadeAvisos'), snap=>{
+  try{
+    prioAvisos={};
+    snap.docs.forEach(d=> prioAvisos[d.id]={firestoreId:d.id,...d.data()});
+    if(_acDragAtivo) return;
+    if(document.querySelector('.screen.active')?.id==='s-acomp-coz') renderAcompCoz();
+  }catch(e){ console.error('prioridadeAvisos snap',e); }
+});
+
+function prioAvisosPendentes(){
+  return Object.values(prioAvisos).filter(a=>a.status!=='visto')
+    .sort((a,b)=>(b.ts||0)-(a.ts||0));
+}
+
+async function prioAvisoRegistrar(semana,dia,tipo,resumo){
+  try{
+    await setDoc(doc(db,'prioridadeAvisos',acPrioId(semana,dia)),
+      { semana, dia, tipo, resumo, status:'pendente',
+        autor:_elevSetor(), data:hoje(), hora:agora(), ts:Date.now() },{merge:true});
+  }catch(e){ console.error('prioAvisoRegistrar',e); }
+}
+
+async function prioAvisoConfirmar(id){
+  try{
+    await updateDoc(doc(db,'prioridadeAvisos',id),
+      { status:'visto', vistoPor:_elevSetor(), vistoEm:agora(), vistoTs:Date.now() });
+  }catch(e){ alert('Erro ao confirmar: '+e.message); }
+}
+window.prioAvisoConfirmar=prioAvisoConfirmar;
+
+function _prioInjectStyles(){
+  if(document.getElementById('prio-anim-styles')) return;
+  const s=document.createElement('style'); s.id='prio-anim-styles';
+  s.textContent='@keyframes prioPulse{0%,100%{box-shadow:0 0 0 0 rgba(217,119,6,.55)}50%{box-shadow:0 0 0 10px rgba(217,119,6,0)}}';
+  document.head.appendChild(s);
+}
+
+// faixa no topo do acompanhamento da COZINHA
+function prioAvisoBannerCoz(){
+  const p=prioAvisosPendentes();
+  if(!p.length) return '';
+  _prioInjectStyles();
+  return p.map(a=>
+    '<div style="background:#fffbeb;border:2px solid #d97706;border-radius:12px;padding:14px;margin-bottom:12px;animation:prioPulse 1.4s ease-out infinite;">'+
+      '<div style="font-size:16px;font-weight:900;color:#b45309;">⚠️ '+
+        (a.tipo==='adiantamento'?'Produção adiantada':'Prioridade alterada')+' — '+a.dia+'</div>'+
+      (a.resumo?'<div style="font-size:13px;color:#0f172a;font-weight:600;margin-top:6px;line-height:1.4;">'+a.resumo+'</div>':'')+
+      '<div style="font-size:11px;color:var(--text-secondary);margin-top:5px;">'+(a.autor||'Confeitaria')+' · '+_elevHoraCurta(a.hora)+' · '+(a.data||'')+'</div>'+
+      '<button onclick="prioAvisoConfirmar(\''+a.firestoreId+'\')" style="margin-top:10px;width:100%;background:#d97706;border:none;color:#fff;border-radius:10px;padding:13px;font-size:15px;font-weight:800;cursor:pointer;font-family:inherit;">✓ Vi a nova prioridade</button>'+
+    '</div>').join('');
+}
+
+/* ══════════════════════════════════════════════════════════════════
    ADIANTAR PRODUÇÃO — puxar um produto para um dia ANTERIOR
    O plano da semana NÃO muda. O que muda é onde o produto aparece no
    acompanhamento (e, junto, a necessidade de recheio da cozinha).
@@ -18580,14 +18641,21 @@ async function acAntecSalvar(semana,diaOriginal,produto,diaNovo){
     await setDoc(doc(db,'acompAntecipacoes',id),
       { semana, diaOriginal, diaNovo, produto, produtoNorm:_normNome(produto),
         autor:_demAutor(), quando:agora() }, {merge:true});
+    // a cozinha precisa saber: o recheio desse produto muda de dia
+    prioAvisoRegistrar(semana,diaNovo,'adiantamento',
+      produto+' foi adiantado de '+diaOriginal.toLowerCase()+' para '+diaNovo.toLowerCase()+'. O recheio dele passa para este dia.');
   }catch(e){ alert('Erro ao adiantar: '+e.message); }
 }
 
 async function acAntecDesfazer(semana,diaOriginal,produto){
   if(!confirm('Devolver "'+produto+'" para '+diaOriginal+'?')) return;
   const id=acAntecId(semana,diaOriginal,produto);
-  try{ await deleteDoc(doc(db,'acompAntecipacoes',id)); delete acAntecipacoes[id]; renderAcomp(); }
-  catch(e){ alert('Erro: '+e.message); }
+  const voltouDe=acAntecDia(semana,diaOriginal,produto);
+  try{
+    await deleteDoc(doc(db,'acompAntecipacoes',id)); delete acAntecipacoes[id]; renderAcomp();
+    if(voltouDe) prioAvisoRegistrar(semana,voltouDe,'adiantamento',
+      produto+' voltou para '+diaOriginal.toLowerCase()+'. O recheio dele sai deste dia.');
+  }catch(e){ alert('Erro: '+e.message); }
 }
 window.acAntecDesfazer=acAntecDesfazer;
 
@@ -18621,8 +18689,12 @@ async function acAntecEscolher(semana,diaOriginal,produto,diaNovo){
   document.getElementById('ac-antec-modal')?.remove();
   if(!diaNovo){ // devolver para o dia do plano
     const id=acAntecId(semana,diaOriginal,produto);
-    try{ await deleteDoc(doc(db,'acompAntecipacoes',id)); delete acAntecipacoes[id]; renderAcomp(); }
-    catch(e){ alert('Erro: '+e.message); }
+    const voltouDe=acAntecDia(semana,diaOriginal,produto);
+    try{
+      await deleteDoc(doc(db,'acompAntecipacoes',id)); delete acAntecipacoes[id]; renderAcomp();
+      if(voltouDe) prioAvisoRegistrar(semana,voltouDe,'adiantamento',
+        produto+' voltou para '+diaOriginal.toLowerCase()+'. O recheio dele sai deste dia.');
+    }catch(e){ alert('Erro: '+e.message); }
     return;
   }
   await acAntecSalvar(semana,diaOriginal,produto,diaNovo);
@@ -18682,11 +18754,16 @@ function acPrioPodeOrdenar(){
 async function acPrioSalvar(semana,dia,nomes){
   const id=acPrioId(semana,dia);
   const ordem=nomes.map(n=>_normNome(n)).filter(Boolean);
+  // soltar o card no mesmo lugar não é mudança: não grava nem avisa a cozinha
+  const anterior=acPrioOrdem(semana,dia);
+  if(anterior.length===ordem.length && anterior.every((v,i)=>v===ordem[i])) return;
   // cache local imediato — a tela já mostra a nova numeração antes do Firebase responder
   acPrioridades[id]={...(acPrioridades[id]||{}), semana, dia, ordem};
   try{
     await setDoc(doc(db,'acompPrioridades',id),
       { semana, dia, ordem, atualizadoEm:agora(), autor:_demAutor() }, {merge:true});
+    const topo=nomes.slice(0,3).map((n,i)=>(i+1)+'º '+n).join(' · ');
+    prioAvisoRegistrar(semana,dia,'ordem','Nova ordem: '+topo+(nomes.length>3?' …':''));
   }catch(e){ alert('Erro ao salvar a prioridade: '+e.message); }
 }
 
@@ -19821,7 +19898,7 @@ function _acCozFmtKg(n){ return (Math.round((n||0)*100)/100).toLocaleString('pt-
 function renderAcompCoz(){
   const el=document.getElementById('acomp-coz-content'); if(!el) return;
   const dados=_acCalcularCoz();
-  if(!dados.semana){ el.innerHTML=elevBotaoCoz()+_acCozSeletorSemanaHtml()+'<div class="empty" style="padding:30px;">Nenhum plano encontrado para esta semana.</div>'+elevHistoricoHtml(6); return; }
+  if(!dados.semana){ el.innerHTML=prioAvisoBannerCoz()+elevBotaoCoz()+_acCozSeletorSemanaHtml()+'<div class="empty" style="padding:30px;">Nenhum plano encontrado para esta semana.</div>'+elevHistoricoHtml(6); return; }
   const semana=dados.semana;
   const DIAS=['Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
 
@@ -19841,7 +19918,7 @@ function renderAcompCoz(){
   const pctGeral=totP>0?Math.round(totF/totP*100):0;
   const nPend=dados.recheios.filter(r=>r.pendente).length;
 
-  let html=elevBotaoCoz()+_acCozSeletorSemanaHtml()+'<div style="font-size:12px;color:var(--text-secondary);margin-bottom:8px;">📅 '+dados.semanaLabel+'</div>';
+  let html=prioAvisoBannerCoz()+elevBotaoCoz()+_acCozSeletorSemanaHtml()+'<div style="font-size:12px;color:var(--text-secondary);margin-bottom:8px;">📅 '+dados.semanaLabel+'</div>';
 
   // Excessos (produziu muito acima do plano) — replicado da confeitaria
   const excessos=dados.recheios.filter(r=>r.totalPlan>0 && r.totalProduzido>r.totalPlan*1.5)
