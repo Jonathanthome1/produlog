@@ -922,6 +922,13 @@
           <div class="card-label">Nome</div>
           <input type="text" id="mp-nome" placeholder="ex: CARNE COXAO" style="" />
         </div>
+        <label for="mp-cozinha" style="display:flex;align-items:flex-start;gap:9px;margin-top:12px;padding:10px;background:var(--bg-page);border:1px solid var(--border);border-radius:9px;cursor:pointer;">
+          <input type="checkbox" id="mp-cozinha" style="width:20px;height:20px;margin:0;flex:0 0 auto;cursor:pointer;">
+          <span style="flex:1;min-width:0;">
+            <span style="display:block;font-size:13px;font-weight:600;">A cozinha lança esta matéria-prima</span>
+            <span style="display:block;font-size:11px;color:var(--text-secondary);margin-top:2px;line-height:1.4;">Marque quando a cozinha prepara este item antes de subir (ferver a salsicha, por exemplo). Ela passa a aparecer na tela de lançamento de recheios, junto dos recheios cadastrados.</span>
+          </span>
+        </label>
         <div style="display:flex;gap:8px;margin-top:12px;">
           <button class="btn btn-primary" id="mp-btn" onclick="salvarMP()" style="flex:1;">Adicionar ✓</button>
           <button class="mc-act-btn-secondary" id="mp-cancel" onclick="cancelarEdicaoMP()" style="display:none;">Cancelar</button>
@@ -5387,10 +5394,26 @@ function irParaRecheio(){
   document.getElementById('recheio-data-banner2').textContent=`Produção de: ${dataRecheio}`;
   renderRecheioList();goTo('s-recheio-lanc');
 }
+// O que a cozinha pode lançar: os recheios cadastrados MAIS as matérias-primas
+// marcadas como "a cozinha lança" (ex: salsicha, que ela ferve antes de subir).
+function _recheiosLancaveis(){
+  const lista=RECHEIOS.slice();
+  const jaTem=new Set(lista.map(r=>_normNome(r)));
+  (typeof materiasPrimas!=='undefined'?materiasPrimas:[]).forEach(m=>{
+    if(!m || !m.lancaCozinha || !m.nome) return;
+    if(jaTem.has(_normNome(m.nome))) return;
+    jaTem.add(_normNome(m.nome));
+    lista.push(m.nome);
+  });
+  return lista.sort((a,b)=>String(a).localeCompare(String(b),'pt-BR'));
+}
+
 function renderRecheioList(){
-  document.getElementById('recheio-list').innerHTML=RECHEIOS.map(r=>`
+  const lista=_recheiosLancaveis();
+  const daCozinha=new Set(RECHEIOS.map(r=>_normNome(r)));
+  document.getElementById('recheio-list').innerHTML=lista.map(r=>`
     <div class="produto-item ${recheioSel===r?'sel-verde':''}" onclick="selRecheio('${r.replace(/'/g,"\\'")}')">
-      <span class="produto-name">${r}</span><span class="produto-check-mark verde">✓</span>
+      <span class="produto-name">${r}${daCozinha.has(_normNome(r))?'':' <span style="font-size:10px;font-weight:700;color:#b45309;">MP</span>'}</span><span class="produto-check-mark verde">✓</span>
     </div>`).join('');
 }
 function selRecheio(nome){
@@ -6428,7 +6451,7 @@ function renderMP(){
   el.innerHTML = lista.map(m=>`<div class="card" style="margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;gap:8px;">
     <div style="flex:1;min-width:0;">
       <div style="font-size:14px;font-weight:600;">${m.nome}</div>
-      <div style="font-size:12px;color:var(--text-secondary);margin-top:2px;">Cód: <strong>${m.codigo}</strong> · ${m.unidade||'KG'}</div>
+      <div style="font-size:12px;color:var(--text-secondary);margin-top:2px;">Cód: <strong>${m.codigo}</strong> · ${m.unidade||'KG'}${m.lancaCozinha?' · <span style="color:#b45309;font-weight:700;">🍲 cozinha lança</span>':''}</div>
     </div>
     <div style="display:flex;gap:6px;flex-shrink:0;">
       <button onclick="editarMP('${m.firestoreId}')" class="btn-sm-outline" style="font-size:13px;padding:5px 9px;">✏️</button>
@@ -6441,6 +6464,7 @@ async function salvarMP(){
   const cod=(document.getElementById('mp-cod').value||'').trim();
   const nome=(document.getElementById('mp-nome').value||'').trim();
   const uni=document.getElementById('mp-uni').value||'KG';
+  const cozinha=!!(document.getElementById('mp-cozinha')||{}).checked;
   if(!cod){alert('Informe o código.');return;}
   if(!nome){alert('Informe o nome.');return;}
   const existe=materiasPrimas.find(m=>String(m.codigo)===cod);
@@ -6450,9 +6474,9 @@ async function salvarMP(){
   const btn=document.getElementById('mp-btn'); const txt=btn.textContent; btn.disabled=true; btn.textContent='Salvando...';
   try{
     if(_mpEditando){
-      await updateDoc(doc(db,'materiasPrimas',_mpEditando),{codigo:cod,nome:nome,unidade:uni,atualizadoEm:agora()});
+      await updateDoc(doc(db,'materiasPrimas',_mpEditando),{codigo:cod,nome:nome,unidade:uni,lancaCozinha:cozinha,atualizadoEm:agora()});
     } else {
-      await setDoc(doc(db,'materiasPrimas',cod),{codigo:cod,nome:nome,unidade:uni,atualizadoEm:agora()});
+      await setDoc(doc(db,'materiasPrimas',cod),{codigo:cod,nome:nome,unidade:uni,lancaCozinha:cozinha,atualizadoEm:agora()});
     }
     cancelarEdicaoMP();
   }catch(e){ alert('Erro ao salvar: '+e.message); btn.disabled=false; btn.textContent=txt; return; }
@@ -6465,6 +6489,7 @@ function editarMP(fid){
   const c=document.getElementById('mp-cod'); c.value=m.codigo||''; c.disabled=true;
   document.getElementById('mp-nome').value=m.nome||'';
   document.getElementById('mp-uni').value=m.unidade||'KG';
+  const ck=document.getElementById('mp-cozinha'); if(ck) ck.checked=!!m.lancaCozinha;
   document.getElementById('mp-btn').textContent='Salvar alteração ✓';
   document.getElementById('mp-cancel').style.display='block';
   document.getElementById('mp-form-titulo').textContent='✏️ Editar matéria-prima';
@@ -6476,6 +6501,7 @@ function cancelarEdicaoMP(){
   const c=document.getElementById('mp-cod'); if(c){c.value='';c.disabled=false;}
   const n=document.getElementById('mp-nome'); if(n)n.value='';
   const u=document.getElementById('mp-uni'); if(u)u.value='KG';
+  const ck=document.getElementById('mp-cozinha'); if(ck)ck.checked=false;
   const b=document.getElementById('mp-btn'); if(b)b.textContent='Adicionar ✓';
   const ca=document.getElementById('mp-cancel'); if(ca)ca.style.display='none';
   const t=document.getElementById('mp-form-titulo'); if(t)t.textContent='➕ Nova matéria-prima';
@@ -10925,7 +10951,10 @@ function aplicarProdutosConfFirebase(){
         tipoRecheio:p.tipoRecheio||'',
         grRecheio:p.grRecheio||0,
         tipoRecheio2:p.tipoRecheio2||'',
-        grRecheio2:p.grRecheio2||0
+        grRecheio2:p.grRecheio2||0,
+        // marcações de "não passa pela cozinha" (usadas no acompanhamento dela)
+        ocultarRecheioCoz:!!p.ocultarRecheioCoz,
+        ocultarRecheio2Coz:!!p.ocultarRecheio2Coz
       });
     });
   } else {
