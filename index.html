@@ -12149,8 +12149,10 @@ function renderAdmProdConfList(){
     html+='<div style="font-size:11px;color:var(--text-secondary);margin-top:2px;">cod '+(p.cod||'-')+' · '+(p.qtdPct||0)+' un/pct · '+(p.pesoPct||0)+'g/pct</div>';
     const detalhes=[];
     if(p.grMassa>0) detalhes.push((p.tipoMassa||'Massa')+': '+p.grMassa+'gr/un');
-    if(p.grRecheio>0) detalhes.push((p.tipoRecheio||'R1')+': '+p.grRecheio+'gr/un');
-    if(p.grRecheio2>0) detalhes.push((p.tipoRecheio2||'R2')+': '+p.grRecheio2+'gr/un');
+    // 🚫 marca o recheio que não entra no acompanhamento da cozinha
+    const semCoz=' <span style="color:#b45309;font-weight:700;">🚫coz</span>';
+    if(p.grRecheio>0) detalhes.push((p.tipoRecheio||'R1')+': '+p.grRecheio+'gr/un'+(p.ocultarRecheioCoz?semCoz:''));
+    if(p.grRecheio2>0) detalhes.push((p.tipoRecheio2||'R2')+': '+p.grRecheio2+'gr/un'+(p.ocultarRecheio2Coz?semCoz:''));
     if(detalhes.length>0) html+='<div style="font-size:10px;color:var(--text-muted);margin-top:2px;">'+detalhes.join(' · ')+'</div>';
     html+='</div>';
     if(isFB){
@@ -12236,6 +12238,7 @@ function renderProdConfForm(){
   html+=_optionsRecheioAgrupadas(p.tipoRecheio);
   html+='</select></div>';
   html+='<div style="margin-top:10px;max-width:220px;"><label style="font-size:11px;color:var(--text-secondary);">Gramatura (gr/un)</label><input type="number" id="pc-grrecheio" value="'+(p.grRecheio||'')+'" step="0.01" style="width:100%;font-size:16px;padding:11px;border-radius:8px;border:1px solid var(--border-md);box-sizing:border-box;" /></div>';
+  html+=_pcCheckOcultaCoz('pc-ocultacoz', p.ocultarRecheioCoz);
   html+='</div>';
   html+='</div>';
 
@@ -12247,6 +12250,7 @@ function renderProdConfForm(){
   html+=_optionsRecheioAgrupadas(p.tipoRecheio2);
   html+='</select></div>';
   html+='<div style="margin-top:10px;max-width:220px;"><label style="font-size:11px;color:var(--text-secondary);">Gramatura (gr/un)</label><input type="number" id="pc-grrecheio2" value="'+(p.grRecheio2||'')+'" step="0.01" style="width:100%;font-size:16px;padding:11px;border-radius:8px;border:1px solid var(--border-md);box-sizing:border-box;" /></div>';
+  html+=_pcCheckOcultaCoz('pc-ocultacoz2', p.ocultarRecheio2Coz);
   html+='</div>';
   html+='</div>';
 
@@ -12290,6 +12294,19 @@ function _optionsEmbalagens(selecionado){
   return h;
 }
 
+/* Caixinha "não passa pela cozinha". Marcada, o recheio deste produto deixa
+   de somar no ACOMPANHAMENTO DO PLANO DA COZINHA. Tudo o mais continua
+   igual: simulação de matéria-prima, estoque e cálculos seguem contando. */
+function _pcCheckOcultaCoz(id, marcado){
+  return '<label for="'+id+'" style="display:flex;align-items:flex-start;gap:9px;margin-top:12px;padding:10px;background:var(--bg-page);border:1px solid var(--border);border-radius:9px;cursor:pointer;">'+
+    '<input type="checkbox" id="'+id+'"'+(marcado?' checked':'')+' style="width:20px;height:20px;margin:0;flex:0 0 auto;cursor:pointer;">'+
+    '<span style="flex:1;min-width:0;">'+
+      '<span style="display:block;font-size:13px;font-weight:600;">Não passa pela cozinha</span>'+
+      '<span style="display:block;font-size:11px;color:var(--text-secondary);margin-top:2px;line-height:1.4;">Marque quando a confeitaria pega esse recheio pronto (calabresa, goiabada...). Ele some do acompanhamento do plano da cozinha, mas continua normal na simulação de matéria-prima e no estoque.</span>'+
+    '</span>'+
+  '</label>';
+}
+
 async function salvarProdConf(){
   const cod=(document.getElementById('pc-cod').value||'').trim();
   const nome=(document.getElementById('pc-nome').value||'').trim();
@@ -12306,6 +12323,9 @@ async function salvarProdConf(){
     grRecheio:parseFloat(document.getElementById('pc-grrecheio').value)||0,
     tipoRecheio2:document.getElementById('pc-tiporecheio2').value||'',
     grRecheio2:parseFloat(document.getElementById('pc-grrecheio2').value)||0,
+    // não conta no acompanhamento da cozinha (recheio que não passa por lá)
+    ocultarRecheioCoz:!!(document.getElementById('pc-ocultacoz')||{}).checked,
+    ocultarRecheio2Coz:!!(document.getElementById('pc-ocultacoz2')||{}).checked,
     embalagemCod:(document.getElementById('pc-embcod')&&document.getElementById('pc-embcod').value)||'',
     embalagemQtd:(document.getElementById('pc-embqtd')&&parseFloat(document.getElementById('pc-embqtd').value))||0,
     atualizadoEm:new Date().toISOString()
@@ -19829,8 +19849,12 @@ function _acCalcularCoz(){
       const un=(parseInt(it.qtdPacotes||it.qtd)||0)*(prod.qtdPct||1); if(un<=0) return;
       // se a confeitaria adiantou o produto, o recheio é necessário no dia novo
       const dEfetivo=acAntecDia(semStr,d,nome)||d;
-      if(prod.tipoRecheio && prod.grRecheio>0) addRec(prod.tipoRecheio, dEfetivo, prod.grRecheio*un/1000, nome, d);
-      if(prod.tipoRecheio2 && prod.grRecheio2>0) addRec(prod.tipoRecheio2, dEfetivo, prod.grRecheio2*un/1000, nome, d);
+      // se a confeitaria pega esse recheio pronto, ele não entra AQUI.
+      // Só nesta tela: simulação, estoque e demais cálculos seguem contando.
+      if(prod.tipoRecheio && prod.grRecheio>0 && !prod.ocultarRecheioCoz)
+        addRec(prod.tipoRecheio, dEfetivo, prod.grRecheio*un/1000, nome, d);
+      if(prod.tipoRecheio2 && prod.grRecheio2>0 && !prod.ocultarRecheio2Coz)
+        addRec(prod.tipoRecheio2, dEfetivo, prod.grRecheio2*un/1000, nome, d);
     });
   });
 
