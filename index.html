@@ -1171,6 +1171,14 @@
           </div>
           <span class="mc-sector-arrow">›</span>
         </button>
+        <button class="mc-sector-card" style="border-left:3px solid #7c3aed;" onclick="goTo('s-est-hub')">
+          <div class="mc-sector-icon" style="background:#ede9fe;">🏬</div>
+          <div class="mc-sector-info">
+            <div class="mc-sector-title">Estoque &amp; Contêiner</div>
+            <div class="mc-sector-desc">Ver o estoque e trazer mercadoria da rua</div>
+          </div>
+          <span class="mc-sector-arrow">›</span>
+        </button>
         <button class="mc-sector-card" onclick="goTo('s-acomp')">
           <div class="mc-sector-icon green">📋</div>
           <div class="mc-sector-info">
@@ -1865,6 +1873,7 @@
       <div class="mc-header-actions">
         <button class="mc-act-btn-secondary" onclick="abrirPresenca('emb')" title="Presença">👥</button>
         <button class="mc-act-btn-secondary" onclick="abrirExpView('emb')" title="Ver expedição">🚚</button>
+        <button class="mc-act-btn-secondary" onclick="goTo('s-est-hub')" title="Estoque &amp; Contêiner">🏬</button>
         <button class="mc-act-btn-primary" onclick="goTo('s-emb-manual')">+ Produto</button>
       </div>
     </div>
@@ -2358,7 +2367,7 @@
   <!-- ============ ESTOQUE CONTROLADO & CONTÊINER ============ -->
   <div class="screen" id="s-est-hub">
     <div class="mc-header">
-      <button class="mc-header-back" onclick="goTo(window.adminMode?'s-adm-hub':'s-inicio')">‹</button>
+      <button class="mc-header-back" onclick="estVoltar()">‹</button>
       <div class="mc-brand"><div class="mc-brand-logo"></div><div class="mc-brand-text"><div class="mc-brand-name">Monte Castelo</div><div class="mc-brand-sub">Estoque</div></div></div>
       <div class="mc-divider-v"></div>
       <div class="mc-page-info"><div class="mc-page-title">🏬 Estoque & Contêiner</div><div class="mc-page-sub">Visão geral em tempo real</div></div>
@@ -18672,13 +18681,15 @@ function estRenderProd(){
   // se a pessoa está digitando, não redesenha a tela por baixo dela
   if(document.activeElement && document.activeElement.id==='est-busca-prod'){ estRenderSugestoes(); return; }
   const ativos=estAtivos();
-  let h='<div style="font-size:12px;color:var(--text-secondary);margin-bottom:10px;line-height:1.5;">Escolha quais produtos entram no controle. Só estes são descontados pelo carregamento — o resto passa e é ignorado.</div>';
+  const adm=estEhAdmin();
+  let h='<div style="font-size:12px;color:var(--text-secondary);margin-bottom:10px;line-height:1.5;">'+
+    (adm ? 'Escolha quais produtos entram no controle. Só estes são descontados pelo carregamento — o resto passa e é ignorado.'
+         : '🔒 Só o admin cadastra ou altera estes produtos. Aqui você consulta como cada um está configurado.')+'</div>';
 
-  h+='<div class="card" style="margin-bottom:12px;">'+
+  if(adm) h+='<div class="card" style="margin-bottom:12px;">'+
     '<div style="font-size:13px;font-weight:700;margin-bottom:8px;">➕ Adicionar produto</div>'+
     '<input type="text" id="est-busca-prod" oninput="estSetBuscaProd(this.value)" placeholder="Digite o código ou o nome" autocomplete="off" style="width:100%;padding:13px 14px;min-height:48px;border:1px solid var(--border-md,#d1d5db);border-radius:9px;font-size:16px;font-family:inherit;box-sizing:border-box;">'+
-    '<div id="est-sug"></div>';
-  h+='</div>';
+    '<div id="est-sug"></div>'+'</div>';
 
   h+='<div class="mc-section-header">'+ativos.length+' produto(s) no controle</div>';
   if(!ativos.length){
@@ -18693,7 +18704,7 @@ function estRenderProd(){
             '<div style="font-size:11px;color:var(--text-secondary);margin-top:2px;">cód '+p.codigo+' · <strong>'+(p.pctCaixa||0)+'</strong> pct/caixa · ideal '+(p.idealInterno||0)+' pct · mínimo '+(p.minimoPct||0)+'%</div>'+
             '<div style="font-size:11px;color:var(--text-muted);margin-top:2px;">na empresa: '+st.interno+' · contêiner: '+st.disponivel+'</div>'+
           '</div>'+
-          '<button onclick="estAbrirProdForm(\''+escapeJsStr(p.codigo)+'\',\''+escapeJsStr(p.nome)+'\')" style="flex:0 0 auto;background:#fff;border:1px solid var(--border);border-radius:7px;padding:6px 11px;cursor:pointer;font-size:12px;font-family:inherit;">✏️</button>'+
+          (adm?'<button onclick="estAbrirProdForm(\''+escapeJsStr(p.codigo)+'\',\''+escapeJsStr(p.nome)+'\')" style="flex:0 0 auto;background:#fff;border:1px solid var(--border);border-radius:7px;padding:6px 11px;cursor:pointer;font-size:12px;font-family:inherit;">✏️</button>':'')+
         '</div></div>';
     }).join('');
   }
@@ -18705,6 +18716,7 @@ function estRenderProd(){
 window.estRenderProd=estRenderProd;
 
 function estAbrirProdForm(cod,nome){
+  if(!estEhAdmin()){ alert('Só o admin pode cadastrar ou alterar produtos do controle.'); return; }
   const p=estProd(cod)||{codigo:String(cod), nome:nome||'', pctCaixa:'', idealInterno:'', minimoPct:30};
   const jaTem=!!estProd(cod);
   const ov=document.createElement('div');
@@ -18731,6 +18743,7 @@ function estAbrirProdForm(cod,nome){
 window.estAbrirProdForm=estAbrirProdForm;
 
 async function estSalvarProd(cod,nome){
+  if(!estEhAdmin()){ alert('Só o admin pode alterar.'); return; }
   const pctCaixa=parseInt(document.getElementById('est-f-pctcaixa').value)||0;
   const ideal=parseInt(document.getElementById('est-f-ideal').value)||0;
   const min=parseInt(document.getElementById('est-f-min').value);
@@ -18747,6 +18760,7 @@ async function estSalvarProd(cod,nome){
 window.estSalvarProd=estSalvarProd;
 
 async function estRemoverProd(cod){
+  if(!estEhAdmin()){ alert('Só o admin pode alterar.'); return; }
   const interno=estSaldoInterno(cod), cont=estSaldoContainer(cod);
   if(interno!==0||cont!==0){
     if(!confirm('Este produto ainda tem saldo (empresa: '+interno+' · contêiner: '+cont+').\n\nTirar do controle mantém o histórico, mas ele para de ser descontado pelo carregamento. Continuar?')) return;
@@ -19200,6 +19214,14 @@ function _estPreviewCapacidade(cod, pacotes){
    Excluir um lançamento recalcula o saldo sozinho, porque o saldo é
    sempre a soma dos movimentos. Toda exclusão deixa um registro de
    auditoria (pacotes 0, para não mexer nos totais). */
+// volta para a tela de origem de quem está logado
+function estVoltar(){
+  if(window.adminMode) return goTo('s-adm-hub');
+  const dest=(typeof DESTINOS!=='undefined' && DESTINOS[window.setorAtual]) || 's-inicio';
+  goTo(dest==='s-est-hub'?'s-inicio':dest);
+}
+window.estVoltar=estVoltar;
+
 function estEhAdmin(){
   return window.adminMode===true || window.setorAtual==='admin';
 }
