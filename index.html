@@ -2358,7 +2358,7 @@
   <!-- ============ ESTOQUE CONTROLADO & CONTÊINER ============ -->
   <div class="screen" id="s-est-hub">
     <div class="mc-header">
-      <button class="mc-header-back" onclick="goTo('s-inicio')">‹</button>
+      <button class="mc-header-back" onclick="goTo(window.adminMode?'s-adm-hub':'s-inicio')">‹</button>
       <div class="mc-brand"><div class="mc-brand-logo"></div><div class="mc-brand-text"><div class="mc-brand-name">Monte Castelo</div><div class="mc-brand-sub">Estoque</div></div></div>
       <div class="mc-divider-v"></div>
       <div class="mc-page-info"><div class="mc-page-title">🏬 Estoque & Contêiner</div><div class="mc-page-sub">Visão geral em tempo real</div></div>
@@ -3070,6 +3070,15 @@
       </button>
 
       <div class="mc-section-header">🛒 Suprimentos</div>
+      <button class="mc-sector-card" style="border-left:4px solid #7c3aed;margin-bottom:10px;" onclick="goTo('s-est-hub')">
+        <div class="mc-sector-icon" style="background:#ede9fe;">🏬</div>
+        <div class="mc-sector-info">
+          <div class="mc-sector-title">Estoque &amp; Contêiner <span id="est-badge-adm" style="display:none;background:var(--mc-vermelho,#dc2626);color:#fff;font-size:11px;font-weight:700;border-radius:99px;padding:1px 8px;margin-left:4px;">0</span></div>
+          <div class="mc-sector-desc">Estoque em tempo real · Reserva na rua · Migração · Movimentações</div>
+        </div>
+        <span class="mc-sector-arrow">›</span>
+      </button>
+
       <button class="mc-sector-card" style="border-left:4px solid var(--mc-dourado);margin-bottom:10px;" onclick="goTo('s-adm-g-mp')">
         <div class="mc-sector-icon" style="background:#fef3c7;">🧪</div>
         <div class="mc-sector-info">
@@ -5059,6 +5068,7 @@ function goTo(id){
   if(id==='s-acomp-coz') renderAcompCoz();
   if(id==='s-inicio' && typeof mcRenderExibicao==='function') mcRenderExibicao();
   if(id&&id.startsWith('s-est-') && typeof estRenderAtual==='function') estRenderAtual();
+  if(id==='s-adm-hub' && typeof estAtualizarBadge==='function') estAtualizarBadge();
   if(id==='s-demandas') renderDemandas();
   if(id==='s-tv') iniciarTV(); else pararTV();
   if(id==='s-carreg') renderCarreg();
@@ -18415,9 +18425,11 @@ function estStatusProduto(p){
 function estAbaixoDoMinimo(){ return estAtivos().map(p=>({p,st:estStatusProduto(p)})).filter(x=>x.st.abaixo); }
 
 function estAtualizarBadge(){
-  const el=document.getElementById('est-badge'); if(!el) return;
-  const n=estAbaixoDoMinimo().length;
-  el.textContent=n; el.style.display=n?'inline-block':'none';
+  const n=estAbaixoDoMinimo().length + estNegativos().length;
+  ['est-badge','est-badge-adm'].forEach(id=>{
+    const el=document.getElementById(id); if(!el) return;
+    el.textContent=n; el.style.display=n?'inline-block':'none';
+  });
 }
 
 /* ── BAIXA AUTOMÁTICA POR BIPAGEM ────────────────────────────────
@@ -18780,7 +18792,13 @@ function estRenderConfig(){
       '<div style="font-size:11px;color:var(--text-secondary);margin:4px 0 8px;line-height:1.5;">Desconta pela quantidade BIPADA, assim que o pessoal bipa. Se um carregamento for corrigido, o app acerta a diferença; se for excluído, devolve ao estoque.</div>'+
       '<button onclick="estToggleAtivo()" style="width:100%;background:'+(c.ativo?'#16a34a':'#fff')+';color:'+(c.ativo?'#fff':'var(--text-secondary)')+';border:1px solid '+(c.ativo?'#16a34a':'var(--border)')+';border-radius:9px;padding:11px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">'+(c.ativo?'✓ Ligada':'Desligada')+'</button>'+
     '</div>'+
-    '<button class="btn btn-primary" style="width:100%;" onclick="estSalvarConfig()">Salvar configurações</button>';
+    '<button class="btn btn-primary" style="width:100%;" onclick="estSalvarConfig()">Salvar configurações</button>'+
+    '<div class="card" style="margin-top:18px;border:1px solid #fecaca;">'+
+      '<div style="font-size:13px;font-weight:700;color:#b91c1c;">🧹 Zerar o estoque</div>'+
+      '<div style="font-size:11px;color:var(--text-secondary);margin:4px 0 10px;line-height:1.5;">Apaga movimentos, lotes e baixas de carregamento, e joga a data de corte para hoje. Use depois dos testes, antes de começar a valer de verdade.</div>'+
+      '<button onclick="estZerarTudo(false)" style="width:100%;background:#fff;border:1px solid #fecaca;color:#b91c1c;border-radius:9px;padding:11px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">Zerar lançamentos (mantém os produtos)</button>'+
+      '<button onclick="estZerarTudo(true)" style="width:100%;margin-top:8px;background:#dc2626;border:none;color:#fff;border-radius:9px;padding:11px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">Apagar tudo, inclusive os produtos</button>'+
+    '</div>';
 }
 window.estRenderConfig=estRenderConfig;
 
@@ -19193,9 +19211,6 @@ async function estExcluirMov(id){
   if(!confirm('Excluir este lançamento?\n\n'+(m.nome||m.codigo)+'\n'+(m.pacotes>0?'+':'')+m.pacotes+' pacotes · '+onde+'\n'+(m.motivo||'')+'\n\nO saldo é recalculado na hora.')) return;
   try{
     await deleteDoc(doc(db,'estoqueCtrlMov',id));
-    await estGravarMov({local:m.local, codigo:m.codigo, nome:m.nome, pacotes:0, tipo:'exclusao',
-      motivo:'Lançamento excluído pelo admin',
-      obs:'era: '+(m.pacotes>0?'+':'')+m.pacotes+' pct · '+(m.tipo||'')+' · '+(m.motivo||'')+' · de '+(m.data||'')});
   }catch(e){ alert('Erro ao excluir: '+e.message); }
 }
 window.estExcluirMov=estExcluirMov;
@@ -19210,12 +19225,39 @@ async function estExcluirLote(id){
   if(!confirm('Excluir este lote do contêiner?\n\n'+(l.nome||l.codigo)+'\nsaldo: '+l.saldo+' pct · val '+(l.validade||'—')+'\nentrada '+(l.dataEntrada||'')+aviso)) return;
   try{
     await deleteDoc(doc(db,'estoqueCtrlLotes',id));
-    await estGravarMov({local:'container', codigo:l.codigo, nome:l.nome||(p?p.nome:''), pacotes:0,
-      tipo:'exclusao', motivo:'Lote excluído pelo admin',
-      obs:'saldo '+l.saldo+' pct · entrada '+(l.dataEntrada||'')+' · val '+(l.validade||'—')+' · resp. '+(l.responsavel||'—')});
   }catch(e){ alert('Erro ao excluir: '+e.message); }
 }
 window.estExcluirLote=estExcluirLote;
+
+/* Zerar os dados de teste. Além de apagar, empurra a data de corte para
+   hoje — senão a sincronização recriaria as baixas dos carregamentos
+   antigos e o estoque voltaria sujo em segundos. */
+async function estZerarTudo(incluirProdutos){
+  if(!estEhAdmin()){ alert('Só o admin pode zerar.'); return; }
+  const qtdMov=estMovs.length, qtdLotes=estLotes.length, qtdBaixas=Object.keys(estBaixas).length, qtdProd=Object.keys(estProdutos).length;
+  let txt='APAGAR PARA SEMPRE:\n\n'+
+    '· '+qtdMov+' movimento(s)\n'+
+    '· '+qtdLotes+' lote(s) do contêiner\n'+
+    '· '+qtdBaixas+' baixa(s) de carregamento\n';
+  if(incluirProdutos) txt+='· '+qtdProd+' produto(s) do controle\n';
+  else txt+='\nOs produtos e as configurações são mantidos.';
+  txt+='\n\nA data de corte vai para hoje ('+hoje()+'), senão os carregamentos antigos voltariam a descontar.\n\nNão dá para desfazer. Confirmar?';
+  if(!confirm(txt)) return;
+  if(!confirm('Última confirmação: apagar mesmo tudo?')) return;
+  try{
+    for(const m of estMovs.slice()) await deleteDoc(doc(db,'estoqueCtrlMov',m.firestoreId));
+    for(const l of estLotes.slice()) await deleteDoc(doc(db,'estoqueCtrlLotes',l.firestoreId));
+    for(const id of Object.keys(estBaixas)) await deleteDoc(doc(db,'estoqueCtrlBaixas',id));
+    if(incluirProdutos){
+      for(const p of Object.values(estProdutos)) await deleteDoc(doc(db,'estoqueCtrlProdutos',p.firestoreId||p.codigo));
+    }
+    await setDoc(doc(db,'configuracoes','estoqueControlado'),
+      {dataCorte:hoje(), atualizadoEm:agora(), autor:_elevSetor()},{merge:true});
+    alert('Pronto, tudo zerado.\n\nData de corte: '+hoje()+'\n\nAgora faça a contagem inicial de cada produto em "Estoque da empresa".');
+    goTo('s-est-hub');
+  }catch(e){ alert('Erro ao zerar: '+e.message); }
+}
+window.estZerarTudo=estZerarTudo;
 
 // ── auxiliares de tela ───────────────────────────────────────────
 function _estModal(titulo, corpo, acaoSalvar){
@@ -19295,7 +19337,7 @@ function estRenderMov(){
   const saiu=filtradas.filter(l=>l.pacotes<0).reduce((s,l)=>s+l.pacotes,0);
   const temFiltro = _estMovFiltro!=='todos'||_estMovProd||_estMovDe||_estMovAte;
 
-  const tipos=[['todos','Tudo'],['carregamento','Carregamento'],['baixa','Baixa manual'],['migracao','Migração'],['entrada','Entrada'],['contagem','Contagem'],['exclusao','Excluídos']];
+  const tipos=[['todos','Tudo'],['carregamento','Carregamento'],['baixa','Baixa manual'],['migracao','Migração'],['entrada','Entrada'],['contagem','Contagem']];
   let h='<div class="card" style="margin-bottom:12px;">'+
     '<div style="font-size:12px;font-weight:700;color:var(--text-secondary);margin-bottom:6px;">PRODUTO</div>'+
     '<select onchange="estSetMovProd(this.value)" style="width:100%;padding:12px;min-height:46px;border:1px solid var(--border-md,#d1d5db);border-radius:9px;font-size:16px;font-family:inherit;box-sizing:border-box;">'+
