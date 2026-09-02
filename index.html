@@ -810,6 +810,14 @@
           </div>
           <span class="mc-sector-arrow">›</span>
         </button>
+        <button class="mc-sector-card" onclick="abrirPin('estoque')">
+          <div class="mc-sector-icon" style="background:#ede9fe;">🏬</div>
+          <div class="mc-sector-info">
+            <div class="mc-sector-title">Estoque & Contêiner <span id="est-badge" style="display:none;background:var(--mc-vermelho,#dc2626);color:#fff;font-size:11px;font-weight:700;border-radius:99px;padding:1px 8px;margin-left:4px;">0</span></div>
+            <div class="mc-sector-desc">Estoque em tempo real e reserva na rua</div>
+          </div>
+          <span class="mc-sector-arrow">›</span>
+        </button>
         <button class="mc-sector-card" onclick="abrirPin('quadra')">
           <div class="mc-sector-icon gold">🍞</div>
           <div class="mc-sector-info">
@@ -2347,6 +2355,71 @@
     <div class="content" id="farinha-hist-content"></div>
   </div>
 
+  <!-- ============ ESTOQUE CONTROLADO & CONTÊINER ============ -->
+  <div class="screen" id="s-est-hub">
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="goTo('s-inicio')">‹</button>
+      <div class="mc-brand"><div class="mc-brand-logo"></div><div class="mc-brand-text"><div class="mc-brand-name">Monte Castelo</div><div class="mc-brand-sub">Estoque</div></div></div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info"><div class="mc-page-title">🏬 Estoque & Contêiner</div><div class="mc-page-sub">Visão geral em tempo real</div></div>
+    </div>
+    <div style="flex:1;padding:16px;background:var(--bg-page);overflow-y:auto;" id="est-hub-content"></div>
+  </div>
+
+  <!-- INTERNO -->
+  <div class="screen" id="s-est-interno">
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="goTo('s-est-hub')">‹</button>
+      <div class="mc-brand"><div class="mc-brand-logo"></div><div class="mc-brand-text"><div class="mc-brand-name">Monte Castelo</div><div class="mc-brand-sub">Estoque</div></div></div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info"><div class="mc-page-title">🏭 Estoque da empresa</div><div class="mc-page-sub">Dentro da fábrica</div></div>
+    </div>
+    <div style="flex:1;padding:16px;background:var(--bg-page);overflow-y:auto;" id="est-interno-content"></div>
+  </div>
+
+  <!-- CONTÊINER -->
+  <div class="screen" id="s-est-container">
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="goTo('s-est-hub')">‹</button>
+      <div class="mc-brand"><div class="mc-brand-logo"></div><div class="mc-brand-text"><div class="mc-brand-name">Monte Castelo</div><div class="mc-brand-sub">Estoque</div></div></div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info"><div class="mc-page-title">🚛 Estoque da rua</div><div class="mc-page-sub">Reserva no contêiner</div></div>
+    </div>
+    <div style="flex:1;padding:16px;background:var(--bg-page);overflow-y:auto;" id="est-container-content"></div>
+  </div>
+
+  <!-- MOVIMENTAÇÕES -->
+  <div class="screen" id="s-est-mov">
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="goTo('s-est-hub')">‹</button>
+      <div class="mc-brand"><div class="mc-brand-logo"></div><div class="mc-brand-text"><div class="mc-brand-name">Monte Castelo</div><div class="mc-brand-sub">Estoque</div></div></div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info"><div class="mc-page-title">📋 Movimentações</div><div class="mc-page-sub">Tudo que entrou e saiu</div></div>
+    </div>
+    <div style="flex:1;padding:16px;background:var(--bg-page);overflow-y:auto;" id="est-mov-content"></div>
+  </div>
+
+  <!-- PRODUTOS CONTROLADOS -->
+  <div class="screen" id="s-est-prod">
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="goTo('s-est-hub')">‹</button>
+      <div class="mc-brand"><div class="mc-brand-logo"></div><div class="mc-brand-text"><div class="mc-brand-name">Monte Castelo</div><div class="mc-brand-sub">Estoque</div></div></div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info"><div class="mc-page-title">⚙️ Produtos controlados</div><div class="mc-page-sub">Quais entram no controle</div></div>
+    </div>
+    <div style="flex:1;padding:16px;background:var(--bg-page);overflow-y:auto;" id="est-prod-content"></div>
+  </div>
+
+  <!-- CONFIGURAÇÕES -->
+  <div class="screen" id="s-est-config">
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="goTo('s-est-hub')">‹</button>
+      <div class="mc-brand"><div class="mc-brand-logo"></div><div class="mc-brand-text"><div class="mc-brand-name">Monte Castelo</div><div class="mc-brand-sub">Estoque</div></div></div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info"><div class="mc-page-title">🔧 Configurações</div><div class="mc-page-sub">Capacidade, corte e senha</div></div>
+    </div>
+    <div style="flex:1;padding:16px;background:var(--bg-page);overflow-y:auto;" id="est-config-content"></div>
+  </div>
   <!-- CONTAINER HOME -->
   <div class="screen" id="s-container-home">
     <div class="mc-header">
@@ -4770,10 +4843,10 @@ let QUADRA_PRODUTOS = [];
 let QUADRA_KITS_RECEITAS = {};
   let QUADRA_KITS = []; // Lista de nomes de kits da Quadra
 let QUADRA_KIT_MAPPING = {"Kit Massa Especial Mini Sonho": "KIT MASSA ESPECIAL MINI SONHO", "Kit Pão Sovado": "KIT PÃO SOVADO", "Kit Pao De Milho Salgado Cacetinho": "KIT PAO DE MILHO SALGADO CACETINHO", "Kit Cuca Alemã": "KIT CUCA ALEMÃ", "Kit Rosca De Polvilho": "KIT ROSCA DE POLVILHO", "Kit Massa Especial Donuts E Cueca Grande": "KIT MASSA ESPECIAL DONUTS E CUECA GRANDE", "Kit Pão Preto": "KIT PÃO PRETO", "Kit Massa Sonho": "KIT MASSA SONHO", "Kit Massa Especial": "KIT MASSA ESPECIAL", "Kit Massa Doce": "KIT MASSA DOCE", "Kit Pão De Cenoura": "KIT PÃO DE CENOURA", "Kit Cueca Virada": "KIT CUECA VIRADA", "Kit Pão De Leite": "KIT PÃO DE LEITE", "Kit Cuca Colonial": "KIT CUCA COLONIAL", "Kit Pão De Aipim": "KIT PÃO DE AIPIM", "Kit Cuca Frutas": "KIT CUCA FRUTAS", "Kit Cuca Chocolate": "KIT CUCA CHOCOLATE", "Kit Vovo/Gajeta": "KIT VOVO/GAJETA", "Kit Pão De Milho Doce": "KIT PÃO DE MILHO DOCE", "Kit Pão De Batata": "KIT PÃO DE BATATA", "Kit Pão Caseiro": "KIT PÃO CASEIRO", "Kit Raminho": "KIT RAMINHO", "Kit Pão De Milho Salgado": "KIT PÃO DE MILHO SALGADO", "Kit Pão Folhado": "KIT PÃO FOLHADO", "Kit Pão Brioche": "KIT PÃO BRIOCHE", "Kit Pão Integral": "KIT PÃO INTEGRAL", "Kit Grande Premium 6/8": "KIT GRANDE PREMIUM 6/8", "Kit Pão 7 Grãos": "KIT PÃO 7 GRÃOS"};
-let PINS = { confeitaria:'1234', cozinha:'5678', embalagem:'9101', expedicao:'1314', admin:'2504', contagem:'0000', container:'0001', quadra:'2020', testes:'7070', simone:'5050', alteracoes:'4321', carregamento:'6060', comercial:'3030' }; // Será carregado do Firebase
+let PINS = { confeitaria:'1234', cozinha:'5678', embalagem:'9101', expedicao:'1314', admin:'2504', contagem:'0000', container:'0001', quadra:'2020', testes:'7070', simone:'5050', alteracoes:'4321', carregamento:'6060', comercial:'3030', estoque:'8080' }; // Será carregado do Firebase
 const CORES = { confeitaria:'', cozinha:'verde', embalagem:'', expedicao:'laranja', admin:'roxo', contagem:'roxo', container:'', quadra:'', testes:'', simone:'', alteracoes:'roxo', carregamento:'laranja', comercial:'verde' };
 const NOMES = { confeitaria:'Confeitaria 🥐', cozinha:'Cozinha 🍳', embalagem:'Embalagem 📦', expedicao:'Expedição 🚚', admin:'Administrativo 📊', contagem:'Contagem 📋', container:'Rafael 📦', quadra:'Quadra 🍞', testes:'Testes MP 🔬', simone:'Simone - Financeiro 💼', alteracoes:'Alterações de Receita ✏️', carregamento:'Carregamento 📦', comercial:'Comercial 🛒' };
-const DESTINOS = { confeitaria:'s-conf-home', cozinha:'s-coz-home', embalagem:'s-emb-sel-data', expedicao:'s-exp-sel-data', admin:'s-adm-hub', contagem:'s-contagem-home', container:'s-rafael-home', quadra:'s-quadra-home', testes:'s-testes-home', simone:'s-simone-home', alteracoes:'s-alt-home', carregamento:'s-carreg', comercial:'s-la-solicitar' };
+const DESTINOS = { confeitaria:'s-conf-home', cozinha:'s-coz-home', embalagem:'s-emb-sel-data', expedicao:'s-exp-sel-data', admin:'s-adm-hub', contagem:'s-contagem-home', container:'s-rafael-home', quadra:'s-quadra-home', testes:'s-testes-home', simone:'s-simone-home', alteracoes:'s-alt-home', carregamento:'s-carreg', comercial:'s-la-solicitar', estoque:'s-est-hub' };
 
 let pinAtual = '';
 let setorAtivo = '';
@@ -4985,6 +5058,7 @@ function goTo(id){
   if(id==='s-acomp') renderAcomp();
   if(id==='s-acomp-coz') renderAcompCoz();
   if(id==='s-inicio' && typeof mcRenderExibicao==='function') mcRenderExibicao();
+  if(id&&id.startsWith('s-est-') && typeof estRenderAtual==='function') estRenderAtual();
   if(id==='s-demandas') renderDemandas();
   if(id==='s-tv') iniciarTV(); else pararTV();
   if(id==='s-carreg') renderCarreg();
@@ -18186,6 +18260,1093 @@ function acPlayControle(semana,dia,produto,pct){
 
 
 
+
+
+/* ══════════════════════════════════════════════════════════════════
+   ESTOQUE CONTROLADO & CONTÊINER
+   Dois estoques: INTERNO (dentro da empresa) e CONTÊINER (reserva na rua).
+
+   Como o saldo é calculado — tudo é MOVIMENTO, nada é "número mágico":
+     interno   = soma dos movimentos de estoqueCtrlMov (local='interno')
+                 + as baixas automáticas de carregamento (estoqueCtrlBaixas)
+     contêiner = soma do saldo dos lotes (estoqueCtrlLotes)
+
+   Baixa por bipagem: o app guarda UM documento por carregamento, com o
+   que já foi descontado. Se o carregamento for editado, ele recalcula a
+   diferença; se for excluído, devolve ao estoque. Assim nunca duplica.
+   ══════════════════════════════════════════════════════════════════ */
+let estProdutos={};      // codigo -> {codigo,nome,pctCaixa,idealInterno,minimoPct,ativo}
+let estLotes=[];         // contêiner: {codigo,nome,pacotes,saldo,validade,dataEntrada,responsavel,...}
+let estMovs=[];          // movimentos manuais/contagem/migração
+let estBaixas={};        // carregamentoId -> {itens:{cod:qtd}, ...}
+let estConfig={capacidadeCaixas:100, dataCorte:'', senhaMigracao:'', ativo:true};
+
+onSnapshot(collection(db,'estoqueCtrlProdutos'), snap=>{
+  try{
+    estProdutos={};
+    snap.docs.forEach(d=>{ estProdutos[d.id]={firestoreId:d.id,...d.data()}; });
+    estRenderAtual();
+  }catch(e){ console.error('estProdutos snap',e); }
+});
+onSnapshot(collection(db,'estoqueCtrlLotes'), snap=>{
+  try{
+    estLotes=snap.docs.map(d=>({firestoreId:d.id,...d.data()}))
+      .sort((a,b)=>(a.validadeNum||0)-(b.validadeNum||0) || (a.ts||0)-(b.ts||0));
+    estRenderAtual();
+  }catch(e){ console.error('estLotes snap',e); }
+});
+onSnapshot(collection(db,'estoqueCtrlMov'), snap=>{
+  try{
+    estMovs=snap.docs.map(d=>({firestoreId:d.id,...d.data()})).sort((a,b)=>(b.ts||0)-(a.ts||0));
+    estRenderAtual();
+  }catch(e){ console.error('estMovs snap',e); }
+});
+onSnapshot(collection(db,'estoqueCtrlBaixas'), snap=>{
+  try{
+    estBaixas={};
+    snap.docs.forEach(d=>{ estBaixas[d.id]=d.data(); });
+    estRenderAtual();
+  }catch(e){ console.error('estBaixas snap',e); }
+});
+onSnapshot(doc(db,'configuracoes','estoqueControlado'), snap=>{
+  try{
+    const d=snap.data()||{};
+    estConfig={
+      capacidadeCaixas:Number(d.capacidadeCaixas)>0?Number(d.capacidadeCaixas):100,
+      dataCorte:d.dataCorte||'',
+      senhaMigracao:d.senhaMigracao||'',
+      ativo:d.ativo!==false
+    };
+    estRenderAtual();
+    estSincronizarCarregamentos();
+  }catch(e){ console.error('estConfig snap',e); }
+});
+
+function estRenderAtual(){
+  const t=document.querySelector('.screen.active')?.id;
+  if(t==='s-est-hub') estRenderHub();
+  if(t==='s-est-interno') estRenderInterno();
+  if(t==='s-est-container') estRenderContainer();
+  if(t==='s-est-mov') estRenderMov();
+  if(t==='s-est-prod') estRenderProd();
+  if(t==='s-est-config') estRenderConfig();
+  estAtualizarBadge();
+}
+
+// ── utilidades ───────────────────────────────────────────────────
+function estAtivos(){
+  return Object.values(estProdutos).filter(p=>p.ativo!==false)
+    .sort((a,b)=>String(a.nome||'').localeCompare(String(b.nome||''),'pt-BR'));
+}
+function estProd(cod){ return estProdutos[String(cod)]||null; }
+function estEhControlado(cod){ const p=estProd(cod); return !!p && p.ativo!==false; }
+
+// caixa começada ocupa caixa inteira — por isso arredonda pra cima
+function estCaixas(pacotes, pctCaixa){
+  const n=Number(pctCaixa)||0;
+  if(n<=0) return 0;
+  return Math.ceil((Number(pacotes)||0)/n);
+}
+function estDataNum(dataBR){
+  const m=String(dataBR||'').match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  return m ? Number(m[3]+m[2]+m[1]) : 0;
+}
+function estHojeNum(){ return estDataNum(hoje()); }
+function estDiasAte(dataBR){
+  const m=String(dataBR||'').match(/^(\d{2})\/(\d{2})\/(\d{4})$/); if(!m) return null;
+  const d=new Date(Number(m[3]),Number(m[2])-1,Number(m[1]));
+  const h=new Date(); h.setHours(0,0,0,0);
+  return Math.round((d-h)/86400000);
+}
+function estISOparaBR(iso){
+  const m=String(iso||'').match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  return m ? (m[3]+'/'+m[2]+'/'+m[1]) : '';
+}
+
+// ── saldos ───────────────────────────────────────────────────────
+// INTERNO: movimentos manuais + baixas automáticas de carregamento
+function estSaldoInterno(cod){
+  const c=String(cod);
+  let s=0;
+  estMovs.forEach(m=>{ if(m.local==='interno' && String(m.codigo)===c) s+=Number(m.pacotes)||0; });
+  Object.values(estBaixas).forEach(b=>{
+    const q=(b.itens||{})[c];
+    if(q) s-=Number(q)||0;
+  });
+  return s;
+}
+// CONTÊINER: soma do saldo dos lotes
+function estSaldoContainer(cod){
+  const c=String(cod);
+  return estLotes.filter(l=>String(l.codigo)===c).reduce((s,l)=>s+(Number(l.saldo)||0),0);
+}
+// caixas ocupadas: conta lote a lote, porque cada lote são caixas separadas
+function estCaixasUsadas(){
+  let t=0;
+  estLotes.forEach(l=>{
+    const saldo=Number(l.saldo)||0; if(saldo<=0) return;
+    const p=estProd(l.codigo);
+    t+=estCaixas(saldo, p?p.pctCaixa:0);
+  });
+  return t;
+}
+function estCaixasDoProduto(cod){
+  const c=String(cod), p=estProd(c);
+  let t=0;
+  estLotes.forEach(l=>{ if(String(l.codigo)!==c) return; const s=Number(l.saldo)||0; if(s>0) t+=estCaixas(s,p?p.pctCaixa:0); });
+  return t;
+}
+// abaixo do mínimo? quanto trazer para voltar ao ideal (em caixas inteiras)
+function estStatusProduto(p){
+  const interno=estSaldoInterno(p.codigo);
+  const ideal=Number(p.idealInterno)||0;
+  const minPct=Number(p.minimoPct)||0;
+  const minimo=ideal>0?Math.round(ideal*minPct/100):0;
+  const abaixo = ideal>0 && interno<=minimo;
+  const faltam = Math.max(0, ideal-interno);
+  const pctCaixa=Number(p.pctCaixa)||0;
+  const caixasSug = (pctCaixa>0 && faltam>0) ? Math.ceil(faltam/pctCaixa) : 0;
+  const disponivel=estSaldoContainer(p.codigo);
+  const caixasPossiveis = pctCaixa>0 ? Math.floor(disponivel/pctCaixa) : 0;
+  return {interno, ideal, minimo, abaixo, faltam, caixasSug,
+          caixasTrazer:Math.min(caixasSug, Math.max(caixasPossiveis, disponivel>0?1:0)),
+          disponivel, pctCaixa};
+}
+function estAbaixoDoMinimo(){ return estAtivos().map(p=>({p,st:estStatusProduto(p)})).filter(x=>x.st.abaixo); }
+
+function estAtualizarBadge(){
+  const el=document.getElementById('est-badge'); if(!el) return;
+  const n=estAbaixoDoMinimo().length;
+  el.textContent=n; el.style.display=n?'inline-block':'none';
+}
+
+/* ── BAIXA AUTOMÁTICA POR BIPAGEM ────────────────────────────────
+   Roda quando os carregamentos mudam. Para cada carregamento a partir
+   da data de corte, guarda o que foi bipado dos produtos controlados.
+   Grava só quando o valor muda — reprocessar não duplica. */
+let _estSyncTimer=null;
+function estSincronizarCarregamentos(){
+  if(_estSyncTimer) clearTimeout(_estSyncTimer);
+  _estSyncTimer=setTimeout(_estSyncAgora, 1500); // espera a bipagem assentar
+}
+async function _estSyncAgora(){
+  if(!estConfig.ativo || !estConfig.dataCorte) return;
+  if(typeof carregamentos==='undefined' || !Array.isArray(carregamentos)) return;
+  if(!Object.keys(estProdutos).length) return;
+  const corte=estDataNum(estConfig.dataCorte);
+  if(!corte) return;
+  const vistos={};
+  for(const c of carregamentos){
+    if(estDataNum(c.data)<corte) continue;
+    vistos[c.firestoreId]=1;
+    const itens={};
+    (c.itens||[]).forEach(it=>{
+      const cod=String(it.codigo);
+      if(!estEhControlado(cod)) return;                 // fora da lista: ignora
+      const q=parseInt(it.qtdBipada)||0;
+      if(q>0) itens[cod]=(itens[cod]||0)+q;
+    });
+    const atual=estBaixas[c.firestoreId];
+    const igual = atual && JSON.stringify(atual.itens||{})===JSON.stringify(itens);
+    if(igual) continue;
+    if(!Object.keys(itens).length && !atual) continue;
+    try{
+      await setDoc(doc(db,'estoqueCtrlBaixas',c.firestoreId),
+        { itens, carregamento:c.nome||'', data:c.data||'', status:c.status||'',
+          total:Object.values(itens).reduce((s,v)=>s+v,0), atualizadoEm:agora(), ts:Date.now() });
+    }catch(e){ console.error('estSync setDoc',e); }
+  }
+  // carregamento excluído: devolve o estoque apagando a baixa
+  for(const id of Object.keys(estBaixas)){
+    if(vistos[id]) continue;
+    try{ await deleteDoc(doc(db,'estoqueCtrlBaixas',id)); }catch(e){}
+  }
+}
+
+// ── PAINEL (visão geral) ─────────────────────────────────────────
+// Em cima só o que exige ação. Embaixo a tabela com tudo.
+function _estKpi(rotulo, valor, unidade, cor, extra){
+  return '<div class="card" style="padding:12px 8px;text-align:center;border-top:3px solid '+cor+';">'+
+    '<div style="font-size:10px;font-weight:700;color:var(--text-secondary);letter-spacing:.3px;">'+rotulo+'</div>'+
+    '<div style="font-size:24px;font-weight:900;color:'+cor+';line-height:1.1;margin-top:3px;">'+valor+'</div>'+
+    '<div style="font-size:10px;color:var(--text-muted);">'+(unidade||'')+'</div>'+
+    (extra?'<div style="font-size:10px;color:var(--text-secondary);margin-top:3px;font-weight:600;">'+extra+'</div>':'')+
+  '</div>';
+}
+
+let _estVerTudo=false;
+function estToggleVerTudo(){ _estVerTudo=!_estVerTudo; estRenderHub(); }
+window.estToggleVerTudo=estToggleVerTudo;
+
+function estRenderHub(){
+  const el=document.getElementById('est-hub-content'); if(!el) return;
+  const prods=estAtivos();
+  const cap=estConfig.capacidadeCaixas||100;
+  const usadas=estCaixasUsadas(), livres=Math.max(0,cap-usadas);
+  const pctCap=cap>0?Math.min(100,Math.round(usadas/cap*100)):0;
+  const totCont=prods.reduce((s,p)=>s+estSaldoContainer(p.codigo),0);
+  const totInt=prods.reduce((s,p)=>s+estSaldoInterno(p.codigo),0);
+  const alertas=estAbaixoDoMinimo();
+  const negativos=estNegativos();
+  const hojeStr=hoje();
+  const saiuHoje=estLinhasMov().filter(l=>l.data===hojeStr&&l.pacotes<0).reduce((s,l)=>s-l.pacotes,0);
+  const vencidos=estLotes.filter(l=>(Number(l.saldo)||0)>0&&l.validade&&estDiasAte(l.validade)<0);
+  const aVencer=estLotes.filter(l=>{const d=(Number(l.saldo)||0)>0&&l.validade?estDiasAte(l.validade):null; return d!==null&&d>=0&&d<=7;});
+  const corCap = pctCap>=95?'#dc2626':(pctCap>=80?'#d97706':'#16a34a');
+  let h='';
+
+  if(!estConfig.dataCorte){
+    h+='<div style="background:#fef3c7;border:2px solid #f59e0b;border-radius:12px;padding:14px;margin-bottom:12px;">'+
+      '<div style="font-size:14px;font-weight:800;color:#92400e;">⚠️ Falta definir a data de corte</div>'+
+      '<div style="font-size:12px;color:#78350f;margin-top:4px;line-height:1.5;">Sem ela o app não desconta os carregamentos. Use a data da contagem inicial.</div>'+
+      '<button class="btn btn-laranja" style="width:100%;margin-top:10px;" onclick="goTo(\'s-est-config\')">Configurar agora</button></div>';
+  }
+  if(!prods.length){
+    el.innerHTML=h+'<div style="background:var(--bg-primary);border:1px solid var(--border);border-radius:12px;padding:26px;text-align:center;">'+
+      '<div style="font-size:40px;">📦</div>'+
+      '<div style="font-size:16px;font-weight:800;margin-top:8px;">Nenhum produto no controle</div>'+
+      '<div style="font-size:12px;color:var(--text-secondary);margin-top:5px;line-height:1.5;">Só os produtos escolhidos aqui são descontados pelo carregamento.</div>'+
+      '<button class="btn btn-primary" style="width:100%;margin-top:14px;" onclick="goTo(\'s-est-prod\')">Selecionar produtos</button></div>';
+    return;
+  }
+
+  // ALERTA DE SALDO NEGATIVO — sempre indica erro em algum lugar
+  if(negativos.length){
+    h+='<div class="card" style="margin-bottom:12px;border:2px solid #dc2626;background:#fef2f2;">'+
+      '<div style="font-size:15px;font-weight:900;color:#b91c1c;">🚨 Estoque negativo</div>'+
+      '<div style="font-size:12px;color:#7f1d1d;margin:4px 0 8px;line-height:1.5;">Saiu mais do que existia. Quase sempre é entrada não registrada, contagem desatualizada ou migração esquecida.</div>'+
+      negativos.map(p=>
+        '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:7px 0;border-top:1px dashed #fecaca;">'+
+          '<span style="flex:1;min-width:0;font-size:13px;font-weight:700;">'+p.nome+'</span>'+
+          '<span style="font-size:17px;font-weight:900;color:#dc2626;">'+estSaldoInterno(p.codigo)+'</span>'+
+          '<button onclick="estAbrirContagem(\''+escapeJsStr(p.codigo)+'\')" style="flex:0 0 auto;background:#dc2626;border:none;color:#fff;border-radius:7px;padding:7px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">Contar</button>'+
+        '</div>').join('')+'</div>';
+  }
+
+  // KPIs
+  h+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">'+
+    _estKpi('NA EMPRESA', totInt.toLocaleString('pt-BR'), 'pacotes', 'var(--mc-azul,#2563eb)', prods.length+' produto(s)')+
+    _estKpi('NO CONTÊINER', totCont.toLocaleString('pt-BR'), 'pacotes', '#7c3aed', usadas+' caixa(s)')+
+  '</div>'+
+  '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px;">'+
+    _estKpi('REPOR', alertas.length, alertas.length===1?'produto':'produtos', alertas.length?'#dc2626':'#16a34a')+
+    _estKpi('SAIU HOJE', saiuHoje, 'pacotes', '#0891b2')+
+    _estKpi('VENCENDO', vencidos.length+aVencer.length, 'lote(s) ≤7d', (vencidos.length?'#dc2626':(aVencer.length?'#d97706':'#16a34a')))+
+  '</div>';
+
+  // ocupação segmentada
+  const cores=['#2563eb','#7c3aed','#0891b2','#16a34a','#d97706','#db2777','#4f46e5','#0d9488'];
+  h+='<div class="card" style="margin-bottom:12px;">'+
+    '<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:7px;">'+
+      '<div style="font-size:13px;font-weight:700;">🚛 Ocupação do contêiner</div>'+
+      '<div style="font-size:22px;font-weight:900;color:'+corCap+';">'+pctCap+'%</div></div>'+
+    '<div style="height:18px;background:var(--bg-page);border-radius:9px;overflow:hidden;display:flex;">'+
+      prods.map((p,i)=>{ const cx=estCaixasDoProduto(p.codigo); if(!cx) return '';
+        return '<div title="'+p.nome+': '+cx+' cx" style="width:'+(cap>0?(cx/cap*100):0)+'%;background:'+cores[i%cores.length]+';"></div>'; }).join('')+
+    '</div>'+
+    '<div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text-secondary);margin-top:7px;">'+
+      '<span><strong>'+usadas+'</strong> de '+cap+' caixas</span>'+
+      '<span style="font-weight:700;color:'+(livres<=5?'#dc2626':'var(--text-secondary)')+';">'+livres+' livre(s)</span></div>'+
+    '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;">'+
+      prods.map((p,i)=>{ const cx=estCaixasDoProduto(p.codigo); if(!cx) return '';
+        return '<span style="font-size:10px;color:var(--text-secondary);display:inline-flex;align-items:center;gap:4px;">'+
+          '<span style="width:9px;height:9px;border-radius:2px;background:'+cores[i%cores.length]+';display:inline-block;"></span>'+p.nome+' ('+cx+')</span>'; }).join('')+
+    '</div>'+
+    '<button class="btn btn-secondary" style="width:100%;margin-top:10px;" onclick="estAbrirEntrada()">➕ Registrar entrada no contêiner</button>'+
+  '</div>';
+
+  // ── DESTAQUES: só quem precisa de ação ──
+  if(alertas.length){
+    h+='<div class="mc-section-header">Precisa de ação</div>';
+    h+=alertas.map(({p,st})=>{
+      const dias=estDiasDeEstoque(p.codigo);
+      const val=estValidadeMaisCurta(p.codigo);
+      return '<div class="card" style="margin-bottom:10px;border-left:4px solid #dc2626;">'+
+        '<div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;">'+
+          '<div style="flex:1;min-width:0;font-size:15px;font-weight:800;">🔻 '+p.nome+'</div>'+
+          (dias!==null?'<span style="font-size:11px;font-weight:800;color:'+(dias<=3?'#dc2626':'#d97706')+';white-space:nowrap;">'+dias+' dia(s)</span>':'')+
+        '</div>'+
+        '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:9px;text-align:center;">'+
+          '<div style="background:var(--bg-page);border-radius:8px;padding:8px 4px;"><div style="font-size:9px;color:var(--text-secondary);font-weight:700;">EMPRESA</div><div style="font-size:19px;font-weight:900;color:#dc2626;">'+st.interno+'</div></div>'+
+          '<div style="background:var(--bg-page);border-radius:8px;padding:8px 4px;"><div style="font-size:9px;color:var(--text-secondary);font-weight:700;">CONTÊINER</div><div style="font-size:19px;font-weight:900;color:#7c3aed;">'+st.disponivel+'</div></div>'+
+          '<div style="background:var(--bg-page);border-radius:8px;padding:8px 4px;"><div style="font-size:9px;color:var(--text-secondary);font-weight:700;">CAIXAS</div><div style="font-size:19px;font-weight:900;">'+estCaixasDoProduto(p.codigo)+'</div></div>'+
+        '</div>'+
+        '<div style="font-size:11px;color:var(--text-secondary);margin-top:7px;">mínimo '+st.minimo+' · ideal '+st.ideal+(val?' · lote mais curto vence '+val.validade:'')+'</div>'+
+        (st.disponivel>0
+          ? '<button onclick="estAbrirMigrar(\''+escapeJsStr(p.codigo)+'\')" style="margin-top:9px;width:100%;background:#16a34a;border:none;color:#fff;border-radius:9px;padding:12px;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit;">🚚 Trazer '+st.caixasSug+' caixa(s) do contêiner</button>'
+          : '<div style="font-size:12px;font-weight:700;color:#b45309;margin-top:9px;text-align:center;">⚠️ Sem saldo no contêiner — precisa produzir</div>')+
+      '</div>';
+    }).join('');
+  } else {
+    h+='<div class="card" style="margin-bottom:12px;background:#f0fdf4;border:1px solid #a7f3d0;text-align:center;">'+
+      '<div style="font-size:14px;font-weight:800;color:#15803d;">✅ Nada precisa de reposição agora</div></div>';
+  }
+
+  // ── TABELA COMPLETA ──
+  const dtCorte=estConfig.dataCorte?new Date(String(estConfig.dataCorte).split('/').reverse().join('-')+'T00:00:00'):null;
+  const diasHist=dtCorte?Math.round((new Date()-dtCorte)/86400000):0;
+  h+='<div class="mc-section-header" style="display:flex;justify-content:space-between;align-items:center;">'+
+    '<span>Todos os produtos</span>'+
+    '<button onclick="estToggleVerTudo()" style="background:none;border:1px solid var(--border);color:var(--text-secondary);border-radius:7px;padding:4px 10px;font-size:11px;cursor:pointer;font-family:inherit;">'+(_estVerTudo?'ocultar':'ver tabela')+'</button></div>';
+  if(_estVerTudo){
+    h+='<div class="card" style="margin-bottom:12px;padding:10px 8px;overflow-x:auto;">'+
+      '<table style="width:100%;border-collapse:collapse;font-size:12px;min-width:430px;">'+
+      '<thead><tr style="font-size:9px;color:var(--text-muted);font-weight:700;text-align:right;">'+
+        '<th style="text-align:left;padding:4px;">PRODUTO</th><th style="padding:4px;">DENTRO</th>'+
+        '<th style="padding:4px;">CONTÊINER</th><th style="padding:4px;">MÉD/SEM</th>'+
+        '<th style="padding:4px;">DIAS</th><th style="padding:4px;">VALIDADE</th></tr></thead><tbody>'+
+      prods.map(p=>{
+        const st=estStatusProduto(p);
+        const media=estVendaMediaSemanal(p.codigo);
+        const dias=estDiasDeEstoque(p.codigo);
+        const val=estValidadeMaisCurta(p.codigo);
+        const dv=val?estDiasAte(val.validade):null;
+        const corI=st.interno<0?'#dc2626':(st.abaixo?'#dc2626':'var(--text-primary)');
+        const corD=dias===null?'var(--text-muted)':(dias<=3?'#dc2626':(dias<=7?'#d97706':'#16a34a'));
+        const corV=dv===null?'var(--text-muted)':(dv<0?'#dc2626':(dv<=7?'#d97706':'var(--text-secondary)'));
+        return '<tr style="border-top:1px solid var(--border);text-align:right;">'+
+          '<td style="text-align:left;padding:7px 4px;font-weight:700;">'+(st.abaixo?'🔻 ':'')+p.nome+'</td>'+
+          '<td style="padding:7px 4px;font-weight:800;color:'+corI+';">'+st.interno+'</td>'+
+          '<td style="padding:7px 4px;color:#7c3aed;font-weight:700;">'+st.disponivel+'</td>'+
+          '<td style="padding:7px 4px;">'+(media===null?'—':media)+'</td>'+
+          '<td style="padding:7px 4px;font-weight:800;color:'+corD+';">'+(dias===null?'—':dias)+'</td>'+
+          '<td style="padding:7px 4px;color:'+corV+';font-size:11px;">'+(val?val.validade:'—')+'</td>'+
+        '</tr>';
+      }).join('')+'</tbody></table>'+
+      '<div style="font-size:10px;color:var(--text-muted);margin-top:8px;line-height:1.5;">'+
+        (diasHist<14
+          ? 'A média semanal aparece depois de 14 dias de histórico (tem '+Math.max(0,diasHist)+'). Até lá, use o estoque ideal manual.'
+          : 'Média semanal calculada pelas saídas reais de carregamento dos últimos 28 dias. "Dias" = quanto dura o estoque total (empresa + contêiner) nesse ritmo.')+
+      '</div></div>';
+  }
+
+  h+='<button class="home-btn" onclick="goTo(\'s-est-container\')"><div class="hb-icon" style="background:#ede9fe;">🚛</div><div style="flex:1;"><div class="hb-title">Estoque da rua</div><div class="hb-desc">Entradas e lotes do contêiner</div></div><span style="color:var(--text-secondary);font-size:20px;">›</span></button>'+
+   '<button class="home-btn" onclick="goTo(\'s-est-interno\')"><div class="hb-icon" style="background:#dbeafe;">🏭</div><div style="flex:1;"><div class="hb-title">Estoque da empresa</div><div class="hb-desc">Contagem e baixa manual</div></div><span style="color:var(--text-secondary);font-size:20px;">›</span></button>'+
+   '<button class="home-btn" onclick="goTo(\'s-est-mov\')"><div class="hb-icon" style="background:#f1f5f9;">📋</div><div style="flex:1;"><div class="hb-title">Movimentações</div><div class="hb-desc">Filtrar por produto e período</div></div><span style="color:var(--text-secondary);font-size:20px;">›</span></button>'+
+   '<button class="home-btn" onclick="goTo(\'s-est-prod\')"><div class="hb-icon" style="background:#fef3c7;">⚙️</div><div style="flex:1;"><div class="hb-title">Produtos controlados</div><div class="hb-desc">'+prods.length+' produto(s) no controle</div></div><span style="color:var(--text-secondary);font-size:20px;">›</span></button>'+
+   (estEhAdmin()
+     ? '<button class="home-btn" onclick="goTo(\'s-est-config\')"><div class="hb-icon" style="background:#f1f5f9;">🔧</div><div style="flex:1;"><div class="hb-title">Configurações</div><div class="hb-desc">Capacidade, data de corte e senha</div></div><span style="color:var(--text-secondary);font-size:20px;">›</span></button>'
+     : '<div style="font-size:11px;color:var(--text-muted);text-align:center;padding:10px;">🔒 Configurações e exclusões só pelo admin</div>');
+
+  el.innerHTML=h;
+}
+window.estRenderHub=estRenderHub;
+
+// ── PRODUTOS CONTROLADOS ─────────────────────────────────────────
+let _estBuscaProd='';
+function estSetBuscaProd(v){
+  _estBuscaProd=v||'';
+  estRenderSugestoes();   // só a lista, nunca o campo (senão o cursor se perde)
+}
+window.estSetBuscaProd=estSetBuscaProd;
+
+function estRenderSugestoes(){
+  const box=document.getElementById('est-sug'); if(!box) return;
+  const q=_estBuscaProd.trim();
+  if(!q){ box.innerHTML=''; return; }
+  const achados=_ajmBuscarProdutos(q).filter(p=>!estProd(p.cod));
+  if(!achados.length){
+    box.innerHTML='<div style="font-size:12px;color:var(--text-secondary);margin-top:8px;">Nenhum produto novo encontrado (ou já está no controle).</div>';
+    return;
+  }
+  box.innerHTML='<div style="margin-top:8px;">'+achados.map(p=>
+    '<button onclick="estAbrirProdForm(\''+escapeJsStr(p.cod)+'\',\''+escapeJsStr(p.nome)+'\')" style="display:block;width:100%;text-align:left;background:#fff;border:1px solid var(--border);border-radius:8px;padding:11px;margin-bottom:5px;cursor:pointer;font-size:14px;font-family:inherit;">'+
+    '<strong style="color:var(--mc-azul);">'+p.cod+'</strong> · '+p.nome+'</button>').join('')+'</div>';
+}
+window.estRenderSugestoes=estRenderSugestoes;
+
+function estRenderProd(){
+  const el=document.getElementById('est-prod-content'); if(!el) return;
+  // se a pessoa está digitando, não redesenha a tela por baixo dela
+  if(document.activeElement && document.activeElement.id==='est-busca-prod'){ estRenderSugestoes(); return; }
+  const ativos=estAtivos();
+  let h='<div style="font-size:12px;color:var(--text-secondary);margin-bottom:10px;line-height:1.5;">Escolha quais produtos entram no controle. Só estes são descontados pelo carregamento — o resto passa e é ignorado.</div>';
+
+  h+='<div class="card" style="margin-bottom:12px;">'+
+    '<div style="font-size:13px;font-weight:700;margin-bottom:8px;">➕ Adicionar produto</div>'+
+    '<input type="text" id="est-busca-prod" oninput="estSetBuscaProd(this.value)" placeholder="Digite o código ou o nome" autocomplete="off" style="width:100%;padding:13px 14px;min-height:48px;border:1px solid var(--border-md,#d1d5db);border-radius:9px;font-size:16px;font-family:inherit;box-sizing:border-box;">'+
+    '<div id="est-sug"></div>';
+  h+='</div>';
+
+  h+='<div class="mc-section-header">'+ativos.length+' produto(s) no controle</div>';
+  if(!ativos.length){
+    h+='<div class="empty" style="padding:24px;text-align:center;color:var(--text-secondary);">Nenhum ainda.</div>';
+  } else {
+    h+=ativos.map(p=>{
+      const st=estStatusProduto(p);
+      return '<div class="card" style="margin-bottom:8px;">'+
+        '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">'+
+          '<div style="flex:1;min-width:0;">'+
+            '<div style="font-size:14px;font-weight:700;">'+p.nome+'</div>'+
+            '<div style="font-size:11px;color:var(--text-secondary);margin-top:2px;">cód '+p.codigo+' · <strong>'+(p.pctCaixa||0)+'</strong> pct/caixa · ideal '+(p.idealInterno||0)+' pct · mínimo '+(p.minimoPct||0)+'%</div>'+
+            '<div style="font-size:11px;color:var(--text-muted);margin-top:2px;">na empresa: '+st.interno+' · contêiner: '+st.disponivel+'</div>'+
+          '</div>'+
+          '<button onclick="estAbrirProdForm(\''+escapeJsStr(p.codigo)+'\',\''+escapeJsStr(p.nome)+'\')" style="flex:0 0 auto;background:#fff;border:1px solid var(--border);border-radius:7px;padding:6px 11px;cursor:pointer;font-size:12px;font-family:inherit;">✏️</button>'+
+        '</div></div>';
+    }).join('');
+  }
+  el.innerHTML=h;
+  const inp=document.getElementById('est-busca-prod');
+  if(inp && _estBuscaProd){ inp.value=_estBuscaProd; }
+  estRenderSugestoes();
+}
+window.estRenderProd=estRenderProd;
+
+function estAbrirProdForm(cod,nome){
+  const p=estProd(cod)||{codigo:String(cod), nome:nome||'', pctCaixa:'', idealInterno:'', minimoPct:30};
+  const jaTem=!!estProd(cod);
+  const ov=document.createElement('div');
+  ov.id='est-prod-modal';
+  ov.style.cssText='position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:3200;display:flex;align-items:center;justify-content:center;padding:16px;';
+  const campo=(id,label,val,dica)=>
+    '<label style="display:block;font-size:12px;font-weight:600;color:var(--text-secondary);margin-bottom:4px;">'+label+'</label>'+
+    '<input type="number" id="'+id+'" value="'+(val===''?'':val)+'" inputmode="numeric" style="width:100%;padding:12px;min-height:46px;border:1px solid var(--border-md,#d1d5db);border-radius:9px;font-size:16px;font-family:inherit;box-sizing:border-box;">'+
+    '<div style="font-size:11px;color:var(--text-muted);margin:3px 0 12px;line-height:1.4;">'+dica+'</div>';
+  ov.innerHTML='<div style="background:#fff;border-radius:16px;max-width:460px;width:100%;max-height:88vh;overflow-y:auto;padding:18px;">'+
+    '<div style="font-size:17px;font-weight:800;">'+(jaTem?'✏️ Editar':'➕ Adicionar')+' produto</div>'+
+    '<div style="font-size:12px;color:var(--text-secondary);margin:2px 0 14px;">'+(p.nome||'')+' · cód '+p.codigo+'</div>'+
+    campo('est-f-pctcaixa','Pacotes por caixa', p.pctCaixa||'', 'Quantos pacotes cabem numa caixa. É o que permite calcular as caixas ocupadas no contêiner.')+
+    campo('est-f-ideal','Estoque ideal na empresa (pacotes)', p.idealInterno||'', 'Quanto você quer manter dentro da fábrica. É o alvo da reposição.')+
+    campo('est-f-min','Repor quando chegar em (%)', p.minimoPct===undefined?30:p.minimoPct, 'Percentual do ideal. Ex: ideal 200 e 30% = avisa quando sobrar 60 pacotes.')+
+    '<div style="display:flex;gap:8px;">'+
+      '<button class="btn btn-secondary" style="flex:1;" onclick="document.getElementById(\'est-prod-modal\').remove()">Cancelar</button>'+
+      '<button class="btn btn-primary" style="flex:1;" onclick="estSalvarProd(\''+escapeJsStr(p.codigo)+'\',\''+escapeJsStr(p.nome)+'\')">Salvar</button>'+
+    '</div>'+
+    (jaTem?'<button onclick="estRemoverProd(\''+escapeJsStr(p.codigo)+'\')" style="width:100%;margin-top:10px;background:none;border:1px solid #fecaca;color:#dc2626;border-radius:9px;padding:10px;font-size:12px;cursor:pointer;font-family:inherit;">Tirar do controle</button>':'')+
+  '</div>';
+  document.body.appendChild(ov);
+}
+window.estAbrirProdForm=estAbrirProdForm;
+
+async function estSalvarProd(cod,nome){
+  const pctCaixa=parseInt(document.getElementById('est-f-pctcaixa').value)||0;
+  const ideal=parseInt(document.getElementById('est-f-ideal').value)||0;
+  const min=parseInt(document.getElementById('est-f-min').value);
+  if(pctCaixa<=0){ alert('Informe quantos pacotes cabem por caixa.'); return; }
+  if(min<0||min>100||isNaN(min)){ alert('O percentual de reposição deve ficar entre 0 e 100.'); return; }
+  try{
+    await setDoc(doc(db,'estoqueCtrlProdutos',String(cod)),
+      { codigo:String(cod), nome:nome||'', pctCaixa, idealInterno:ideal, minimoPct:min,
+        ativo:true, atualizadoEm:agora(), autor:_elevSetor() },{merge:true});
+    document.getElementById('est-prod-modal')?.remove();
+    _estBuscaProd=''; estRenderProd();
+  }catch(e){ alert('Erro: '+e.message); }
+}
+window.estSalvarProd=estSalvarProd;
+
+async function estRemoverProd(cod){
+  const interno=estSaldoInterno(cod), cont=estSaldoContainer(cod);
+  if(interno!==0||cont!==0){
+    if(!confirm('Este produto ainda tem saldo (empresa: '+interno+' · contêiner: '+cont+').\n\nTirar do controle mantém o histórico, mas ele para de ser descontado pelo carregamento. Continuar?')) return;
+  } else if(!confirm('Tirar este produto do controle?')) return;
+  try{
+    await updateDoc(doc(db,'estoqueCtrlProdutos',String(cod)),{ativo:false, atualizadoEm:agora()});
+    document.getElementById('est-prod-modal')?.remove();
+    estRenderProd();
+  }catch(e){ alert('Erro: '+e.message); }
+}
+window.estRemoverProd=estRemoverProd;
+
+// ── CONFIGURAÇÕES ────────────────────────────────────────────────
+function estRenderConfig(){
+  const el=document.getElementById('est-config-content'); if(!el) return;
+  if(!estEhAdmin()){
+    el.innerHTML='<div style="background:var(--bg-primary);border:1px solid var(--border);border-radius:12px;padding:26px;text-align:center;">'+
+      '<div style="font-size:38px;">🔒</div>'+
+      '<div style="font-size:16px;font-weight:800;margin-top:8px;">Acesso restrito</div>'+
+      '<div style="font-size:12px;color:var(--text-secondary);margin-top:5px;line-height:1.5;">Capacidade do contêiner, data de corte e senha da migração só podem ser alterados pelo admin.</div>'+
+      '<button class="btn btn-secondary" style="width:100%;margin-top:14px;" onclick="goTo(\'s-est-hub\')">Voltar</button></div>';
+    return;
+  }
+  const c=estConfig;
+  el.innerHTML=
+    '<div class="card" style="margin-bottom:12px;">'+
+      '<div style="font-size:13px;font-weight:700;margin-bottom:8px;">🚛 Capacidade do contêiner</div>'+
+      '<label style="font-size:12px;color:var(--text-secondary);">Total de caixas que cabem</label>'+
+      '<input type="number" id="est-cfg-cap" value="'+(c.capacidadeCaixas||100)+'" inputmode="numeric" style="width:100%;padding:12px;min-height:46px;border:1px solid var(--border-md,#d1d5db);border-radius:9px;font-size:16px;box-sizing:border-box;margin-top:4px;">'+
+    '</div>'+
+    '<div class="card" style="margin-bottom:12px;">'+
+      '<div style="font-size:13px;font-weight:700;margin-bottom:4px;">📅 Data de corte</div>'+
+      '<div style="font-size:11px;color:var(--text-secondary);margin-bottom:8px;line-height:1.5;">A partir desta data os carregamentos passam a descontar do estoque. Use a data da contagem inicial — carregamentos anteriores são ignorados, senão a contagem seria destruída pelo histórico.</div>'+
+      '<input type="date" id="est-cfg-corte" value="'+(c.dataCorte?c.dataCorte.split('/').reverse().join('-'):'')+'" style="width:100%;padding:12px;min-height:46px;border:1px solid var(--border-md,#d1d5db);border-radius:9px;font-size:16px;box-sizing:border-box;">'+
+    '</div>'+
+    '<div class="card" style="margin-bottom:12px;">'+
+      '<div style="font-size:13px;font-weight:700;margin-bottom:4px;">🔒 Senha da migração</div>'+
+      '<div style="font-size:11px;color:var(--text-secondary);margin-bottom:8px;line-height:1.5;">Pedida toda vez que alguém traz mercadoria do contêiner para a empresa. Deixe em branco para não pedir senha.</div>'+
+      '<input type="text" id="est-cfg-senha" value="'+String(c.senhaMigracao||'').replace(/"/g,'&quot;')+'" inputmode="numeric" placeholder="ex: 4321" style="width:100%;padding:12px;min-height:46px;border:1px solid var(--border-md,#d1d5db);border-radius:9px;font-size:16px;box-sizing:border-box;">'+
+    '</div>'+
+    '<div class="card" style="margin-bottom:12px;">'+
+      '<div style="font-size:13px;font-weight:700;">⚡ Baixa automática pelo carregamento</div>'+
+      '<div style="font-size:11px;color:var(--text-secondary);margin:4px 0 8px;line-height:1.5;">Desconta pela quantidade BIPADA, assim que o pessoal bipa. Se um carregamento for corrigido, o app acerta a diferença; se for excluído, devolve ao estoque.</div>'+
+      '<button onclick="estToggleAtivo()" style="width:100%;background:'+(c.ativo?'#16a34a':'#fff')+';color:'+(c.ativo?'#fff':'var(--text-secondary)')+';border:1px solid '+(c.ativo?'#16a34a':'var(--border)')+';border-radius:9px;padding:11px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">'+(c.ativo?'✓ Ligada':'Desligada')+'</button>'+
+    '</div>'+
+    '<button class="btn btn-primary" style="width:100%;" onclick="estSalvarConfig()">Salvar configurações</button>';
+}
+window.estRenderConfig=estRenderConfig;
+
+async function estSalvarConfig(){
+  if(!estEhAdmin()){ alert('Só o admin pode alterar as configurações.'); return; }
+  const cap=parseInt(document.getElementById('est-cfg-cap').value)||0;
+  const corteISO=document.getElementById('est-cfg-corte').value;
+  const senha=(document.getElementById('est-cfg-senha').value||'').trim();
+  if(cap<=0){ alert('Informe a capacidade do contêiner em caixas.'); return; }
+  try{
+    await setDoc(doc(db,'configuracoes','estoqueControlado'),
+      { capacidadeCaixas:cap, dataCorte:estISOparaBR(corteISO), senhaMigracao:senha,
+        ativo:estConfig.ativo, atualizadoEm:agora(), autor:_elevSetor() },{merge:true});
+    alert('Configurações salvas!');
+    goTo('s-est-hub');
+  }catch(e){ alert('Erro: '+e.message); }
+}
+window.estSalvarConfig=estSalvarConfig;
+
+async function estToggleAtivo(){
+  if(!estEhAdmin()){ alert('Só o admin pode alterar as configurações.'); return; }
+  try{
+    await setDoc(doc(db,'configuracoes','estoqueControlado'),{ativo:!estConfig.ativo},{merge:true});
+  }catch(e){ alert('Erro: '+e.message); }
+}
+window.estToggleAtivo=estToggleAtivo;
+
+// ── ESTOQUE DA EMPRESA (interno) ─────────────────────────────────
+function estRenderInterno(){
+  const el=document.getElementById('est-interno-content'); if(!el) return;
+  const prods=estAtivos();
+  if(!prods.length){ el.innerHTML='<div class="empty" style="padding:26px;text-align:center;color:var(--text-secondary);">Nenhum produto no controle ainda.</div>'; return; }
+  let h='<div style="font-size:12px;color:var(--text-secondary);margin-bottom:10px;line-height:1.5;">O saldo cai sozinho conforme o pessoal bipa no carregamento. Use a contagem para acertar e a baixa manual para saídas que não passam pelo carregamento.</div>';
+  h+=prods.map(p=>{
+    const st=estStatusProduto(p);
+    const cor = st.abaixo?'#dc2626':'var(--mc-azul)';
+    const pctBarra = st.ideal>0?Math.min(100,Math.round(st.interno/st.ideal*100)):0;
+    return '<div class="card" style="margin-bottom:8px;">'+
+      '<div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;">'+
+        '<div style="flex:1;min-width:0;font-size:14px;font-weight:700;">'+(st.abaixo?'🔻 ':'')+p.nome+'</div>'+
+        '<div style="font-size:20px;font-weight:900;color:'+cor+';">'+st.interno+'</div>'+
+      '</div>'+
+      '<div style="font-size:11px;color:var(--text-secondary);">pacotes'+(st.ideal>0?(' · ideal '+st.ideal+' · mínimo '+st.minimo):'')+'</div>'+
+      (st.ideal>0?'<div style="height:8px;background:var(--bg-page);border-radius:4px;overflow:hidden;margin-top:6px;"><div style="height:100%;width:'+pctBarra+'%;background:'+cor+';"></div></div>':'')+
+      '<div style="display:flex;gap:6px;margin-top:9px;flex-wrap:wrap;">'+
+        '<button onclick="estAbrirContagem(\''+escapeJsStr(p.codigo)+'\')" style="flex:1;min-width:96px;background:#fff;border:1px solid var(--border);border-radius:8px;padding:9px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">🔢 Contagem</button>'+
+        '<button onclick="estAbrirBaixa(\''+escapeJsStr(p.codigo)+'\')" style="flex:1;min-width:96px;background:#fff;border:1px solid #fecaca;color:#b91c1c;border-radius:8px;padding:9px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">➖ Baixa manual</button>'+
+        (st.disponivel>0?'<button onclick="estAbrirMigrar(\''+escapeJsStr(p.codigo)+'\')" style="flex:1;min-width:96px;background:#16a34a;border:none;color:#fff;border-radius:8px;padding:9px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">🚚 Trazer da rua</button>':'')+
+      '</div></div>';
+  }).join('');
+  el.innerHTML=h;
+}
+window.estRenderInterno=estRenderInterno;
+
+// contagem: informa o valor real e o app registra a diferença
+function estAbrirContagem(cod){
+  const p=estProd(cod); if(!p) return;
+  const atual=estSaldoInterno(cod);
+  _estUnid='cx';
+  _estModal('🔢 Contagem — '+p.nome,
+    '<div style="font-size:12px;color:var(--text-secondary);margin-bottom:12px;line-height:1.5;">O app tem <strong>'+atual+'</strong> pacotes ('+estCaixas(atual,p.pctCaixa)+' cx). Informe o que você contou de verdade; a diferença fica registrada.</div>'+
+    _estCampoQtd(cod,'Quantidade contada')+
+    '<label style="font-size:12px;font-weight:600;color:var(--text-secondary);">Observação (opcional)</label>'+
+    '<textarea id="est-m-obs" rows="2" style="width:100%;padding:11px;border:1px solid var(--border-md,#d1d5db);border-radius:9px;font-size:16px;font-family:inherit;box-sizing:border-box;margin-top:4px;"></textarea>',
+    'estSalvarContagem(\''+escapeJsStr(cod)+'\')');
+}
+window.estAbrirContagem=estAbrirContagem;
+
+async function estSalvarContagem(cod){
+  const campo=(document.getElementById('est-q-val')||{}).value;
+  if(campo===''||campo===undefined){ alert('Informe a quantidade contada.'); return; }
+  const contado=_estLerQtd(cod);
+  if(contado<0){ alert('A quantidade não pode ser negativa.'); return; }
+  const atual=estSaldoInterno(cod);
+  const dif=contado-atual;
+  const p=estProd(cod);
+  if(dif===0){ alert('A contagem bate com o sistema. Nada a ajustar.'); _estFecharModal(); return; }
+  const obs=(document.getElementById('est-m-obs').value||'').trim();
+  if(!confirm('Sistema: '+atual+' pct\nContado: '+contado+' pct\nDiferença: '+(dif>0?'+':'')+dif+'\n\nRegistrar o ajuste?')) return;
+  await estGravarMov({local:'interno', codigo:String(cod), nome:p?p.nome:'', pacotes:dif,
+    tipo:'contagem', motivo:'Contagem física ('+(dif>0?'sobra':'falta')+')', obs});
+  _estFecharModal();
+}
+window.estSalvarContagem=estSalvarContagem;
+
+// baixa manual com justificativa obrigatória
+const EST_MOTIVOS=['Saída sem nota','Nota será gerada depois','Perda / avaria','Consumo interno','Troca / devolução ao cliente','Outro'];
+function estAbrirBaixa(cod){
+  const p=estProd(cod); if(!p) return;
+  const saldo=estSaldoInterno(cod);
+  _estUnid='pct';
+  _estModal('➖ Baixa manual — '+p.nome,
+    '<div style="font-size:12px;color:var(--text-secondary);margin-bottom:10px;line-height:1.5;">Use só para o que NÃO passou pelo carregamento. Saldo atual: <strong>'+saldo+'</strong> pacotes.</div>'+
+    _estCampoQtd(cod,'Quantidade que saiu')+
+    '<label style="font-size:12px;font-weight:600;color:var(--text-secondary);">Motivo</label>'+
+    '<select id="est-m-motivo" style="width:100%;padding:12px;min-height:48px;border:1px solid var(--border-md,#d1d5db);border-radius:9px;font-size:16px;font-family:inherit;box-sizing:border-box;margin:4px 0 10px;">'+
+      EST_MOTIVOS.map(m=>'<option value="'+m+'">'+m+'</option>').join('')+'</select>'+
+    '<label style="font-size:12px;font-weight:600;color:var(--text-secondary);">Quem retirou / detalhes</label>'+
+    '<textarea id="est-m-obs" rows="2" placeholder="Ex: levado pelo Rafael para o cliente X" style="width:100%;padding:11px;border:1px solid var(--border-md,#d1d5db);border-radius:9px;font-size:16px;font-family:inherit;box-sizing:border-box;margin-top:4px;"></textarea>',
+    'estSalvarBaixa(\''+escapeJsStr(cod)+'\')');
+}
+window.estAbrirBaixa=estAbrirBaixa;
+
+async function estSalvarBaixa(cod){
+  const q=_estLerQtd(cod);
+  if(q<=0){ alert('Informe a quantidade que saiu.'); return; }
+  const motivo=document.getElementById('est-m-motivo').value;
+  const obs=(document.getElementById('est-m-obs').value||'').trim();
+  if(!obs){ alert('Descreva quem retirou ou o detalhe da saída.'); return; }
+  const p=estProd(cod);
+  const saldo=estSaldoInterno(cod);
+  if(q>saldo && !confirm('A baixa de '+q+' deixa o saldo negativo (tem '+saldo+').\n\nIsso costuma indicar contagem desatualizada. Continuar mesmo assim?')) return;
+  await estGravarMov({local:'interno', codigo:String(cod), nome:p?p.nome:'', pacotes:-q,
+    tipo:'baixa', motivo, obs});
+  _estFecharModal();
+}
+window.estSalvarBaixa=estSalvarBaixa;
+
+// ── CONTÊINER (estoque da rua) ───────────────────────────────────
+function estRenderContainer(){
+  const el=document.getElementById('est-container-content'); if(!el) return;
+  const prods=estAtivos();
+  const cap=estConfig.capacidadeCaixas||100, usadas=estCaixasUsadas();
+  const pct=cap>0?Math.min(100,Math.round(usadas/cap*100)):0;
+  const cor = pct>=95?'#dc2626':(pct>=80?'#d97706':'#16a34a');
+  let h='<div class="card" style="margin-bottom:12px;">'+
+    '<div style="display:flex;justify-content:space-between;align-items:baseline;">'+
+      '<div style="font-size:13px;font-weight:700;">Ocupação</div>'+
+      '<div style="font-size:18px;font-weight:900;color:'+cor+';">'+usadas+'/'+cap+' cx</div></div>'+
+    '<div style="height:12px;background:var(--bg-page);border-radius:6px;overflow:hidden;margin-top:7px;"><div style="height:100%;width:'+pct+'%;background:'+cor+';"></div></div>'+
+    '</div>';
+
+  h+='<button class="btn btn-primary" style="width:100%;margin-bottom:12px;" onclick="estAbrirEntrada()">➕ Registrar entrada no contêiner</button>';
+
+  const comSaldo=estLotes.filter(l=>(Number(l.saldo)||0)>0);
+  h+='<div class="mc-section-header">'+comSaldo.length+' lote(s) armazenado(s)</div>';
+  if(!comSaldo.length){
+    h+='<div class="empty" style="padding:24px;text-align:center;color:var(--text-secondary);">Contêiner vazio.</div>';
+  } else {
+    h+=comSaldo.map(l=>{
+      const p=estProd(l.codigo);
+      const dias=estDiasAte(l.validade);
+      const corV = dias===null?'var(--text-secondary)':(dias<0?'#dc2626':(dias<=5?'#d97706':'#16a34a'));
+      const txtV = dias===null?'sem validade':(dias<0?('vencido há '+Math.abs(dias)+'d'):(dias===0?'vence hoje':('faltam '+dias+'d')));
+      const cx=estCaixas(l.saldo, p?p.pctCaixa:0);
+      return '<div class="card" style="margin-bottom:8px;">'+
+        '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">'+
+          '<div style="flex:1;min-width:0;">'+
+            '<div style="font-size:14px;font-weight:700;">'+(l.nome||l.codigo)+'</div>'+
+            '<div style="font-size:11px;color:var(--text-secondary);margin-top:2px;">entrou '+(l.dataEntrada||'')+' · '+(l.responsavel||'—')+'</div>'+
+            (l.obs?'<div style="font-size:11px;color:var(--text-muted);margin-top:2px;">'+l.obs+'</div>':'')+
+          '</div>'+
+          '<div style="text-align:right;white-space:nowrap;">'+
+            '<div style="font-size:17px;font-weight:900;color:#7c3aed;">'+l.saldo+'</div>'+
+            '<div style="font-size:10px;color:var(--text-muted);">pct · '+cx+' cx</div></div>'+
+        '</div>'+
+        '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;padding-top:7px;border-top:1px dashed var(--border);">'+
+          '<span style="font-size:11px;font-weight:700;color:'+corV+';">📅 '+(l.validade||'—')+' · '+txtV+'</span>'+
+          '<span style="display:flex;gap:6px;">'+
+            (estEhAdmin()?'<button onclick="estExcluirLote(\''+escapeJsStr(l.firestoreId)+'\')" title="Excluir lote" style="background:none;border:1px solid #fecaca;color:#dc2626;border-radius:7px;padding:6px 10px;font-size:12px;cursor:pointer;font-family:inherit;">🗑</button>':'')+
+            '<button onclick="estAbrirMigrar(\''+escapeJsStr(l.codigo)+'\')" style="background:#16a34a;border:none;color:#fff;border-radius:7px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">🚚 Migrar</button>'+
+          '</span>'+
+        '</div></div>';
+    }).join('');
+  }
+  el.innerHTML=h;
+}
+window.estRenderContainer=estRenderContainer;
+
+function estAbrirEntrada(cod){
+  const prods=estAtivos();
+  if(!prods.length){ alert('Cadastre os produtos controlados antes.'); return; }
+  const sel=cod||prods[0].codigo;
+  _estUnid='cx';
+  _estModal('➕ Entrada no contêiner',
+    '<label style="font-size:12px;font-weight:600;color:var(--text-secondary);">Produto</label>'+
+    '<select id="est-e-prod" onchange="estPreviewQtd(this.value)" style="width:100%;padding:12px;min-height:48px;border:1px solid var(--border-md,#d1d5db);border-radius:9px;font-size:16px;font-family:inherit;box-sizing:border-box;margin:4px 0 12px;">'+
+      prods.map(p=>'<option value="'+String(p.codigo).replace(/"/g,'&quot;')+'"'+(String(p.codigo)===String(sel)?' selected':'')+'>'+p.nome+' ('+(p.pctCaixa||0)+'/cx)</option>').join('')+'</select>'+
+    _estCampoQtd(sel,'Quantidade que entrou')+
+    '<label style="font-size:12px;font-weight:600;color:var(--text-secondary);">Validade do produto</label>'+
+    '<input type="date" id="est-e-val" style="width:100%;padding:12px;min-height:48px;border:1px solid var(--border-md,#d1d5db);border-radius:9px;font-size:16px;box-sizing:border-box;margin:4px 0 10px;">'+
+    '<label style="font-size:12px;font-weight:600;color:var(--text-secondary);">Data da entrada</label>'+
+    '<input type="date" id="est-e-data" value="'+new Date().toISOString().slice(0,10)+'" style="width:100%;padding:12px;min-height:48px;border:1px solid var(--border-md,#d1d5db);border-radius:9px;font-size:16px;box-sizing:border-box;margin:4px 0 10px;">'+
+    '<label style="font-size:12px;font-weight:600;color:var(--text-secondary);">Responsável pela liberação</label>'+
+    '<input type="text" id="est-e-resp" placeholder="Nome de quem liberou" autocomplete="off" style="width:100%;padding:13px;min-height:48px;border:1px solid var(--border-md,#d1d5db);border-radius:9px;font-size:16px;font-family:inherit;box-sizing:border-box;margin:4px 0 10px;">'+
+    '<label style="font-size:12px;font-weight:600;color:var(--text-secondary);">Observação (opcional)</label>'+
+    '<textarea id="est-e-obs" rows="2" style="width:100%;padding:11px;border:1px solid var(--border-md,#d1d5db);border-radius:9px;font-size:16px;font-family:inherit;box-sizing:border-box;margin-top:4px;"></textarea>'+
+    '<div id="est-e-cap" style="font-size:12px;font-weight:700;text-align:center;margin-top:10px;"></div>',
+    'estSalvarEntrada()');
+}
+window.estAbrirEntrada=estAbrirEntrada;
+
+async function estSalvarEntrada(){
+  const cod=document.getElementById('est-e-prod').value;
+  const q=_estLerQtd(cod);
+  const valISO=document.getElementById('est-e-val').value;
+  const dataISO=document.getElementById('est-e-data').value;
+  const resp=(document.getElementById('est-e-resp').value||'').trim();
+  const obs=(document.getElementById('est-e-obs').value||'').trim();
+  if(q<=0){ alert('Informe a quantidade que entrou.'); return; }
+  if(!valISO){ alert('Informe a validade — é ela que controla o que sai primeiro.'); return; }
+  if(!resp){ alert('Informe o responsável pela liberação.'); return; }
+  const p=estProd(cod);
+  const cx=estCaixas(q,p?p.pctCaixa:0);
+  const livre=Math.max(0,(estConfig.capacidadeCaixas||100)-estCaixasUsadas());
+  if(cx>livre && !confirm('Esta entrada ocupa '+cx+' caixa(s) e só há '+livre+' livre(s).\n\nRegistrar mesmo assim?')) return;
+  const validade=estISOparaBR(valISO), dataEntrada=estISOparaBR(dataISO)||hoje();
+  try{
+    await addDoc(collection(db,'estoqueCtrlLotes'),{
+      codigo:String(cod), nome:p?p.nome:'', pacotes:q, saldo:q,
+      validade, validadeNum:estDataNum(validade),
+      dataEntrada, responsavel:resp, obs,
+      autor:_elevSetor(), hora:agora(), ts:Date.now()
+    });
+    await estGravarMov({local:'container', codigo:String(cod), nome:p?p.nome:'', pacotes:q,
+      tipo:'entrada', motivo:'Entrada no contêiner · resp. '+resp,
+      obs:cx+' cx · val '+validade+(obs?' · '+obs:'')});
+    _estFecharModal();
+  }catch(e){ alert('Erro: '+e.message); }
+}
+window.estSalvarEntrada=estSalvarEntrada;
+
+// ── MIGRAÇÃO contêiner → empresa (com senha) ─────────────────────
+function estAbrirMigrar(cod){
+  const p=estProd(cod); if(!p){ alert('Produto não está no controle.'); return; }
+  const st=estStatusProduto(p);
+  if(st.disponivel<=0){ alert('Não há saldo deste produto no contêiner.'); return; }
+  const lotes=estLotes.filter(l=>String(l.codigo)===String(cod) && (Number(l.saldo)||0)>0);
+  _estUnid='cx';
+  const sugerido=Math.max(1, Math.min(st.caixasSug||1, Math.ceil(st.disponivel/(p.pctCaixa||1))));
+  _estModal('🚚 Trazer do contêiner — '+p.nome,
+    '<div style="font-size:12px;color:var(--text-secondary);margin-bottom:12px;line-height:1.5;">Na empresa há <strong>'+st.interno+'</strong> pct (ideal '+st.ideal+'). No contêiner há <strong>'+st.disponivel+'</strong> pct em '+lotes.length+' lote(s). Sai sempre o de validade mais próxima.</div>'+
+    _estCampoQtd(cod,'Quantidade trazida', sugerido)+
+    '<div id="est-g-lotes" style="font-size:11px;color:var(--text-secondary);margin-bottom:10px;"></div>'+
+    (estConfig.senhaMigracao
+      ? '<label style="font-size:12px;font-weight:600;color:var(--text-secondary);">🔒 Senha da migração</label>'+
+        '<input type="password" id="est-g-senha" inputmode="numeric" autocomplete="off" style="width:100%;padding:13px;min-height:48px;border:1px solid var(--border-md,#d1d5db);border-radius:9px;font-size:16px;box-sizing:border-box;margin:4px 0 10px;">'
+      : '<div style="font-size:11px;color:#b45309;background:#fef3c7;border-radius:8px;padding:8px;margin-bottom:10px;">Sem senha cadastrada. Defina uma em Configurações para travar esta operação.</div>'),
+    'estConfirmarMigrar(\''+escapeJsStr(cod)+'\')');
+  estPreviewQtd(cod);
+  estPreviewLotes(cod);
+}
+window.estAbrirMigrar=estAbrirMigrar;
+
+function estPreviewLotes(cod){
+  const out=document.getElementById('est-g-lotes'); if(!out) return;
+  const total=_estLerQtd(cod);
+  const disp=estSaldoContainer(cod);
+  if(total<=0){ out.textContent=''; return; }
+  if(total>disp){ out.innerHTML='<span style="color:#dc2626;font-weight:700;">⚠️ O contêiner só tem '+disp+' pacotes deste produto.</span>'; return; }
+  const lotes=estLotes.filter(l=>String(l.codigo)===String(cod)&&(Number(l.saldo)||0)>0);
+  let resta=total; const usados=[];
+  for(const l of lotes){ if(resta<=0) break; const t=Math.min(Number(l.saldo)||0,resta); resta-=t; usados.push(t+' pct de '+l.validade); }
+  out.innerHTML='sai dos lotes: '+usados.join(' · ');
+}
+window.estPreviewLotes=estPreviewLotes;
+
+async function estConfirmarMigrar(cod){
+  const p=estProd(cod); if(!p) return;
+  const total=_estLerQtd(cod);
+  if(total<=0){ alert('Informe a quantidade trazida.'); return; }
+  const disp=estSaldoContainer(cod);
+  if(total>disp){ alert('O contêiner só tem '+disp+' pacotes deste produto.'); return; }
+  if(estConfig.senhaMigracao){
+    const senha=(document.getElementById('est-g-senha')||{}).value||'';
+    if(String(senha).trim()!==String(estConfig.senhaMigracao)){ alert('Senha incorreta. A migração não foi registrada.'); return; }
+  }
+  const cx=estCaixas(total,p.pctCaixa);
+  if(!confirm('Registrar a entrada de '+total+' pacote(s) ('+cx+' cx) de '+p.nome+' na empresa?')) return;
+  const lotes=estLotes.filter(l=>String(l.codigo)===String(cod)&&(Number(l.saldo)||0)>0);
+  let resta=total; const detalhes=[];
+  try{
+    for(const l of lotes){
+      if(resta<=0) break;
+      const t=Math.min(Number(l.saldo)||0, resta);
+      await updateDoc(doc(db,'estoqueCtrlLotes',l.firestoreId),{saldo:(Number(l.saldo)||0)-t});
+      resta-=t; detalhes.push(t+' pct val '+l.validade);
+    }
+    const desc=cx+' cx ('+total+' pct) · '+detalhes.join(' · ');
+    await estGravarMov({local:'container', codigo:String(cod), nome:p.nome, pacotes:-total,
+      tipo:'migracao', motivo:'Migrado para a empresa', obs:desc});
+    await estGravarMov({local:'interno', codigo:String(cod), nome:p.nome, pacotes:total,
+      tipo:'migracao', motivo:'Recebido do contêiner', obs:desc});
+    _estFecharModal();
+    alert('Migração registrada: '+total+' pacotes ('+cx+' caixas).');
+  }catch(e){ alert('Erro na migração: '+e.message); }
+}
+window.estConfirmarMigrar=estConfirmarMigrar;
+
+/* ── CAMPO DE QUANTIDADE: caixa ou pacote ────────────────────────
+   A operação fala em caixas, o sistema guarda em pacotes. A pessoa
+   escolhe a unidade e vê o total nas duas na hora, antes de salvar. */
+let _estUnid='cx';
+function estSetUnid(u, cod){
+  _estUnid=u;
+  document.querySelectorAll('[data-est-unid]').forEach(b=>{
+    const ativo=b.getAttribute('data-est-unid')===u;
+    b.style.background = ativo?'var(--mc-azul,#2563eb)':'#fff';
+    b.style.color      = ativo?'#fff':'var(--text-secondary)';
+    b.style.borderColor= ativo?'var(--mc-azul,#2563eb)':'var(--border)';
+  });
+  const inp=document.getElementById('est-q-val');
+  if(inp) inp.placeholder = u==='cx'?'Quantas caixas':'Quantos pacotes';
+  estPreviewQtd(cod);
+}
+window.estSetUnid=estSetUnid;
+
+// bloco reutilizado por entrada, contagem, baixa e migração
+function _estCampoQtd(cod, rotulo, valorInicial){
+  const p=estProd(cod), pct=p?(Number(p.pctCaixa)||0):0;
+  const btn=(u,txt)=>'<button type="button" data-est-unid="'+u+'" onclick="estSetUnid(\''+u+'\',\''+escapeJsStr(cod)+'\')" '+
+    'style="flex:1;background:'+(_estUnid===u?'var(--mc-azul,#2563eb)':'#fff')+';color:'+(_estUnid===u?'#fff':'var(--text-secondary)')+';border:1px solid '+(_estUnid===u?'var(--mc-azul,#2563eb)':'var(--border)')+';border-radius:9px;padding:11px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">'+txt+'</button>';
+  return '<label style="font-size:12px;font-weight:600;color:var(--text-secondary);">'+rotulo+'</label>'+
+    '<div style="display:flex;gap:8px;margin:6px 0 8px;">'+btn('cx','📦 Caixas')+btn('pct','Pacotes')+'</div>'+
+    '<input type="number" id="est-q-val" value="'+(valorInicial===undefined?'':valorInicial)+'" inputmode="numeric" placeholder="'+(_estUnid==='cx'?'Quantas caixas':'Quantos pacotes')+'" oninput="estPreviewQtd(\''+escapeJsStr(cod)+'\')" style="width:100%;padding:14px;min-height:52px;border:1px solid var(--border-md,#d1d5db);border-radius:9px;font-size:18px;font-weight:700;box-sizing:border-box;">'+
+    '<div id="est-q-prev" style="font-size:14px;font-weight:800;color:var(--mc-azul);min-height:22px;margin:6px 0 10px;text-align:center;background:var(--bg-page);border-radius:8px;padding:8px;"></div>'+
+    '<input type="hidden" id="est-q-pct" value="'+pct+'">';
+}
+
+// converte o que foi digitado para PACOTES (é assim que o app guarda)
+function _estLerQtd(cod){
+  const p=estProd(cod), pct=p?(Number(p.pctCaixa)||0):0;
+  const v=parseInt((document.getElementById('est-q-val')||{}).value)||0;
+  if(v<=0) return 0;
+  return _estUnid==='cx' ? v*pct : v;
+}
+
+function estPreviewQtd(cod){
+  const out=document.getElementById('est-q-prev'); if(!out) return;
+  const p=estProd(cod), pct=p?(Number(p.pctCaixa)||0):0;
+  const v=parseInt((document.getElementById('est-q-val')||{}).value)||0;
+  if(v<=0){ out.textContent=''; return; }
+  const pacotes=_estUnid==='cx'?v*pct:v;
+  const caixas=estCaixas(pacotes,pct);
+  const sobra=pct>0?(pacotes%pct):0;
+  if(typeof estPreviewLotes==='function' && document.getElementById('est-g-lotes')) estPreviewLotes(cod);
+  if(document.getElementById('est-e-cap')) _estPreviewCapacidade(cod, pacotes);
+  out.innerHTML='= <strong>'+pacotes+'</strong> pacotes &nbsp;·&nbsp; <strong>'+caixas+'</strong> caixa(s)'+
+    (sobra?'<div style="font-size:11px;font-weight:600;color:var(--text-secondary);margin-top:2px;">'+(caixas-1)+' cheia(s) + '+sobra+' pacote(s) soltos</div>':'')+
+    (pct?'<div style="font-size:11px;font-weight:400;color:var(--text-muted);margin-top:2px;">'+pct+' pacotes por caixa</div>':'<div style="font-size:11px;color:#dc2626;margin-top:2px;">produto sem pacotes/caixa definido</div>');
+}
+window.estPreviewQtd=estPreviewQtd;
+
+/* ── VENDA MÉDIA E DIAS DE ESTOQUE ───────────────────────────────
+   Calculada a partir das baixas reais de carregamento. Só passa a
+   valer depois de 14 dias de histórico — antes disso não há base. */
+function estVendaMediaSemanal(cod){
+  const c=String(cod);
+  const corte=estDataNum(estConfig.dataCorte);
+  if(!corte) return null;
+  const hojeN=estHojeNum();
+  // janela de 28 dias
+  const d=new Date(); d.setDate(d.getDate()-28);
+  const iniJanela=Number(String(d.getFullYear())+String(d.getMonth()+1).padStart(2,'0')+String(d.getDate()).padStart(2,'0'));
+  const inicio=Math.max(corte, iniJanela);
+  let total=0, achou=false;
+  Object.values(estBaixas).forEach(b=>{
+    const dn=estDataNum(b.data);
+    if(!dn || dn<inicio || dn>hojeN) return;
+    const q=(b.itens||{})[c];
+    if(q){ total+=Number(q)||0; achou=true; }
+  });
+  // quantos dias de histórico existem de fato
+  const dtCorte=new Date(String(estConfig.dataCorte).split('/').reverse().join('-')+'T00:00:00');
+  const dias=Math.min(28, Math.max(0, Math.round((new Date()-dtCorte)/86400000)));
+  if(dias<14) return null;             // pouco histórico: não arrisca palpite
+  if(!achou && total===0) return 0;
+  return Math.round(total/(dias/7));
+}
+function estDiasDeEstoque(cod){
+  const media=estVendaMediaSemanal(cod);
+  if(media===null || media<=0) return null;
+  const total=estSaldoInterno(cod)+estSaldoContainer(cod);
+  return Math.floor(total/(media/7));
+}
+function estNegativos(){
+  return estAtivos().filter(p=>estSaldoInterno(p.codigo)<0);
+}
+function estValidadeMaisCurta(cod){
+  const c=String(cod);
+  const lotes=estLotes.filter(l=>String(l.codigo)===c && (Number(l.saldo)||0)>0 && l.validade);
+  if(!lotes.length) return null;
+  return lotes.slice().sort((a,b)=>(a.validadeNum||0)-(b.validadeNum||0))[0];
+}
+
+// aviso de capacidade na entrada do contêiner
+function _estPreviewCapacidade(cod, pacotes){
+  const out=document.getElementById('est-e-cap'); if(!out) return;
+  const p=estProd(cod);
+  const cx=estCaixas(pacotes, p?p.pctCaixa:0);
+  const livre=Math.max(0,(estConfig.capacidadeCaixas||100)-estCaixasUsadas());
+  if(!cx){ out.textContent=''; return; }
+  out.innerHTML = cx>livre
+    ? '<span style="color:#dc2626;">⚠️ Ocupa '+cx+' cx e só há '+livre+' livre(s)</span>'
+    : '<span style="color:#16a34a;">✓ Cabe: '+cx+' de '+livre+' caixa(s) livres</span>';
+}
+
+/* ── ACESSO E EXCLUSÃO (só admin) ────────────────────────────────
+   Excluir um lançamento recalcula o saldo sozinho, porque o saldo é
+   sempre a soma dos movimentos. Toda exclusão deixa um registro de
+   auditoria (pacotes 0, para não mexer nos totais). */
+function estEhAdmin(){
+  return window.adminMode===true || window.setorAtual==='admin';
+}
+
+async function estExcluirMov(id){
+  if(!estEhAdmin()){ alert('Só o admin pode excluir lançamentos.'); return; }
+  const m=estMovs.find(x=>x.firestoreId===id); if(!m) return;
+  const onde = m.local==='container'?'contêiner':'empresa';
+  if(!confirm('Excluir este lançamento?\n\n'+(m.nome||m.codigo)+'\n'+(m.pacotes>0?'+':'')+m.pacotes+' pacotes · '+onde+'\n'+(m.motivo||'')+'\n\nO saldo é recalculado na hora.')) return;
+  try{
+    await deleteDoc(doc(db,'estoqueCtrlMov',id));
+    await estGravarMov({local:m.local, codigo:m.codigo, nome:m.nome, pacotes:0, tipo:'exclusao',
+      motivo:'Lançamento excluído pelo admin',
+      obs:'era: '+(m.pacotes>0?'+':'')+m.pacotes+' pct · '+(m.tipo||'')+' · '+(m.motivo||'')+' · de '+(m.data||'')});
+  }catch(e){ alert('Erro ao excluir: '+e.message); }
+}
+window.estExcluirMov=estExcluirMov;
+
+async function estExcluirLote(id){
+  if(!estEhAdmin()){ alert('Só o admin pode excluir lotes.'); return; }
+  const l=estLotes.find(x=>x.firestoreId===id); if(!l) return;
+  const p=estProd(l.codigo);
+  const consumido=(Number(l.pacotes)||0)-(Number(l.saldo)||0);
+  let aviso='';
+  if(consumido>0) aviso='\n\nATENÇÃO: '+consumido+' pacote(s) deste lote já foram migrados para a empresa. Excluir o lote NÃO desfaz essas migrações.';
+  if(!confirm('Excluir este lote do contêiner?\n\n'+(l.nome||l.codigo)+'\nsaldo: '+l.saldo+' pct · val '+(l.validade||'—')+'\nentrada '+(l.dataEntrada||'')+aviso)) return;
+  try{
+    await deleteDoc(doc(db,'estoqueCtrlLotes',id));
+    await estGravarMov({local:'container', codigo:l.codigo, nome:l.nome||(p?p.nome:''), pacotes:0,
+      tipo:'exclusao', motivo:'Lote excluído pelo admin',
+      obs:'saldo '+l.saldo+' pct · entrada '+(l.dataEntrada||'')+' · val '+(l.validade||'—')+' · resp. '+(l.responsavel||'—')});
+  }catch(e){ alert('Erro ao excluir: '+e.message); }
+}
+window.estExcluirLote=estExcluirLote;
+
+// ── auxiliares de tela ───────────────────────────────────────────
+function _estModal(titulo, corpo, acaoSalvar){
+  _estFecharModal();
+  const ov=document.createElement('div');
+  ov.id='est-modal';
+  ov.style.cssText='position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:3200;display:flex;align-items:center;justify-content:center;padding:16px;';
+  ov.innerHTML='<div style="background:#fff;border-radius:16px;max-width:460px;width:100%;max-height:90vh;overflow-y:auto;padding:18px;">'+
+    '<div style="font-size:16px;font-weight:800;margin-bottom:12px;">'+titulo+'</div>'+
+    corpo+
+    '<div style="display:flex;gap:8px;margin-top:14px;">'+
+      '<button class="btn btn-secondary" style="flex:1;" onclick="_estFecharModal()">Cancelar</button>'+
+      '<button class="btn btn-primary" style="flex:1;" onclick="'+acaoSalvar+'">Confirmar</button>'+
+    '</div></div>';
+  document.body.appendChild(ov);
+}
+function _estFecharModal(){ document.getElementById('est-modal')?.remove(); }
+window._estFecharModal=_estFecharModal;
+
+// todo movimento passa por aqui: sempre com autor, data e motivo
+async function estGravarMov(m){
+  try{
+    await addDoc(collection(db,'estoqueCtrlMov'),{
+      local:m.local, codigo:String(m.codigo), nome:m.nome||'',
+      pacotes:Number(m.pacotes)||0, tipo:m.tipo, motivo:m.motivo||'', obs:m.obs||'',
+      autor:_elevSetor(), data:hoje(), hora:agora(), ts:Date.now()
+    });
+    return true;
+  }catch(e){ alert('Erro ao registrar movimento: '+e.message); return false; }
+}
+
+// ── MOVIMENTAÇÕES ────────────────────────────────────────────────
+let _estMovFiltro='todos', _estMovProd='', _estMovDe='', _estMovAte='';
+function estSetMovFiltro(v){ _estMovFiltro=v; estRenderMov(); }
+function estSetMovProd(v){ _estMovProd=v||''; estRenderMov(); }
+function estSetMovData(qual,v){ if(qual==='de') _estMovDe=v||''; else _estMovAte=v||''; estRenderMov(); }
+function estLimparFiltrosMov(){ _estMovFiltro='todos'; _estMovProd=''; _estMovDe=''; _estMovAte=''; estRenderMov(); }
+window.estSetMovFiltro=estSetMovFiltro;
+window.estSetMovProd=estSetMovProd;
+window.estSetMovData=estSetMovData;
+window.estLimparFiltrosMov=estLimparFiltrosMov;
+
+// junta os movimentos manuais com as baixas automáticas de carregamento
+function estLinhasMov(){
+  const linhas=[];
+  estMovs.forEach(m=>linhas.push({
+    id:m.firestoreId, podeExcluir:true,
+    ts:m.ts||0, data:m.data, dataNum:estDataNum(m.data), hora:_elevHoraCurta(m.hora),
+    tipo:m.tipo, local:m.local, codigo:String(m.codigo), nome:m.nome||m.codigo,
+    pacotes:Number(m.pacotes)||0, motivo:m.motivo, obs:m.obs, autor:m.autor
+  }));
+  Object.entries(estBaixas).forEach(([id,b])=>{
+    Object.entries(b.itens||{}).forEach(([cod,q])=>{
+      const p=estProd(cod);
+      linhas.push({ id:id, podeExcluir:false,
+        ts:b.ts||0, data:b.data, dataNum:estDataNum(b.data), hora:_elevHoraCurta(b.atualizadoEm),
+        tipo:'carregamento', local:'interno', codigo:String(cod), nome:p?p.nome:cod,
+        pacotes:-(Number(q)||0), motivo:'Carregamento: '+(b.carregamento||id),
+        obs:'baixa automática pela bipagem', autor:'Sistema' });
+    });
+  });
+  return linhas.sort((a,b)=>(b.ts||0)-(a.ts||0));
+}
+
+function estRenderMov(){
+  const el=document.getElementById('est-mov-content'); if(!el) return;
+  const todas=estLinhasMov();
+  const de=estDataNum(estISOparaBR(_estMovDe)), ate=estDataNum(estISOparaBR(_estMovAte));
+  const filtradas=todas.filter(l=>{
+    if(_estMovFiltro!=='todos' && l.tipo!==_estMovFiltro) return false;
+    if(_estMovProd && String(l.codigo)!==String(_estMovProd)) return false;
+    if(de && l.dataNum && l.dataNum<de) return false;
+    if(ate && l.dataNum && l.dataNum>ate) return false;
+    return true;
+  });
+  const entrou=filtradas.filter(l=>l.pacotes>0).reduce((s,l)=>s+l.pacotes,0);
+  const saiu=filtradas.filter(l=>l.pacotes<0).reduce((s,l)=>s+l.pacotes,0);
+  const temFiltro = _estMovFiltro!=='todos'||_estMovProd||_estMovDe||_estMovAte;
+
+  const tipos=[['todos','Tudo'],['carregamento','Carregamento'],['baixa','Baixa manual'],['migracao','Migração'],['entrada','Entrada'],['contagem','Contagem'],['exclusao','Excluídos']];
+  let h='<div class="card" style="margin-bottom:12px;">'+
+    '<div style="font-size:12px;font-weight:700;color:var(--text-secondary);margin-bottom:6px;">PRODUTO</div>'+
+    '<select onchange="estSetMovProd(this.value)" style="width:100%;padding:12px;min-height:46px;border:1px solid var(--border-md,#d1d5db);border-radius:9px;font-size:16px;font-family:inherit;box-sizing:border-box;">'+
+      '<option value="">Todos os produtos</option>'+
+      estAtivos().map(p=>'<option value="'+String(p.codigo).replace(/"/g,'&quot;')+'"'+(String(_estMovProd)===String(p.codigo)?' selected':'')+'>'+p.nome+'</option>').join('')+
+    '</select>'+
+    '<div style="display:flex;gap:8px;margin-top:10px;">'+
+      '<div style="flex:1;min-width:0;"><div style="font-size:11px;font-weight:700;color:var(--text-secondary);margin-bottom:4px;">DE</div>'+
+        '<input type="date" value="'+_estMovDe+'" onchange="estSetMovData(\'de\',this.value)" style="width:100%;padding:10px;min-height:44px;border:1px solid var(--border-md,#d1d5db);border-radius:9px;font-size:15px;box-sizing:border-box;"></div>'+
+      '<div style="flex:1;min-width:0;"><div style="font-size:11px;font-weight:700;color:var(--text-secondary);margin-bottom:4px;">ATÉ</div>'+
+        '<input type="date" value="'+_estMovAte+'" onchange="estSetMovData(\'ate\',this.value)" style="width:100%;padding:10px;min-height:44px;border:1px solid var(--border-md,#d1d5db);border-radius:9px;font-size:15px;box-sizing:border-box;"></div>'+
+    '</div>'+
+    '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;">'+
+      tipos.map(([v,l])=>'<button onclick="estSetMovFiltro(\''+v+'\')" style="background:'+(_estMovFiltro===v?'var(--mc-azul,#2563eb)':'#fff')+';color:'+(_estMovFiltro===v?'#fff':'var(--text-secondary)')+';border:1px solid '+(_estMovFiltro===v?'var(--mc-azul,#2563eb)':'var(--border)')+';border-radius:99px;padding:6px 12px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;">'+l+'</button>').join('')+
+    '</div>'+
+    (temFiltro?'<button onclick="estLimparFiltrosMov()" style="width:100%;margin-top:10px;background:none;border:1px solid var(--border);color:var(--text-secondary);border-radius:8px;padding:8px;font-size:12px;cursor:pointer;font-family:inherit;">Limpar filtros</button>':'')+
+  '</div>';
+
+  h+='<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:12px;">'+
+    '<div class="card" style="text-align:center;padding:10px 6px;"><div style="font-size:10px;color:var(--text-secondary);">MOVIMENTOS</div><div style="font-size:18px;font-weight:900;">'+filtradas.length+'</div></div>'+
+    '<div class="card" style="text-align:center;padding:10px 6px;"><div style="font-size:10px;color:var(--text-secondary);">ENTROU</div><div style="font-size:18px;font-weight:900;color:#16a34a;">+'+entrou+'</div></div>'+
+    '<div class="card" style="text-align:center;padding:10px 6px;"><div style="font-size:10px;color:var(--text-secondary);">SAIU</div><div style="font-size:18px;font-weight:900;color:#dc2626;">'+saiu+'</div></div>'+
+  '</div>';
+
+  if(!filtradas.length){
+    h+='<div class="empty" style="padding:24px;text-align:center;color:var(--text-secondary);">Nenhuma movimentação'+(temFiltro?' com esses filtros':'')+'.</div>';
+  } else {
+    const icone={carregamento:'🚚',baixa:'➖',migracao:'🔄',entrada:'➕',contagem:'🔢',exclusao:'🗑'};
+    h+=filtradas.slice(0,200).map(l=>{
+      const pos=l.pacotes>0;
+      return '<div class="card" style="margin-bottom:6px;padding:10px 12px;">'+
+        '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">'+
+          '<div style="flex:1;min-width:0;">'+
+            '<div style="font-size:13px;font-weight:700;">'+(icone[l.tipo]||'•')+' '+l.nome+'</div>'+
+            '<div style="font-size:11px;color:var(--text-secondary);margin-top:2px;">'+(l.motivo||'')+'</div>'+
+            (l.obs?'<div style="font-size:10px;color:var(--text-muted);margin-top:2px;">'+l.obs+'</div>':'')+
+            '<div style="font-size:10px;color:var(--text-muted);margin-top:3px;">'+(l.data||'')+' '+(l.hora||'')+' · '+(l.autor||'')+' · '+(l.local==='container'?'contêiner':'empresa')+'</div>'+
+          '</div>'+
+          '<div style="text-align:right;white-space:nowrap;">'+
+            '<div style="font-size:16px;font-weight:900;color:'+(l.tipo==='exclusao'?'var(--text-muted)':(pos?'#16a34a':'#dc2626'))+';">'+(l.tipo==='exclusao'?'—':((pos?'+':'')+l.pacotes))+'</div>'+
+            (estEhAdmin() && l.podeExcluir && l.tipo!=='exclusao'
+              ? '<button onclick="estExcluirMov(\''+escapeJsStr(l.id)+'\')" title="Excluir lançamento" style="margin-top:5px;background:none;border:1px solid #fecaca;color:#dc2626;border-radius:6px;padding:4px 9px;font-size:11px;cursor:pointer;font-family:inherit;">🗑</button>'
+              : (l.podeExcluir?'':'<div style="font-size:9px;color:var(--text-muted);margin-top:4px;">do carregamento</div>'))+
+          '</div>'+
+        '</div></div>';
+    }).join('');
+    if(filtradas.length>200) h+='<div style="font-size:11px;color:var(--text-muted);text-align:center;padding:8px;">mostrando as 200 mais recentes de '+filtradas.length+'</div>';
+  }
+  el.innerHTML=h;
+}
+window.estRenderMov=estRenderMov;
 
 /* ══════════════════════════════════════════════════════════════════
    EXIBIÇÃO — tela cheia e largura total
