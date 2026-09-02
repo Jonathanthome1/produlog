@@ -19290,17 +19290,43 @@ async function estGravarMov(m){
 }
 
 // ── MOVIMENTAÇÕES ────────────────────────────────────────────────
-let _estMovFiltro='todos', _estMovProd='', _estMovDe='', _estMovAte='';
+let _estMovFiltro='todos', _estMovProd='', _estMovDe='', _estMovAte='', _estMovPeriodo='30';
+let _estMovAbertos={};   // grupos de carregamento expandidos (dia+produto)
+function estToggleGrupo(k){ _estMovAbertos[k]=!_estMovAbertos[k]; estRenderMovLista(); }
+window.estToggleGrupo=estToggleGrupo;
 function estSetMovFiltro(v){ _estMovFiltro=v; estRenderMov(); }
 function estSetMovProd(v){ _estMovProd=v||''; estRenderMov(); }
-function estSetMovData(qual,v){ if(qual==='de') _estMovDe=v||''; else _estMovAte=v||''; estRenderMov(); }
-function estLimparFiltrosMov(){ _estMovFiltro='todos'; _estMovProd=''; _estMovDe=''; _estMovAte=''; estRenderMov(); }
+// datas só redesenham a LISTA — se redesenhassem o filtro, o campo seria
+// recriado no meio da digitação e o ano ficava se perdendo
+function estSetMovData(qual,v){
+  if(qual==='de') _estMovDe=v||''; else _estMovAte=v||'';
+  _estMovPeriodo='custom';
+  estRenderMovLista();
+}
+function estSetMovPeriodo(p){
+  _estMovPeriodo=p;
+  if(p!=='custom'){ _estMovDe=''; _estMovAte=''; }
+  estRenderMov();
+}
+function estLimparFiltrosMov(){
+  _estMovFiltro='todos'; _estMovProd=''; _estMovDe=''; _estMovAte=''; _estMovPeriodo='30';
+  estRenderMov();
+}
 window.estSetMovFiltro=estSetMovFiltro;
 window.estSetMovProd=estSetMovProd;
 window.estSetMovData=estSetMovData;
+window.estSetMovPeriodo=estSetMovPeriodo;
 window.estLimparFiltrosMov=estLimparFiltrosMov;
 
-// junta os movimentos manuais com as baixas automáticas de carregamento
+// data limite do período escolhido (em número aaaammdd)
+function _estMovDesde(){
+  if(_estMovPeriodo==='custom' || _estMovPeriodo==='tudo') return 0;
+  const dias={hoje:0,'7':6,'30':29}[_estMovPeriodo];
+  if(dias===undefined) return 0;
+  const d=new Date(); d.setHours(0,0,0,0); d.setDate(d.getDate()-dias);
+  return Number(String(d.getFullYear())+String(d.getMonth()+1).padStart(2,'0')+String(d.getDate()).padStart(2,'0'));
+}
+
 function estLinhasMov(){
   const linhas=[];
   estMovs.forEach(m=>linhas.push({
@@ -19322,73 +19348,156 @@ function estLinhasMov(){
   return linhas.sort((a,b)=>(b.ts||0)-(a.ts||0));
 }
 
-function estRenderMov(){
-  const el=document.getElementById('est-mov-content'); if(!el) return;
-  const todas=estLinhasMov();
+function estMovFiltradas(){
+  const desde=_estMovDesde();
   const de=estDataNum(estISOparaBR(_estMovDe)), ate=estDataNum(estISOparaBR(_estMovAte));
-  const filtradas=todas.filter(l=>{
+  return estLinhasMov().filter(l=>{
     if(_estMovFiltro!=='todos' && l.tipo!==_estMovFiltro) return false;
     if(_estMovProd && String(l.codigo)!==String(_estMovProd)) return false;
+    if(desde && l.dataNum && l.dataNum<desde) return false;
     if(de && l.dataNum && l.dataNum<de) return false;
     if(ate && l.dataNum && l.dataNum>ate) return false;
     return true;
   });
-  const entrou=filtradas.filter(l=>l.pacotes>0).reduce((s,l)=>s+l.pacotes,0);
-  const saiu=filtradas.filter(l=>l.pacotes<0).reduce((s,l)=>s+l.pacotes,0);
-  const temFiltro = _estMovFiltro!=='todos'||_estMovProd||_estMovDe||_estMovAte;
+}
 
+function estRenderMov(){
+  const el=document.getElementById('est-mov-content'); if(!el) return;
+  // se a pessoa está digitando uma data, não redesenha o filtro por baixo dela
+  const ativo=document.activeElement&&document.activeElement.id;
+  if(ativo==='est-mov-de'||ativo==='est-mov-ate'){ estRenderMovLista(); return; }
+
+  const periodos=[['hoje','Hoje'],['7','7 dias'],['30','30 dias'],['tudo','Tudo'],['custom','Escolher datas']];
   const tipos=[['todos','Tudo'],['carregamento','Carregamento'],['baixa','Baixa manual'],['migracao','Migração'],['entrada','Entrada'],['contagem','Contagem']];
+  const chip=(ativoV,v,l,fn)=>'<button onclick="'+fn+'(\''+v+'\')" style="background:'+(ativoV===v?'var(--mc-azul,#2563eb)':'#fff')+';color:'+(ativoV===v?'#fff':'var(--text-secondary)')+';border:1px solid '+(ativoV===v?'var(--mc-azul,#2563eb)':'var(--border)')+';border-radius:99px;padding:8px 14px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;">'+l+'</button>';
+
   let h='<div class="card" style="margin-bottom:12px;">'+
-    '<div style="font-size:12px;font-weight:700;color:var(--text-secondary);margin-bottom:6px;">PRODUTO</div>'+
+    '<div style="font-size:11px;font-weight:700;color:var(--text-secondary);margin-bottom:6px;">PERÍODO</div>'+
+    '<div style="display:flex;gap:6px;flex-wrap:wrap;">'+
+      periodos.map(([v,l])=>chip(_estMovPeriodo,v,l,'estSetMovPeriodo')).join('')+'</div>'+
+    (_estMovPeriodo==='custom'
+      ? '<div style="display:flex;gap:8px;margin-top:10px;">'+
+          '<div style="flex:1;min-width:0;"><div style="font-size:11px;font-weight:700;color:var(--text-secondary);margin-bottom:4px;">DE</div>'+
+            '<input type="date" id="est-mov-de" value="'+_estMovDe+'" onchange="estSetMovData(\'de\',this.value)" style="width:100%;padding:11px;min-height:46px;border:1px solid var(--border-md,#d1d5db);border-radius:9px;font-size:15px;box-sizing:border-box;"></div>'+
+          '<div style="flex:1;min-width:0;"><div style="font-size:11px;font-weight:700;color:var(--text-secondary);margin-bottom:4px;">ATÉ</div>'+
+            '<input type="date" id="est-mov-ate" value="'+_estMovAte+'" onchange="estSetMovData(\'ate\',this.value)" style="width:100%;padding:11px;min-height:46px;border:1px solid var(--border-md,#d1d5db);border-radius:9px;font-size:15px;box-sizing:border-box;"></div>'+
+        '</div>'
+      : '')+
+    '<div style="font-size:11px;font-weight:700;color:var(--text-secondary);margin:12px 0 6px;">PRODUTO</div>'+
     '<select onchange="estSetMovProd(this.value)" style="width:100%;padding:12px;min-height:46px;border:1px solid var(--border-md,#d1d5db);border-radius:9px;font-size:16px;font-family:inherit;box-sizing:border-box;">'+
       '<option value="">Todos os produtos</option>'+
       estAtivos().map(p=>'<option value="'+String(p.codigo).replace(/"/g,'&quot;')+'"'+(String(_estMovProd)===String(p.codigo)?' selected':'')+'>'+p.nome+'</option>').join('')+
     '</select>'+
-    '<div style="display:flex;gap:8px;margin-top:10px;">'+
-      '<div style="flex:1;min-width:0;"><div style="font-size:11px;font-weight:700;color:var(--text-secondary);margin-bottom:4px;">DE</div>'+
-        '<input type="date" value="'+_estMovDe+'" onchange="estSetMovData(\'de\',this.value)" style="width:100%;padding:10px;min-height:44px;border:1px solid var(--border-md,#d1d5db);border-radius:9px;font-size:15px;box-sizing:border-box;"></div>'+
-      '<div style="flex:1;min-width:0;"><div style="font-size:11px;font-weight:700;color:var(--text-secondary);margin-bottom:4px;">ATÉ</div>'+
-        '<input type="date" value="'+_estMovAte+'" onchange="estSetMovData(\'ate\',this.value)" style="width:100%;padding:10px;min-height:44px;border:1px solid var(--border-md,#d1d5db);border-radius:9px;font-size:15px;box-sizing:border-box;"></div>'+
-    '</div>'+
-    '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;">'+
-      tipos.map(([v,l])=>'<button onclick="estSetMovFiltro(\''+v+'\')" style="background:'+(_estMovFiltro===v?'var(--mc-azul,#2563eb)':'#fff')+';color:'+(_estMovFiltro===v?'#fff':'var(--text-secondary)')+';border:1px solid '+(_estMovFiltro===v?'var(--mc-azul,#2563eb)':'var(--border)')+';border-radius:99px;padding:6px 12px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;">'+l+'</button>').join('')+
-    '</div>'+
-    (temFiltro?'<button onclick="estLimparFiltrosMov()" style="width:100%;margin-top:10px;background:none;border:1px solid var(--border);color:var(--text-secondary);border-radius:8px;padding:8px;font-size:12px;cursor:pointer;font-family:inherit;">Limpar filtros</button>':'')+
-  '</div>';
+    '<div style="font-size:11px;font-weight:700;color:var(--text-secondary);margin:12px 0 6px;">TIPO</div>'+
+    '<div style="display:flex;gap:6px;flex-wrap:wrap;">'+
+      tipos.map(([v,l])=>chip(_estMovFiltro,v,l,'estSetMovFiltro')).join('')+'</div>'+
+    '<button onclick="estLimparFiltrosMov()" style="width:100%;margin-top:12px;background:none;border:1px solid var(--border);color:var(--text-secondary);border-radius:8px;padding:9px;font-size:12px;cursor:pointer;font-family:inherit;">Limpar filtros</button>'+
+  '</div>'+
+  '<div id="est-mov-lista"></div>';
 
-  h+='<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:12px;">'+
-    '<div class="card" style="text-align:center;padding:10px 6px;"><div style="font-size:10px;color:var(--text-secondary);">MOVIMENTOS</div><div style="font-size:18px;font-weight:900;">'+filtradas.length+'</div></div>'+
+  el.innerHTML=h;
+  estRenderMovLista();
+}
+window.estRenderMov=estRenderMov;
+
+function estRenderMovLista(){
+  const el=document.getElementById('est-mov-lista'); if(!el) return;
+  const filtradas=estMovFiltradas();
+  const entrou=filtradas.filter(l=>l.pacotes>0).reduce((s,l)=>s+l.pacotes,0);
+  const saiu=filtradas.filter(l=>l.pacotes<0).reduce((s,l)=>s+l.pacotes,0);
+
+  let h='<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:12px;">'+
+    '<div class="card" style="text-align:center;padding:10px 6px;"><div style="font-size:10px;color:var(--text-secondary);">LANÇAMENTOS</div><div style="font-size:18px;font-weight:900;">'+filtradas.length+'</div></div>'+
     '<div class="card" style="text-align:center;padding:10px 6px;"><div style="font-size:10px;color:var(--text-secondary);">ENTROU</div><div style="font-size:18px;font-weight:900;color:#16a34a;">+'+entrou+'</div></div>'+
     '<div class="card" style="text-align:center;padding:10px 6px;"><div style="font-size:10px;color:var(--text-secondary);">SAIU</div><div style="font-size:18px;font-weight:900;color:#dc2626;">'+saiu+'</div></div>'+
   '</div>';
 
   if(!filtradas.length){
-    h+='<div class="empty" style="padding:24px;text-align:center;color:var(--text-secondary);">Nenhuma movimentação'+(temFiltro?' com esses filtros':'')+'.</div>';
-  } else {
-    const icone={carregamento:'🚚',baixa:'➖',migracao:'🔄',entrada:'➕',contagem:'🔢',exclusao:'🗑'};
-    h+=filtradas.slice(0,200).map(l=>{
-      const pos=l.pacotes>0;
+    h+='<div class="empty" style="padding:26px;text-align:center;color:var(--text-secondary);">Nenhum lançamento nesse filtro.</div>';
+    el.innerHTML=h; return;
+  }
+
+  // agrupa por dia, para o histórico ficar legível
+  const icone={carregamento:'🚚',baixa:'➖',migracao:'🔄',entrada:'➕',contagem:'🔢'};
+  const porDia={}, ordemDias=[];
+  filtradas.slice(0,300).forEach(l=>{
+    const d=l.data||'sem data';
+    if(!porDia[d]){ porDia[d]=[]; ordemDias.push(d); }
+    porDia[d].push(l);
+  });
+  const hojeStr=hoje();
+  ordemDias.forEach(d=>{
+    const doDia=porDia[d];
+    const somaDia=doDia.reduce((s,l)=>s+l.pacotes,0);
+    h+='<div style="display:flex;justify-content:space-between;align-items:baseline;margin:14px 0 6px;">'+
+      '<div style="font-size:13px;font-weight:800;">'+(d===hojeStr?'Hoje':d)+' <span style="font-size:11px;font-weight:500;color:var(--text-secondary);">'+(d===hojeStr?d:'')+'</span></div>'+
+      '<div style="font-size:12px;font-weight:700;color:'+(somaDia>=0?'#16a34a':'#dc2626')+';">'+(somaDia>0?'+':'')+somaDia+' pct</div>'+
+    '</div>';
+    // carregamento vira UM card por produto, com o total do dia.
+    // Toca para abrir e ver as rotas. O resto continua linha a linha.
+    const grupos={}, ordemItens=[];
+    doDia.forEach(l=>{
+      if(l.tipo==='carregamento'){
+        const k=d+'|'+l.codigo;
+        if(!grupos[k]){ grupos[k]={chave:k, nome:l.nome, total:0, itens:[]}; ordemItens.push({grupo:k}); }
+        grupos[k].total+=l.pacotes; grupos[k].itens.push(l);
+      } else {
+        ordemItens.push({linha:l});
+      }
+    });
+
+    h+=ordemItens.map(o=>{
+      if(o.grupo){
+        const g=grupos[o.grupo];
+        if(!g || g.jaSaiu) return '';
+        g.jaSaiu=true;                                  // só desenha na 1ª aparição
+        const aberto=!!_estMovAbertos[g.chave];
+        const rotas=g.itens.length;
+        return '<div class="card" style="margin-bottom:6px;padding:0;overflow:hidden;">'+
+          '<div onclick="estToggleGrupo(\''+escapeJsStr(g.chave)+'\')" style="cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:11px 12px;">'+
+            '<div style="flex:1;min-width:0;">'+
+              '<div style="font-size:13px;font-weight:700;">🚚 '+g.nome+'</div>'+
+              '<div style="font-size:11px;color:var(--text-secondary);margin-top:2px;">'+rotas+' carregamento'+(rotas>1?'s':'')+' · toque para ver as rotas</div>'+
+            '</div>'+
+            '<div style="font-size:17px;font-weight:900;color:'+(g.total>=0?'#16a34a':'#dc2626')+';white-space:nowrap;">'+(g.total>0?'+':'')+g.total+'</div>'+
+            '<span style="flex:0 0 auto;font-size:15px;color:var(--text-muted);transform:rotate('+(aberto?'90':'0')+'deg);transition:transform .15s;">›</span>'+
+          '</div>'+
+          (aberto
+            ? '<div style="background:var(--bg-page);padding:2px 12px 8px;">'+
+                g.itens.map(it=>
+                  '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:7px 0;border-top:1px dashed var(--border);">'+
+                    '<div style="flex:1;min-width:0;">'+
+                      '<div style="font-size:12px;font-weight:600;">'+String(it.motivo||'').replace('Carregamento: ','')+'</div>'+
+                      '<div style="font-size:10px;color:var(--text-muted);margin-top:1px;">'+(it.hora||'')+'</div>'+
+                    '</div>'+
+                    '<div style="font-size:14px;font-weight:800;color:'+(it.pacotes>=0?'#16a34a':'#dc2626')+';white-space:nowrap;">'+(it.pacotes>0?'+':'')+it.pacotes+'</div>'+
+                  '</div>').join('')+
+              '</div>'
+            : '')+
+        '</div>';
+      }
+      const l=o.linha, pos=l.pacotes>0;
       return '<div class="card" style="margin-bottom:6px;padding:10px 12px;">'+
         '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">'+
           '<div style="flex:1;min-width:0;">'+
             '<div style="font-size:13px;font-weight:700;">'+(icone[l.tipo]||'•')+' '+l.nome+'</div>'+
             '<div style="font-size:11px;color:var(--text-secondary);margin-top:2px;">'+(l.motivo||'')+'</div>'+
             (l.obs?'<div style="font-size:10px;color:var(--text-muted);margin-top:2px;">'+l.obs+'</div>':'')+
-            '<div style="font-size:10px;color:var(--text-muted);margin-top:3px;">'+(l.data||'')+' '+(l.hora||'')+' · '+(l.autor||'')+' · '+(l.local==='container'?'contêiner':'empresa')+'</div>'+
+            '<div style="font-size:10px;color:var(--text-muted);margin-top:3px;">'+(l.hora||'')+' · '+(l.autor||'')+' · '+(l.local==='container'?'contêiner':'empresa')+'</div>'+
           '</div>'+
           '<div style="text-align:right;white-space:nowrap;">'+
-            '<div style="font-size:16px;font-weight:900;color:'+(l.tipo==='exclusao'?'var(--text-muted)':(pos?'#16a34a':'#dc2626'))+';">'+(l.tipo==='exclusao'?'—':((pos?'+':'')+l.pacotes))+'</div>'+
-            (estEhAdmin() && l.podeExcluir && l.tipo!=='exclusao'
+            '<div style="font-size:16px;font-weight:900;color:'+(pos?'#16a34a':'#dc2626')+';">'+(pos?'+':'')+l.pacotes+'</div>'+
+            (estEhAdmin()
               ? '<button onclick="estExcluirMov(\''+escapeJsStr(l.id)+'\')" title="Excluir lançamento" style="margin-top:5px;background:none;border:1px solid #fecaca;color:#dc2626;border-radius:6px;padding:4px 9px;font-size:11px;cursor:pointer;font-family:inherit;">🗑</button>'
-              : (l.podeExcluir?'':'<div style="font-size:9px;color:var(--text-muted);margin-top:4px;">do carregamento</div>'))+
+              : '')+
           '</div>'+
         '</div></div>';
     }).join('');
-    if(filtradas.length>200) h+='<div style="font-size:11px;color:var(--text-muted);text-align:center;padding:8px;">mostrando as 200 mais recentes de '+filtradas.length+'</div>';
-  }
+  });
+  if(filtradas.length>300) h+='<div style="font-size:11px;color:var(--text-muted);text-align:center;padding:10px;">mostrando os 300 mais recentes de '+filtradas.length+'</div>';
   el.innerHTML=h;
 }
-window.estRenderMov=estRenderMov;
+window.estRenderMovLista=estRenderMovLista;
 
 /* ══════════════════════════════════════════════════════════════════
    EXIBIÇÃO — tela cheia e largura total
