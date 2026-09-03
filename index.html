@@ -348,6 +348,19 @@
     }
     .content > .home-btn { margin-bottom: 12px; }
   }
+  /* MODO TV — o painel ocupa a tela inteira, sem faixa lateral, sem sombra,
+     sem rolagem e sem sobra embaixo. Vale em qualquer tamanho de tela. */
+  body.mc-tv-mode { margin:0; padding:0; overflow:hidden; height:100vh; height:100dvh; background:#eef4ff; }
+  body.mc-tv-mode .app-frame {
+    max-width:100% !important; width:100% !important; margin:0 !important;
+    padding:0 !important; box-shadow:none !important;
+    height:100vh !important; height:100dvh !important; min-height:0 !important; overflow:hidden !important;
+  }
+  body.mc-tv-mode #s-tv.active {
+    height:100vh; height:100dvh; min-height:0; overflow:hidden; padding:0; margin:0;
+  }
+  body.mc-tv-mode #tv-content { flex:1 1 auto; height:auto !important; min-height:0; overflow:hidden; }
+
   /* Largura total: opção do aparelho (rodapé da tela inicial). Vence a faixa
      de 600px do tablet porque tem seletor mais específico. */
   body.mc-largura-total .app-frame {
@@ -4911,11 +4924,14 @@ function _entrarModoTvLink(){
   if(!window._tvLinkMode || window._tvLinkIniciado) return;
   window._tvLinkIniciado=true;
   const loading=document.getElementById('loading'); if(loading) loading.style.display='none';
+  estTvModo(true);          // painel ocupa 100% da janela por CSS
   goTo('s-tv');
-  // tenta tela cheia (alguns navegadores exigem toque; então também tentamos no 1º toque)
-  const fs=()=>{ const e=document.documentElement; if(!document.fullscreenElement){ (e.requestFullscreen||e.webkitRequestFullscreen||function(){}).call(e); } };
-  setTimeout(fs, 400);
-  document.addEventListener('click', function _once(){ fs(); document.removeEventListener('click', _once); }, {once:true});
+  // tenta a tela cheia do navegador; se ele barrar (é o normal ao abrir um
+  // link), mostra o aviso de iniciar, que resolve tudo num toque só
+  setTimeout(()=>{
+    _tvPedirTelaCheia();
+    setTimeout(()=>{ if(!document.fullscreenElement && !document.webkitFullscreenElement) _tvOverlayIniciar(); }, 500);
+  }, 300);
 }
 // Entra no painel assim que o DOM estiver pronto (não espera o Firebase responder)
 if(window._tvLinkMode){
@@ -5082,6 +5098,7 @@ function goTo(id){
   if(id==='s-acomp-coz') renderAcompCoz();
   if(id==='s-inicio' && typeof mcRenderExibicao==='function') mcRenderExibicao();
   if(id&&id.startsWith('s-est-') && typeof estRenderAtual==='function') estRenderAtual();
+  if(typeof estTvModo==='function' && id!=='s-tv' && !window._tvLinkMode) estTvModo(false);
   if((id==='s-adm-hub'||id==='s-emb-sel-data') && typeof estAtualizarBadge==='function') estAtualizarBadge();
   if(id==='s-demandas') renderDemandas();
   if(id==='s-tv') iniciarTV(); else pararTV();
@@ -19286,6 +19303,46 @@ async function estZerarTudo(incluirProdutos){
 }
 window.estZerarTudo=estZerarTudo;
 
+/* ── MODO TV EM TELA CHEIA ───────────────────────────────────────
+   O navegador não deixa nenhum site entrar em tela cheia sozinho: é
+   preciso um gesto da pessoa. Então fazemos duas coisas — o painel
+   passa a ocupar 100% da janela por CSS (funciona sempre) e, para
+   esconder a barra do navegador, mostramos UM aviso grande que some
+   no primeiro toque/clique/tecla, entrando em tela cheia e liberando
+   o som de uma vez só. */
+function estTvModo(ligar){
+  document.body.classList.toggle('mc-tv-mode', !!ligar);
+}
+window.estTvModo=estTvModo;
+
+function _tvPedirTelaCheia(){
+  const e=document.documentElement;
+  if(document.fullscreenElement||document.webkitFullscreenElement) return true;
+  try{ (e.requestFullscreen||e.webkitRequestFullscreen||function(){}).call(e); }catch(_){}
+  return !!(document.fullscreenElement||document.webkitFullscreenElement);
+}
+
+function _tvOverlayIniciar(){
+  if(document.getElementById('tv-start')) return;
+  const ov=document.createElement('div');
+  ov.id='tv-start';
+  ov.style.cssText='position:fixed;inset:0;z-index:200;background:linear-gradient(160deg,#1e3a8a,#0f172a);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;cursor:pointer;text-align:center;padding:24px;';
+  ov.innerHTML=
+    '<div style="width:180px;height:120px;background-image:var(--mc-logo-img);background-size:contain;background-repeat:no-repeat;background-position:center;filter:brightness(0) invert(1);opacity:.95;"></div>'+
+    '<div style="font-size:34px;font-weight:900;letter-spacing:-.5px;">Painel de Produção</div>'+
+    '<div style="font-size:20px;opacity:.85;font-weight:600;">Toque na tela para iniciar</div>'+
+    '<div style="font-size:14px;opacity:.6;max-width:420px;line-height:1.5;">Entra em tela cheia e ativa o alerta sonoro do elevador. É só uma vez, ao ligar o painel.</div>';
+  const iniciar=()=>{
+    _tvPedirTelaCheia();
+    if(typeof _elevLiberarAudio==='function') _elevLiberarAudio();
+    ov.remove();
+  };
+  ov.addEventListener('click', iniciar);
+  ov.addEventListener('pointerdown', iniciar);
+  document.addEventListener('keydown', function k(){ document.removeEventListener('keydown',k); iniciar(); });
+  document.body.appendChild(ov);
+}
+
 // ── auxiliares de tela ───────────────────────────────────────────
 function _estModal(titulo, corpo, acaoSalvar){
   _estFecharModal();
@@ -20527,8 +20584,9 @@ function _tvTick(){
   if(_tvTickN%5===0){ _tvMsgIdx++; const m=document.getElementById('tv-msg'); if(m) m.textContent=TV_MSGS[_tvMsgIdx%TV_MSGS.length]; }
   if(!_tvPaused && _tvTickN%15===0){ _tvView++; renderTV(); } // troca de visão a cada 15s (se não pausado)
 }
-function iniciarTV(){ if(_tvInterval) clearInterval(_tvInterval); _tvTickN=0; _tvInterval=setInterval(_tvTick,1000); renderTV(); _elevRenderTV(); _elevRenderBotaoSom(); }
-function pararTV(){ if(_tvInterval){ clearInterval(_tvInterval); _tvInterval=null; } }
+function iniciarTV(){ if(_tvInterval) clearInterval(_tvInterval); _tvTickN=0; _tvInterval=setInterval(_tvTick,1000); estTvModo(true); renderTV(); _elevRenderTV(); _elevRenderBotaoSom(); }
+function pararTV(){
+  estTvModo(false); if(_tvInterval){ clearInterval(_tvInterval); _tvInterval=null; } }
 function sairTV(){ if(window._tvLinkMode){ return; } const manter=(typeof _mcPref==='function' && _mcPref('mc_tela_cheia')==='1'); if(document.fullscreenElement && !manter){ try{document.exitFullscreen();}catch(e){} } pararTV(); goTo(window.adminMode?'s-adm-hub':'s-conf-home'); }
 function tvFullscreen(){ mcToggleTelaCheia(); }
 window.sairTV=sairTV; window.tvFullscreen=tvFullscreen; window.renderTV=renderTV; window.iniciarTV=iniciarTV; window.pararTV=pararTV;
