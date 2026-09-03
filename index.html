@@ -2400,6 +2400,9 @@
       <div class="mc-brand"><div class="mc-brand-logo"></div><div class="mc-brand-text"><div class="mc-brand-name">Monte Castelo</div><div class="mc-brand-sub">Estoque</div></div></div>
       <div class="mc-divider-v"></div>
       <div class="mc-page-info"><div class="mc-page-title">🏬 Estoque & Contêiner</div><div class="mc-page-sub">Visão geral em tempo real</div></div>
+      <div class="mc-header-actions">
+        <button class="mc-act-btn-secondary" onclick="goTo('s-est-config')" title="Configurações e produtos controlados">⚙️</button>
+      </div>
     </div>
     <div style="flex:1;padding:16px;background:var(--bg-page);overflow-y:auto;" id="est-hub-content"></div>
   </div>
@@ -2440,10 +2443,10 @@
   <!-- PRODUTOS CONTROLADOS -->
   <div class="screen" id="s-est-prod">
     <div class="mc-header">
-      <button class="mc-header-back" onclick="goTo('s-est-hub')">‹</button>
+      <button class="mc-header-back" onclick="goTo('s-est-config')">‹</button>
       <div class="mc-brand"><div class="mc-brand-logo"></div><div class="mc-brand-text"><div class="mc-brand-name">Monte Castelo</div><div class="mc-brand-sub">Estoque</div></div></div>
       <div class="mc-divider-v"></div>
-      <div class="mc-page-info"><div class="mc-page-title">⚙️ Produtos controlados</div><div class="mc-page-sub">Quais entram no controle</div></div>
+      <div class="mc-page-info"><div class="mc-page-title">📦 Produtos controlados</div><div class="mc-page-sub">Quais entram no controle</div></div>
     </div>
     <div style="flex:1;padding:16px;background:var(--bg-page);overflow-y:auto;" id="est-prod-content"></div>
   </div>
@@ -18888,6 +18891,68 @@ function _estKpi(rotulo, valor, unidade, cor, extra){
   '</div>';
 }
 
+/* Gráfico de rosca da ocupação do contêiner. Cada produto é uma fatia,
+   o vão claro é o espaço livre. Desenhado em SVG puro (sem biblioteca). */
+function _estRoscaContainer(prods, cap, usadas, livres, pctCap, corCap, painelDireita){
+  const cores=['#2563eb','#7c3aed','#0891b2','#16a34a','#d97706','#db2777','#4f46e5','#0d9488','#c026d3','#ea580c'];
+  const fatias=prods.map(p=>({nome:p.nome, cx:estCaixasDoProduto(p.codigo)}))
+                    .filter(f=>f.cx>0).sort((a,b)=>b.cx-a.cx);
+  const maior=fatias.length?fatias[0].cx:0;
+
+  // ROSCA: só ocupado x livre. Com duas fatias ela é legível de longe;
+  // um produto por fatia viraria um monte de fiapo indistinguível.
+  const R=52, C=2*Math.PI*R;
+  const base=Math.max(cap, usadas)||1;
+  const usadoLen=(Math.min(usadas,base)/base)*C;
+  const rosca='<svg viewBox="0 0 140 140" style="width:126px;height:126px;flex:0 0 auto;">'+
+    '<circle cx="70" cy="70" r="'+R+'" fill="none" stroke="var(--bg-page,#f1f5f9)" stroke-width="18"></circle>'+
+    '<circle cx="70" cy="70" r="'+R+'" fill="none" stroke="'+corCap+'" stroke-width="18" stroke-linecap="round" '+
+      'stroke-dasharray="'+usadoLen.toFixed(2)+' '+(C-usadoLen).toFixed(2)+'" transform="rotate(-90 70 70)"></circle>'+
+    '<text x="70" y="66" text-anchor="middle" font-size="27" font-weight="800" fill="'+corCap+'">'+pctCap+'%</text>'+
+    '<text x="70" y="84" text-anchor="middle" font-size="11" fill="#64748b">'+usadas+'/'+cap+' cx</text>'+
+  '</svg>';
+
+  // BARRAS: nome completo (sem cortar), barra e número colados
+  const TOPO=10;
+  const mostra=fatias.slice(0,TOPO), resto=fatias.slice(TOPO);
+  let barras=mostra.map((f,i)=>
+    '<div style="display:flex;align-items:center;gap:8px;padding:2px 0;">'+
+      '<span style="width:170px;flex:0 0 auto;font-size:11px;line-height:1.25;">'+f.nome+'</span>'+
+      '<span style="flex:1;min-width:26px;height:11px;background:var(--bg-page,#f1f5f9);border-radius:6px;overflow:hidden;">'+
+        '<span style="display:block;height:100%;width:'+(maior>0?Math.max(4,f.cx/maior*100):0)+'%;background:'+cores[i%cores.length]+';border-radius:6px;"></span>'+
+      '</span>'+
+      '<strong style="width:26px;flex:0 0 auto;text-align:right;font-size:12px;">'+f.cx+'</strong>'+
+    '</div>').join('');
+  if(resto.length){
+    const soma=resto.reduce((a,b)=>a+b.cx,0);
+    barras+='<div style="display:flex;align-items:center;gap:8px;padding:2px 0;">'+
+      '<span style="width:170px;flex:0 0 auto;font-size:11px;color:var(--text-secondary);">+ '+resto.length+' produto(s)</span>'+
+      '<span style="flex:1;min-width:26px;height:11px;background:var(--bg-page,#f1f5f9);border-radius:6px;overflow:hidden;">'+
+        '<span style="display:block;height:100%;width:'+(maior>0?Math.max(4,soma/maior*100):0)+'%;background:#94a3b8;border-radius:6px;"></span></span>'+
+      '<strong style="width:26px;flex:0 0 auto;text-align:right;font-size:12px;color:var(--text-secondary);">'+soma+'</strong></div>';
+  }
+  if(!fatias.length) barras='<div style="font-size:12px;color:var(--text-secondary);padding:8px 0;">Contêiner vazio.</div>';
+
+  return '<div class="card" style="margin-bottom:12px;">'+
+    '<div style="display:flex;gap:20px;flex-wrap:wrap;align-items:flex-start;">'+
+      // ── lado esquerdo: ocupação ──
+      '<div style="flex:1 1 420px;min-width:290px;">'+
+        '<div style="font-size:13px;font-weight:700;margin-bottom:8px;">🚛 Ocupação do contêiner</div>'+
+        '<div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;">'+
+          '<div style="display:flex;flex-direction:column;align-items:center;gap:6px;flex:0 0 auto;">'+
+            rosca+
+            '<div style="font-size:11px;font-weight:700;color:'+(livres<=5?'#dc2626':'var(--text-secondary)')+';">'+livres+' caixa(s) livre(s)</div>'+
+          '</div>'+
+          '<div style="flex:1 1 260px;min-width:240px;">'+barras+'</div>'+
+        '</div>'+
+        '<button class="btn btn-secondary" style="width:100%;margin-top:12px;" onclick="estAbrirEntrada()">➕ Registrar entrada no contêiner</button>'+
+      '</div>'+
+      // ── lado direito: o que precisa de reposição ──
+      '<div style="flex:1 1 300px;min-width:270px;">'+(painelDireita||'')+'</div>'+
+    '</div>'+
+  '</div>';
+}
+
 let _estVerTudo=false;
 function estToggleVerTudo(){ _estVerTudo=!_estVerTudo; estRenderHub(); }
 window.estToggleVerTudo=estToggleVerTudo;
@@ -18898,14 +18963,10 @@ function estRenderHub(){
   const cap=estConfig.capacidadeCaixas||100;
   const usadas=estCaixasUsadas(), livres=Math.max(0,cap-usadas);
   const pctCap=cap>0?Math.min(100,Math.round(usadas/cap*100)):0;
-  const totCont=prods.reduce((s,p)=>s+estSaldoContainer(p.codigo),0);
-  const totInt=prods.reduce((s,p)=>s+estSaldoInterno(p.codigo),0);
   const alertas=estAbaixoDoMinimo();
   const negativos=estNegativos();
-  const hojeStr=hoje();
-  const saiuHoje=estLinhasMov().filter(l=>l.data===hojeStr&&l.pacotes<0).reduce((s,l)=>s-l.pacotes,0);
   const vencidos=estLotes.filter(l=>(Number(l.saldo)||0)>0&&l.validade&&estDiasAte(l.validade)<0);
-  const aVencer=estLotes.filter(l=>{const d=(Number(l.saldo)||0)>0&&l.validade?estDiasAte(l.validade):null; return d!==null&&d>=0&&d<=7;});
+  const aVencer=estLotes.filter(l=>{const d=(Number(l.saldo)||0)>0&&l.validade?estDiasAte(l.validade):null; return d!==null&&d>=0&&d<=25;});
   const corCap = pctCap>=95?'#dc2626':(pctCap>=80?'#d97706':'#16a34a');
   let h='';
 
@@ -18937,63 +18998,61 @@ function estRenderHub(){
         '</div>').join('')+'</div>';
   }
 
-  // KPIs
-  h+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">'+
-    _estKpi('NA EMPRESA', totInt.toLocaleString('pt-BR'), 'pacotes', 'var(--mc-azul,#2563eb)', prods.length+' produto(s)')+
-    _estKpi('NO CONTÊINER', totCont.toLocaleString('pt-BR'), 'pacotes', '#7c3aed', usadas+' caixa(s)')+
-  '</div>'+
-  '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px;">'+
-    _estKpi('REPOR', alertas.length, alertas.length===1?'produto':'produtos', alertas.length?'#dc2626':'#16a34a')+
-    _estKpi('SAIU HOJE', saiuHoje, 'pacotes', '#0891b2')+
-    _estKpi('VENCENDO', vencidos.length+aVencer.length, 'lote(s) ≤7d', (vencidos.length?'#dc2626':(aVencer.length?'#d97706':'#16a34a')))+
+  // KPIs — só o que exige ação
+  h+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">'+
+    _estKpi('PRECISA REPOR', alertas.length, alertas.length===1?'produto':'produtos',
+            alertas.length?'#dc2626':'#16a34a', alertas.length?'abaixo do mínimo':'tudo em dia')+
+    _estKpi('VENCENDO', vencidos.length+aVencer.length, 'lote(s) em 25 dias',
+            (vencidos.length?'#dc2626':(aVencer.length?'#d97706':'#16a34a')),
+            vencidos.length?(vencidos.length+' já vencido(s)'):'')+
   '</div>';
 
-  // ocupação segmentada
-  const cores=['#2563eb','#7c3aed','#0891b2','#16a34a','#d97706','#db2777','#4f46e5','#0d9488'];
-  h+='<div class="card" style="margin-bottom:12px;">'+
-    '<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:7px;">'+
-      '<div style="font-size:13px;font-weight:700;">🚛 Ocupação do contêiner</div>'+
-      '<div style="font-size:22px;font-weight:900;color:'+corCap+';">'+pctCap+'%</div></div>'+
-    '<div style="height:18px;background:var(--bg-page);border-radius:9px;overflow:hidden;display:flex;">'+
-      prods.map((p,i)=>{ const cx=estCaixasDoProduto(p.codigo); if(!cx) return '';
-        return '<div title="'+p.nome+': '+cx+' cx" style="width:'+(cap>0?(cx/cap*100):0)+'%;background:'+cores[i%cores.length]+';"></div>'; }).join('')+
-    '</div>'+
-    '<div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text-secondary);margin-top:7px;">'+
-      '<span><strong>'+usadas+'</strong> de '+cap+' caixas</span>'+
-      '<span style="font-weight:700;color:'+(livres<=5?'#dc2626':'var(--text-secondary)')+';">'+livres+' livre(s)</span></div>'+
-    '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;">'+
-      prods.map((p,i)=>{ const cx=estCaixasDoProduto(p.codigo); if(!cx) return '';
-        return '<span style="font-size:10px;color:var(--text-secondary);display:inline-flex;align-items:center;gap:4px;">'+
-          '<span style="width:9px;height:9px;border-radius:2px;background:'+cores[i%cores.length]+';display:inline-block;"></span>'+p.nome+' ('+cx+')</span>'; }).join('')+
-    '</div>'+
-    '<button class="btn btn-secondary" style="width:100%;margin-top:10px;" onclick="estAbrirEntrada()">➕ Registrar entrada no contêiner</button>'+
-  '</div>';
-
-  // ── DESTAQUES: só quem precisa de ação ──
+  // ── painel de reposição: fica ao LADO do gráfico ──
+  let repor='<div style="font-size:13px;font-weight:700;margin-bottom:8px;">'+
+    (alertas.length?('🔻 Precisa de reposição <span style="color:#dc2626;">('+alertas.length+')</span>'):'📦 Reposição')+'</div>';
   if(alertas.length){
-    h+='<div class="mc-section-header">Precisa de ação</div>';
-    h+=alertas.map(({p,st})=>{
+    repor+=alertas.map(({p,st})=>{
       const dias=estDiasDeEstoque(p.codigo);
       const val=estValidadeMaisCurta(p.codigo);
-      return '<div class="card" style="margin-bottom:10px;border-left:4px solid #dc2626;">'+
+      return '<div style="border:1px solid #fecaca;background:#fef2f2;border-radius:10px;padding:11px;margin-bottom:8px;">'+
         '<div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;">'+
-          '<div style="flex:1;min-width:0;font-size:15px;font-weight:800;">🔻 '+p.nome+'</div>'+
+          '<div style="flex:1;min-width:0;font-size:14px;font-weight:800;">'+p.nome+'</div>'+
           (dias!==null?'<span style="font-size:11px;font-weight:800;color:'+(dias<=3?'#dc2626':'#d97706')+';white-space:nowrap;">'+dias+' dia(s)</span>':'')+
         '</div>'+
-        '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:9px;text-align:center;">'+
-          '<div style="background:var(--bg-page);border-radius:8px;padding:8px 4px;"><div style="font-size:9px;color:var(--text-secondary);font-weight:700;">EMPRESA</div><div style="font-size:19px;font-weight:900;color:#dc2626;">'+st.interno+'</div></div>'+
-          '<div style="background:var(--bg-page);border-radius:8px;padding:8px 4px;"><div style="font-size:9px;color:var(--text-secondary);font-weight:700;">CONTÊINER</div><div style="font-size:19px;font-weight:900;color:#7c3aed;">'+st.disponivel+'</div></div>'+
-          '<div style="background:var(--bg-page);border-radius:8px;padding:8px 4px;"><div style="font-size:9px;color:var(--text-secondary);font-weight:700;">CAIXAS</div><div style="font-size:19px;font-weight:900;">'+estCaixasDoProduto(p.codigo)+'</div></div>'+
+        '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:5px;margin-top:8px;text-align:center;">'+
+          '<div style="background:#fff;border-radius:7px;padding:6px 3px;"><div style="font-size:9px;color:var(--text-secondary);font-weight:700;">EMPRESA</div><div style="font-size:17px;font-weight:900;color:#dc2626;">'+st.interno+'</div></div>'+
+          '<div style="background:#fff;border-radius:7px;padding:6px 3px;"><div style="font-size:9px;color:var(--text-secondary);font-weight:700;">CONTÊINER</div><div style="font-size:17px;font-weight:900;color:#7c3aed;">'+st.disponivel+'</div></div>'+
+          '<div style="background:#fff;border-radius:7px;padding:6px 3px;"><div style="font-size:9px;color:var(--text-secondary);font-weight:700;">CAIXAS</div><div style="font-size:17px;font-weight:900;">'+estCaixasDoProduto(p.codigo)+'</div></div>'+
         '</div>'+
-        '<div style="font-size:11px;color:var(--text-secondary);margin-top:7px;">mínimo '+st.minimo+' · ideal '+st.ideal+(val?' · lote mais curto vence '+val.validade:'')+'</div>'+
+        '<div style="font-size:11px;color:var(--text-secondary);margin-top:6px;">mínimo '+st.minimo+' · ideal '+st.ideal+(val?' · vence '+val.validade:'')+'</div>'+
         (st.disponivel>0
-          ? '<button onclick="estAbrirMigrar(\''+escapeJsStr(p.codigo)+'\')" style="margin-top:9px;width:100%;background:#16a34a;border:none;color:#fff;border-radius:9px;padding:12px;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit;">🚚 Trazer '+st.caixasSug+' caixa(s) do contêiner</button>'
-          : '<div style="font-size:12px;font-weight:700;color:#b45309;margin-top:9px;text-align:center;">⚠️ Sem saldo no contêiner — precisa produzir</div>')+
+          ? '<button onclick="estAbrirMigrar(\''+escapeJsStr(p.codigo)+'\')" style="margin-top:8px;width:100%;background:#16a34a;border:none;color:#fff;border-radius:8px;padding:10px;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit;">🚚 Trazer '+st.caixasSug+' caixa(s)</button>'
+          : '<div style="font-size:12px;font-weight:700;color:#b45309;margin-top:8px;text-align:center;">⚠️ Sem saldo no contêiner</div>')+
       '</div>';
     }).join('');
   } else {
-    h+='<div class="card" style="margin-bottom:12px;background:#f0fdf4;border:1px solid #a7f3d0;text-align:center;">'+
-      '<div style="font-size:14px;font-weight:800;color:#15803d;">✅ Nada precisa de reposição agora</div></div>';
+    repor+='<div style="background:#f0fdf4;border:1px solid #a7f3d0;border-radius:10px;padding:18px;text-align:center;">'+
+      '<div style="font-size:26px;">✅</div>'+
+      '<div style="font-size:14px;font-weight:800;color:#15803d;margin-top:4px;">Nada precisa de reposição</div>'+
+      '<div style="font-size:11px;color:#166534;margin-top:3px;">Todos os produtos acima do mínimo.</div></div>';
+  }
+  h+=_estRoscaContainer(prods, cap, usadas, livres, pctCap, corCap, repor);
+
+  // ── VALIDADE: o que vence nos próximos 25 dias ──
+  const vencendo=estLotes.filter(l=>(Number(l.saldo)||0)>0&&l.validade)
+    .map(l=>({l,dias:estDiasAte(l.validade)}))
+    .filter(x=>x.dias!==null&&x.dias<=25).sort((a,b)=>a.dias-b.dias).slice(0,8);
+  if(vencendo.length){
+    h+='<div class="card" style="margin-bottom:12px;">'+
+      '<div style="font-size:13px;font-weight:700;">📅 Sai primeiro (validade)</div>'+
+      vencendo.map(({l,dias})=>{
+        const cor=dias<0?'#dc2626':(dias<=10?'#d97706':'#16a34a');
+        const txt=dias<0?('vencido há '+Math.abs(dias)+'d'):(dias===0?'vence hoje':('faltam '+dias+'d'));
+        return '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:7px 0;border-top:1px dashed var(--border);">'+
+          '<div style="flex:1;min-width:0;"><div style="font-size:13px;font-weight:600;">'+(l.nome||l.codigo)+'</div>'+
+          '<div style="font-size:11px;color:var(--text-secondary);">'+l.saldo+' pct · val '+l.validade+'</div></div>'+
+          '<span style="flex:0 0 auto;font-size:11px;font-weight:800;color:'+cor+';">'+txt+'</span></div>';
+      }).join('')+'</div>';
   }
 
   // ── TABELA COMPLETA ──
@@ -19044,10 +19103,7 @@ function estRenderHub(){
   h+='<button class="home-btn" onclick="goTo(\'s-est-container\')"><div class="hb-icon" style="background:#ede9fe;">🚛</div><div style="flex:1;"><div class="hb-title">Estoque da rua</div><div class="hb-desc">Entradas e lotes do contêiner</div></div><span style="color:var(--text-secondary);font-size:20px;">›</span></button>'+
    '<button class="home-btn" onclick="goTo(\'s-est-interno\')"><div class="hb-icon" style="background:#dbeafe;">🏭</div><div style="flex:1;"><div class="hb-title">Estoque da empresa</div><div class="hb-desc">Contagem e baixa manual</div></div><span style="color:var(--text-secondary);font-size:20px;">›</span></button>'+
    '<button class="home-btn" onclick="goTo(\'s-est-mov\')"><div class="hb-icon" style="background:#f1f5f9;">📋</div><div style="flex:1;"><div class="hb-title">Movimentações</div><div class="hb-desc">Filtrar por produto e período</div></div><span style="color:var(--text-secondary);font-size:20px;">›</span></button>'+
-   '<button class="home-btn" onclick="goTo(\'s-est-prod\')"><div class="hb-icon" style="background:#fef3c7;">⚙️</div><div style="flex:1;"><div class="hb-title">Produtos controlados</div><div class="hb-desc">'+prods.length+' produto(s) no controle</div></div><span style="color:var(--text-secondary);font-size:20px;">›</span></button>'+
-   (estEhAdmin()
-     ? '<button class="home-btn" onclick="goTo(\'s-est-config\')"><div class="hb-icon" style="background:#f1f5f9;">🔧</div><div style="flex:1;"><div class="hb-title">Configurações</div><div class="hb-desc">Capacidade, data de corte e senha</div></div><span style="color:var(--text-secondary);font-size:20px;">›</span></button>'
-     : '<div style="font-size:11px;color:var(--text-muted);text-align:center;padding:10px;">🔒 Configurações e exclusões só pelo admin</div>');
+   '';
 
   el.innerHTML=h;
 }
@@ -19176,16 +19232,22 @@ window.estRemoverProd=estRemoverProd;
 // ── CONFIGURAÇÕES ────────────────────────────────────────────────
 function estRenderConfig(){
   const el=document.getElementById('est-config-content'); if(!el) return;
+  const linkProdutos='<button class="home-btn" style="margin-bottom:12px;" onclick="goTo(\'s-est-prod\')">'+
+    '<div class="hb-icon" style="background:#fef3c7;">📦</div>'+
+    '<div style="flex:1;"><div class="hb-title">Produtos controlados</div>'+
+    '<div class="hb-desc">'+estAtivos().length+' produto(s) no controle</div></div>'+
+    '<span style="color:var(--text-secondary);font-size:20px;">›</span></button>';
   if(!estEhAdmin()){
-    el.innerHTML='<div style="background:var(--bg-primary);border:1px solid var(--border);border-radius:12px;padding:26px;text-align:center;">'+
-      '<div style="font-size:38px;">🔒</div>'+
-      '<div style="font-size:16px;font-weight:800;margin-top:8px;">Acesso restrito</div>'+
-      '<div style="font-size:12px;color:var(--text-secondary);margin-top:5px;line-height:1.5;">Capacidade do contêiner, data de corte e senha da migração só podem ser alterados pelo admin.</div>'+
-      '<button class="btn btn-secondary" style="width:100%;margin-top:14px;" onclick="goTo(\'s-est-hub\')">Voltar</button></div>';
+    el.innerHTML=linkProdutos+
+      '<div style="background:var(--bg-primary);border:1px solid var(--border);border-radius:12px;padding:22px;text-align:center;">'+
+      '<div style="font-size:34px;">🔒</div>'+
+      '<div style="font-size:15px;font-weight:800;margin-top:8px;">Restante só pelo admin</div>'+
+      '<div style="font-size:12px;color:var(--text-secondary);margin-top:5px;line-height:1.5;">Capacidade do contêiner, data de corte e senha da migração só o admin altera.</div></div>';
     return;
   }
   const c=estConfig;
   el.innerHTML=
+    linkProdutos+
     '<div class="card" style="margin-bottom:12px;">'+
       '<div style="font-size:13px;font-weight:700;margin-bottom:8px;">🚛 Capacidade do contêiner</div>'+
       '<label style="font-size:12px;color:var(--text-secondary);">Total de caixas que cabem</label>'+
