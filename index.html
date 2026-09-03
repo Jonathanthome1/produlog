@@ -18630,13 +18630,18 @@ window.pfAvisoCarregHtml=pfAvisoCarregHtml;
 /* ── integração com o estoque ──────────────────────────────────── */
 // já saiu (entrega até hoje) — desconta do estoque
 function pfBaixado(cod){
+  // sem data de corte definida, NADA desconta — mesma regra do carregamento.
+  // Senão o estoque baixaria pelos pedidos por fora e não pelo carregamento,
+  // e a contagem inicial ficaria errada sem ninguém perceber.
+  if(!estConfig.ativo || !estConfig.dataCorte) return 0;
   const c=String(cod), hojeN=estHojeNum(), corte=estDataNum(estConfig.dataCorte);
+  if(!corte) return 0;
   let t=0;
   Object.values(pfDias).forEach(dia=>{
     Object.entries(dia.porEntrega||{}).forEach(([entrega,itens])=>{
       const dn=estDataNum(entrega);
-      if(!dn || dn>hojeN) return;              // ainda não saiu
-      if(corte && dn<corte) return;            // antes da data de corte
+      if(!dn || dn>hojeN) return;   // entrega futura: ainda não saiu
+      if(dn<corte) return;          // anterior ao corte: fora do controle
       t+=Number(itens[c])||0;
     });
   });
