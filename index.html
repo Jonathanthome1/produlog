@@ -19807,6 +19807,27 @@ function estLinhasMov(){
         obs:'baixa automática pela bipagem', autor:'Sistema' });
     });
   });
+  // pedidos por fora: aparecem no DIA DA ENTREGA, que é quando descontam
+  if(typeof pfDias!=='undefined' && estConfig.ativo && estConfig.dataCorte){
+    const hojeN=estHojeNum(), corte=estDataNum(estConfig.dataCorte);
+    Object.values(pfDias).forEach(dia=>{
+      (dia.pedidos||[]).forEach(ped=>{
+        const dn=estDataNum(ped.entrega);
+        if(!dn || dn>hojeN || dn<corte) return;
+        (ped.itens||[]).forEach(it=>{
+          const cod=String(it.cod);
+          if(!estEhControlado(cod)) return;
+          const q=Number(it.qtd)||0; if(q<=0) return;
+          const p=estProd(cod);
+          linhas.push({ id:dia.firestoreId, podeExcluir:false,
+            ts:dn*100, data:ped.entrega, dataNum:dn, hora:'',
+            tipo:'porfora', local:'interno', codigo:cod, nome:p?p.nome:cod,
+            pacotes:-q, motivo:'Pedido por fora: '+(ped.cliente||ped.numero||''),
+            obs:'venda '+(ped.numero||'')+' · lançado em '+(dia.data||''), autor:'Sistema' });
+        });
+      });
+    });
+  }
   return linhas.sort((a,b)=>(b.ts||0)-(a.ts||0));
 }
 
@@ -19830,7 +19851,7 @@ function estRenderMov(){
   if(ativo==='est-mov-de'||ativo==='est-mov-ate'){ estRenderMovLista(); return; }
 
   const periodos=[['hoje','Hoje'],['7','7 dias'],['30','30 dias'],['tudo','Tudo'],['custom','Escolher datas']];
-  const tipos=[['todos','Tudo'],['carregamento','Carregamento'],['baixa','Baixa manual'],['migracao','Migração'],['entrada','Entrada'],['contagem','Contagem']];
+  const tipos=[['todos','Tudo'],['carregamento','Carregamento'],['baixa','Baixa manual'],['porfora','Por fora'],['migracao','Migração'],['entrada','Entrada'],['contagem','Contagem']];
   const chip=(ativoV,v,l,fn)=>'<button onclick="'+fn+'(\''+v+'\')" style="background:'+(ativoV===v?'var(--mc-azul,#2563eb)':'#fff')+';color:'+(ativoV===v?'#fff':'var(--text-secondary)')+';border:1px solid '+(ativoV===v?'var(--mc-azul,#2563eb)':'var(--border)')+';border-radius:99px;padding:8px 14px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;">'+l+'</button>';
 
   let h='<div class="card" style="margin-bottom:12px;">'+
@@ -19880,7 +19901,7 @@ function estRenderMovLista(){
   }
 
   // agrupa por dia, para o histórico ficar legível
-  const icone={carregamento:'🚚',baixa:'➖',migracao:'🔄',entrada:'➕',contagem:'🔢'};
+  const icone={carregamento:'🚚',baixa:'➖',migracao:'🔄',entrada:'➕',contagem:'🔢',porfora:'📄'};
   const porDia={}, ordemDias=[];
   filtradas.slice(0,300).forEach(l=>{
     const d=l.data||'sem data';
@@ -19899,9 +19920,9 @@ function estRenderMovLista(){
     // Toca para abrir e ver as rotas. O resto continua linha a linha.
     const grupos={}, ordemItens=[];
     doDia.forEach(l=>{
-      if(l.tipo==='carregamento'){
-        const k=d+'|'+l.codigo;
-        if(!grupos[k]){ grupos[k]={chave:k, nome:l.nome, total:0, itens:[]}; ordemItens.push({grupo:k}); }
+      if(l.tipo==='carregamento' || l.tipo==='porfora'){
+        const k=d+'|'+l.tipo+'|'+l.codigo;
+        if(!grupos[k]){ grupos[k]={chave:k, nome:l.nome, tipo:l.tipo, total:0, itens:[]}; ordemItens.push({grupo:k}); }
         grupos[k].total+=l.pacotes; grupos[k].itens.push(l);
       } else {
         ordemItens.push({linha:l});
@@ -19918,8 +19939,10 @@ function estRenderMovLista(){
         return '<div class="card" style="margin-bottom:6px;padding:0;overflow:hidden;">'+
           '<div onclick="estToggleGrupo(\''+escapeJsStr(g.chave)+'\')" style="cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:11px 12px;">'+
             '<div style="flex:1;min-width:0;">'+
-              '<div style="font-size:13px;font-weight:700;">🚚 '+g.nome+'</div>'+
-              '<div style="font-size:11px;color:var(--text-secondary);margin-top:2px;">'+rotas+' carregamento'+(rotas>1?'s':'')+' · toque para ver as rotas</div>'+
+              '<div style="font-size:13px;font-weight:700;">'+(g.tipo==='porfora'?'📄':'🚚')+' '+g.nome+'</div>'+
+              '<div style="font-size:11px;color:var(--text-secondary);margin-top:2px;">'+rotas+' '+
+                (g.tipo==='porfora'?('pedido'+(rotas>1?'s':'')+' por fora · toque para ver os clientes')
+                                   :('carregamento'+(rotas>1?'s':'')+' · toque para ver as rotas'))+'</div>'+
             '</div>'+
             '<div style="font-size:17px;font-weight:900;color:'+(g.total>=0?'#16a34a':'#dc2626')+';white-space:nowrap;">'+(g.total>0?'+':'')+g.total+'</div>'+
             '<span style="flex:0 0 auto;font-size:15px;color:var(--text-muted);transform:rotate('+(aberto?'90':'0')+'deg);transition:transform .15s;">›</span>'+
@@ -19929,8 +19952,8 @@ function estRenderMovLista(){
                 g.itens.map(it=>
                   '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:7px 0;border-top:1px dashed var(--border);">'+
                     '<div style="flex:1;min-width:0;">'+
-                      '<div style="font-size:12px;font-weight:600;">'+String(it.motivo||'').replace('Carregamento: ','')+'</div>'+
-                      '<div style="font-size:10px;color:var(--text-muted);margin-top:1px;">'+(it.hora||'')+'</div>'+
+                      '<div style="font-size:12px;font-weight:600;">'+String(it.motivo||'').replace('Carregamento: ','').replace('Pedido por fora: ','')+'</div>'+
+                      '<div style="font-size:10px;color:var(--text-muted);margin-top:1px;">'+(it.hora||it.obs||'')+'</div>'+
                     '</div>'+
                     '<div style="font-size:14px;font-weight:800;color:'+(it.pacotes>=0?'#16a34a':'#dc2626')+';white-space:nowrap;">'+(it.pacotes>0?'+':'')+it.pacotes+'</div>'+
                   '</div>').join('')+
