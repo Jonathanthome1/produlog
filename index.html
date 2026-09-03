@@ -2382,6 +2382,17 @@
     <div class="content" id="farinha-hist-content"></div>
   </div>
 
+  <!-- PEDIDOS POR FORA -->
+  <div class="screen" id="s-pf">
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="goTo('s-carreg')">‹</button>
+      <div class="mc-brand"><div class="mc-brand-logo"></div><div class="mc-brand-text"><div class="mc-brand-name">Monte Castelo</div><div class="mc-brand-sub">Expedição</div></div></div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info"><div class="mc-page-title">📄 Pedidos por fora</div><div class="mc-page-sub">Um lançamento por dia</div></div>
+    </div>
+    <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;" id="pf-content"></div>
+  </div>
+
   <!-- ============ ESTOQUE CONTROLADO & CONTÊINER ============ -->
   <div class="screen" id="s-est-hub">
     <div class="mc-header">
@@ -4198,6 +4209,7 @@
       <div class="mc-divider-v"></div>
       <div class="mc-page-info"><div class="mc-page-title">📦 Carregamentos</div><div class="mc-page-sub">Conferência por bipagem</div></div>
       <div class="mc-header-actions">
+        <button class="mc-act-btn-secondary" onclick="goTo('s-pf')" title="Pedidos por fora">📄 Pedidos por fora <span id="pf-badge" style="display:none;background:var(--mc-vermelho,#dc2626);color:#fff;font-size:10px;font-weight:700;border-radius:99px;padding:1px 6px;margin-left:3px;">0</span></button>
         <button class="mc-act-btn-secondary" onclick="goTo('s-eans')" title="Cadastro de códigos de barras (EAN)">🏷️ Códigos de barras</button>
       </div>
     </div>
@@ -5098,6 +5110,8 @@ function goTo(id){
   if(id==='s-acomp-coz') renderAcompCoz();
   if(id==='s-inicio' && typeof mcRenderExibicao==='function') mcRenderExibicao();
   if(id&&id.startsWith('s-est-') && typeof estRenderAtual==='function') estRenderAtual();
+  if(id==='s-pf' && typeof pfRender==='function') pfRender();
+  if(id==='s-carreg' && typeof pfAtualizarBadge==='function') pfAtualizarBadge();
   if(typeof estTvModo==='function' && id!=='s-tv' && !window._tvLinkMode) estTvModo(false);
   if((id==='s-adm-hub'||id==='s-emb-sel-data') && typeof estAtualizarBadge==='function') estAtualizarBadge();
   if(id==='s-demandas') renderDemandas();
@@ -15463,6 +15477,9 @@ function renderCarreg(){
   const isAdmin=window.adminMode===true;
   const podeGerenciar = isAdmin || window.setorAtual==='carregamento'; // setor Carregamento também cria/edita
   let html='';
+  // cobra os dias de pedidos por fora que ficaram sem lançamento
+  if(typeof pfAvisoCarregHtml==='function') html+=pfAvisoCarregHtml();
+  if(typeof pfAtualizarBadge==='function') setTimeout(pfAtualizarBadge,0);
   if(podeGerenciar) html+='<button class="btn btn-primary" style="width:100%;margin-bottom:12px;" onclick="novoCarreg()">+ Novo carregamento</button>';
   if(!carregamentos.length){ el.innerHTML=html+'<div class="empty" style="padding:24px;">Nenhum carregamento. '+(isAdmin?'Crie um para a expedição conferir.':'Aguarde o admin criar um carregamento.')+'</div>'; return; }
   const _dtKey=(c)=>{ const p=String(c.data||'').split('/'); return (p.length===3)? (p[2]+p[1].padStart(2,'0')+p[0].padStart(2,'0')) : '00000000'; };
@@ -18304,6 +18321,354 @@ function acPlayControle(semana,dia,produto,pct){
 
 
 /* ══════════════════════════════════════════════════════════════════
+   PEDIDOS POR FORA
+   Todo dia o administrativo joga aqui o PDF com os pedidos que saíram
+   fora do carregamento. O app lê o arquivo no próprio navegador, extrai
+   os itens e guarda só os dados (o PDF em si não é armazenado).
+
+   Regras combinadas:
+   · BONIFICAÇÃO é ignorada — não entra no controle de estoque.
+   · Quantidade quebrada é arredondada para cima (pacote é inteiro).
+   · A baixa acontece na DATA DE ENTREGA de cada pedido, não no dia do
+     lançamento. Antes disso o item aparece como "previsto".
+   · Um lançamento por dia; se faltar algum, o carregamento avisa.
+   Coleção: pedidosForaDias  (id = data do lançamento)
+   ══════════════════════════════════════════════════════════════════ */
+let pfDias={};
+
+onSnapshot(collection(db,'pedidosForaDias'), snap=>{
+  try{
+    pfDias={};
+    snap.docs.forEach(d=>{ pfDias[d.id]={firestoreId:d.id,...d.data()}; });
+    const t=document.querySelector('.screen.active')?.id;
+    if(t==='s-pf') pfRender();
+    if(t==='s-carreg' && typeof renderCarreg==='function') renderCarreg();
+    if(t&&t.startsWith('s-est-')&&typeof estRenderAtual==='function') estRenderAtual();
+  }catch(e){ console.error('pedidosForaDias snap',e); }
+});
+
+function pfId(dataBR){ return String(dataBR||'').replace(/\//g,'-'); }
+function pfDoDia(dataBR){ return pfDias[pfId(dataBR)]||null; }
+
+/* ── leitura do PDF ────────────────────────────────────────────── */
+async function pfCarregarPdfJs(){
+  if(window.pdfjsLib) return window.pdfjsLib;
+  await new Promise((res,rej)=>{
+    const sc=document.createElement('script');
+    sc.src='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+    sc.onload=res; sc.onerror=()=>rej(new Error('não foi possível carregar o leitor de PDF'));
+    document.head.appendChild(sc);
+  });
+  try{ window.pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'; }catch(e){}
+  return window.pdfjsLib;
+}
+
+// o pdf.js entrega pedaços soltos de texto com coordenadas; aqui eles são
+// remontados em linhas, que é o formato que o leitor espera
+async function pfExtrairPaginas(arquivo){
+  const pdfjs=await pfCarregarPdfJs();
+  const buf=await arquivo.arrayBuffer();
+  const doc=await pdfjs.getDocument({data:buf}).promise;
+  const paginas=[];
+  for(let i=1;i<=doc.numPages;i++){
+    const pg=await doc.getPage(i);
+    const tc=await pg.getTextContent();
+    const linhas=[];
+    tc.items.forEach(it=>{
+      const y=it.transform[5], x=it.transform[4], txt=it.str;
+      if(!String(txt).trim()) return;
+      let alvo=linhas.find(l=>Math.abs(l.y-y)<=2.5);   // mesma linha (tolerância)
+      if(!alvo){ alvo={y, partes:[]}; linhas.push(alvo); }
+      alvo.partes.push({x, txt});
+    });
+    linhas.sort((a,b)=>b.y-a.y);                        // de cima para baixo
+    paginas.push(linhas.map(l=>
+      l.partes.sort((a,b)=>a.x-b.x).map(p=>p.txt).join(' ').replace(/\s+/g,' ').trim()
+    ).join('\n'));
+  }
+  return paginas;
+}
+
+function pfLerPaginas(paginas){
+  const RE_INI=/^(\d{1,4})\s+(?:(.+?)\s+)?([\d.]*\d,\d{4})\s+(PCT|UN)\s+R\$\s*([\d.,]+)\s+R\$\s*([\d.,]+)$/;
+  const RE_MEIO=/^(.+?)\s+(\d{1,4})\s+([\d.]*\d,\d{4})\s+(PCT|UN)\s+R\$\s*([\d.,]+)\s+R\$\s*([\d.,]+)$/;
+  const num=s=>parseFloat(String(s).replace(/\./g,'').replace(',','.'))||0;
+  const docs={}; let atual=null;
+  (paginas||[]).forEach(t=>{
+    t=String(t||'');
+    const mNum=t.match(/IE:\s*\S+\s+(\d{5,7})/);
+    if(mNum) atual=mNum[1];
+    if(!atual) return;
+    if(!docs[atual]) docs[atual]={numero:atual,
+      tipo:/BONIFICA/.test(t.slice(0,120))?'BONIFICACAO':'VENDA',
+      itens:[], total:null, entrega:'', cliente:''};
+    const d=docs[atual];
+    t.split('\n').map(x=>x.trim()).forEach(l=>{
+      let m=l.match(RE_INI);
+      if(m){ d.itens.push({cod:m[1],desc:(m[2]||'').trim(),qtd:num(m[3]),un:m[4],valor:num(m[6])}); return; }
+      m=l.match(RE_MEIO);
+      if(m){ d.itens.push({cod:m[2],desc:(m[1]||'').trim(),qtd:num(m[3]),un:m[4],valor:num(m[6])}); }
+    });
+    if(d.total===null){ const mt=t.match(/Total de mercadorias[\s\S]*?R\$ ([\d.,]+)/); if(mt) d.total=num(mt[1]); }
+    if(!d.entrega){ const me=t.match(/Data entrega\s+(\d{2}\/\d{2}\/\d{4})/); if(me) d.entrega=me[1]; }
+    if(!d.cliente){ const mc=t.match(/Nome\/Razão Social\s+(.+)/); if(mc) d.cliente=mc[1].trim(); }
+  });
+  return Object.values(docs);
+}
+
+function pfConsolidar(docs){
+  const porEntrega={}, ignorados=[], semData=[];
+  let pacotes=0, itens=0;
+  (docs||[]).forEach(d=>{
+    if(d.tipo==='BONIFICACAO'){ ignorados.push(d.numero); return; }
+    const dia=d.entrega||'';
+    if(!dia) semData.push(d.numero);
+    if(!porEntrega[dia]) porEntrega[dia]={};
+    d.itens.forEach(it=>{
+      const q=Math.ceil(it.qtd||0);        // pacote é inteiro: arredonda pra cima
+      if(q<=0) return;
+      porEntrega[dia][it.cod]=(porEntrega[dia][it.cod]||0)+q;
+      pacotes+=q; itens++;
+    });
+  });
+  return {porEntrega, ignorados, semData, pacotes, itens};
+}
+
+/* ── situação dos dias ─────────────────────────────────────────── */
+// devolve os últimos N dias com o estado de cada um
+function pfSituacaoDias(n){
+  const lista=[]; const hojeD=new Date(); hojeD.setHours(0,0,0,0);
+  for(let i=0;i<(n||21);i++){
+    const d=new Date(hojeD); d.setDate(d.getDate()-i);
+    const br=String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')+'/'+d.getFullYear();
+    const reg=pfDoDia(br);
+    lista.push({
+      data:br, diaSemana:['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'][d.getDay()],
+      domingo:d.getDay()===0, hoje:i===0,
+      estado: reg ? (reg.status==='sem-pedidos'?'sem':'ok') : 'falta',
+      reg
+    });
+  }
+  return lista;
+}
+// dias em aberto (ontem para trás; hoje ainda dá tempo)
+function pfDiasFaltando(){
+  return pfSituacaoDias(21).filter(d=>!d.hoje && d.estado==='falta' && !d.domingo);
+}
+
+/* ── tela ──────────────────────────────────────────────────────── */
+let _pfPrevia=null, _pfDataSel='';
+
+function pfRender(){
+  const el=document.getElementById('pf-content'); if(!el) return;
+  if(!_pfDataSel) _pfDataSel=new Date().toISOString().slice(0,10);
+  const dataBR=estISOparaBR(_pfDataSel);
+  const jaTem=pfDoDia(dataBR);
+  const faltando=pfDiasFaltando();
+  let h='';
+
+  if(faltando.length){
+    h+='<div class="card" style="margin-bottom:12px;border:2px solid #d97706;background:#fffbeb;">'+
+      '<div style="font-size:14px;font-weight:800;color:#b45309;">⚠️ '+faltando.length+' dia(s) sem lançamento</div>'+
+      '<div style="font-size:12px;color:#78350f;margin:4px 0 8px;">'+faltando.slice(0,8).map(d=>d.diaSemana+' '+d.data.slice(0,5)).join(' · ')+'</div>'+
+      '<div style="font-size:11px;color:var(--text-secondary);">Sem esses lançamentos o estoque do contêiner fica maior do que a realidade.</div>'+
+    '</div>';
+  }
+
+  h+='<div class="card" style="margin-bottom:12px;">'+
+    '<div style="font-size:14px;font-weight:800;margin-bottom:8px;">📄 Lançar o dia</div>'+
+    '<label style="font-size:12px;font-weight:600;color:var(--text-secondary);">Dia de referência</label>'+
+    '<input type="date" id="pf-data" value="'+_pfDataSel+'" onchange="pfSetData(this.value)" style="width:100%;padding:12px;min-height:48px;border:1px solid var(--border-md,#d1d5db);border-radius:9px;font-size:16px;box-sizing:border-box;margin:4px 0 12px;">';
+
+  if(jaTem){
+    const totCx=Object.values(jaTem.porEntrega||{}).reduce((s,o)=>s+Object.values(o).reduce((a,b)=>a+b,0),0);
+    h+='<div style="background:#f0fdf4;border:1px solid #a7f3d0;border-radius:9px;padding:11px;">'+
+      '<div style="font-size:13px;font-weight:700;color:#15803d;">✓ '+(jaTem.status==='sem-pedidos'?'Marcado como sem pedidos':'Já lançado')+'</div>'+
+      (jaTem.status==='sem-pedidos' ? '' :
+        '<div style="font-size:12px;color:var(--text-secondary);margin-top:3px;">'+(jaTem.totalPedidos||0)+' pedido(s) · '+(jaTem.totalItens||0)+' item(ns) · '+totCx+' pacotes</div>')+
+      '<div style="font-size:11px;color:var(--text-muted);margin-top:3px;">'+(jaTem.lancadoPor||'')+' · '+(jaTem.lancadoEm||'')+'</div>'+
+      '<button onclick="pfExcluirDia(\''+dataBR+'\')" style="width:100%;margin-top:9px;background:#fff;border:1px solid #fecaca;color:#b91c1c;border-radius:8px;padding:9px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">Apagar e lançar de novo</button>'+
+    '</div>';
+  } else {
+    h+='<input type="file" id="pf-arq" accept="application/pdf" onchange="pfArquivoEscolhido(this)" style="width:100%;padding:11px;border:1px dashed var(--border-md,#d1d5db);border-radius:9px;font-size:14px;box-sizing:border-box;background:var(--bg-page);">'+
+      '<div id="pf-status" style="font-size:12px;margin-top:8px;min-height:18px;"></div>'+
+      '<div id="pf-previa"></div>'+
+      '<button onclick="pfMarcarSemPedidos(\''+dataBR+'\')" style="width:100%;margin-top:10px;background:none;border:1px solid var(--border);color:var(--text-secondary);border-radius:8px;padding:9px;font-size:12px;cursor:pointer;font-family:inherit;">Não houve pedidos por fora neste dia</button>';
+  }
+  h+='</div>';
+
+  // histórico de todos os dias
+  h+='<div class="mc-section-header">Situação dos últimos dias</div>';
+  h+='<div class="card" style="padding:8px 10px;">'+
+    pfSituacaoDias(21).map(d=>{
+      const cor = d.estado==='ok'?'#16a34a':(d.estado==='sem'?'#64748b':(d.domingo?'#cbd5e1':'#dc2626'));
+      const txt = d.estado==='ok'?'lançado':(d.estado==='sem'?'sem pedidos':(d.domingo?'domingo':(d.hoje?'pendente hoje':'FALTA')));
+      const det = d.reg && d.reg.status!=='sem-pedidos'
+        ? (d.reg.totalPedidos||0)+' pedidos · '+(d.reg.totalItens||0)+' itens' : '';
+      return '<div onclick="pfSetDataBR(\''+d.data+'\')" style="cursor:pointer;display:flex;align-items:center;gap:9px;padding:8px 2px;border-bottom:1px solid var(--border);">'+
+        '<span style="width:9px;height:9px;border-radius:50%;background:'+cor+';flex:0 0 auto;"></span>'+
+        '<div style="flex:1;min-width:0;"><div style="font-size:13px;font-weight:'+(d.estado==='falta'&&!d.domingo?'800':'600')+';">'+d.diaSemana+' · '+d.data+(d.hoje?' <span style="font-size:10px;color:var(--text-muted);">(hoje)</span>':'')+'</div>'+
+        (det?'<div style="font-size:11px;color:var(--text-secondary);">'+det+'</div>':'')+'</div>'+
+        '<span style="font-size:11px;font-weight:700;color:'+cor+';white-space:nowrap;">'+txt+'</span></div>';
+    }).join('')+'</div>';
+
+  el.innerHTML=h;
+}
+window.pfRender=pfRender;
+
+function pfSetData(iso){ _pfDataSel=iso; _pfPrevia=null; pfRender(); }
+window.pfSetData=pfSetData;
+function pfSetDataBR(br){ const m=String(br).match(/^(\d{2})\/(\d{2})\/(\d{4})$/); if(!m) return;
+  _pfDataSel=m[3]+'-'+m[2]+'-'+m[1]; _pfPrevia=null; pfRender();
+  document.getElementById('pf-content')?.scrollIntoView({behavior:'smooth',block:'start'}); }
+window.pfSetDataBR=pfSetDataBR;
+
+async function pfArquivoEscolhido(input){
+  const arq=input.files && input.files[0]; if(!arq) return;
+  const st=document.getElementById('pf-status');
+  const prev=document.getElementById('pf-previa');
+  st.innerHTML='<span style="color:var(--text-secondary);">Lendo o PDF...</span>';
+  prev.innerHTML='';
+  try{
+    const paginas=await pfExtrairPaginas(arq);
+    const docs=pfLerPaginas(paginas);
+    if(!docs.length){ st.innerHTML='<span style="color:#dc2626;">Não encontrei nenhum pedido nesse arquivo. Confira se é o PDF do ELIGO.</span>'; return; }
+    const c=pfConsolidar(docs);
+    _pfPrevia={arquivo:arq.name, docs, ...c};
+    // conferência: soma dos itens x total impresso em cada pedido
+    const divergentes=docs.filter(d=>d.total!==null &&
+      Math.abs(d.itens.reduce((s,i)=>s+i.valor,0)-d.total)>0.05);
+    st.innerHTML='<span style="color:#16a34a;font-weight:700;">✓ '+docs.length+' pedido(s) lido(s)</span>';
+    let ph='<div style="background:var(--bg-page);border-radius:9px;padding:11px;margin-top:10px;">'+
+      '<div style="font-size:13px;font-weight:700;">Confira antes de salvar</div>'+
+      '<div style="font-size:12px;color:var(--text-secondary);margin-top:5px;">'+
+        (docs.length-c.ignorados.length)+' venda(s) · <strong>'+c.itens+'</strong> itens · <strong>'+c.pacotes+'</strong> pacotes</div>';
+    if(c.ignorados.length) ph+='<div style="font-size:11px;color:#b45309;margin-top:5px;">'+c.ignorados.length+' bonificação(ões) ignorada(s): '+c.ignorados.join(', ')+'</div>';
+    if(c.semData.length) ph+='<div style="font-size:11px;color:#dc2626;margin-top:5px;">⚠️ '+c.semData.length+' pedido(s) sem data de entrega: '+c.semData.join(', ')+'</div>';
+    if(divergentes.length) ph+='<div style="font-size:11px;color:#dc2626;margin-top:5px;">⚠️ '+divergentes.length+' pedido(s) com soma diferente do total impresso: '+divergentes.map(d=>d.numero).join(', ')+'</div>';
+    ph+='<div style="margin-top:9px;">'+Object.keys(c.porEntrega).sort().map(dia=>{
+      const itens=c.porEntrega[dia];
+      const tot=Object.values(itens).reduce((a,b)=>a+b,0);
+      return '<div style="display:flex;justify-content:space-between;font-size:12px;padding:5px 0;border-top:1px dashed var(--border);">'+
+        '<span>entrega <strong>'+(dia||'sem data')+'</strong></span>'+
+        '<span>'+Object.keys(itens).length+' produtos · <strong>'+tot+'</strong> pct</span></div>';
+    }).join('')+'</div>'+
+    '<button class="btn btn-primary" style="width:100%;margin-top:11px;" onclick="pfSalvar()">Salvar lançamento do dia</button>'+
+    '</div>';
+    prev.innerHTML=ph;
+  }catch(e){
+    st.innerHTML='<span style="color:#dc2626;">Erro ao ler: '+e.message+'</span>';
+  }
+}
+window.pfArquivoEscolhido=pfArquivoEscolhido;
+
+async function pfSalvar(){
+  if(!_pfPrevia) return;
+  const dataBR=estISOparaBR(_pfDataSel);
+  if(pfDoDia(dataBR)){ alert('Este dia já tem lançamento. Apague o atual antes de lançar outro.'); return; }
+  const p=_pfPrevia;
+  try{
+    await setDoc(doc(db,'pedidosForaDias',pfId(dataBR)),{
+      data:dataBR, dataNum:estDataNum(dataBR), status:'lancado',
+      arquivo:p.arquivo||'', porEntrega:p.porEntrega,
+      totalPedidos:p.docs.filter(d=>d.tipo!=='BONIFICACAO').length,
+      totalItens:p.itens, totalPacotes:p.pacotes,
+      ignorados:p.ignorados||[],
+      pedidos:p.docs.filter(d=>d.tipo!=='BONIFICACAO').map(d=>({
+        numero:d.numero, cliente:d.cliente, entrega:d.entrega,
+        itens:d.itens.map(i=>({cod:i.cod, qtd:Math.ceil(i.qtd||0)}))
+      })),
+      lancadoPor:_elevSetor(), lancadoEm:agora(), ts:Date.now()
+    });
+    _pfPrevia=null;
+    alert('Lançamento salvo!');
+    pfRender();
+  }catch(e){ alert('Erro ao salvar: '+e.message); }
+}
+window.pfSalvar=pfSalvar;
+
+async function pfMarcarSemPedidos(dataBR){
+  if(!confirm('Marcar '+dataBR+' como um dia sem pedidos por fora?')) return;
+  try{
+    await setDoc(doc(db,'pedidosForaDias',pfId(dataBR)),{
+      data:dataBR, dataNum:estDataNum(dataBR), status:'sem-pedidos',
+      porEntrega:{}, totalPedidos:0, totalItens:0, totalPacotes:0,
+      lancadoPor:_elevSetor(), lancadoEm:agora(), ts:Date.now()
+    });
+    pfRender();
+  }catch(e){ alert('Erro: '+e.message); }
+}
+window.pfMarcarSemPedidos=pfMarcarSemPedidos;
+
+async function pfExcluirDia(dataBR){
+  if(!confirm('Apagar o lançamento de '+dataBR+'?\n\nAs baixas desses pedidos saem do estoque e você poderá lançar outro arquivo.')) return;
+  try{ await deleteDoc(doc(db,'pedidosForaDias',pfId(dataBR))); _pfPrevia=null; pfRender(); }
+  catch(e){ alert('Erro: '+e.message); }
+}
+window.pfExcluirDia=pfExcluirDia;
+
+function pfAtualizarBadge(){
+  const el=document.getElementById('pf-badge'); if(!el) return;
+  const n=pfDiasFaltando().length;
+  el.textContent=n; el.style.display=n?'inline-block':'none';
+}
+window.pfAtualizarBadge=pfAtualizarBadge;
+
+// faixa de aviso no topo da tela de carregamentos
+function pfAvisoCarregHtml(){
+  const f=pfDiasFaltando();
+  if(!f.length) return '';
+  return '<div class="card" style="margin-bottom:12px;border:2px solid #d97706;background:#fffbeb;">'+
+    '<div style="font-size:14px;font-weight:800;color:#b45309;">⚠️ Pedidos por fora não lançados</div>'+
+    '<div style="font-size:12px;color:#78350f;margin:4px 0 8px;line-height:1.5;">'+
+      f.slice(0,10).map(d=>d.diaSemana+' '+d.data.slice(0,5)).join(' · ')+
+      (f.length>10?' e mais '+(f.length-10):'')+'</div>'+
+    '<button class="btn btn-laranja" style="width:100%;" onclick="goTo(\'s-pf\')">Lançar agora</button></div>';
+}
+window.pfAvisoCarregHtml=pfAvisoCarregHtml;
+
+/* ── integração com o estoque ──────────────────────────────────── */
+// já saiu (entrega até hoje) — desconta do estoque
+function pfBaixado(cod){
+  const c=String(cod), hojeN=estHojeNum(), corte=estDataNum(estConfig.dataCorte);
+  let t=0;
+  Object.values(pfDias).forEach(dia=>{
+    Object.entries(dia.porEntrega||{}).forEach(([entrega,itens])=>{
+      const dn=estDataNum(entrega);
+      if(!dn || dn>hojeN) return;              // ainda não saiu
+      if(corte && dn<corte) return;            // antes da data de corte
+      t+=Number(itens[c])||0;
+    });
+  });
+  return t;
+}
+// vai sair nos próximos dias — só previsão, não desconta ainda
+function pfPrevisto(cod){
+  const c=String(cod), hojeN=estHojeNum();
+  let t=0;
+  Object.values(pfDias).forEach(dia=>{
+    Object.entries(dia.porEntrega||{}).forEach(([entrega,itens])=>{
+      const dn=estDataNum(entrega);
+      if(!dn || dn<=hojeN) return;
+      t+=Number(itens[c])||0;
+    });
+  });
+  return t;
+}
+function pfPrevistoPorDia(){
+  const hojeN=estHojeNum(), out={};
+  Object.values(pfDias).forEach(dia=>{
+    Object.entries(dia.porEntrega||{}).forEach(([entrega,itens])=>{
+      const dn=estDataNum(entrega);
+      if(!dn || dn<=hojeN) return;
+      out[entrega]=out[entrega]||{};
+      Object.entries(itens).forEach(([cod,q])=>{ out[entrega][cod]=(out[entrega][cod]||0)+q; });
+    });
+  });
+  return out;
+}
+
+/* ══════════════════════════════════════════════════════════════════
    ESTOQUE CONTROLADO & CONTÊINER
    Dois estoques: INTERNO (dentro da empresa) e CONTÊINER (reserva na rua).
 
@@ -18414,6 +18779,7 @@ function estSaldoInterno(cod){
     const q=(b.itens||{})[c];
     if(q) s-=Number(q)||0;
   });
+  if(typeof pfBaixado==='function') s-=pfBaixado(c);   // pedidos por fora já entregues
   return s;
 }
 // CONTÊINER: soma do saldo dos lotes
@@ -18636,6 +19002,7 @@ function estRenderHub(){
       '<table style="width:100%;border-collapse:collapse;font-size:12px;min-width:430px;">'+
       '<thead><tr style="font-size:9px;color:var(--text-muted);font-weight:700;text-align:right;">'+
         '<th style="text-align:left;padding:4px;">PRODUTO</th><th style="padding:4px;">DENTRO</th>'+
+        '<th style="padding:4px;">PREVISTO</th><th style="padding:4px;">FICA</th>'+
         '<th style="padding:4px;">CONTÊINER</th><th style="padding:4px;">MÉD/SEM</th>'+
         '<th style="padding:4px;">DIAS</th><th style="padding:4px;">VALIDADE</th></tr></thead><tbody>'+
       prods.map(p=>{
@@ -18647,9 +19014,14 @@ function estRenderHub(){
         const corI=st.interno<0?'#dc2626':(st.abaixo?'#dc2626':'var(--text-primary)');
         const corD=dias===null?'var(--text-muted)':(dias<=3?'#dc2626':(dias<=7?'#d97706':'#16a34a'));
         const corV=dv===null?'var(--text-muted)':(dv<0?'#dc2626':(dv<=7?'#d97706':'var(--text-secondary)'));
+        const prev=(typeof pfPrevisto==='function')?pfPrevisto(p.codigo):0;
+        const fica=st.interno-prev;
+        const corF=fica<0?'#dc2626':(st.ideal>0&&fica<=st.minimo?'#d97706':'var(--text-secondary)');
         return '<tr style="border-top:1px solid var(--border);text-align:right;">'+
           '<td style="text-align:left;padding:7px 4px;font-weight:700;">'+(st.abaixo?'🔻 ':'')+p.nome+'</td>'+
           '<td style="padding:7px 4px;font-weight:800;color:'+corI+';">'+st.interno+'</td>'+
+          '<td style="padding:7px 4px;color:'+(prev?'#0891b2':'var(--text-muted)')+';">'+(prev?'−'+prev:'—')+'</td>'+
+          '<td style="padding:7px 4px;font-weight:800;color:'+corF+';">'+fica+'</td>'+
           '<td style="padding:7px 4px;color:#7c3aed;font-weight:700;">'+st.disponivel+'</td>'+
           '<td style="padding:7px 4px;">'+(media===null?'—':media)+'</td>'+
           '<td style="padding:7px 4px;font-weight:800;color:'+corD+';">'+(dias===null?'—':dias)+'</td>'+
@@ -18660,6 +19032,7 @@ function estRenderHub(){
         (diasHist<14
           ? 'A média semanal aparece depois de 14 dias de histórico (tem '+Math.max(0,diasHist)+'). Até lá, use o estoque ideal manual.'
           : 'Média semanal calculada pelas saídas reais de carregamento dos últimos 28 dias. "Dias" = quanto dura o estoque total (empresa + contêiner) nesse ritmo.')+
+        '<br>"PREVISTO" são pedidos por fora com entrega marcada para os próximos dias; "FICA" é como o estoque fica depois que eles saírem.'+
       '</div></div>';
   }
 
