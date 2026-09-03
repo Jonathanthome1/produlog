@@ -1748,6 +1748,11 @@
         <div style="flex:1;"><div class="hb-title">Prioridades</div><div class="hb-desc" id="prioridades-emb-badge">Produtos prioritários para embalar</div></div>
         <span style="color:var(--text-secondary);font-size:20px;">›</span>
       </button>
+      <button class="home-btn" onclick="goTo('s-est-hub')" style="border-left-color:#7c3aed;margin-bottom:4px;">
+        <div class="hb-icon" style="background:#ede9fe;">🏬</div>
+        <div style="flex:1;"><div class="hb-title">Estoque &amp; Contêiner <span id="est-badge-emb" style="display:none;background:var(--mc-vermelho,#dc2626);color:#fff;font-size:11px;font-weight:700;border-radius:99px;padding:1px 8px;margin-left:4px;">0</span></div><div class="hb-desc">Ver o estoque e trazer mercadoria da rua</div></div>
+        <span style="color:var(--text-secondary);font-size:20px;">›</span>
+      </button>
       <button class="home-btn" onclick="abrirPlano()" style="border-left-color:var(--mc-roxo);margin-bottom:4px;">
         <div class="hb-icon" style="background:#ede9fe;">📅</div>
         <div style="flex:1;"><div class="hb-title">Plano de Produção</div><div class="hb-desc">Cronograma da semana</div></div>
@@ -5077,7 +5082,7 @@ function goTo(id){
   if(id==='s-acomp-coz') renderAcompCoz();
   if(id==='s-inicio' && typeof mcRenderExibicao==='function') mcRenderExibicao();
   if(id&&id.startsWith('s-est-') && typeof estRenderAtual==='function') estRenderAtual();
-  if(id==='s-adm-hub' && typeof estAtualizarBadge==='function') estAtualizarBadge();
+  if((id==='s-adm-hub'||id==='s-emb-sel-data') && typeof estAtualizarBadge==='function') estAtualizarBadge();
   if(id==='s-demandas') renderDemandas();
   if(id==='s-tv') iniciarTV(); else pararTV();
   if(id==='s-carreg') renderCarreg();
@@ -18435,7 +18440,7 @@ function estAbaixoDoMinimo(){ return estAtivos().map(p=>({p,st:estStatusProduto(
 
 function estAtualizarBadge(){
   const n=estAbaixoDoMinimo().length + estNegativos().length;
-  ['est-badge','est-badge-adm'].forEach(id=>{
+  ['est-badge','est-badge-adm','est-badge-emb'].forEach(id=>{
     const el=document.getElementById(id); if(!el) return;
     el.textContent=n; el.style.display=n?'inline-block':'none';
   });
