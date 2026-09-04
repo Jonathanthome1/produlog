@@ -15132,9 +15132,17 @@ function _tvDados(){
         // estado do play (produzindo agora / pausado / manutenção) — vindo do Acompanhamento
         let playEstado='';
         try{ const pid=acPlayId(ac.semana||_acSemanaSel||semanaAtual(), todayInfo.dia, p.nome); playEstado=acPlayEstado(acPlayStatus[pid]); }catch(e){}
+        // minutos já rodados (para o painel mostrar "há 22 min")
+        let minProd=0;
+        try{ const pid2=acPlayId(ac.semana||semanaAtual(), todayInfo.dia, p.nome);
+             minProd=(acPlayTempos(acPlayStatus[pid2])||{}).liquido||0; }catch(e){}
+        // posição na fila definida pela confeitaria (arrastar do acompanhamento)
+        let prio=9999;
+        try{ prio=acPrioPos(ac.semana||semanaAtual(), todayInfo.dia, p.nome); }catch(e){}
         hojeProdutos.push({
           nome:p.nome, plan:dObj.qtdPlan, feito:dObj.mostrado,
           status:dObj.status, fonteLabel:dObj.fonteLabel||'', playEstado,
+          minProd, prio,
           ok:(dObj.status==='verde'||dObj.status==='adiantado'||dObj.status==='atrasado')
         });
       });
@@ -15229,53 +15237,191 @@ function _tvFooter(d, views, viewIdx, isAdmin){
       (window._tvLinkMode?'':'<button onclick="sairTV()" style="'+btn+'color:#64748b;padding:9px 16px;">✕ Sair</button>')+
     '</div></div>';
 }
+/* ── TURNO: usado para calcular ritmo e projeção no Painel TV ──── */
+let tvTurno={inicio:'05:00', fim:'17:00'};
+onSnapshot(doc(db,'configuracoes','painelTV'), snap=>{
+  try{
+    const d=snap.data()||{};
+    tvTurno={inicio:d.inicio||'05:00', fim:d.fim||'17:00'};
+    if(document.querySelector('.screen.active')?.id==='s-tv') renderTV();
+  }catch(e){ console.error('painelTV snap',e); }
+});
+async function tvSetTurno(inicio,fim){
+  try{ await setDoc(doc(db,'configuracoes','painelTV'),{inicio,fim,atualizadoEm:agora()},{merge:true}); }
+  catch(e){ alert('Erro: '+e.message); }
+}
+window.tvSetTurno=tvSetTurno;
+
+// tudo que o bloco de RITMO precisa saber
+function tvRitmo(plano, feito){
+  const iniM=_horaMin(tvTurno.inicio+':00')!=null?_horaMin(tvTurno.inicio+':00'):_horaMin(tvTurno.inicio);
+  const fimM=_horaMin(tvTurno.fim+':00')!=null?_horaMin(tvTurno.fim+':00'):_horaMin(tvTurno.fim);
+  const d=new Date(); const agoraM=d.getHours()*60+d.getMinutes();
+  const ini=(iniM==null?300:iniM), fim=(fimM==null?1020:fimM);
+  const decorrido=Math.max(0, Math.min(agoraM,fim)-ini);
+  const restante=Math.max(0, fim-Math.max(agoraM,ini));
+  const falta=Math.max(0, plano-feito);
+  const ritmoAtual = decorrido>0 ? (feito/(decorrido/60)) : 0;      // pacotes por hora
+  const precisaHora = restante>0 ? (falta/(restante/60)) : (falta>0?Infinity:0);
+  const projecao = feito + ritmoAtual*(restante/60);
+  return {
+    ini, fim, agoraM, decorridoMin:decorrido, restanteMin:restante, falta,
+    ritmoAtual:Math.round(ritmoAtual), precisaHora:(precisaHora===Infinity?null:Math.round(precisaHora)),
+    projecao:Math.round(projecao), sobra:Math.round(projecao-plano),
+    foraDoTurno: agoraM<ini || agoraM>=fim,
+    pctTempo: (fim>ini)? Math.max(0,Math.min(100, Math.round((agoraM-ini)/(fim-ini)*100))) : 0
+  };
+}
+function tvHm(min){
+  const m=Math.max(0,Math.round(min));
+  return (m>=60? Math.floor(m/60)+'h'+String(m%60).padStart(2,'0') : m+'min');
+}
+
 function _tvViewHoje(d){
-  const bateuDia=d.metaDiaPct>=100;
-  const corDiaA=bateuDia?'#f59e0b':'#1e3a8a', corDiaB=bateuDia?'#fbbf24':'#3b82f6';
-  const corPctTxt=bateuDia?'#d97706':(d.metaDiaPct>=70?'#1e3a8a':'#3b82f6');
-  let h='<div style="display:grid;grid-template-columns:1.3fr 1fr;gap:1.4vw;flex:1;min-height:0;position:relative;z-index:1;">';
-  h+='<div class="tv-card" style="background:'+(bateuDia?'linear-gradient(135deg,#fffbeb,#fef3c7)':'#fff')+';border-radius:26px;padding:2vh 2vw;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;overflow:hidden;box-shadow:0 12px 40px rgba(30,41,59,.08);'+(bateuDia?'animation:tvFadeIn .5s ease both, tvGlow 2.5s ease-in-out infinite;':'')+'">'+
-    '<div style="font-size:1.3vw;color:#64748b;font-weight:800;letter-spacing:3px;margin-bottom:1vh;">META DO DIA</div>'+
-    '<div style="position:relative;display:flex;align-items:center;justify-content:center;'+(bateuDia?'':'animation:tvFloat 4s ease-in-out infinite;')+'">'+_tvRing(d.metaDiaPct,340,corDiaA,corDiaB)+
-      '<div style="position:absolute;text-align:center;"><div id="tv-metapct" style="font-size:5.2vw;font-weight:900;line-height:1;color:'+corPctTxt+';">0%</div>'+
-      '<div style="font-size:1.5vw;color:#334155;font-weight:800;margin-top:0.5vh;"><span id="tv-feitohoje">0</span> / '+d.planoHoje.toLocaleString('pt-BR')+'</div>'+
-      '<div style="font-size:0.95vw;color:#94a3b8;font-weight:600;">pacotes</div></div></div>'+
-    (bateuDia?'<div style="margin-top:1.5vh;font-size:2.4vw;font-weight:900;color:#d97706;text-align:center;animation:tvPop .6s ease both;">🎉 META BATIDA! 🎉</div>':(d.planoHoje>0?'<div style="margin-top:1.5vh;font-size:1.6vw;font-weight:800;color:#1e3a8a;">Faltam '+Math.max(d.planoHoje-d.feitoHoje,0).toLocaleString('pt-BR')+' pacotes 💪</div>':'<div style="margin-top:1.5vh;font-size:1.3vw;color:#94a3b8;">Sem meta definida para hoje</div>'))+
+  const todos=d.hojeProdutos||[];
+  const r=tvRitmo(d.planoHoje, d.feitoHoje);
+  const bateu=d.metaDiaPct>=100;
+
+  const produzindo=todos.filter(p=>p.playEstado==='produzindo');
+  const prontos=todos.filter(p=>p.playEstado!=='produzindo' && (p.status==='verde' || (p.plan>0 && p.feito>=p.plan)));
+  const faltam=todos.filter(p=>!produzindo.includes(p) && !prontos.includes(p))
+    .sort((a,b)=>{
+      if(a.prio!==b.prio) return a.prio-b.prio;                    // fila da confeitaria manda
+      const oa=a.status==='atrasado'?0:1, ob=b.status==='atrasado'?0:1;
+      return oa-ob || (b.plan-b.feito)-(a.plan-a.feito);
+    });
+
+  /* Uma tela fixa, sempre com a mesma coisa no mesmo lugar:
+     RITMO à esquerda · AGORA e DEPOIS no centro · FALTA e PRONTO à direita.
+     O objetivo não é informar, é provocar reação: por isso o ritmo e a
+     projeção vêm antes do "quanto já fizemos". */
+  let h='<div style="display:grid;grid-template-columns:1fr 2fr 1fr;gap:1vw;flex:1;min-height:0;position:relative;z-index:1;">';
+
+  /* ═══ ESQUERDA: RITMO ═══ */
+  const noPrazo = r.precisaHora===null ? false : (r.ritmoAtual>=r.precisaHora);
+  const corRitmo = bateu?'#16a34a':(r.foraDoTurno?'#64748b':(noPrazo?'#16a34a':'#dc2626'));
+  h+='<div class="tv-card" style="background:#fff;border-radius:22px;padding:1.6vh 1.1vw;display:flex;flex-direction:column;gap:1vh;box-shadow:0 8px 24px rgba(30,41,59,.06);min-height:0;overflow:hidden;">'+
+    '<div style="font-size:1vw;font-weight:900;color:#64748b;letter-spacing:2px;">RITMO</div>';
+
+  if(bateu){
+    h+='<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;">'+
+      '<div style="font-size:4vw;">🎉</div>'+
+      '<div style="font-size:1.7vw;font-weight:900;color:#d97706;line-height:1.1;margin-top:1vh;">META BATIDA</div>'+
+      '<div style="font-size:1.1vw;color:#64748b;font-weight:700;margin-top:0.6vh;">'+d.feitoHoje.toLocaleString('pt-BR')+' de '+d.planoHoje.toLocaleString('pt-BR')+'</div></div>';
+  } else if(r.foraDoTurno){
+    h+='<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;">'+
+      '<div style="font-size:1.3vw;font-weight:800;color:#64748b;">Fora do turno</div>'+
+      '<div style="font-size:1vw;color:#94a3b8;margin-top:0.5vh;">'+tvTurno.inicio+' às '+tvTurno.fim+'</div>'+
+      '<div style="font-size:2.2vw;font-weight:900;color:#1e3a8a;margin-top:1.5vh;">'+d.metaDiaPct+'%</div>'+
+      '<div style="font-size:1vw;color:#64748b;font-weight:700;">'+d.feitoHoje.toLocaleString('pt-BR')+' / '+d.planoHoje.toLocaleString('pt-BR')+'</div></div>';
+  } else {
+    // tempo restante
+    h+='<div style="text-align:center;">'+
+        '<div style="font-size:0.85vw;color:#94a3b8;font-weight:700;letter-spacing:1px;">TEMPO RESTANTE</div>'+
+        '<div style="font-size:2.6vw;font-weight:900;color:#0f172a;line-height:1.05;">'+tvHm(r.restanteMin)+'</div>'+
+        '<div style="height:7px;border-radius:4px;background:#e2e8f0;overflow:hidden;margin-top:0.6vh;">'+
+          '<div style="height:100%;width:'+r.pctTempo+'%;background:#94a3b8;"></div></div>'+
+      '</div>'+
+      // precisa x atual
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:0.6vw;">'+
+        '<div style="background:#f8fafc;border-radius:12px;padding:1vh 0.4vw;text-align:center;">'+
+          '<div style="font-size:0.75vw;color:#64748b;font-weight:800;">PRECISA</div>'+
+          '<div style="font-size:1.7vw;font-weight:900;color:#1e3a8a;line-height:1.1;">'+(r.precisaHora===null?'—':r.precisaHora)+'</div>'+
+          '<div style="font-size:0.7vw;color:#94a3b8;font-weight:600;">pct/hora</div></div>'+
+        '<div style="background:'+(noPrazo?'#f0fdf4':'#fef2f2')+';border-radius:12px;padding:1vh 0.4vw;text-align:center;">'+
+          '<div style="font-size:0.75vw;color:#64748b;font-weight:800;">ESTÁ INDO</div>'+
+          '<div style="font-size:1.7vw;font-weight:900;color:'+corRitmo+';line-height:1.1;">'+r.ritmoAtual+'</div>'+
+          '<div style="font-size:0.7vw;color:#94a3b8;font-weight:600;">pct/hora</div></div>'+
+      '</div>'+
+      // projeção — a frase que faz alguém reagir
+      '<div style="flex:1;display:flex;align-items:center;justify-content:center;background:'+(noPrazo?'#f0fdf4':'#fef2f2')+';border:2px solid '+(noPrazo?'#a7f3d0':'#fecaca')+';border-radius:14px;padding:1vh 0.6vw;text-align:center;">'+
+        '<div><div style="font-size:0.8vw;color:#64748b;font-weight:800;letter-spacing:1px;">NESSE RITMO</div>'+
+        (noPrazo
+          ? '<div style="font-size:1.35vw;font-weight:900;color:#15803d;line-height:1.2;margin-top:0.4vh;">✓ bate a meta<br><span style="font-size:1vw;font-weight:700;color:#16a34a;">'+(r.sobra>0?('sobram '+r.sobra+' pct'):'no limite')+'</span></div>'
+          : '<div style="font-size:1.35vw;font-weight:900;color:#b91c1c;line-height:1.2;margin-top:0.4vh;">faltam '+Math.abs(r.sobra)+'<br><span style="font-size:1vw;font-weight:700;">pacotes no fim do dia</span></div>')+
+        '</div></div>'+
+      '<div style="text-align:center;font-size:0.85vw;color:#64748b;font-weight:700;">'+
+        d.feitoHoje.toLocaleString('pt-BR')+' / '+d.planoHoje.toLocaleString('pt-BR')+' · '+d.metaDiaPct+'%</div>';
+  }
+  h+='</div>';
+
+  /* ═══ CENTRO: AGORA e DEPOIS ═══ */
+  h+='<div class="tv-card" style="background:#fff;border-radius:22px;padding:1.6vh 1.3vw;display:flex;flex-direction:column;gap:1vh;box-shadow:0 8px 24px rgba(30,41,59,.06);min-height:0;overflow:hidden;">';
+
+  if(produzindo.length){
+    h+='<div style="background:linear-gradient(135deg,#fef2f2,#fff);border:3px solid #fecaca;border-radius:16px;padding:1.4vh 1.2vw;">'+
+      '<div style="display:flex;align-items:center;gap:0.5vw;margin-bottom:0.6vh;">'+
+        '<span style="width:0.85vw;height:0.85vw;min-width:11px;min-height:11px;border-radius:50%;background:#ef4444;display:inline-block;animation:tvPulse 1.4s ease-in-out infinite;"></span>'+
+        '<span style="font-size:0.95vw;font-weight:900;color:#b91c1c;letter-spacing:2px;">AGORA</span></div>'+
+      produzindo.map(p=>{
+        const resta=Math.max(0,p.plan-p.feito);
+        return '<div style="display:flex;align-items:baseline;gap:0.8vw;flex-wrap:wrap;">'+
+          '<div style="flex:1;min-width:0;font-size:2.1vw;font-weight:900;color:#0f172a;line-height:1.1;">'+p.nome+'</div>'+
+          '<div style="text-align:right;"><div style="font-size:2.1vw;font-weight:900;color:#b91c1c;line-height:1.1;">'+resta+'</div>'+
+          '<div style="font-size:0.75vw;color:#94a3b8;font-weight:700;">faltam</div></div>'+
+          (p.minProd>0?'<div style="flex-basis:100%;font-size:0.9vw;color:#64748b;font-weight:700;">há '+tvHm(p.minProd)+' em produção</div>':'')+
+        '</div>';
+      }).join('')+
     '</div>';
-  // produtos de hoje
-  // produtos de hoje (todos, com tamanho adaptativo ao total)
-  const n=d.hojeProdutos.length;
-  const fsz = n<=8?'1.05vw':(n<=12?'0.95vw':'0.85vw');
-  const bh = n<=8?10:(n<=12?9:7);
-  const gp = n<=8?'0.9vh':(n<=12?'0.6vh':'0.4vh');
-  const ic = n<=8?30:(n<=12?26:22);
-  h+='<div class="tv-card" style="background:#fff;border-radius:22px;padding:1.6vh 1.2vw;display:flex;flex-direction:column;box-shadow:0 8px 24px rgba(30,41,59,.06);min-height:0;">'+
-    '<div style="font-size:1.2vw;font-weight:800;color:#334155;margin-bottom:1vh;">📋 Produtos de hoje'+(n?' <span style="font-size:0.9vw;color:#94a3b8;font-weight:600;">('+n+')</span>':'')+'</div>'+
-    '<div style="flex:1;overflow:hidden;display:flex;flex-direction:column;gap:'+gp+';justify-content:space-evenly;">';
-  if(d.hojeProdutos.length){
-    h+=d.hojeProdutos.map(p=>{
-      const pct=p.plan>0?Math.round(p.feito/p.plan*100):0;
-      const st=p.status||'';
-      const isAdiant=(st==='adiantado');
-      const isAtras=(st==='atrasado');
-      const isFeito=(st==='verde');
-      const isProduzindo=(p.playEstado==='produzindo');
-      // cores por status
-      const corBarra = isProduzindo?'linear-gradient(90deg,#dc2626,#f87171)':(isAdiant?'#0d9488':(isAtras?'#d97706':(isFeito?'#22c55e':'linear-gradient(90deg,#1e3a8a,#3b82f6)')));
-      const corIcone = isProduzindo?'#dc2626':(isAdiant?'#0d9488':(isAtras?'#d97706':(isFeito?'#22c55e':'#eef2f7')));
-      const corNome  = isProduzindo?'#b91c1c':(isAdiant?'#0f766e':(isAtras?'#b45309':(isFeito?'#16a34a':'#334155')));
-      const icone    = isProduzindo?'●':(isAdiant?'⏩':(isAtras?'⏰':(isFeito?'✓':'')));
-      const selo     = isProduzindo?' <span style="font-size:'+(fsz)+';color:#b91c1c;font-weight:800;">🔴 produzindo agora</span>':(isAdiant?' <span style="font-size:'+(fsz)+';color:#0f766e;font-weight:800;">⏩ adiantado'+(p.fonteLabel?' ('+p.fonteLabel+')':'')+'</span>':'');
-      const rowBg    = isProduzindo?'background:rgba(220,38,38,.06);border-radius:8px;padding:4px 6px;margin:0 -6px;':'';
-      return '<div style="display:flex;align-items:center;gap:0.8vw;'+rowBg+'">'+
-      '<div style="width:'+ic+'px;height:'+ic+'px;border-radius:8px;background:'+corIcone+';display:flex;align-items:center;justify-content:center;font-size:'+(ic*0.5)+'px;color:#fff;flex-shrink:0;'+(isProduzindo?'animation:tvPulse 1.2s infinite;':(p.ok?'animation:tvPop .5s ease both;':''))+'">'+icone+'</div>'+
-      '<div style="flex:1;min-width:0;"><div style="font-size:'+fsz+';font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:'+corNome+';">'+p.nome+selo+'</div>'+
-      '<div style="height:'+bh+'px;border-radius:5px;background:#eef2f7;overflow:hidden;margin-top:3px;"><div style="height:100%;width:'+Math.min(pct,100)+'%;background:'+corBarra+';border-radius:5px;transition:width 1s ease;"></div></div></div>'+
-      '<div style="font-size:'+fsz+';color:#64748b;font-weight:700;white-space:nowrap;">'+p.feito+'/'+p.plan+'</div></div>'; }).join('');
-  } else h+='<div style="color:#94a3b8;font-size:1.1vw;">Sem produtos planejados para hoje.</div>';
-  h+='</div></div></div>';
+  } else {
+    h+='<div style="background:#f8fafc;border:3px dashed #cbd5e1;border-radius:16px;padding:1.4vh 1.2vw;text-align:center;">'+
+      '<div style="font-size:0.95vw;font-weight:900;color:#94a3b8;letter-spacing:2px;">AGORA</div>'+
+      '<div style="font-size:1.5vw;font-weight:800;color:#64748b;margin-top:0.4vh;">'+(faltam.length?'Nenhum produto iniciado':'Sem produção pendente')+'</div></div>';
+  }
+
+  // fila do que vem depois — a prioridade que a confeitaria definiu
+  const fila=faltam.slice(0,4);
+  h+='<div style="flex:1;display:flex;flex-direction:column;min-height:0;">'+
+    '<div style="font-size:0.95vw;font-weight:900;color:#1e3a8a;letter-spacing:2px;margin-bottom:0.7vh;">DEPOIS</div>';
+  if(fila.length){
+    h+='<div style="flex:1;display:flex;flex-direction:column;gap:0.7vh;justify-content:flex-start;">'+
+      fila.map((p,i)=>{
+        const resta=Math.max(0,p.plan-p.feito);
+        const atras=p.status==='atrasado';
+        const cor=atras?'#d97706':'#1e3a8a';
+        return '<div style="display:flex;align-items:center;gap:0.8vw;background:'+(atras?'#fffbeb':'#f8fafc')+';border-left:6px solid '+cor+';border-radius:12px;padding:0.9vh 1vw;">'+
+          '<span style="flex:0 0 auto;width:2vw;height:2vw;min-width:26px;min-height:26px;border-radius:50%;background:'+cor+';color:#fff;font-size:1.05vw;font-weight:900;display:flex;align-items:center;justify-content:center;">'+(i+2)+'</span>'+
+          '<span style="flex:1;min-width:0;font-size:1.4vw;font-weight:800;color:#0f172a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+(atras?'⏰ ':'')+p.nome+'</span>'+
+          '<span style="flex:0 0 auto;font-size:1.4vw;font-weight:900;color:'+cor+';">'+resta+'</span>'+
+        '</div>';
+      }).join('')+'</div>';
+  } else {
+    h+='<div style="flex:1;display:flex;align-items:center;justify-content:center;text-align:center;">'+
+      '<div><div style="font-size:3vw;">🎉</div>'+
+      '<div style="font-size:1.6vw;font-weight:900;color:#16a34a;margin-top:0.8vh;">Tudo pronto!</div></div></div>';
+  }
+  h+='</div></div>';
+
+  /* ═══ DIREITA: FALTA e PRONTO ═══ */
+  const resto=faltam.slice(4);
+  h+='<div class="tv-card" style="background:#fff;border-radius:22px;padding:1.6vh 1vw;display:flex;flex-direction:column;gap:1vh;box-shadow:0 8px 24px rgba(30,41,59,.06);min-height:0;overflow:hidden;">'+
+    '<div>'+
+      '<div style="font-size:0.9vw;font-weight:900;color:#1e3a8a;letter-spacing:2px;margin-bottom:0.6vh;">NA FILA <span style="color:#94a3b8;">('+faltam.length+')</span></div>'+
+      (resto.length
+        ? resto.slice(0,9).map((p,i)=>'<div style="display:flex;align-items:center;gap:0.4vw;font-size:0.92vw;font-weight:700;color:#334155;padding:0.25vh 0;white-space:nowrap;overflow:hidden;">'+
+            '<span style="flex:0 0 auto;color:#94a3b8;font-weight:900;">'+(i+6)+'</span>'+
+            '<span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;">'+p.nome+'</span>'+
+            '<span style="flex:0 0 auto;color:#64748b;">'+Math.max(0,p.plan-p.feito)+'</span></div>').join('')
+          +(resto.length>9?'<div style="font-size:0.82vw;color:#94a3b8;font-weight:700;margin-top:0.3vh;">+ '+(resto.length-9)+' depois</div>':'')
+        : '<div style="font-size:0.9vw;color:#94a3b8;">Nada além da fila ao lado.</div>')+
+    '</div>'+
+    '<div style="flex:1;min-height:0;border-top:2px solid #e2e8f0;padding-top:0.9vh;display:flex;flex-direction:column;">'+
+      '<div style="font-size:0.9vw;font-weight:900;color:#16a34a;letter-spacing:2px;margin-bottom:0.6vh;">✅ PRONTO <span style="color:#94a3b8;">('+prontos.length+')</span></div>'+
+      '<div style="flex:1;overflow:hidden;display:flex;flex-direction:column;gap:0.2vh;">'+
+        (prontos.length
+          ? prontos.slice(0,10).map(p=>'<div style="display:flex;align-items:center;gap:0.4vw;font-size:0.88vw;color:#15803d;font-weight:700;white-space:nowrap;overflow:hidden;">'+
+              '<span style="flex:0 0 auto;">✓</span><span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;">'+p.nome+'</span>'+
+              '<span style="flex:0 0 auto;color:#94a3b8;font-weight:600;">'+p.feito+'</span></div>').join('')
+            +(prontos.length>10?'<div style="font-size:0.82vw;color:#94a3b8;font-weight:700;">+ '+(prontos.length-10)+' outros</div>':'')
+          : '<div style="font-size:0.9vw;color:#94a3b8;">Nada finalizado ainda.</div>')+
+      '</div>'+
+    '</div>'+
+  '</div>';
+
+  h+='</div>';
   return h;
 }
+
 function _tvViewSemana(d){
   const premioAtingido=d.cumprimento>=(tvPremio.metaPct||90);
   const premioPct=tvPremio.metaPct>0?Math.min(Math.round(d.cumprimento/tvPremio.metaPct*100),100):0;
@@ -19498,68 +19644,117 @@ async function estSalvarEntrada(){
 window.estSalvarEntrada=estSalvarEntrada;
 
 // ── MIGRAÇÃO contêiner → empresa (com senha) ─────────────────────
+// mostra na hora se a quantidade passa do que existe no lote escolhido
+function _estAvisoQtdLote(pacotes){
+  const out=document.getElementById('est-q-prev'); if(!out) return;
+  const lote=estLotes.find(l=>String(l.firestoreId)===String(_estLoteSel));
+  if(!lote) return;
+  const saldo=Number(lote.saldo)||0;
+  if(pacotes>saldo){
+    out.insertAdjacentHTML('beforeend',
+      '<div style="font-size:11px;font-weight:700;color:#dc2626;margin-top:4px;">⚠️ este lote só tem '+saldo+' pct — traga '+saldo+' aqui e '+(pacotes-saldo)+' de outro lote</div>');
+  }
+}
+
+let _estLoteSel='';
+
+// lotes do produto que ainda têm saldo, do mais velho para o mais novo
+function _estLotesDe(cod){
+  return estLotes.filter(l=>String(l.codigo)===String(cod) && (Number(l.saldo)||0)>0)
+    .slice().sort((a,b)=>(a.validadeNum||estDataNum(a.validade))-(b.validadeNum||estDataNum(b.validade)));
+}
+
 function estAbrirMigrar(cod){
   const p=estProd(cod); if(!p){ alert('Produto não está no controle.'); return; }
   const st=estStatusProduto(p);
-  if(st.disponivel<=0){ alert('Não há saldo deste produto no contêiner.'); return; }
-  const lotes=estLotes.filter(l=>String(l.codigo)===String(cod) && (Number(l.saldo)||0)>0);
+  const lotes=_estLotesDe(cod);
+  if(!lotes.length){ alert('Não há saldo deste produto no contêiner.'); return; }
   _estUnid='cx';
-  const sugerido=Math.max(1, Math.min(st.caixasSug||1, Math.ceil(st.disponivel/(p.pctCaixa||1))));
+  _estLoteSel=lotes[0].firestoreId;          // já vem no mais antigo
   _estModal('🚚 Trazer do contêiner — '+p.nome,
-    '<div style="font-size:12px;color:var(--text-secondary);margin-bottom:12px;line-height:1.5;">Na empresa há <strong>'+st.interno+'</strong> pct (ideal '+st.ideal+'). No contêiner há <strong>'+st.disponivel+'</strong> pct em '+lotes.length+' lote(s). Sai sempre o de validade mais próxima.</div>'+
-    _estCampoQtd(cod,'Quantidade trazida', sugerido)+
-    '<div id="est-g-lotes" style="font-size:11px;color:var(--text-secondary);margin-bottom:10px;"></div>'+
+    '<div style="font-size:12px;color:var(--text-secondary);margin-bottom:12px;line-height:1.5;">Na empresa há <strong>'+st.interno+'</strong> pct (ideal '+st.ideal+'). Escolha de qual lote vai sair.</div>'+
+    '<label style="font-size:12px;font-weight:600;color:var(--text-secondary);">Lote</label>'+
+    '<div id="est-g-lotes" style="margin:6px 0 4px;"></div>'+
+    '<div id="est-g-aviso" style="margin-bottom:10px;"></div>'+
+    _estCampoQtd(cod,'Quantidade trazida')+
     (estConfig.senhaMigracao
       ? '<label style="font-size:12px;font-weight:600;color:var(--text-secondary);">🔒 Senha da migração</label>'+
         '<input type="password" id="est-g-senha" inputmode="numeric" autocomplete="off" style="width:100%;padding:13px;min-height:48px;border:1px solid var(--border-md,#d1d5db);border-radius:9px;font-size:16px;box-sizing:border-box;margin:4px 0 10px;">'
       : '<div style="font-size:11px;color:#b45309;background:#fef3c7;border-radius:8px;padding:8px;margin-bottom:10px;">Sem senha cadastrada. Defina uma em Configurações para travar esta operação.</div>'),
     'estConfirmarMigrar(\''+escapeJsStr(cod)+'\')');
+  estRenderLotes(cod);
   estPreviewQtd(cod);
-  estPreviewLotes(cod);
 }
 window.estAbrirMigrar=estAbrirMigrar;
 
-function estPreviewLotes(cod){
-  const out=document.getElementById('est-g-lotes'); if(!out) return;
-  const total=_estLerQtd(cod);
-  const disp=estSaldoContainer(cod);
-  if(total<=0){ out.textContent=''; return; }
-  if(total>disp){ out.innerHTML='<span style="color:#dc2626;font-weight:700;">⚠️ O contêiner só tem '+disp+' pacotes deste produto.</span>'; return; }
-  const lotes=estLotes.filter(l=>String(l.codigo)===String(cod)&&(Number(l.saldo)||0)>0);
-  let resta=total; const usados=[];
-  for(const l of lotes){ if(resta<=0) break; const t=Math.min(Number(l.saldo)||0,resta); resta-=t; usados.push(t+' pct de '+l.validade); }
-  out.innerHTML='sai dos lotes: '+usados.join(' · ');
+function estSelLote(cod,id){ _estLoteSel=id; estRenderLotes(cod); estPreviewQtd(cod); }
+window.estSelLote=estSelLote;
+
+function estRenderLotes(cod){
+  const box=document.getElementById('est-g-lotes'); if(!box) return;
+  const p=estProd(cod), lotes=_estLotesDe(cod);
+  box.innerHTML=lotes.map((l,i)=>{
+    const sel=(String(l.firestoreId)===String(_estLoteSel));
+    const dias=estDiasAte(l.validade);
+    const corV = dias===null?'#64748b':(dias<0?'#dc2626':(dias<=10?'#d97706':'#16a34a'));
+    const txtV = dias===null?'sem validade':(dias<0?('vencido há '+Math.abs(dias)+'d'):(dias===0?'vence hoje':('faltam '+dias+'d')));
+    return '<button type="button" onclick="estSelLote(\''+escapeJsStr(cod)+'\',\''+escapeJsStr(l.firestoreId)+'\')" '+
+      'style="display:block;width:100%;text-align:left;background:'+(sel?'rgba(37,99,235,.08)':'#fff')+';border:2px solid '+(sel?'var(--mc-azul,#2563eb)':'var(--border)')+';border-radius:10px;padding:10px 12px;margin-bottom:6px;cursor:pointer;font-family:inherit;">'+
+      '<div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;">'+
+        '<span style="font-size:13px;font-weight:800;">'+(sel?'◉':'○')+' Validade '+(l.validade||'—')+
+          (i===0?' <span style="font-size:10px;font-weight:700;color:#16a34a;">⏱ mais antigo</span>':'')+'</span>'+
+        '<span style="font-size:15px;font-weight:900;color:#7c3aed;white-space:nowrap;">'+l.saldo+' pct</span>'+
+      '</div>'+
+      '<div style="font-size:11px;color:var(--text-secondary);margin-top:2px;">'+
+        estCaixas(l.saldo, p?p.pctCaixa:0)+' cx · entrou '+(l.dataEntrada||'—')+' · <span style="color:'+corV+';font-weight:700;">'+txtV+'</span></div>'+
+    '</button>';
+  }).join('');
+
+  // avisa quando o escolhido não é o de validade mais próxima
+  const aviso=document.getElementById('est-g-aviso'); if(!aviso) return;
+  const idx=lotes.findIndex(l=>String(l.firestoreId)===String(_estLoteSel));
+  if(idx>0){
+    const velho=lotes[0];
+    aviso.innerHTML='<div style="background:#fef2f2;border:2px solid #dc2626;border-radius:9px;padding:10px;">'+
+      '<div style="font-size:13px;font-weight:800;color:#b91c1c;">⚠️ Existe um lote que vence antes</div>'+
+      '<div style="font-size:12px;color:#7f1d1d;margin-top:3px;line-height:1.45;">O lote de <strong>'+velho.validade+'</strong> ('+velho.saldo+' pct) vence primeiro e deveria sair antes deste. Só siga se tiver certeza.</div>'+
+      '<button type="button" onclick="estSelLote(\''+escapeJsStr(cod)+'\',\''+escapeJsStr(velho.firestoreId)+'\')" style="width:100%;margin-top:8px;background:#dc2626;border:none;color:#fff;border-radius:8px;padding:9px;font-size:12px;font-weight:800;cursor:pointer;font-family:inherit;">Usar o lote de '+velho.validade+'</button>'+
+    '</div>';
+  } else aviso.innerHTML='';
 }
-window.estPreviewLotes=estPreviewLotes;
+window.estRenderLotes=estRenderLotes;
 
 async function estConfirmarMigrar(cod){
   const p=estProd(cod); if(!p) return;
+  const lote=estLotes.find(l=>String(l.firestoreId)===String(_estLoteSel));
+  if(!lote){ alert('Escolha o lote que vai sair.'); return; }
   const total=_estLerQtd(cod);
   if(total<=0){ alert('Informe a quantidade trazida.'); return; }
-  const disp=estSaldoContainer(cod);
-  if(total>disp){ alert('O contêiner só tem '+disp+' pacotes deste produto.'); return; }
+  const saldoLote=Number(lote.saldo)||0;
+  if(total>saldoLote){
+    const falta=total-saldoLote;
+    alert('O lote de '+lote.validade+' só tem '+saldoLote+' pacote(s).\n\n'+
+          'Lance '+saldoLote+' aqui e depois faça outra migração com os '+falta+' restantes, escolhendo outro lote.\n\n'+
+          'É assim que a conta de cada lote fecha certo.');
+    return;
+  }
   if(estConfig.senhaMigracao){
     const senha=(document.getElementById('est-g-senha')||{}).value||'';
     if(String(senha).trim()!==String(estConfig.senhaMigracao)){ alert('Senha incorreta. A migração não foi registrada.'); return; }
   }
   const cx=estCaixas(total,p.pctCaixa);
-  if(!confirm('Registrar a entrada de '+total+' pacote(s) ('+cx+' cx) de '+p.nome+' na empresa?')) return;
-  const lotes=estLotes.filter(l=>String(l.codigo)===String(cod)&&(Number(l.saldo)||0)>0);
-  let resta=total; const detalhes=[];
+  if(!confirm('Trazer '+total+' pacote(s) ('+cx+' cx) de '+p.nome+'\ndo lote com validade '+lote.validade+'?')) return;
   try{
-    for(const l of lotes){
-      if(resta<=0) break;
-      const t=Math.min(Number(l.saldo)||0, resta);
-      await updateDoc(doc(db,'estoqueCtrlLotes',l.firestoreId),{saldo:(Number(l.saldo)||0)-t});
-      resta-=t; detalhes.push(t+' pct val '+l.validade);
-    }
-    const desc=cx+' cx ('+total+' pct) · '+detalhes.join(' · ');
+    await updateDoc(doc(db,'estoqueCtrlLotes',lote.firestoreId),{saldo:saldoLote-total});
+    const desc=cx+' cx ('+total+' pct) · lote val '+lote.validade;
     await estGravarMov({local:'container', codigo:String(cod), nome:p.nome, pacotes:-total,
       tipo:'migracao', motivo:'Migrado para a empresa', obs:desc});
     await estGravarMov({local:'interno', codigo:String(cod), nome:p.nome, pacotes:total,
       tipo:'migracao', motivo:'Recebido do contêiner', obs:desc});
     _estFecharModal();
-    alert('Migração registrada: '+total+' pacotes ('+cx+' caixas).');
+    const resta=saldoLote-total;
+    alert('Migração registrada: '+total+' pacotes ('+cx+' caixas).'+
+      (resta>0?('\n\nAinda restam '+resta+' pacote(s) neste lote.'):'\n\nEste lote foi zerado.'));
   }catch(e){ alert('Erro na migração: '+e.message); }
 }
 window.estConfirmarMigrar=estConfirmarMigrar;
@@ -19610,7 +19805,7 @@ function estPreviewQtd(cod){
   const pacotes=_estUnid==='cx'?v*pct:v;
   const caixas=estCaixas(pacotes,pct);
   const sobra=pct>0?(pacotes%pct):0;
-  if(typeof estPreviewLotes==='function' && document.getElementById('est-g-lotes')) estPreviewLotes(cod);
+  if(document.getElementById('est-g-lotes')) _estAvisoQtdLote(pacotes);
   if(document.getElementById('est-e-cap')) _estPreviewCapacidade(cod, pacotes);
   out.innerHTML='= <strong>'+pacotes+'</strong> pacotes &nbsp;·&nbsp; <strong>'+caixas+'</strong> caixa(s)'+
     (sobra?'<div style="font-size:11px;font-weight:600;color:var(--text-secondary);margin-top:2px;">'+(caixas-1)+' cheia(s) + '+sobra+' pacote(s) soltos</div>':'')+
@@ -20341,6 +20536,30 @@ function _elevSomTick(){
 }
 function _elevIniciarSom(){ if(!_elevSomTimer) _elevSomTimer=setInterval(_elevSomTick,4000); }
 function _elevPararSom(){ if(_elevSomTimer){ clearInterval(_elevSomTimer); _elevSomTimer=null; } }
+
+// horário do turno — alimenta o cálculo de ritmo do Painel TV
+function tvTurnoCard(){
+  return '<div class="card" style="margin-bottom:12px;">'+
+    '<div style="font-size:13px;font-weight:700;">⏱️ Horário do turno (Painel TV)</div>'+
+    '<div style="font-size:11px;color:var(--text-secondary);margin:4px 0 8px;line-height:1.5;">O painel usa esse horário para calcular quanto falta de tempo, o ritmo por hora e a projeção do fim do dia.</div>'+
+    '<div style="display:flex;gap:8px;">'+
+      '<div style="flex:1;"><div style="font-size:11px;font-weight:700;color:var(--text-secondary);margin-bottom:4px;">COMEÇA</div>'+
+        '<input type="time" id="tv-turno-ini" value="'+tvTurno.inicio+'" style="width:100%;padding:11px;min-height:46px;border:1px solid var(--border-md,#d1d5db);border-radius:9px;font-size:16px;box-sizing:border-box;"></div>'+
+      '<div style="flex:1;"><div style="font-size:11px;font-weight:700;color:var(--text-secondary);margin-bottom:4px;">TERMINA</div>'+
+        '<input type="time" id="tv-turno-fim" value="'+tvTurno.fim+'" style="width:100%;padding:11px;min-height:46px;border:1px solid var(--border-md,#d1d5db);border-radius:9px;font-size:16px;box-sizing:border-box;"></div>'+
+    '</div>'+
+    '<button class="btn btn-secondary" style="width:100%;margin-top:9px;" onclick="tvSalvarTurno()">Salvar horário</button>'+
+  '</div>';
+}
+function tvSalvarTurno(){
+  const i=(document.getElementById('tv-turno-ini')||{}).value||'';
+  const f=(document.getElementById('tv-turno-fim')||{}).value||'';
+  if(!i||!f){ alert('Informe os dois horários.'); return; }
+  if(i>=f){ alert('O fim do turno precisa ser depois do começo.'); return; }
+  tvSetTurno(i,f);
+  alert('Horário salvo! O painel já usa o novo turno.');
+}
+window.tvSalvarTurno=tvSalvarTurno;
 
 // cartão de ajuste, no acompanhamento da confeitaria
 function elevConfigCard(){
@@ -22313,7 +22532,7 @@ function renderAcomp(){
   });
 
   if(!algumDia) html+='<div class="empty">Nenhum produto nesse filtro.</div>';
-  html+=elevConfigCard()+elevHistoricoHtml(6);
+  html+=tvTurnoCard()+elevConfigCard()+elevHistoricoHtml(6);
   el.innerHTML=html;
 }
 window.renderAcomp=renderAcomp; window.setAcBusca=setAcBusca; window.toggleAcPend=toggleAcPend;
