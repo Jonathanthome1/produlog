@@ -1761,6 +1761,11 @@
         <div style="flex:1;"><div class="hb-title">Prioridades</div><div class="hb-desc" id="prioridades-emb-badge">Produtos prioritários para embalar</div></div>
         <span style="color:var(--text-secondary);font-size:20px;">›</span>
       </button>
+      <button class="home-btn" onclick="goTo('s-am-emb')" style="border-left-color:#0891b2;margin-bottom:4px;">
+        <div class="hb-icon" style="background:#cffafe;">🧪</div>
+        <div style="flex:1;"><div class="hb-title">Pedidos Amostra <span id="am-badge-emb" style="display:none;background:var(--mc-vermelho,#dc2626);color:#fff;font-size:11px;font-weight:700;border-radius:99px;padding:1px 8px;margin-left:4px;">0</span></div><div class="hb-desc">Amostras para produzir</div></div>
+        <span style="color:var(--text-secondary);font-size:20px;">›</span>
+      </button>
       <button class="home-btn" onclick="goTo('s-est-hub')" style="border-left-color:#7c3aed;margin-bottom:4px;">
         <div class="hb-icon" style="background:#ede9fe;">🏬</div>
         <div style="flex:1;"><div class="hb-title">Estoque &amp; Contêiner <span id="est-badge-emb" style="display:none;background:var(--mc-vermelho,#dc2626);color:#fff;font-size:11px;font-weight:700;border-radius:99px;padding:1px 8px;margin-left:4px;">0</span></div><div class="hb-desc">Ver o estoque e trazer mercadoria da rua</div></div>
@@ -2391,6 +2396,43 @@
       <div class="mc-page-info"><div class="mc-page-title">📄 Pedidos por fora</div><div class="mc-page-sub">Um lançamento por dia</div></div>
     </div>
     <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;" id="pf-content"></div>
+  </div>
+
+  <!-- ============ PEDIDOS AMOSTRA ============ -->
+  <div class="screen" id="s-am">
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="amVoltar()">‹</button>
+      <div class="mc-brand"><div class="mc-brand-logo"></div><div class="mc-brand-text"><div class="mc-brand-name">Monte Castelo</div><div class="mc-brand-sub">Comercial</div></div></div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info"><div class="mc-page-title">🧪 Pedidos Amostra</div><div class="mc-page-sub">Solicitação de amostras para clientes</div></div>
+      <div class="mc-header-actions">
+        <button class="mc-act-btn-secondary" onclick="amAbrirConfig()" title="Prazo mínimo">⚙️</button>
+        <button class="mc-act-btn-primary" onclick="amNova()">+ Nova amostra</button>
+      </div>
+    </div>
+    <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;" id="am-content"></div>
+  </div>
+
+  <!-- FORMULÁRIO DA AMOSTRA -->
+  <div class="screen" id="s-am-form">
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="goTo('s-am')">‹</button>
+      <div class="mc-brand"><div class="mc-brand-logo"></div><div class="mc-brand-text"><div class="mc-brand-name">Monte Castelo</div><div class="mc-brand-sub">Comercial</div></div></div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info"><div class="mc-page-title" id="am-form-titulo">🧪 Nova amostra</div><div class="mc-page-sub">Informe as unidades de cada produto</div></div>
+    </div>
+    <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;" id="am-form-content"></div>
+  </div>
+
+  <!-- EMBALAGEM -->
+  <div class="screen" id="s-am-emb">
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="goTo(window.adminMode?'s-adm-hub':'s-emb-sel-data')">‹</button>
+      <div class="mc-brand"><div class="mc-brand-logo"></div><div class="mc-brand-text"><div class="mc-brand-name">Monte Castelo</div><div class="mc-brand-sub">Embalagem</div></div></div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info"><div class="mc-page-title">🧪 Amostras</div><div class="mc-page-sub">Solicitações e amostras a produzir</div></div>
+    </div>
+    <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;" id="am-emb-content"></div>
   </div>
 
   <!-- ============ ESTOQUE CONTROLADO & CONTÊINER ============ -->
@@ -3106,6 +3148,15 @@
         <div class="mc-sector-info">
           <div class="mc-sector-title">Ajustes de Refazimento</div>
           <div class="mc-sector-desc">Conferir ajustes de entrada/saída pendentes por dia</div>
+        </div>
+        <span class="mc-sector-arrow">›</span>
+      </button>
+
+      <button class="mc-sector-card" style="border-left:4px solid #0891b2;margin-bottom:10px;" onclick="goTo('s-am')">
+        <div class="mc-sector-icon" style="background:#cffafe;">🧪</div>
+        <div class="mc-sector-info">
+          <div class="mc-sector-title">Pedidos Amostra</div>
+          <div class="mc-sector-desc">Solicitações do comercial &middot; produção da embalagem</div>
         </div>
         <span class="mc-sector-arrow">›</span>
       </button>
@@ -4262,6 +4313,9 @@
     <div class="mc-brand"><div class="mc-brand-logo"></div><div class="mc-brand-text"><div class="mc-brand-name">Monte Castelo</div><div class="mc-brand-sub">Comercial</div></div></div>
     <div class="mc-divider-v"></div>
     <div class="mc-page-info"><div class="mc-page-title">📝 Solicitar produto</div><div class="mc-page-sub">Pedido de liberação antecipada</div></div>
+    <div class="mc-header-actions">
+      <button class="mc-act-btn-secondary" onclick="goTo('s-am')" title="Pedidos Amostra">🧪 Amostras <span id="am-badge-com" style="display:none;background:var(--mc-vermelho,#dc2626);color:#fff;font-size:10px;font-weight:700;border-radius:99px;padding:1px 6px;margin-left:3px;">0</span></button>
+    </div>
   </div>
   <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;" id="la-solicitar-content"></div>
 </div>
@@ -5114,6 +5168,10 @@ function goTo(id){
   if(id==='s-inicio' && typeof mcRenderExibicao==='function') mcRenderExibicao();
   if(id&&id.startsWith('s-est-') && typeof estRenderAtual==='function') estRenderAtual();
   if(id==='s-pf' && typeof pfRender==='function') pfRender();
+  if(id==='s-am' && typeof amRender==='function') amRender();
+  if(id==='s-am-emb' && typeof amRenderEmb==='function') amRenderEmb();
+  if(id==='s-am-form' && typeof amRenderForm==='function') amRenderForm();
+  if(typeof amAtualizarBadges==='function') amAtualizarBadges();
   if(id==='s-carreg' && typeof pfAtualizarBadge==='function') pfAtualizarBadge();
   if(typeof estTvModo==='function' && id!=='s-tv' && !window._tvLinkMode) estTvModo(false);
   if((id==='s-adm-hub'||id==='s-emb-sel-data') && typeof estAtualizarBadge==='function') estAtualizarBadge();
@@ -18392,6 +18450,656 @@ function acPlayControle(semana,dia,produto,pct){
 
 
 
+
+/* ══════════════════════════════════════════════════════════════════
+   PEDIDOS AMOSTRA
+   O comercial pede amostras para um cliente, em UNIDADES. A embalagem
+   produz. Quando o prazo é curto (menos que o mínimo configurado), a
+   embalagem precisa aceitar antes de a amostra virar pendente.
+
+   A coluna "Pacote" é unidades ÷ unidades por pacote — o número
+   fracionado que o comercial lança no ERP para a saída sair
+   proporcional. Não é usado em nenhum cálculo interno do app.
+   Coleções: amostras · configuracoes/amostras
+   ══════════════════════════════════════════════════════════════════ */
+let amostras=[];
+let amConfig={prazoMinDias:2};
+
+onSnapshot(collection(db,'amostras'), snap=>{
+  try{
+    amostras=snap.docs.map(d=>({firestoreId:d.id,...d.data()}))
+      .sort((a,b)=>(a.entregaNum||0)-(b.entregaNum||0) || (a.ts||0)-(b.ts||0));
+    amRenderAtual();
+  }catch(e){ console.error('amostras snap',e); }
+});
+onSnapshot(doc(db,'configuracoes','amostras'), snap=>{
+  try{
+    const d=snap.data()||{};
+    amConfig={prazoMinDias: Number(d.prazoMinDias)>0?Number(d.prazoMinDias):2};
+    amRenderAtual();
+  }catch(e){ console.error('config amostras',e); }
+});
+
+function amRenderAtual(){
+  const t=document.querySelector('.screen.active')?.id;
+  if(t==='s-am') amRender();
+  if(t==='s-am-emb') amRenderEmb();
+  amAtualizarBadges();
+}
+
+function amVoltar(){
+  if(window.adminMode) return goTo('s-adm-hub');
+  goTo((typeof DESTINOS!=='undefined' && DESTINOS[window.setorAtual]) || 's-inicio');
+}
+window.amVoltar=amVoltar;
+
+/* ── catálogo: pães à esquerda, salgados à direita ─────────────── */
+// Peso da unidade: nos salgados o cadastro guarda o peso TOTAL do pacote,
+// nos pães guarda o peso do pacote em kg. Aqui os dois viram grama/unidade.
+function amCatalogo(){
+  const paes=(typeof QUADRA_PRODUTOS!=='undefined'?QUADRA_PRODUTOS:[])
+    .filter(p=>p && p.cod && p.nome)
+    .map(p=>{
+      const qtdPct=Number(p.qtdPct)||0, kgPct=Number(p.kgPacote)||0;
+      return {cod:String(p.cod), nome:p.nome, tipo:'pao', qtdPct, kgPct,
+              pesoUn: qtdPct>0 ? Math.round(kgPct*1000/qtdPct) : 0};
+    });
+  const salg=(typeof PRODUTOS!=='undefined'?PRODUTOS:[])
+    .filter(p=>p && p.cod && p.nome)
+    .map(p=>{
+      const qtdPct=Number(p.qtdPct)||0, pesoPct=Number(p.pesoPct)||0;
+      return {cod:String(p.cod), nome:p.nome, tipo:'salgado', qtdPct, kgPct:pesoPct/1000,
+              pesoUn: qtdPct>0 ? Math.round(pesoPct/qtdPct) : 0};
+    });
+  const ordena=(a,b)=>{
+    const na=parseInt(a.cod), nb=parseInt(b.cod);
+    if(!isNaN(na)&&!isNaN(nb)&&na!==nb) return na-nb;
+    return String(a.nome).localeCompare(String(b.nome),'pt-BR');
+  };
+  return {paes:paes.sort(ordena), salgados:salg.sort(ordena)};
+}
+
+// a conversão que o comercial usa no ERP
+function amPacotes(unidades, qtdPct){
+  const u=Number(unidades)||0, q=Number(qtdPct)||0;
+  if(u<=0 || q<=0) return 0;
+  return u/q;
+}
+function amFmtPct(v){ return (Number(v)||0).toFixed(2).replace('.',','); }
+
+/* ── prazo ─────────────────────────────────────────────────────── */
+function amDiasAte(dataBR){ return estDiasAte(dataBR); }
+function amPrazoCurto(dataBR){
+  const d=amDiasAte(dataBR);
+  return d!==null && d < (amConfig.prazoMinDias||2);
+}
+
+/* ── listas por situação ───────────────────────────────────────── */
+function amPorStatus(st){ return amostras.filter(a=>a.status===st); }
+function amAguardando(){ return amPorStatus('aguardando'); }
+function amPendentes(){ return amPorStatus('pendente'); }
+function amRecusadas(){ return amPorStatus('recusada'); }
+
+function amAtualizarBadges(){
+  const nEmb=amAguardando().length+amPendentes().length;
+  const nCom=amRecusadas().length;
+  [['am-badge-emb',nEmb],['am-badge-com',nCom]].forEach(([id,n])=>{
+    const el=document.getElementById(id); if(!el) return;
+    el.textContent=n; el.style.display=n?'inline-block':'none';
+  });
+}
+
+const AM_STATUS={
+  aguardando:{txt:'Aguardando embalagem', cor:'#d97706', bg:'#fffbeb', ico:'⏳'},
+  pendente:  {txt:'A produzir',           cor:'#1e3a8a', bg:'#eff6ff', ico:'📋'},
+  feita:     {txt:'Pronta',               cor:'#16a34a', bg:'#f0fdf4', ico:'✅'},
+  recusada:  {txt:'Recusada — remarcar',  cor:'#dc2626', bg:'#fef2f2', ico:'↩️'}
+};
+
+/* ── FORMULÁRIO ────────────────────────────────────────────────── */
+let _amItens={};       // cod -> unidades
+let _amEditando=null;  // amostra sendo remarcada
+let _amBusca='';
+let _amSoPreenchidos=false;
+
+function amNova(){
+  _amEditando=null; _amItens={}; _amBusca=''; _amSoPreenchidos=false;
+  goTo('s-am-form'); amRenderForm();
+}
+window.amNova=amNova;
+
+function amRemarcar(id){
+  const a=amostras.find(x=>x.firestoreId===id); if(!a) return;
+  _amEditando=a; _amItens={}; _amBusca=''; _amSoPreenchidos=false;
+  (a.itens||[]).forEach(it=>{ _amItens[String(it.cod)]=Number(it.unidades)||0; });
+  goTo('s-am-form'); amRenderForm();
+}
+window.amRemarcar=amRemarcar;
+
+function amSetBusca(v){ _amBusca=v||''; amRenderTabelas(); }
+window.amSetBusca=amSetBusca;
+function amToggleSoPreenchidos(){
+  _amSoPreenchidos=!_amSoPreenchidos;
+  // NÃO redesenha o formulário: isso apagaria cliente, data e observação
+  // que a pessoa já tinha preenchido. Só o botão e as tabelas mudam.
+  const b=document.getElementById('am-btn-preench');
+  if(b){
+    b.textContent=_amSoPreenchidos?'✓ Só os preenchidos':'Ver só os preenchidos';
+    b.style.background=_amSoPreenchidos?'var(--mc-azul,#2563eb)':'#fff';
+    b.style.color=_amSoPreenchidos?'#fff':'var(--text-secondary)';
+    b.style.borderColor=_amSoPreenchidos?'var(--mc-azul,#2563eb)':'var(--border)';
+  }
+  amRenderTabelas();
+}
+window.amToggleSoPreenchidos=amToggleSoPreenchidos;
+
+function amSetQtd(cod,v){
+  const n=parseInt(v)||0;
+  if(n>0) _amItens[String(cod)]=n; else delete _amItens[String(cod)];
+  amAtualizarLinha(cod);
+  amAtualizarResumo();
+}
+window.amSetQtd=amSetQtd;
+
+// só a linha e o resumo mudam — a tabela não é redesenhada, senão o
+// cursor sairia do campo a cada dígito
+function amAtualizarLinha(cod){
+  const cat=amCatalogo();
+  const p=[...cat.paes,...cat.salgados].find(x=>String(x.cod)===String(cod));
+  const cel=document.getElementById('am-pct-'+cod);
+  if(cel && p){
+    const un=_amItens[String(cod)]||0;
+    cel.textContent = un>0 ? amFmtPct(amPacotes(un,p.qtdPct)) : '0,00';
+    cel.style.color = un>0 ? 'var(--mc-azul,#2563eb)' : 'var(--text-muted)';
+    cel.style.fontWeight = un>0 ? '800' : '600';
+  }
+  const linha=document.getElementById('am-lin-'+cod);
+  if(linha) linha.style.background = (_amItens[String(cod)]>0) ? 'rgba(37,99,235,.06)' : '';
+}
+
+function amAtualizarResumo(){
+  const el=document.getElementById('am-resumo'); if(!el) return;
+  const cat=amCatalogo(), todos=[...cat.paes,...cat.salgados];
+  let itens=0, un=0, pct=0;
+  Object.entries(_amItens).forEach(([cod,q])=>{
+    const p=todos.find(x=>String(x.cod)===String(cod)); if(!p) return;
+    itens++; un+=q; pct+=amPacotes(q,p.qtdPct);
+  });
+  el.innerHTML = itens
+    ? '<strong>'+itens+'</strong> produto(s) · <strong>'+un+'</strong> unidade(s) · <strong>'+amFmtPct(pct)+'</strong> pacote(s)'
+    : '<span style="color:var(--text-secondary);">Nenhum produto informado ainda.</span>';
+}
+
+function amRenderForm(){
+  const el=document.getElementById('am-form-content'); if(!el) return;
+  const tit=document.getElementById('am-form-titulo');
+  if(tit) tit.textContent = _amEditando ? '🧪 Remarcar amostra' : '🧪 Nova amostra';
+  const a=_amEditando;
+  const hojeISO=new Date().toISOString().slice(0,10);
+
+  let h='';
+  if(a && a.status==='recusada'){
+    h+='<div class="card" style="margin-bottom:12px;border:2px solid #dc2626;background:#fef2f2;">'+
+      '<div style="font-size:14px;font-weight:800;color:#b91c1c;">↩️ A embalagem recusou o prazo</div>'+
+      (a.recusaMotivo?'<div style="font-size:13px;color:#7f1d1d;margin-top:5px;">"'+a.recusaMotivo+'"</div>':'')+
+      '<div style="font-size:11px;color:var(--text-secondary);margin-top:4px;">'+(a.recusadoPor||'')+' · '+(a.recusadoEm||'')+'</div>'+
+      '<div style="font-size:12px;color:#7f1d1d;margin-top:7px;">Escolha uma nova data de entrega e envie de novo. Os produtos já estão preenchidos.</div></div>';
+  }
+
+  // dados do cliente
+  h+='<div class="card" style="margin-bottom:12px;">'+
+    '<div style="font-size:14px;font-weight:800;margin-bottom:10px;">Dados da amostra</div>'+
+    '<label style="font-size:12px;font-weight:600;color:var(--text-secondary);">Cliente <span style="color:#dc2626;">*</span></label>'+
+    '<input type="text" id="am-cliente" value="'+String(a?a.cliente:'').replace(/"/g,'&quot;')+'" placeholder="Nome do cliente" autocomplete="off" style="width:100%;padding:13px;min-height:48px;border:1px solid var(--border-md,#d1d5db);border-radius:9px;font-size:16px;font-family:inherit;box-sizing:border-box;margin:4px 0 12px;">'+
+    '<label style="font-size:12px;font-weight:600;color:var(--text-secondary);">Data de entrega <span style="color:#dc2626;">*</span></label>'+
+    '<input type="date" id="am-entrega" min="'+hojeISO+'" value="'+(a&&a.entrega?a.entrega.split("/").reverse().join("-"):'')+'" onchange="amAvisoPrazo()" style="width:100%;padding:13px;min-height:48px;border:1px solid var(--border-md,#d1d5db);border-radius:9px;font-size:16px;box-sizing:border-box;margin:4px 0 4px;">'+
+    '<div id="am-aviso-prazo" style="font-size:12px;font-weight:700;min-height:18px;margin-bottom:10px;"></div>'+
+    '<label style="font-size:12px;font-weight:600;color:var(--text-secondary);">Observação</label>'+
+    '<textarea id="am-obs" rows="2" placeholder="Opcional" style="width:100%;padding:11px;border:1px solid var(--border-md,#d1d5db);border-radius:9px;font-size:16px;font-family:inherit;box-sizing:border-box;margin-top:4px;">'+String(a?(a.obs||''):'')+'</textarea>'+
+  '</div>';
+
+  // busca e filtro
+  h+='<div class="card" style="margin-bottom:12px;">'+
+    '<input type="text" id="am-busca" value="'+String(_amBusca).replace(/"/g,'&quot;')+'" oninput="amSetBusca(this.value)" placeholder="🔎 Buscar produto por nome ou código" autocomplete="off" style="width:100%;padding:12px;min-height:46px;border:1px solid var(--border-md,#d1d5db);border-radius:9px;font-size:16px;font-family:inherit;box-sizing:border-box;">'+
+    '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:9px;flex-wrap:wrap;">'+
+      '<div id="am-resumo" style="font-size:12px;flex:1;min-width:180px;"></div>'+
+      '<button id="am-btn-preench" onclick="amToggleSoPreenchidos()" style="flex:0 0 auto;background:'+(_amSoPreenchidos?'var(--mc-azul,#2563eb)':'#fff')+';color:'+(_amSoPreenchidos?'#fff':'var(--text-secondary)')+';border:1px solid '+(_amSoPreenchidos?'var(--mc-azul,#2563eb)':'var(--border)')+';border-radius:99px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">'+(_amSoPreenchidos?'✓ Só os preenchidos':'Ver só os preenchidos')+'</button>'+
+    '</div></div>';
+
+  h+='<div id="am-tabelas"></div>';
+
+  h+='<button class="btn btn-primary" style="width:100%;margin-top:4px;padding:15px;font-size:16px;" onclick="amEnviar()">Enviar solicitação</button>'+
+     '<button class="btn btn-secondary" style="width:100%;margin-top:8px;" onclick="goTo(\'s-am\')">Cancelar</button>';
+
+  el.innerHTML=h;
+  amRenderTabelas();
+  amAtualizarResumo();
+  amAvisoPrazo();
+}
+window.amRenderForm=amRenderForm;
+
+function amAvisoPrazo(){
+  const el=document.getElementById('am-aviso-prazo'); if(!el) return;
+  const iso=(document.getElementById('am-entrega')||{}).value||'';
+  if(!iso){ el.textContent=''; return; }
+  const br=estISOparaBR(iso), dias=amDiasAte(br);
+  if(dias===null){ el.textContent=''; return; }
+  if(dias<0){ el.innerHTML='<span style="color:#dc2626;">Data no passado.</span>'; return; }
+  if(dias<(amConfig.prazoMinDias||2)){
+    el.innerHTML='<span style="color:#b45309;">⚠️ Prazo curto ('+(dias===0?'hoje':dias+' dia(s)')+'). A embalagem precisa aceitar antes de virar pendente.</span>';
+  } else {
+    el.innerHTML='<span style="color:#16a34a;">✓ Prazo de '+dias+' dias — entra direto para a embalagem.</span>';
+  }
+}
+window.amAvisoPrazo=amAvisoPrazo;
+
+// tabela no formato da planilha: código, produto, peso un, kg pct, qtd pct, unidade, pacote
+function _amTabela(titulo, lista, cor){
+  if(!lista.length) return '<div class="card" style="flex:1 1 380px;min-width:320px;"><div style="font-size:13px;font-weight:800;color:'+cor+';">'+titulo+'</div>'+
+    '<div style="font-size:12px;color:var(--text-secondary);padding:12px 0;">Nenhum produto nesse filtro.</div></div>';
+  return '<div class="card" style="flex:1 1 380px;min-width:320px;padding:10px;">'+
+    '<div style="font-size:13px;font-weight:800;color:'+cor+';margin-bottom:6px;">'+titulo+' <span style="color:var(--text-muted);font-weight:600;">('+lista.length+')</span></div>'+
+    '<div style="overflow-x:auto;">'+
+    '<table style="width:100%;border-collapse:collapse;font-size:12px;min-width:430px;">'+
+    '<thead><tr style="background:#334155;color:#fff;font-size:9px;">'+
+      '<th style="padding:5px 4px;text-align:left;">CÓD</th>'+
+      '<th style="padding:5px 4px;text-align:left;">PRODUTO</th>'+
+      '<th style="padding:5px 3px;text-align:right;">PESO UN</th>'+
+      '<th style="padding:5px 3px;text-align:right;">KG PCT</th>'+
+      '<th style="padding:5px 3px;text-align:right;">QTD PCT</th>'+
+      '<th style="padding:5px 3px;text-align:center;width:66px;">UNIDADE</th>'+
+      '<th style="padding:5px 4px;text-align:right;">PACOTE</th></tr></thead><tbody>'+
+    lista.map(p=>{
+      const un=_amItens[String(p.cod)]||0;
+      const pct=un>0?amPacotes(un,p.qtdPct):0;
+      return '<tr id="am-lin-'+p.cod+'" style="border-bottom:1px solid var(--border);'+(un>0?'background:rgba(37,99,235,.06);':'')+'">'+
+        '<td style="padding:4px;font-weight:700;color:var(--text-secondary);">'+p.cod+'</td>'+
+        '<td style="padding:4px;font-weight:600;">'+p.nome+'</td>'+
+        '<td style="padding:4px 3px;text-align:right;color:var(--text-secondary);">'+(p.pesoUn||'—')+'</td>'+
+        '<td style="padding:4px 3px;text-align:right;color:var(--text-secondary);">'+(p.kgPct?p.kgPct.toFixed(3):'—')+'</td>'+
+        '<td style="padding:4px 3px;text-align:right;color:var(--text-secondary);">'+(p.qtdPct||'—')+'</td>'+
+        '<td style="padding:3px;"><input type="number" inputmode="numeric" min="0" value="'+(un||'')+'" oninput="amSetQtd(\''+escapeJsStr(p.cod)+'\',this.value)" style="width:100%;padding:7px 5px;border:1px solid var(--border-md,#d1d5db);border-radius:7px;font-size:15px;text-align:center;box-sizing:border-box;"></td>'+
+        '<td id="am-pct-'+p.cod+'" style="padding:4px;text-align:right;font-weight:'+(un>0?'800':'600')+';color:'+(un>0?'var(--mc-azul,#2563eb)':'var(--text-muted)')+';">'+(un>0?amFmtPct(pct):'0,00')+'</td>'+
+      '</tr>';
+    }).join('')+
+    '</tbody></table></div></div>';
+}
+
+function amRenderTabelas(){
+  const box=document.getElementById('am-tabelas'); if(!box) return;
+  const cat=amCatalogo();
+  const q=_normNome(_amBusca||'');
+  const filtra=l=>l.filter(p=>{
+    if(_amSoPreenchidos && !(_amItens[String(p.cod)]>0)) return false;
+    if(!q) return true;
+    return _normNome(p.nome).includes(q) || String(p.cod).includes(_amBusca.trim());
+  });
+  box.innerHTML='<div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px;">'+
+    _amTabela('🥖 PÃES', filtra(cat.paes), '#b45309')+
+    _amTabela('🥟 SALGADOS', filtra(cat.salgados), '#7c3aed')+
+  '</div>';
+}
+window.amRenderTabelas=amRenderTabelas;
+
+/* ── ENVIO ─────────────────────────────────────────────────────── */
+async function amEnviar(){
+  const cliente=(document.getElementById('am-cliente').value||'').trim();
+  const iso=(document.getElementById('am-entrega').value||'').trim();
+  const obs=(document.getElementById('am-obs').value||'').trim();
+  if(!cliente){ alert('Informe o nome do cliente.'); return; }
+  if(!iso){ alert('Informe a data de entrega.'); return; }
+  const entrega=estISOparaBR(iso);
+  const dias=amDiasAte(entrega);
+  if(dias===null || dias<0){ alert('A data de entrega não pode ser no passado.'); return; }
+
+  const cat=amCatalogo(), todos=[...cat.paes,...cat.salgados];
+  const itens=[];
+  Object.entries(_amItens).forEach(([cod,q])=>{
+    const p=todos.find(x=>String(x.cod)===String(cod)); if(!p || q<=0) return;
+    itens.push({cod:p.cod, nome:p.nome, tipo:p.tipo, qtdPct:p.qtdPct, pesoUn:p.pesoUn,
+                unidades:q, pacotes:Number(amPacotes(q,p.qtdPct).toFixed(4))});
+  });
+  if(!itens.length){ alert('Informe a quantidade de pelo menos um produto.'); return; }
+
+  const curto=amPrazoCurto(entrega);
+  const status=curto?'aguardando':'pendente';
+  const totalUn=itens.reduce((s,i)=>s+i.unidades,0);
+  const totalPct=itens.reduce((s,i)=>s+i.pacotes,0);
+  if(!confirm((curto?'⚠️ Prazo curto: a embalagem precisará ACEITAR.\n\n':'')+
+    'Cliente: '+cliente+'\nEntrega: '+entrega+'\n'+itens.length+' produto(s) · '+totalUn+' unidade(s)\n\nEnviar?')) return;
+
+  const dados={
+    cliente, entrega, entregaNum:estDataNum(entrega), obs, itens,
+    totalUn, totalPct:Number(totalPct.toFixed(4)),
+    status, prazoCurto:curto,
+    solicitadoPor:_elevSetor(), solicitadoEm:agora(), data:hoje(), ts:Date.now(),
+    feitos:{}, recusaMotivo:'', recusadoPor:'', recusadoEm:''
+  };
+  try{
+    if(_amEditando){
+      await updateDoc(doc(db,'amostras',_amEditando.firestoreId), dados);
+    } else {
+      await addDoc(collection(db,'amostras'), dados);
+    }
+    _amItens={}; _amEditando=null;
+    alert(curto ? 'Enviado! A embalagem precisa aceitar o prazo curto.' : 'Amostra enviada para a embalagem!');
+    goTo('s-am');
+  }catch(e){ alert('Erro ao enviar: '+e.message); }
+}
+window.amEnviar=amEnviar;
+
+/* ── LISTA DO COMERCIAL ────────────────────────────────────────── */
+function amCard(a, paraEmbalagem){
+  const st=AM_STATUS[a.status]||AM_STATUS.pendente;
+  const dias=amDiasAte(a.entrega);
+  const urgente = dias!==null && dias<=1 && a.status!=='feita';
+  const feitos=Object.keys(a.feitos||{}).length, total=(a.itens||[]).length;
+  return '<div onclick="amAbrir(\''+a.firestoreId+'\','+(paraEmbalagem?'true':'false')+')" '+
+    'style="cursor:pointer;background:'+st.bg+';border:1px solid '+st.cor+';border-left:5px solid '+st.cor+';border-radius:12px;padding:12px;margin-bottom:8px;">'+
+    '<div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;">'+
+      '<div style="flex:1;min-width:0;font-size:15px;font-weight:800;">'+a.cliente+'</div>'+
+      '<div style="font-size:11px;font-weight:800;color:'+st.cor+';white-space:nowrap;">'+st.ico+' '+st.txt+'</div>'+
+    '</div>'+
+    '<div style="font-size:12px;color:var(--text-secondary);margin-top:3px;">'+
+      '📅 '+a.entrega+(dias!==null?(' · '+(dias<0?('atrasada '+Math.abs(dias)+'d'):(dias===0?'HOJE':(dias===1?'amanhã':'em '+dias+' dias')))):'')+
+      (urgente?' <span style="color:#dc2626;font-weight:800;">⚠️</span>':'')+'</div>'+
+    '<div style="font-size:12px;color:var(--text-secondary);margin-top:2px;">'+
+      (a.itens||[]).length+' produto(s) · '+(a.totalUn||0)+' unidade(s)'+
+      (a.status==='pendente'&&feitos?(' · <strong>'+feitos+'/'+total+' conferidos</strong>'):'')+'</div>'+
+    (a.obs?'<div style="font-size:11px;color:var(--text-muted);margin-top:3px;">📝 '+a.obs+'</div>':'')+
+    '<div style="font-size:10px;color:var(--text-muted);margin-top:4px;">'+(a.solicitadoPor||'')+' · '+(a.solicitadoEm||'')+'</div>'+
+  '</div>';
+}
+
+function amRender(){
+  const el=document.getElementById('am-content'); if(!el) return;
+  const recusadas=amRecusadas(), aguard=amAguardando(), pend=amPendentes();
+  const feitas=amPorStatus('feita').slice().reverse();
+  let h='';
+
+  if(recusadas.length){
+    h+='<div class="card" style="margin-bottom:12px;border:2px solid #dc2626;background:#fef2f2;">'+
+      '<div style="font-size:14px;font-weight:800;color:#b91c1c;">↩️ '+recusadas.length+' amostra(s) recusada(s) — remarcar</div>'+
+      '<div style="font-size:12px;color:#7f1d1d;margin-top:3px;">A embalagem não aceitou o prazo. Toque para escolher outra data.</div></div>';
+    h+=recusadas.map(a=>amCard(a,false)).join('');
+  }
+  if(aguard.length){ h+='<div class="mc-section-header">⏳ Aguardando a embalagem aceitar ('+aguard.length+')</div>'+aguard.map(a=>amCard(a,false)).join(''); }
+  if(pend.length){ h+='<div class="mc-section-header">📋 A produzir ('+pend.length+')</div>'+pend.map(a=>amCard(a,false)).join(''); }
+  if(feitas.length){ h+='<div class="mc-section-header">✅ Prontas ('+feitas.length+')</div>'+feitas.slice(0,20).map(a=>amCard(a,false)).join(''); }
+  if(!amostras.length){
+    h='<div style="background:var(--bg-primary);border:1px solid var(--border);border-radius:12px;padding:26px;text-align:center;">'+
+      '<div style="font-size:40px;">🧪</div>'+
+      '<div style="font-size:16px;font-weight:800;margin-top:8px;">Nenhuma amostra ainda</div>'+
+      '<div style="font-size:12px;color:var(--text-secondary);margin-top:5px;">Toque em "+ Nova amostra" para solicitar.</div></div>';
+  }
+  el.innerHTML=h;
+}
+window.amRender=amRender;
+
+/* ── TELA DA EMBALAGEM ─────────────────────────────────────────── */
+function amRenderEmb(){
+  const el=document.getElementById('am-emb-content'); if(!el) return;
+  const aguard=amAguardando(), pend=amPendentes();
+  const feitas=amPorStatus('feita').slice().reverse();
+  let h='';
+  if(aguard.length){
+    h+='<div class="card" style="margin-bottom:12px;border:2px solid #d97706;background:#fffbeb;">'+
+      '<div style="font-size:14px;font-weight:800;color:#b45309;">⏳ '+aguard.length+' solicitação(ões) de prazo curto</div>'+
+      '<div style="font-size:12px;color:#78350f;margin-top:3px;">Precisam do seu aceite para entrar na lista.</div></div>';
+    h+=aguard.map(a=>amCard(a,true)).join('');
+  }
+  h+='<div class="mc-section-header">📋 A produzir ('+pend.length+')</div>';
+  h+= pend.length ? pend.map(a=>amCard(a,true)).join('')
+    : '<div class="empty" style="padding:22px;text-align:center;color:var(--text-secondary);">Nenhuma amostra pendente.</div>';
+  if(feitas.length) h+='<div class="mc-section-header">✅ Prontas ('+feitas.length+')</div>'+feitas.slice(0,10).map(a=>amCard(a,true)).join('');
+  el.innerHTML=h;
+}
+window.amRenderEmb=amRenderEmb;
+
+/* ── DETALHE ───────────────────────────────────────────────────── */
+function amAbrir(id, paraEmbalagem){
+  const a=amostras.find(x=>x.firestoreId===id); if(!a) return;
+  const st=AM_STATUS[a.status]||AM_STATUS.pendente;
+  const podeMarcar = paraEmbalagem && a.status==='pendente';
+  const feitos=a.feitos||{};
+  const nFeitos=Object.keys(feitos).length, total=(a.itens||[]).length;
+  const paes=(a.itens||[]).filter(i=>i.tipo==='pao');
+  const salg=(a.itens||[]).filter(i=>i.tipo!=='pao');
+
+  const linha=it=>{
+    const ok=!!feitos[it.cod];
+    return '<div '+(podeMarcar?'onclick="amToggleItem(\''+a.firestoreId+'\',\''+escapeJsStr(it.cod)+'\')" style="cursor:pointer;':'style="')+
+      'display:flex;align-items:center;gap:9px;padding:9px 8px;border-bottom:1px solid var(--border);background:'+(ok?'#f0fdf4':'transparent')+';">'+
+      (podeMarcar||ok
+        ? '<span style="flex:0 0 auto;width:22px;height:22px;border-radius:6px;border:2px solid '+(ok?'#16a34a':'#cbd5e1')+';background:'+(ok?'#16a34a':'#fff')+';color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:900;">'+(ok?'✓':'')+'</span>'
+        : '')+
+      '<span style="flex:0 0 auto;font-size:11px;font-weight:700;color:var(--text-secondary);width:36px;">'+it.cod+'</span>'+
+      '<span style="flex:1;min-width:0;font-size:14px;font-weight:600;'+(ok?'text-decoration:line-through;opacity:.65;':'')+'">'+it.nome+'</span>'+
+      '<span style="flex:0 0 auto;text-align:right;">'+
+        '<span style="font-size:17px;font-weight:900;color:var(--mc-azul,#2563eb);">'+it.unidades+'</span>'+
+        '<span style="font-size:10px;color:var(--text-muted);"> un</span>'+
+        '<div style="font-size:10px;color:var(--text-muted);">'+amFmtPct(it.pacotes)+' pct</div></span>'+
+    '</div>';
+  };
+
+  const ov=document.createElement('div');
+  ov.id='am-modal';
+  ov.style.cssText='position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:3200;display:flex;align-items:center;justify-content:center;padding:16px;';
+  ov.innerHTML='<div style="background:#fff;border-radius:16px;max-width:620px;width:100%;max-height:92vh;display:flex;flex-direction:column;">'+
+    '<div style="padding:16px 18px 10px;border-bottom:1px solid var(--border);">'+
+      '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">'+
+        '<div style="flex:1;min-width:0;font-size:18px;font-weight:900;">'+a.cliente+'</div>'+
+        '<div style="display:flex;align-items:center;gap:8px;flex:0 0 auto;">'+
+          '<div style="font-size:11px;font-weight:800;color:'+st.cor+';">'+st.ico+' '+st.txt+'</div>'+
+          '<button onclick="amImprimir(\''+a.firestoreId+'\')" title="Imprimir amostra" style="background:#fff;border:1px solid var(--border);border-radius:8px;padding:7px 11px;font-size:16px;cursor:pointer;font-family:inherit;">🖨️</button>'+
+        '</div></div>'+
+      '<div style="font-size:13px;color:var(--text-secondary);margin-top:3px;">📅 Entrega '+a.entrega+' · '+total+' produto(s) · '+(a.totalUn||0)+' un · '+amFmtPct(a.totalPct||0)+' pct</div>'+
+      (a.obs?'<div style="font-size:12px;color:var(--text-primary);background:var(--bg-page);border-radius:8px;padding:7px 9px;margin-top:7px;">📝 '+a.obs+'</div>':'')+
+      '<div style="font-size:10px;color:var(--text-muted);margin-top:5px;">Pedido por '+(a.solicitadoPor||'')+' em '+(a.solicitadoEm||'')+'</div>'+
+      (podeMarcar?'<div style="font-size:12px;font-weight:700;color:var(--mc-azul);margin-top:6px;">'+nFeitos+' de '+total+' conferidos</div>':'')+
+    '</div>'+
+    '<div style="flex:1;overflow-y:auto;padding:6px 12px;">'+
+      (paes.length?'<div style="font-size:12px;font-weight:800;color:#b45309;padding:8px 4px 4px;">🥖 PÃES</div>'+paes.map(linha).join(''):'')+
+      (salg.length?'<div style="font-size:12px;font-weight:800;color:#7c3aed;padding:10px 4px 4px;">🥟 SALGADOS</div>'+salg.map(linha).join(''):'')+
+    '</div>'+
+    '<div style="padding:12px 18px 16px;border-top:1px solid var(--border);">'+
+      (a.status==='aguardando' && paraEmbalagem
+        ? '<div style="font-size:12px;color:#b45309;font-weight:700;margin-bottom:8px;">⚠️ Prazo menor que '+(amConfig.prazoMinDias||2)+' dia(s). Você aceita produzir?</div>'+
+          '<div style="display:flex;gap:8px;"><button class="btn btn-secondary" style="flex:1;" onclick="amRecusar(\''+a.firestoreId+'\')">Recusar</button>'+
+          '<button class="btn btn-primary" style="flex:1;" onclick="amAceitar(\''+a.firestoreId+'\')">Aceitar</button></div>'
+        : (podeMarcar
+          ? '<button class="btn btn-primary" style="width:100%;" onclick="amFinalizar(\''+a.firestoreId+'\')">✅ Finalizar amostra</button>'
+          : (a.status==='recusada'
+            ? '<button class="btn btn-primary" style="width:100%;" onclick="document.getElementById(\'am-modal\').remove();amRemarcar(\''+a.firestoreId+'\')">Remarcar data</button>'
+            : '')))+
+      '<button class="btn btn-secondary" style="width:100%;margin-top:8px;" onclick="document.getElementById(\'am-modal\').remove()">Fechar</button>'+
+      (a.status!=='feita' && (window.adminMode||String(a.solicitadoPor)===_elevSetor())
+        ? '<button onclick="amExcluir(\''+a.firestoreId+'\')" style="width:100%;margin-top:8px;background:none;border:1px solid #fecaca;color:#dc2626;border-radius:9px;padding:9px;font-size:12px;cursor:pointer;font-family:inherit;">Excluir amostra</button>' : '')+
+    '</div></div>';
+  document.body.appendChild(ov);
+}
+window.amAbrir=amAbrir;
+
+async function amToggleItem(id,cod){
+  const a=amostras.find(x=>x.firestoreId===id); if(!a) return;
+  const f={...(a.feitos||{})};
+  if(f[cod]) delete f[cod]; else f[cod]=true;
+  try{
+    await updateDoc(doc(db,'amostras',id),{feitos:f});
+    document.getElementById('am-modal')?.remove();
+    const at={...a, feitos:f}; const i=amostras.findIndex(x=>x.firestoreId===id);
+    if(i>=0) amostras[i]=at;
+    amAbrir(id,true);
+  }catch(e){ alert('Erro: '+e.message); }
+}
+window.amToggleItem=amToggleItem;
+
+async function amAceitar(id){
+  try{
+    await updateDoc(doc(db,'amostras',id),{status:'pendente', aceitoPor:_elevSetor(), aceitoEm:agora()});
+    document.getElementById('am-modal')?.remove();
+  }catch(e){ alert('Erro: '+e.message); }
+}
+window.amAceitar=amAceitar;
+
+async function amRecusar(id){
+  const motivo=prompt('Por que não dá para produzir nesse prazo?\n(a amostra volta para o comercial remarcar)');
+  if(motivo===null) return;
+  try{
+    await updateDoc(doc(db,'amostras',id),
+      {status:'recusada', recusaMotivo:(motivo||'').trim(), recusadoPor:_elevSetor(), recusadoEm:agora()});
+    document.getElementById('am-modal')?.remove();
+  }catch(e){ alert('Erro: '+e.message); }
+}
+window.amRecusar=amRecusar;
+
+async function amFinalizar(id){
+  const a=amostras.find(x=>x.firestoreId===id); if(!a) return;
+  const total=(a.itens||[]).length, feitos=Object.keys(a.feitos||{}).length;
+  if(feitos<total && !confirm('Faltam '+(total-feitos)+' item(ns) sem conferir.\n\nFinalizar assim mesmo?')) return;
+  try{
+    await updateDoc(doc(db,'amostras',id),{status:'feita', finalizadoPor:_elevSetor(), finalizadoEm:agora(), finalizadoTs:Date.now()});
+    document.getElementById('am-modal')?.remove();
+    alert('Amostra finalizada! O comercial já vê como pronta.');
+  }catch(e){ alert('Erro: '+e.message); }
+}
+window.amFinalizar=amFinalizar;
+
+async function amExcluir(id){
+  if(!confirm('Excluir esta amostra?')) return;
+  try{ await deleteDoc(doc(db,'amostras',id)); document.getElementById('am-modal')?.remove(); }
+  catch(e){ alert('Erro: '+e.message); }
+}
+window.amExcluir=amExcluir;
+
+/* ── IMPRESSÃO DA AMOSTRA ──────────────────────────────────────────
+   Monta uma folha limpa num iframe escondido e manda imprimir. Iframe
+   em vez de janela nova porque bloqueador de pop-up costuma barrar. */
+function amImprimir(id){
+  const a=amostras.find(x=>x.firestoreId===id); if(!a) return;
+  const st=AM_STATUS[a.status]||AM_STATUS.pendente;
+  const feitos=a.feitos||{};
+  const paes=(a.itens||[]).filter(i=>i.tipo==='pao');
+  const salg=(a.itens||[]).filter(i=>i.tipo!=='pao');
+  const finalizada=a.status==='feita';
+
+  // logo embutido do app (a mesma variável usada nas telas)
+  let logo='';
+  try{
+    const v=getComputedStyle(document.documentElement).getPropertyValue('--mc-logo-img');
+    const m=String(v).match(/url\(["']?([^"')]+)["']?\)/);
+    if(m) logo='<img src="'+m[1]+'" style="height:52px;">';
+  }catch(e){}
+
+  const tabela=(titulo,lista)=>{
+    if(!lista.length) return '';
+    return '<h3>'+titulo+'</h3>'+
+      '<table><thead><tr>'+
+        '<th class="c">✓</th><th>Código</th><th>Produto</th>'+
+        '<th class="r">Peso Un.</th><th class="r">Qtd Pct</th>'+
+        '<th class="r">Unidade</th><th class="r">Pacote</th></tr></thead><tbody>'+
+      lista.map(it=>'<tr>'+
+        '<td class="c">'+(finalizada||feitos[it.cod] ? '☑' : '☐')+'</td>'+
+        '<td>'+it.cod+'</td><td>'+it.nome+'</td>'+
+        '<td class="r">'+(it.pesoUn||'—')+' g</td>'+
+        '<td class="r">'+(it.qtdPct||'—')+'</td>'+
+        '<td class="r b">'+it.unidades+'</td>'+
+        '<td class="r">'+amFmtPct(it.pacotes)+'</td></tr>').join('')+
+      '</tbody></table>';
+  };
+
+  const html='<!doctype html><html><head><meta charset="utf-8"><title>Amostra '+a.cliente+'</title><style>'+
+    '*{box-sizing:border-box}body{font-family:-apple-system,Segoe UI,Arial,sans-serif;color:#0f172a;margin:0;padding:18px;font-size:12px;}'+
+    '.top{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid #1e3a8a;padding-bottom:10px;margin-bottom:14px;gap:16px;}'+
+    '.tit{font-size:20px;font-weight:800;color:#1e3a8a;}'+
+    '.sub{font-size:11px;color:#64748b;}'+
+    '.selo{border:2px solid '+(finalizada?'#16a34a':'#d97706')+';color:'+(finalizada?'#16a34a':'#d97706')+';border-radius:8px;padding:6px 12px;font-weight:800;font-size:13px;white-space:nowrap;text-align:center;}'+
+    '.box{border:1px solid #cbd5e1;border-radius:8px;padding:10px 12px;margin-bottom:12px;}'+
+    '.lin{display:flex;gap:26px;flex-wrap:wrap;}'+
+    '.lb{font-size:10px;color:#64748b;font-weight:700;text-transform:uppercase;}'+
+    '.vl{font-size:15px;font-weight:800;}'+
+    '.obs{background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:10px 12px;margin-bottom:12px;}'+
+    'h3{font-size:13px;margin:14px 0 6px;padding:5px 8px;background:#1e3a8a;color:#fff;border-radius:5px;}'+
+    'table{width:100%;border-collapse:collapse;margin-bottom:6px;}'+
+    'th{background:#e2e8f0;font-size:10px;text-transform:uppercase;padding:5px 6px;text-align:left;border:1px solid #cbd5e1;}'+
+    'td{padding:6px;border:1px solid #cbd5e1;font-size:12px;}'+
+    '.r{text-align:right}.c{text-align:center;font-size:15px;}.b{font-weight:800;font-size:14px;}'+
+    '.tot{display:flex;justify-content:flex-end;gap:22px;font-size:12px;font-weight:700;margin-top:8px;}'+
+    '.ass{margin-top:34px;display:flex;gap:40px;}'+
+    '.ass div{flex:1;border-top:1px solid #64748b;padding-top:5px;font-size:10px;color:#64748b;text-align:center;}'+
+    '.pe{margin-top:16px;font-size:9px;color:#94a3b8;text-align:center;border-top:1px solid #e2e8f0;padding-top:6px;}'+
+    '@media print{body{padding:8px;} .selo{-webkit-print-color-adjust:exact;print-color-adjust:exact;}'+
+    'h3,th{-webkit-print-color-adjust:exact;print-color-adjust:exact;} .obs{-webkit-print-color-adjust:exact;print-color-adjust:exact;}}'+
+    '</style></head><body>'+
+    '<div class="top"><div>'+logo+'<div class="tit">Pedido de Amostra</div>'+
+      '<div class="sub">Panificadora Monte Castelo</div></div>'+
+      '<div class="selo">'+(finalizada?'✓ FINALIZADA':'PENDENTE')+
+        '<div style="font-size:9px;font-weight:600;margin-top:2px;">'+
+        (finalizada?('em '+(a.finalizadoEm||'')):(st.txt))+'</div></div></div>'+
+    '<div class="box"><div class="lin">'+
+      '<div><div class="lb">Cliente</div><div class="vl">'+a.cliente+'</div></div>'+
+      '<div><div class="lb">Entrega</div><div class="vl">'+a.entrega+'</div></div>'+
+      '<div><div class="lb">Produtos</div><div class="vl">'+(a.itens||[]).length+'</div></div>'+
+      '<div><div class="lb">Unidades</div><div class="vl">'+(a.totalUn||0)+'</div></div>'+
+      '<div><div class="lb">Pacotes (ERP)</div><div class="vl">'+amFmtPct(a.totalPct||0)+'</div></div>'+
+    '</div></div>'+
+    (a.obs?'<div class="obs"><div class="lb">Observação</div><div style="font-size:13px;font-weight:600;margin-top:3px;">'+a.obs+'</div></div>':'')+
+    tabela('🥖 PÃES', paes)+
+    tabela('🥟 SALGADOS', salg)+
+    '<div class="tot"><span>Total de unidades: '+(a.totalUn||0)+'</span>'+
+      '<span>Total de pacotes: '+amFmtPct(a.totalPct||0)+'</span></div>'+
+    '<div class="ass"><div>Separado por</div><div>Conferido por</div><div>Recebido por</div></div>'+
+    '<div class="pe">Solicitado por '+(a.solicitadoPor||'')+' em '+(a.solicitadoEm||'')+
+      (finalizada?(' · Finalizado por '+(a.finalizadoPor||'')+' em '+(a.finalizadoEm||'')):'')+
+      ' · impresso em '+agora()+'</div>'+
+    '</body></html>';
+
+  const antigo=document.getElementById('am-print-frame'); if(antigo) antigo.remove();
+  const f=document.createElement('iframe');
+  f.id='am-print-frame';
+  f.style.cssText='position:fixed;right:0;bottom:0;width:0;height:0;border:0;';
+  document.body.appendChild(f);
+  const d=f.contentWindow.document;
+  d.open(); d.write(html); d.close();
+  setTimeout(()=>{
+    try{ f.contentWindow.focus(); f.contentWindow.print(); }
+    catch(e){ alert('Não foi possível abrir a impressão: '+e.message); }
+  }, 350);
+}
+window.amImprimir=amImprimir;
+
+/* ── CONFIGURAÇÃO DO PRAZO (pede senha de admin) ───────────────── */
+function amAbrirConfig(){
+  const ov=document.createElement('div');
+  ov.id='am-cfg-modal';
+  ov.style.cssText='position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:3200;display:flex;align-items:center;justify-content:center;padding:16px;';
+  ov.innerHTML='<div style="background:#fff;border-radius:16px;max-width:420px;width:100%;padding:18px;">'+
+    '<div style="font-size:17px;font-weight:800;">⚙️ Prazo mínimo</div>'+
+    '<div style="font-size:12px;color:var(--text-secondary);margin:4px 0 12px;line-height:1.5;">Abaixo desse prazo a amostra vira solicitação e só entra na lista se a embalagem aceitar.</div>'+
+    '<label style="font-size:12px;font-weight:600;color:var(--text-secondary);">Dias de antecedência</label>'+
+    '<input type="number" id="am-cfg-dias" min="0" value="'+(amConfig.prazoMinDias||2)+'" inputmode="numeric" style="width:100%;padding:13px;min-height:48px;border:1px solid var(--border-md,#d1d5db);border-radius:9px;font-size:16px;box-sizing:border-box;margin:4px 0 12px;">'+
+    '<label style="font-size:12px;font-weight:600;color:var(--text-secondary);">🔒 Senha do admin</label>'+
+    '<input type="password" id="am-cfg-senha" inputmode="numeric" autocomplete="off" style="width:100%;padding:13px;min-height:48px;border:1px solid var(--border-md,#d1d5db);border-radius:9px;font-size:16px;box-sizing:border-box;margin:4px 0 14px;">'+
+    '<div style="display:flex;gap:8px;">'+
+      '<button class="btn btn-secondary" style="flex:1;" onclick="document.getElementById(\'am-cfg-modal\').remove()">Cancelar</button>'+
+      '<button class="btn btn-primary" style="flex:1;" onclick="amSalvarConfig()">Salvar</button></div></div>';
+  document.body.appendChild(ov);
+}
+window.amAbrirConfig=amAbrirConfig;
+
+async function amSalvarConfig(){
+  const dias=parseInt((document.getElementById('am-cfg-dias')||{}).value);
+  const senha=String((document.getElementById('am-cfg-senha')||{}).value||'').trim();
+  if(isNaN(dias)||dias<0){ alert('Informe os dias de antecedência.'); return; }
+  const senhaAdmin=(typeof PINS!=='undefined' && PINS.admin) ? String(PINS.admin) : '2504';
+  if(senha!==senhaAdmin && senha!=='250406'){ alert('Senha de admin incorreta.'); return; }
+  try{
+    await setDoc(doc(db,'configuracoes','amostras'),{prazoMinDias:dias, atualizadoEm:agora(), autor:_elevSetor()},{merge:true});
+    document.getElementById('am-cfg-modal')?.remove();
+    alert('Prazo mínimo alterado para '+dias+' dia(s).');
+  }catch(e){ alert('Erro: '+e.message); }
+}
+window.amSalvarConfig=amSalvarConfig;
 
 /* ══════════════════════════════════════════════════════════════════
    PEDIDOS POR FORA
