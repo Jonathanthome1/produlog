@@ -5035,6 +5035,7 @@ function atualizarTela(){
   if(tela==='s-alt-editor') renderAltEditor();
   if(tela==='s-alt-admin') renderAltAdmin();
   if(tela==='s-acomp') renderAcomp();
+  if(tela==='s-acomp-coz') renderAcompCoz();   // faltava: a cozinha não acompanhava as mudanças do plano
   if(tela==='s-demandas') renderDemandas();
   if(tela==='s-tv') renderTV();
   if(tela==='s-carreg') renderCarreg();
@@ -9343,12 +9344,13 @@ function renderPlano(){
           return `<div style="padding:10px 0;border-bottom:0.5px solid var(--border);">
             <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
               <div style="flex:1;">
-                <div style="font-size:13px;font-weight:600;color:var(--text-primary);">${item.nome}</div>
+                <div style="font-size:13px;font-weight:600;color:var(--text-primary);">${prod&&prod.cod?`<span style="display:inline-block;background:var(--bg-secondary);color:var(--text-secondary);font-size:11px;font-weight:700;border-radius:5px;padding:1px 6px;margin-right:5px;">${prod.cod}</span>`:''}${item.nome}</div>
                 <div id="pl-un-${diaId}-${i}" style="font-size:11px;color:var(--text-secondary);">${item.qtdPacotes} pct × ${prod?prod.qtdPct||1:1} = ${un} un</div>
               </div>
               <input type="number" value="${item.qtdPacotes||0}" min="0" inputmode="numeric"
                 style="width:64px;font-size:14px;padding:6px;border-radius:8px;border:1px solid var(--mc-roxo);background:var(--bg-primary);color:var(--text-primary);font-family:inherit;"
                 oninput="atualizarQtdPlano('${dia}',${i},this.value)" />
+              <button onclick="moverItemPlano('${dia}',${i})" title="Mover para outro dia" style="background:none;border:1px solid var(--border);color:var(--text-secondary);border-radius:8px;padding:5px 8px;cursor:pointer;font-family:inherit;">⇄</button>
               <button onclick="removerItemPlano('${dia}',${i})" style="background:none;border:1px solid #ef9a9a;color:#c62828;border-radius:8px;padding:5px 8px;cursor:pointer;font-family:inherit;">×</button>
             </div>
             <div id="pl-info-${diaId}-${i}" style="font-size:11px;color:var(--text-secondary);padding-left:4px;">
@@ -9388,7 +9390,9 @@ function toggleFeriado(dia, val){
   if(!planoAtual.feriados)planoAtual.feriados={};
   if(val) planoAtual.feriados[dia]=true;
   else delete planoAtual.feriados[dia];
-  renderPlano();
+  _plRenderMantendo();
+  _plToast(val?('🚫 '+dia+' marcado como feriado'):('✓ '+dia+' voltou ao normal'), val?'#b45309':'#16a34a');
+  _plAutoSalvar();
 }
 
 function togglePlanoDia(id){
@@ -9447,6 +9451,7 @@ function importarPlanoPaste(){
   if(naoEncontrados.length>0)msg+=' ⚠️ Código(s) não encontrado(s): '+naoEncontrados.join(', ');
   result.textContent=msg;
   result.style.color=naoEncontrados.length?'#856404':'#2e7d32';
+  _plAutoSalvar();
   document.getElementById('plano-import-txt').value='';
   renderPlano();
 }
@@ -9524,7 +9529,9 @@ function apAdicionar(nome){
   if(planoAtual.itens[_apDia].some(it=>it.nome===nome)){ alert('Este produto já está no dia.'); return; }
   planoAtual.itens[_apDia].push({nome:p.nome, qtdPacotes:0});
   document.getElementById('ap-modal')?.remove();
-  renderPlano();
+  _plRenderMantendo();
+  _plToast('➕ '+p.nome+' adicionado em '+_apDia, '#16a34a');
+  _plAutoSalvar();
   // abre o dia e já deixa o campo de quantidade pronto para digitar
   const diaId='plano-dia-'+_apDia.replace(/[^a-z]/gi,'');
   setTimeout(()=>{
@@ -9546,6 +9553,7 @@ function atualizarQtdPlano(dia,idx,val){
   // inteira tiraria o cursor do campo e fecharia o dia no meio da digitação.
   _plRecalcularDia(dia);
   _plRecalcularGeral();
+  _plAutoSalvar();
 }
 
 const _plDiaId=dia=>'plano-dia-'+String(dia).replace(/[^a-z]/gi,'');
@@ -9612,11 +9620,146 @@ function _plRecalcularGeral(){
   box.innerHTML='<div style="font-size:13px;font-weight:600;color:var(--mc-dourado);margin-bottom:10px;">📊 Consumo Geral da Semana</div>'+corpo.join('');
 }
 
-function removerItemPlano(dia,idx){
-  if(planoAtual.itens[dia]){
-    planoAtual.itens[dia].splice(idx,1);
-    renderPlano();
+
+
+/* ── SALVAMENTO AUTOMÁTICO DO PLANO ───────────────────────────────
+   Qualquer mudança (quantidade, excluir, adicionar, mover, importar)
+   vai sozinha para o Firebase depois de uma pausa. Assim o
+   acompanhamento da confeitaria e o da cozinha acompanham na hora,
+   sem depender de alguém lembrar de clicar em Salvar. */
+let _plSalvarTimer=null, _plSalvando=false;
+
+function _plStatus(txt, cor){
+  let el=document.getElementById('pl-status');
+  if(!el){
+    const box=document.getElementById('plano-content');
+    if(!box) return;
+    el=document.createElement('div');
+    el.id='pl-status';
+    el.style.cssText='position:sticky;top:0;z-index:20;margin:-4px -4px 8px;padding:7px 12px;border-radius:9px;font-size:12px;font-weight:700;text-align:center;';
+    box.insertBefore(el, box.firstChild);
   }
+  el.textContent=txt;
+  el.style.background=cor==='ok'?'#f0fdf4':(cor==='erro'?'#fef2f2':'#eff6ff');
+  el.style.color=cor==='ok'?'#15803d':(cor==='erro'?'#b91c1c':'#1e3a8a');
+  el.style.display='block';
+  if(cor==='ok'){ setTimeout(()=>{ if(el.textContent===txt) el.style.display='none'; }, 2500); }
+}
+
+function _plAutoSalvar(){
+  if(!planoAtual || !planoAtual.semana) return;
+  if(_plSalvarTimer) clearTimeout(_plSalvarTimer);
+  _plStatus('✏️ alterações não salvas...', 'info');
+  _plSalvarTimer=setTimeout(_plSalvarAgora, 1200);   // espera a pessoa parar de digitar
+}
+
+async function _plSalvarAgora(){
+  if(_plSalvando){ _plAutoSalvar(); return; }        // já tem uma gravação em curso
+  if(!planoAtual || !planoAtual.semana) return;
+  _plSalvando=true;
+  _plStatus('💾 salvando...', 'info');
+  try{
+    if(planoAtual.firestoreId){
+      await updateDoc(doc(db,'planos',planoAtual.firestoreId),
+        {itens:planoAtual.itens, feriados:planoAtual.feriados||{}, editadoEm:agora()});
+    } else {
+      const ref=doc(collection(db,'planos'));
+      await setDoc(ref,{semana:planoAtual.semana, itens:planoAtual.itens,
+        feriados:planoAtual.feriados||{}, hora:agora(), timestamp:Date.now()});
+      planoAtual.firestoreId=ref.id;
+    }
+    _plStatus('✓ salvo — o acompanhamento já foi atualizado', 'ok');
+  }catch(e){
+    console.error('auto-salvar plano',e);
+    _plStatus('⚠️ não consegui salvar: '+e.message+' — use o botão Salvar', 'erro');
+  }
+  _plSalvando=false;
+}
+window._plAutoSalvar=_plAutoSalvar;
+
+/* Redesenha o plano mantendo a rolagem e os dias que estavam abertos.
+   Sem isso, qualquer alteração jogava a tela para o topo e fechava tudo. */
+function _plRenderMantendo(){
+  const box=document.getElementById('plano-content');
+  const topo=box?box.scrollTop:0;
+  const abertos=[];
+  document.querySelectorAll('[id^="plano-dia-"]').forEach(el=>{
+    if(el.style.display!=='none') abertos.push(el.id);
+  });
+  renderPlano();
+  abertos.forEach(id=>{
+    const el=document.getElementById(id);
+    if(el && el.style.display==='none' && typeof togglePlanoDia==='function') togglePlanoDia(id);
+  });
+  if(box) box.scrollTop=topo;
+}
+
+// avisinho flutuante, some sozinho
+function _plToast(msg, cor){
+  document.getElementById('pl-toast')?.remove();
+  const t=document.createElement('div');
+  t.id='pl-toast';
+  t.style.cssText='position:fixed;left:50%;bottom:26px;transform:translateX(-50%);z-index:4000;'+
+    'background:'+(cor||'#0f172a')+';color:#fff;padding:12px 20px;border-radius:99px;font-size:14px;font-weight:700;'+
+    'box-shadow:0 10px 30px rgba(15,23,42,.28);max-width:90vw;text-align:center;';
+  t.textContent=msg;
+  document.body.appendChild(t);
+  setTimeout(()=>{ t.style.transition='opacity .4s'; t.style.opacity='0'; setTimeout(()=>t.remove(),420); }, 2600);
+}
+window._plToast=_plToast;
+
+/* Mover um produto de um dia para outro sem apagar e recadastrar. */
+function moverItemPlano(dia, idx){
+  const item=(planoAtual.itens[dia]||[])[idx]; if(!item) return;
+  const dias=['Segunda','Terça','Quarta','Quinta','Sexta','Sábado'].filter(d=>d!==dia);
+  const ov=document.createElement('div');
+  ov.id='pl-mover-modal';
+  ov.style.cssText='position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:3200;display:flex;align-items:center;justify-content:center;padding:16px;';
+  ov.innerHTML='<div style="background:#fff;border-radius:16px;max-width:420px;width:100%;padding:18px;">'+
+    '<div style="font-size:17px;font-weight:800;">⇄ Mover produto</div>'+
+    '<div style="font-size:13px;color:var(--text-secondary);margin:3px 0 14px;"><strong>'+item.nome+'</strong> · '+(item.qtdPacotes||0)+' pct<br>hoje está em '+dia+'</div>'+
+    dias.map(d=>{
+      const jaTem=(planoAtual.itens[d]||[]).some(x=>x.nome===item.nome);
+      const qtdLa=jaTem?((planoAtual.itens[d]||[]).find(x=>x.nome===item.nome).qtdPacotes||0):0;
+      return '<button onclick="moverItemPlanoPara(\''+escapeJsStr(dia)+'\','+idx+',\''+d+'\')" '+
+        'style="display:block;width:100%;text-align:left;background:#fff;border:1px solid var(--border);border-radius:9px;padding:12px 14px;margin-bottom:6px;cursor:pointer;font-size:15px;font-weight:600;font-family:inherit;">'+
+        d+(jaTem?'<span style="font-size:11px;font-weight:700;color:#b45309;"> · já tem '+qtdLa+' pct — vai somar</span>':'')+'</button>';
+    }).join('')+
+    '<button class="btn btn-secondary" style="width:100%;margin-top:6px;" onclick="document.getElementById(\'pl-mover-modal\').remove()">Cancelar</button>'+
+  '</div>';
+  document.body.appendChild(ov);
+}
+window.moverItemPlano=moverItemPlano;
+
+function moverItemPlanoPara(diaOrigem, idx, diaDestino){
+  const lista=planoAtual.itens[diaOrigem]||[];
+  const item=lista[idx]; if(!item) return;
+  if(!planoAtual.itens[diaDestino]) planoAtual.itens[diaDestino]=[];
+  const existente=planoAtual.itens[diaDestino].find(x=>x.nome===item.nome);
+  let msg;
+  if(existente){
+    const antes=existente.qtdPacotes||0;
+    existente.qtdPacotes=antes+(item.qtdPacotes||0);
+    msg=item.nome+': '+(item.qtdPacotes||0)+' pct somados na '+diaDestino+' (agora '+existente.qtdPacotes+')';
+  } else {
+    planoAtual.itens[diaDestino].push({nome:item.nome, qtdPacotes:item.qtdPacotes||0});
+    msg=item.nome+' movido de '+diaOrigem+' para '+diaDestino;
+  }
+  lista.splice(idx,1);
+  document.getElementById('pl-mover-modal')?.remove();
+  _plRenderMantendo();
+  _plToast('⇄ '+msg, '#1e3a8a');
+  _plAutoSalvar();
+}
+window.moverItemPlanoPara=moverItemPlanoPara;
+
+function removerItemPlano(dia,idx){
+  if(!planoAtual.itens[dia]) return;
+  const removido=planoAtual.itens[dia][idx];
+  planoAtual.itens[dia].splice(idx,1);
+  _plRenderMantendo();          // não pula para o topo nem fecha os dias
+  _plToast('🗑 '+(removido?removido.nome:'Produto')+' removido de '+dia, '#b91c1c');
+  _plAutoSalvar();
 }
 
 async function salvarPlano(){
@@ -9632,6 +9775,7 @@ async function salvarPlano(){
       planoAtual.firestoreId=ref.id;
     }
     if(btn){btn.textContent='Salvar';btn.disabled=false;}
+    if(typeof _plStatus==='function') _plStatus('✓ salvo — o acompanhamento já foi atualizado','ok');
     alert('Plano salvo!');
   }catch(e){
     console.error(e);
