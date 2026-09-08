@@ -5384,6 +5384,7 @@ function calcPrev(){
   prev.textContent=txt;prev.style.display='block';
 }
 async function salvar(){
+  if(typeof mcExigirInternet==='function' && !mcExigirInternet('produção')) return;
   const qtd=parseInt(document.getElementById('i-qtd').value)||0;
   const massa=parseFloat(document.getElementById('i-massa').value)||0;
   const r1=parseFloat(document.getElementById('i-r1').value)||0;
@@ -5565,6 +5566,7 @@ function selMassa(nome){
   document.getElementById('massa-obs').value='';
 }
 async function salvarMassa(){
+  if(typeof mcExigirInternet==='function' && !mcExigirInternet('massa')) return;
   const qtd=parseFloat(document.getElementById('massa-qtd').value)||0;
   const obs=document.getElementById('massa-obs').value;
   if(!qtd){alert('Informe a quantidade em kg.');return;}
@@ -5618,6 +5620,7 @@ function selRecheio(nome){
   document.getElementById('recheio-obs').value='';
 }
 async function salvarRecheio(){
+  if(typeof mcExigirInternet==='function' && !mcExigirInternet('recheio')) return;
   const qtd=parseFloat(document.getElementById('recheio-qtd').value)||0;
   const obs=document.getElementById('recheio-obs').value;
   if(!qtd){alert('Informe a quantidade em kg.');return;}
@@ -5707,6 +5710,7 @@ onSnapshot(collection(db,'embManual'), snap=>{
 });
 
 async function salvarEmbManual(){
+  if(typeof mcExigirInternet==='function' && !mcExigirInternet('embalagem')) return;
   const nome=document.getElementById('emb-manual-nome').value.trim();
   const qtd=parseInt(document.getElementById('emb-manual-qtd').value)||0;
   const obs=document.getElementById('emb-manual-obs').value.trim();
@@ -7581,6 +7585,7 @@ async function excluirPresenca(fid){
 }
 
 async function salvarPresenca(){
+  if(typeof mcExigirInternet==='function' && !mcExigirInternet('presença')) return;
   // Collect current field values
   colaboradoresTemp.forEach((c,i)=>{
     const n=document.getElementById(`colab-nome-${i}`);
@@ -10123,6 +10128,7 @@ function selecionarDataContainerEntrada(){
 }
 
 async function salvarContainerEntrada(){
+  if(typeof mcExigirInternet==='function' && !mcExigirInternet('entrada no contêiner')) return;
   const qtd=parseFloat(document.getElementById('container-entrada-qtd').value)||0;
   const obs=document.getElementById('container-entrada-obs').value.trim();
   if(!containerDataEntrada){alert('Selecione uma data.');return;}
@@ -10194,6 +10200,7 @@ function selecionarLoteSaida(fid){
 }
 
 async function salvarContainerSaida(){
+  if(typeof mcExigirInternet==='function' && !mcExigirInternet('saída do contêiner')) return;
   const lote=containerLotes.find(l=>l.firestoreId===containerLoteSaida);
   if(!lote){alert('Selecione um lote.');return;}
   const qtd=parseFloat(document.getElementById('container-saida-qtd').value)||0;
@@ -10657,6 +10664,7 @@ function atualizarResumoQuadra(){
 }
 
 async function salvarQuadra(){
+  if(typeof mcExigirInternet==='function' && !mcExigirInternet('quadra')) return;
   const numKits=parseFloat(document.getElementById('quadra-num-kits')?.value)||0;
   const massaVelha=parseFloat(document.getElementById('quadra-massa-velha')?.value)||0;
   const produtosArr=Object.values(quadraProdutosLanc);
@@ -10912,6 +10920,7 @@ function atualizarPreviewFarinha(){
 }
 
 async function salvarFarinhaLanc(){
+  if(typeof mcExigirInternet==='function' && !mcExigirInternet('farinha')) return;
   const farinhas=FARINHAS_CONFIG[farinhaEstoqueAtivo]||[];
   const itens={};
   let totalSC=0;
@@ -18729,6 +18738,90 @@ function acPlayControle(semana,dia,produto,pct){
 
 
 
+
+/* ══════════════════════════════════════════════════════════════════
+   AVISO DE SEM INTERNET
+   Não basta olhar o wifi: dá para estar conectado ao roteador e sem
+   internet. O Firebase avisa isso em cada snapshot pelo campo
+   metadata.fromCache — quando ele é true, o dado veio do cache e o
+   servidor não está respondendo. Usamos os dois sinais juntos.
+   ══════════════════════════════════════════════════════════════════ */
+let mcOnline=true, _mcQuedaEm=null, _mcAvisoTimer=null;
+
+function mcConexaoOk(){ return mcOnline && navigator.onLine!==false; }
+window.mcConexaoOk=mcConexaoOk;
+
+function _mcBanner(){
+  let el=document.getElementById('mc-offline');
+  if(!el){
+    el=document.createElement('div');
+    el.id='mc-offline';
+    el.style.cssText='position:fixed;left:0;right:0;top:0;z-index:5000;display:none;'+
+      'padding:10px 14px;text-align:center;font-size:14px;font-weight:800;'+
+      'box-shadow:0 4px 14px rgba(0,0,0,.18);';
+    document.body.appendChild(el);
+  }
+  return el;
+}
+
+function _mcAtualizarBanner(){
+  const el=_mcBanner();
+  const ok=mcConexaoOk();
+  if(ok){
+    if(el.getAttribute('data-estado')==='off'){
+      // voltou: mostra confirmação em verde e some sozinho
+      el.setAttribute('data-estado','on');
+      el.style.background='#16a34a'; el.style.color='#fff';
+      el.innerHTML='✓ Conexão restabelecida — pode lançar normalmente';
+      el.style.display='block';
+      clearTimeout(_mcAvisoTimer);
+      _mcAvisoTimer=setTimeout(()=>{ el.style.display='none'; }, 4000);
+    } else {
+      el.style.display='none';
+    }
+    document.body.style.paddingTop='';
+    return;
+  }
+  clearTimeout(_mcAvisoTimer);
+  el.setAttribute('data-estado','off');
+  el.style.background='#dc2626'; el.style.color='#fff';
+  const min=_mcQuedaEm?Math.floor((Date.now()-_mcQuedaEm)/60000):0;
+  el.innerHTML='⚠️ SEM INTERNET — não lance nada agora, pode não ser gravado'+
+    (min>0?(' <span style="font-weight:600;opacity:.85;">(há '+min+' min)</span>'):'');
+  el.style.display='block';
+  document.body.style.paddingTop=el.offsetHeight+'px';
+}
+
+function _mcSetOnline(v){
+  const antes=mcConexaoOk();
+  mcOnline=!!v;
+  const agoraOk=mcConexaoOk();
+  if(antes && !agoraOk) _mcQuedaEm=Date.now();
+  if(!antes && agoraOk) _mcQuedaEm=null;
+  _mcAtualizarBanner();
+}
+
+// sinal do navegador (wifi caiu de vez)
+window.addEventListener('offline', ()=>{ _mcSetOnline(false); });
+window.addEventListener('online',  ()=>{ _mcSetOnline(true); });
+
+// sinal do Firebase: se o dado veio do cache, o servidor não respondeu
+onSnapshot(doc(db,'configuracoes','estoqueControlado'), {includeMetadataChanges:true}, snap=>{
+  try{ _mcSetOnline(!snap.metadata.fromCache); }catch(e){}
+}, err=>{ _mcSetOnline(false); });
+
+// mantém o contador de tempo em dia
+setInterval(()=>{ if(!mcConexaoOk()) _mcAtualizarBanner(); }, 30000);
+
+/* Usar antes de qualquer gravação importante: avisa e impede o lançamento
+   quando não há conexão, em vez de deixar a pessoa achar que salvou. */
+function mcExigirInternet(oque){
+  if(mcConexaoOk()) return true;
+  alert('⚠️ SEM INTERNET\n\nO lançamento'+(oque?' de '+oque:'')+' NÃO seria gravado.\n\n'+
+        'Espere a conexão voltar (o aviso vermelho no topo some) e lance de novo.');
+  return false;
+}
+window.mcExigirInternet=mcExigirInternet;
 
 /* ══════════════════════════════════════════════════════════════════
    PEDIDOS AMOSTRA
