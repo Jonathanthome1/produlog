@@ -9344,34 +9344,36 @@ function renderPlano(){
             <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
               <div style="flex:1;">
                 <div style="font-size:13px;font-weight:600;color:var(--text-primary);">${item.nome}</div>
-                <div style="font-size:11px;color:var(--text-secondary);">${item.qtdPacotes} pct × ${prod?prod.qtdPct||1:1} = ${un} un</div>
+                <div id="pl-un-${diaId}-${i}" style="font-size:11px;color:var(--text-secondary);">${item.qtdPacotes} pct × ${prod?prod.qtdPct||1:1} = ${un} un</div>
               </div>
               <input type="number" value="${item.qtdPacotes||0}" min="0" inputmode="numeric"
                 style="width:64px;font-size:14px;padding:6px;border-radius:8px;border:1px solid var(--mc-roxo);background:var(--bg-primary);color:var(--text-primary);font-family:inherit;"
-                onchange="atualizarQtdPlano('${dia}',${i},this.value)" />
+                oninput="atualizarQtdPlano('${dia}',${i},this.value)" />
               <button onclick="removerItemPlano('${dia}',${i})" style="background:none;border:1px solid #ef9a9a;color:#c62828;border-radius:8px;padding:5px 8px;cursor:pointer;font-family:inherit;">×</button>
             </div>
-            <div style="font-size:11px;color:var(--text-secondary);padding-left:4px;">
+            <div id="pl-info-${diaId}-${i}" style="font-size:11px;color:var(--text-secondary);padding-left:4px;">
               ${prod&&prod.tipoMassa&&prod.grMassa>0?`⚖️ ${prod.tipoMassa}: ${mkg} kg`:''}
               ${prod&&prod.tipoRecheio&&prod.grRecheio>0?` · 🍖 ${prod.tipoRecheio}: ${r1kg} kg`:''}
               ${prod&&prod.tipoRecheio2&&prod.grRecheio2>0?` · ➕ ${prod.tipoRecheio2}: ${r2kg} kg`:''}
             </div>
           </div>`;
         }).join('')}
-        ${hasTotais?`<div style="margin-top:10px;padding:10px;background:var(--bg-secondary);border-radius:8px;">
+        <div id="pl-res-${diaId}" style="${hasTotais?'':'display:none;'}margin-top:10px;padding:10px;background:var(--bg-secondary);border-radius:8px;">
           <div style="font-size:11px;font-weight:600;color:var(--mc-roxo);text-transform:uppercase;letter-spacing:0.04em;margin-bottom:6px;">Resumo do dia</div>
           ${Object.entries(totalMassa).map(([k,v])=>`<div style="font-size:12px;color:var(--text-secondary);">⚖️ <strong>${k}:</strong> ${v.toFixed(3)} kg</div>`).join('')}
           ${Object.entries(totalR1).map(([k,v])=>`<div style="font-size:12px;color:var(--text-secondary);">🍖 <strong>${k}:</strong> ${v.toFixed(3)} kg</div>`).join('')}
           ${Object.entries(totalR2).map(([k,v])=>`<div style="font-size:12px;color:var(--text-secondary);">➕ <strong>${k}:</strong> ${v.toFixed(3)} kg</div>`).join('')}
-        </div>`:''}
+        </div>
       </div>
     </div>`;
   });
 
   // Grand total card
   const hasGrand=Object.keys(grandMassa).length+Object.keys(grandR1).length+Object.keys(grandR2).length>0;
-  if(hasGrand){
-    html+=`<div class="card" style="border-left:3px solid var(--mc-dourado);margin-top:4px;">
+  // o card existe sempre (escondido quando vazio), senão o recálculo em tempo
+  // real não teria onde escrever num plano que começou do zero
+  {
+    html+=`<div class="card" id="pl-res-geral" style="${hasGrand?'':'display:none;'}border-left:3px solid var(--mc-dourado);margin-top:4px;">
       <div style="font-size:13px;font-weight:600;color:var(--mc-dourado);margin-bottom:10px;">📊 Consumo Geral da Semana</div>
       ${Object.entries(grandMassa).map(([k,v])=>`<div class="resumo-row"><span class="resumo-nome">⚖️ ${k}</span><span style="font-weight:700;color:var(--mc-azul);">${v.toFixed(3)} kg</span></div>`).join('')}
       ${Object.entries(grandR1).map(([k,v])=>`<div class="resumo-row"><span class="resumo-nome">🍖 ${k}</span><span style="font-weight:700;color:var(--mc-verde);">${v.toFixed(3)} kg</span></div>`).join('')}
@@ -9538,10 +9540,76 @@ function apAdicionar(nome){
 window.apAdicionar=apAdicionar;
 
 function atualizarQtdPlano(dia,idx,val){
-  if(planoAtual.itens[dia]&&planoAtual.itens[dia][idx]){
-    planoAtual.itens[dia][idx].qtdPacotes=parseInt(val)||0;
-    renderPlano();
+  if(!planoAtual.itens[dia]||!planoAtual.itens[dia][idx]) return;
+  planoAtual.itens[dia][idx].qtdPacotes=parseInt(val)||0;
+  // recalcula na hora só o que depende da quantidade. Redesenhar a tela
+  // inteira tiraria o cursor do campo e fecharia o dia no meio da digitação.
+  _plRecalcularDia(dia);
+  _plRecalcularGeral();
+}
+
+const _plDiaId=dia=>'plano-dia-'+String(dia).replace(/[^a-z]/gi,'');
+const _plKg=(gr,un)=>(gr*un/1000);
+
+// massa e recheios de um dia: por item e no resumo do dia
+function _plRecalcularDia(dia){
+  const diaId=_plDiaId(dia);
+  const itens=planoAtual.itens[dia]||[];
+  const tM={}, tR1={}, tR2={};
+  itens.forEach((item,i)=>{
+    const prod=(PRODUTOS||[]).find(p=>p.nome===item.nome);
+    const un=prod?((item.qtdPacotes||0)*(prod.qtdPct||1)):0;
+    const elUn=document.getElementById('pl-un-'+diaId+'-'+i);
+    if(elUn) elUn.textContent=(item.qtdPacotes||0)+' pct × '+(prod?prod.qtdPct||1:1)+' = '+un+' un';
+    let info='';
+    if(prod){
+      if(prod.tipoMassa&&prod.grMassa>0){
+        const kg=_plKg(prod.grMassa,un); tM[prod.tipoMassa]=(tM[prod.tipoMassa]||0)+kg;
+        info+='⚖️ '+prod.tipoMassa+': '+kg.toFixed(3)+' kg';
+      }
+      if(prod.tipoRecheio&&prod.grRecheio>0){
+        const kg=_plKg(prod.grRecheio,un); tR1[prod.tipoRecheio]=(tR1[prod.tipoRecheio]||0)+kg;
+        info+=(info?' · ':'')+'🍖 '+prod.tipoRecheio+': '+kg.toFixed(3)+' kg';
+      }
+      if(prod.tipoRecheio2&&prod.grRecheio2>0){
+        const kg=_plKg(prod.grRecheio2,un); tR2[prod.tipoRecheio2]=(tR2[prod.tipoRecheio2]||0)+kg;
+        info+=(info?' · ':'')+'➕ '+prod.tipoRecheio2+': '+kg.toFixed(3)+' kg';
+      }
+    }
+    const elInfo=document.getElementById('pl-info-'+diaId+'-'+i);
+    if(elInfo) elInfo.innerHTML=info;
+  });
+  const box=document.getElementById('pl-res-'+diaId);
+  if(box){
+    const linhas=[]
+      .concat(Object.entries(tM).map(([k,v])=>'<div style="font-size:12px;color:var(--text-secondary);">⚖️ <strong>'+k+':</strong> '+v.toFixed(3)+' kg</div>'))
+      .concat(Object.entries(tR1).map(([k,v])=>'<div style="font-size:12px;color:var(--text-secondary);">🍖 <strong>'+k+':</strong> '+v.toFixed(3)+' kg</div>'))
+      .concat(Object.entries(tR2).map(([k,v])=>'<div style="font-size:12px;color:var(--text-secondary);">➕ <strong>'+k+':</strong> '+v.toFixed(3)+' kg</div>'));
+    box.style.display = linhas.length ? 'block' : 'none';
+    box.innerHTML='<div style="font-size:11px;font-weight:600;color:var(--mc-roxo);text-transform:uppercase;letter-spacing:0.04em;margin-bottom:6px;">Resumo do dia</div>'+linhas.join('');
   }
+}
+
+// consumo geral da semana
+function _plRecalcularGeral(){
+  const box=document.getElementById('pl-res-geral'); if(!box) return;
+  const gM={}, gR1={}, gR2={};
+  ['Segunda','Terça','Quarta','Quinta','Sexta','Sábado'].forEach(dia=>{
+    (planoAtual.itens[dia]||[]).forEach(item=>{
+      const prod=(PRODUTOS||[]).find(p=>p.nome===item.nome); if(!prod) return;
+      const un=(item.qtdPacotes||0)*(prod.qtdPct||1);
+      if(prod.tipoMassa&&prod.grMassa>0) gM[prod.tipoMassa]=(gM[prod.tipoMassa]||0)+_plKg(prod.grMassa,un);
+      if(prod.tipoRecheio&&prod.grRecheio>0) gR1[prod.tipoRecheio]=(gR1[prod.tipoRecheio]||0)+_plKg(prod.grRecheio,un);
+      if(prod.tipoRecheio2&&prod.grRecheio2>0) gR2[prod.tipoRecheio2]=(gR2[prod.tipoRecheio2]||0)+_plKg(prod.grRecheio2,un);
+    });
+  });
+  const linha=(ico,k,v,cor)=>'<div class="resumo-row"><span class="resumo-nome">'+ico+' '+k+'</span><span style="font-weight:700;color:'+cor+';">'+v.toFixed(3)+' kg</span></div>';
+  const corpo=[]
+    .concat(Object.entries(gM).map(([k,v])=>linha('⚖️',k,v,'var(--mc-azul)')))
+    .concat(Object.entries(gR1).map(([k,v])=>linha('🍖',k,v,'var(--mc-verde)')))
+    .concat(Object.entries(gR2).map(([k,v])=>linha('➕',k,v,'var(--mc-roxo)')));
+  box.style.display = corpo.length ? 'block' : 'none';
+  box.innerHTML='<div style="font-size:13px;font-weight:600;color:var(--mc-dourado);margin-bottom:10px;">📊 Consumo Geral da Semana</div>'+corpo.join('');
 }
 
 function removerItemPlano(dia,idx){
