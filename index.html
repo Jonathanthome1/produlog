@@ -21214,6 +21214,9 @@ async function estGravarMov(m){
 // ── MOVIMENTAÇÕES ────────────────────────────────────────────────
 let _estMovFiltro='todos', _estMovProd='', _estMovDe='', _estMovAte='', _estMovPeriodo='30';
 let _estMovAbertos={};   // grupos de carregamento expandidos (dia+produto)
+let _estMovMigAberta={}; // dias com o painel de migração aberto
+function estToggleMig(d){ _estMovMigAberta[d]=!_estMovMigAberta[d]; estRenderMovLista(); }
+window.estToggleMig=estToggleMig;
 function estToggleGrupo(k){ _estMovAbertos[k]=!_estMovAbertos[k]; estRenderMovLista(); }
 window.estToggleGrupo=estToggleGrupo;
 function estSetMovFiltro(v){ _estMovFiltro=v; estRenderMov(); }
@@ -21311,7 +21314,7 @@ function estRenderMov(){
   if(ativo==='est-mov-de'||ativo==='est-mov-ate'){ estRenderMovLista(); return; }
 
   const periodos=[['hoje','Hoje'],['7','7 dias'],['30','30 dias'],['tudo','Tudo'],['custom','Escolher datas']];
-  const tipos=[['todos','Tudo'],['carregamento','Carregamento'],['baixa','Baixa manual'],['porfora','Por fora'],['migracao','Migração'],['entrada','Entrada'],['contagem','Contagem']];
+  const tipos=[['todos','Tudo'],['carregamento','Carregamento'],['baixa','Baixa manual'],['porfora','Por fora'],['entrada','Entrada'],['contagem','Contagem']];
   const chip=(ativoV,v,l,fn)=>'<button onclick="'+fn+'(\''+v+'\')" style="background:'+(ativoV===v?'var(--mc-azul,#2563eb)':'#fff')+';color:'+(ativoV===v?'#fff':'var(--text-secondary)')+';border:1px solid '+(ativoV===v?'var(--mc-azul,#2563eb)':'var(--border)')+';border-radius:99px;padding:8px 14px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;">'+l+'</button>';
 
   let h='<div class="card" style="margin-bottom:12px;">'+
@@ -21372,9 +21375,67 @@ function estSaldoInternoAte(cod, dataNum){
   return s;
 }
 
+// saldo do CONTÊINER no fim de um dia (entradas de lote menos migrações)
+function estSaldoContainerAte(cod, dataNum){
+  const c=String(cod);
+  let s=0;
+  estMovs.forEach(m=>{
+    if(m.local!=='container' || String(m.codigo)!==c) return;
+    const dn=estDataNum(m.data);
+    if(dn && dn>dataNum) return;
+    s+=Number(m.pacotes)||0;
+  });
+  return s;
+}
+function estSaldoContainerTotalAte(dataNum){
+  return estAtivos().reduce((t,p)=>t+estSaldoContainerAte(p.codigo,dataNum),0);
+}
+
 // saldo de todos os produtos controlados no fim do dia
 function estSaldoTotalAte(dataNum){
   return estAtivos().reduce((t,p)=>t+estSaldoInternoAte(p.codigo,dataNum),0);
+}
+
+/* Resumo fixo no topo das movimentações: como está o estoque de dentro
+   (o que importa para vender) e a situação do contêiner. */
+function estResumoTopoMov(){
+  const filtrado=_estMovProd?estProd(_estMovProd):null;
+  const prods=filtrado?[filtrado]:estAtivos();
+  if(!prods.length) return '';
+  const interno=prods.reduce((t,p)=>t+estSaldoInterno(p.codigo),0);
+  const cont=prods.reduce((t,p)=>t+estSaldoContainer(p.codigo),0);
+  const caixas=filtrado?estCaixasDoProduto(filtrado.codigo):estCaixasUsadas();
+  const cap=estConfig.capacidadeCaixas||100;
+  const pctCap=cap>0?Math.min(100,Math.round(estCaixasUsadas()/cap*100)):0;
+
+  let alerta='', corInt='var(--mc-azul,#2563eb)';
+  if(filtrado){
+    const st=estStatusProduto(filtrado);
+    if(st.interno<0){ corInt='#dc2626'; alerta='🚨 saldo negativo'; }
+    else if(st.abaixo){ corInt='#dc2626'; alerta='🔻 abaixo do mínimo ('+st.minimo+')'; }
+    else if(st.ideal>0) alerta='ideal '+st.ideal+' · mínimo '+st.minimo;
+  } else {
+    const n=estAbaixoDoMinimo().length, neg=estNegativos().length;
+    if(neg) { corInt='#dc2626'; alerta='🚨 '+neg+' com saldo negativo'; }
+    else if(n){ corInt='#dc2626'; alerta='🔻 '+n+' precisa(m) repor'; }
+    else alerta='✓ todos acima do mínimo';
+  }
+
+  return '<div style="display:grid;grid-template-columns:1.3fr 1fr;gap:8px;margin-bottom:12px;">'+
+    '<div class="card" style="padding:12px;border-top:3px solid '+corInt+';">'+
+      '<div style="font-size:10px;font-weight:800;color:var(--text-secondary);letter-spacing:.5px;">🏭 NA EMPRESA'+(filtrado?'':' (todos)')+'</div>'+
+      '<div style="font-size:30px;font-weight:900;color:'+corInt+';line-height:1.1;">'+interno.toLocaleString('pt-BR')+'</div>'+
+      '<div style="font-size:10px;color:var(--text-muted);">pacotes</div>'+
+      (alerta?'<div style="font-size:11px;font-weight:700;color:'+(alerta.startsWith('✓')?'#16a34a':(alerta.startsWith('🔻')||alerta.startsWith('🚨')?'#dc2626':'var(--text-secondary)'))+';margin-top:4px;">'+alerta+'</div>':'')+
+    '</div>'+
+    '<div class="card" style="padding:12px;border-top:3px solid #7c3aed;">'+
+      '<div style="font-size:10px;font-weight:800;color:var(--text-secondary);letter-spacing:.5px;">🚛 NO CONTÊINER</div>'+
+      '<div style="font-size:30px;font-weight:900;color:#7c3aed;line-height:1.1;">'+cont.toLocaleString('pt-BR')+'</div>'+
+      '<div style="font-size:10px;color:var(--text-muted);">pacotes · '+caixas+' cx</div>'+
+      '<div style="font-size:11px;font-weight:700;color:'+(pctCap>=95?'#dc2626':(pctCap>=80?'#d97706':'var(--text-secondary)'))+';margin-top:4px;">'+
+        (filtrado?('contêiner '+pctCap+'% cheio'):(pctCap+'% da capacidade'))+'</div>'+
+    '</div>'+
+  '</div>';
 }
 
 function estRenderMovLista(){
@@ -21386,7 +21447,8 @@ function estRenderMovLista(){
   const entrou=paraTotal.filter(l=>l.pacotes>0).reduce((s,l)=>s+l.pacotes,0);
   const saiu=paraTotal.filter(l=>l.pacotes<0).reduce((s,l)=>s+l.pacotes,0);
 
-  let h='<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:12px;">'+
+  let h=estResumoTopoMov();
+  h+='<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:12px;">'+
     '<div class="card" style="text-align:center;padding:10px 6px;"><div style="font-size:10px;color:var(--text-secondary);">LANÇAMENTOS</div><div style="font-size:18px;font-weight:900;">'+filtradas.length+'</div></div>'+
     '<div class="card" style="text-align:center;padding:10px 6px;"><div style="font-size:10px;color:var(--text-secondary);">ENTROU</div><div style="font-size:18px;font-weight:900;color:#16a34a;">+'+entrou+'</div></div>'+
     '<div class="card" style="text-align:center;padding:10px 6px;"><div style="font-size:10px;color:var(--text-secondary);">SAIU</div><div style="font-size:18px;font-weight:900;color:#dc2626;">'+saiu+'</div></div>'+
@@ -21415,6 +21477,12 @@ function estRenderMovLista(){
     const saiu=internas.filter(l=>l.pacotes<0).reduce((s,l)=>s-l.pacotes,0);
     const dn=estDataNum(d);
     const saldoFim = _estMovProd ? estSaldoInternoAte(_estMovProd,dn) : estSaldoTotalAte(dn);
+    const saldoCont = _estMovProd ? estSaldoContainerAte(_estMovProd,dn) : estSaldoContainerTotalAte(dn);
+    // tudo que é do contêiner: entrada de lote e migração. A migração gera
+    // dois lançamentos (sai do contêiner, entra na empresa) — mostramos só
+    // o lado da empresa para não aparecer em dobro.
+    const migsDia=doDia.filter(l=>
+      (l.tipo==='migracao' && l.local==='interno') || (l.local==='container' && l.tipo!=='migracao'));
     h+='<div style="margin:16px 0 7px;">'+
       '<div style="font-size:13px;font-weight:800;margin-bottom:5px;">'+(d===hojeStr?'Hoje':d)+
         (d===hojeStr?' <span style="font-size:11px;font-weight:500;color:var(--text-secondary);">'+d+'</span>':'')+'</div>'+
@@ -21425,23 +21493,45 @@ function estRenderMovLista(){
         '<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:9px;padding:7px 4px;text-align:center;">'+
           '<div style="font-size:9px;font-weight:800;color:#b91c1c;">SAIU</div>'+
           '<div style="font-size:16px;font-weight:900;color:#dc2626;">'+(saiu?'−'+saiu:'—')+'</div></div>'+
-        '<div style="background:var(--bg-page);border:1px solid var(--border);border-radius:9px;padding:7px 4px;text-align:center;">'+
-          '<div style="font-size:9px;font-weight:800;color:var(--text-secondary);">SALDO NO FIM</div>'+
-          '<div style="font-size:16px;font-weight:900;color:'+(saldoFim<0?'#dc2626':'var(--text-primary)')+';">'+saldoFim+'</div></div>'+
-      '</div></div>';
+        // saldo no fim: os DOIS estoques dividindo o mesmo espaço
+        '<div style="background:var(--bg-page);border:1px solid var(--border);border-radius:9px;padding:5px 4px;">'+
+          '<div style="font-size:9px;font-weight:800;color:var(--text-secondary);text-align:center;">SALDO NO FIM'+
+            (migsDia.length
+              ? ' <button onclick="estToggleMig(\''+escapeJsStr(d)+'\')" title="Ver o que entrou e saiu do contêiner" style="background:'+(_estMovMigAberta[d]?'var(--mc-azul,#2563eb)':'#fff')+';border:1px solid var(--mc-azul,#2563eb);color:'+(_estMovMigAberta[d]?'#fff':'var(--mc-azul,#2563eb)')+';border-radius:5px;padding:0 5px;font-size:10px;cursor:pointer;font-family:inherit;vertical-align:middle;">⇄</button>'
+              : '')+
+          '</div>'+
+          '<div style="display:flex;align-items:stretch;margin-top:2px;">'+
+            '<div style="flex:1;text-align:center;">'+
+              '<div style="font-size:8px;font-weight:700;color:var(--text-muted);">🏭 EMPRESA</div>'+
+              '<div style="font-size:15px;font-weight:900;color:'+(saldoFim<0?'#dc2626':'var(--text-primary)')+';line-height:1.15;">'+saldoFim+'</div></div>'+
+            '<div style="width:1px;background:var(--border);margin:2px 0;"></div>'+
+            '<div style="flex:1;text-align:center;">'+
+              '<div style="font-size:8px;font-weight:700;color:var(--text-muted);">🚛 CONTÊINER</div>'+
+              '<div style="font-size:15px;font-weight:900;color:#7c3aed;line-height:1.15;">'+saldoCont+'</div></div>'+
+          '</div></div>'+
+      '</div>'+
+      (migsDia.length && _estMovMigAberta[d]
+        ? '<div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:9px;padding:8px 10px;margin-top:6px;">'+
+            '<div style="font-size:11px;font-weight:800;color:#1e3a8a;margin-bottom:4px;">⇄ Movimentos do contêiner</div>'+
+            migsDia.map(m=>{
+              const txt = m.tipo==='migracao'
+                ? (m.pacotes>0?'🚛 → 🏭 saiu do contêiner para a empresa':'🏭 → 🚛 devolvido ao contêiner')
+                : '➕ 🚛 entrada no contêiner'+(m.motivo&&m.motivo.indexOf('resp.')>=0?(' · '+m.motivo.split('·').pop().trim()):'');
+              return '<div style="display:flex;justify-content:space-between;gap:8px;font-size:11px;color:var(--text-secondary);padding:4px 0;border-top:1px dashed #bfdbfe;">'+
+                '<span style="flex:1;min-width:0;">'+txt+(m.obs?' <span style="color:var(--text-muted);">· '+m.obs+'</span>':'')+'</span>'+
+                '<span style="font-weight:800;white-space:nowrap;color:'+(m.tipo==='migracao'?'var(--text-secondary)':'#16a34a')+';">'+(m.tipo==='migracao'?'':'+')+Math.abs(m.pacotes)+' pct</span></div>';
+            }).join('')+
+          '</div>'
+        : '')+
+    '</div>';
     // carregamento vira UM card por produto, com o total do dia.
     // Toca para abrir e ver as rotas. O resto continua linha a linha.
     const grupos={}, ordemItens=[];
-    // migração é transferência entre os dois estoques, não entrada nem saída
-    // de verdade. Ela conta no resumo acima, mas só vira linha quando a
-    // pessoa escolhe o filtro Migração — senão o histórico fica poluído.
-    const visiveis = _estMovFiltro==='migracao' ? doDia : doDia.filter(l=>l.tipo!=='migracao');
-    if(!visiveis.length){
-      h+='<div style="font-size:11px;color:var(--text-muted);padding:4px 2px 8px;">'+
-        (doDia.length===1?'1 migração entre os estoques':doDia.length+' migrações entre os estoques')+
-        ' · <button onclick="estSetMovFiltro(\'migracao\')" style="background:none;border:none;color:var(--mc-azul);font-size:11px;font-weight:700;cursor:pointer;padding:0;font-family:inherit;text-decoration:underline;">ver</button></div>';
-      return;
-    }
+    // a lista mostra só o que mexe no ESTOQUE DE DENTRO. Entrada de lote no
+    // contêiner e migração entre os dois ficam no ⇄ ao lado do saldo —
+    // misturados na mesma lista, davam a impressão de conta errada.
+    const visiveis = doDia.filter(l=>l.local==='interno' && l.tipo!=='migracao');
+    if(!visiveis.length && !migsDia.length) return;
     visiveis.forEach(l=>{
       if(l.tipo==='carregamento' || l.tipo==='porfora'){
         const k=d+'|'+l.tipo+'|'+l.codigo;
