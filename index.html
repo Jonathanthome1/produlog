@@ -9265,6 +9265,13 @@ function renderPlano(){
       <div class="card-label">Cole os dados (Código + Quantidade, um por linha)</div>
       <textarea id="plano-import-txt" placeholder="358&#9;200&#10;255&#9;100&#10;214&#9;100" 
         style="width:100%;height:120px;font-size:14px;padding:8px;border-radius:8px;border:1px solid var(--mc-roxo);background:var(--bg-primary);color:var(--text-primary);font-family:monospace;resize:vertical;"></textarea>
+      <label style="display:flex;align-items:flex-start;gap:8px;margin-top:8px;padding:9px;background:var(--bg-page);border:1px solid var(--border);border-radius:8px;cursor:pointer;">
+        <input type="checkbox" id="plano-import-somar" style="width:18px;height:18px;margin:0;flex:0 0 auto;cursor:pointer;">
+        <span style="flex:1;min-width:0;">
+          <span style="display:block;font-size:12px;font-weight:600;">Somar ao que já existe no dia</span>
+          <span style="display:block;font-size:11px;color:var(--text-secondary);margin-top:1px;line-height:1.4;">Sem marcar, o dia é substituído pelo que você colar. Marque para acrescentar só os produtos novos.</span>
+        </span>
+      </label>
       <div style="display:flex;gap:8px;margin-top:8px;">
         <button onclick="importarPlanoPaste()" style="flex:1;padding:10px;background:var(--mc-roxo);color:white;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;">Importar →</button>
         <button onclick="limparPlano()" style="padding:10px 14px;background:none;border:1px solid #ef9a9a;color:#c62828;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">🗑 Limpar semana</button>
@@ -9418,9 +9425,23 @@ function importarPlanoPaste(){
   });
 
   if(!planoAtual.itens)planoAtual.itens={};
-  planoAtual.itens[dia]=itens;
+  const somar=!!(document.getElementById('plano-import-somar')||{}).checked;
+  let atualizados=0, novos=0;
+  if(somar){
+    const atual=planoAtual.itens[dia]||[];
+    itens.forEach(it=>{
+      const ex=atual.find(x=>x.nome===it.nome);
+      if(ex){ ex.qtdPacotes=it.qtdPacotes; atualizados++; }   // já existia: fica com a quantidade nova
+      else { atual.push(it); novos++; }
+    });
+    planoAtual.itens[dia]=atual;
+  } else {
+    planoAtual.itens[dia]=itens;
+  }
 
-  let msg='✓ '+importados+' produto(s) importado(s) para '+dia+'-feira.';
+  let msg = somar
+    ? ('✓ '+novos+' novo(s) e '+atualizados+' atualizado(s) em '+dia+'-feira. O resto do dia foi mantido.')
+    : ('✓ '+importados+' produto(s) importado(s) para '+dia+'-feira.');
   if(naoEncontrados.length>0)msg+=' ⚠️ Código(s) não encontrado(s): '+naoEncontrados.join(', ');
   result.textContent=msg;
   result.style.color=naoEncontrados.length?'#856404':'#2e7d32';
@@ -9449,26 +9470,72 @@ function trocarSemanaPlano(semana){
   renderPlano();
 }
 
+let _apDia='', _apBusca='';
+
+/* Adicionar produto ao plano sem refazer o dia inteiro.
+   Antes era um prompt() encadeado (digite o nome, depois o número da
+   opção) — na prática era mais rápido colar tudo de novo do Excel. */
 function adicionarItemPlano(dia){
-  // Show product search modal
-  const prod=prompt('Digite o nome do produto (ou parte):');
-  if(!prod)return;
-  const q=prod.toLowerCase();
-  const found=PRODUTOS.filter(p=>p.nome.toLowerCase().includes(q));
-  if(!found.length){alert('Produto não encontrado.');return;}
-  let escolha;
-  if(found.length===1){
-    escolha=found[0];
-  } else {
-    const nomes=found.slice(0,10).map((p,i)=>`${i+1}. ${p.nome} (${p.qtdPct||1} un/pct)`).join('\n');
-    const idx=parseInt(prompt(`Encontrados:\n${nomes}\n\nDigite o número:`));
-    if(!idx||idx<1||idx>found.length)return;
-    escolha=found[idx-1];
-  }
-  if(!planoAtual.itens[dia])planoAtual.itens[dia]=[];
-  planoAtual.itens[dia].push({nome:escolha.nome,qtdPacotes:0});
-  renderPlano();
+  _apDia=dia; _apBusca='';
+  const ov=document.createElement('div');
+  ov.id='ap-modal';
+  ov.style.cssText='position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:3200;display:flex;align-items:center;justify-content:center;padding:16px;';
+  ov.innerHTML='<div style="background:#fff;border-radius:16px;max-width:480px;width:100%;max-height:88vh;display:flex;flex-direction:column;">'+
+    '<div style="padding:18px 18px 10px;">'+
+      '<div style="font-size:17px;font-weight:800;">➕ Adicionar produto</div>'+
+      '<div style="font-size:12px;color:var(--text-secondary);margin:2px 0 12px;">'+dia+' · os produtos que já estão no dia continuam como estão</div>'+
+      '<input type="text" id="ap-busca" oninput="apBuscar(this.value)" placeholder="Digite o nome ou o código" autocomplete="off" style="width:100%;padding:13px 14px;min-height:48px;border:1px solid var(--border-md,#d1d5db);border-radius:9px;font-size:16px;font-family:inherit;box-sizing:border-box;">'+
+    '</div>'+
+    '<div id="ap-lista" style="flex:1;overflow-y:auto;padding:0 18px;"></div>'+
+    '<div style="padding:12px 18px 18px;">'+
+      '<button class="btn btn-secondary" style="width:100%;" onclick="document.getElementById(\'ap-modal\').remove()">Fechar</button>'+
+    '</div></div>';
+  document.body.appendChild(ov);
+  apBuscar('');
+  setTimeout(()=>document.getElementById('ap-busca')?.focus(), 60);
 }
+window.adicionarItemPlano=adicionarItemPlano;
+
+function apBuscar(v){
+  _apBusca=v||'';
+  const box=document.getElementById('ap-lista'); if(!box) return;
+  const q=_normNome(_apBusca);
+  const jaTem=(planoAtual.itens[_apDia]||[]).map(it=>it.nome);
+  let lista=(typeof PRODUTOS!=='undefined'?PRODUTOS:[]).filter(p=>p&&p.nome);
+  if(q) lista=lista.filter(p=>_normNome(p.nome).includes(q)||String(p.cod||'').includes(_apBusca.trim()));
+  lista=lista.slice(0,40);
+  if(!lista.length){ box.innerHTML='<div style="font-size:13px;color:var(--text-secondary);padding:14px 0;">Nenhum produto encontrado.</div>'; return; }
+  box.innerHTML=lista.map(p=>{
+    const dentro=jaTem.includes(p.nome);
+    return '<button onclick="apAdicionar(\''+escapeJsStr(p.nome)+'\')" '+(dentro?'disabled ':'')+
+      'style="display:block;width:100%;text-align:left;background:'+(dentro?'var(--bg-page)':'#fff')+';border:1px solid var(--border);border-radius:9px;padding:11px 12px;margin-bottom:6px;cursor:'+(dentro?'default':'pointer')+';font-family:inherit;opacity:'+(dentro?'.55':'1')+';">'+
+      '<div style="font-size:14px;font-weight:700;">'+p.nome+'</div>'+
+      '<div style="font-size:11px;color:var(--text-secondary);margin-top:2px;">cód '+(p.cod||'—')+' · '+(p.qtdPct||1)+' un/pct'+
+        (dentro?' · <strong style="color:var(--mc-azul);">já está neste dia</strong>':'')+'</div></button>';
+  }).join('');
+}
+window.apBuscar=apBuscar;
+
+function apAdicionar(nome){
+  const p=(PRODUTOS||[]).find(x=>x.nome===nome); if(!p) return;
+  if(!planoAtual.itens[_apDia]) planoAtual.itens[_apDia]=[];
+  if(planoAtual.itens[_apDia].some(it=>it.nome===nome)){ alert('Este produto já está no dia.'); return; }
+  planoAtual.itens[_apDia].push({nome:p.nome, qtdPacotes:0});
+  document.getElementById('ap-modal')?.remove();
+  renderPlano();
+  // abre o dia e já deixa o campo de quantidade pronto para digitar
+  const diaId='plano-dia-'+_apDia.replace(/[^a-z]/gi,'');
+  setTimeout(()=>{
+    const alvo=document.getElementById(diaId);
+    if(alvo && alvo.style.display==='none' && typeof togglePlanoDia==='function') togglePlanoDia(diaId);
+    setTimeout(()=>{
+      const inputs=document.querySelectorAll('#'+diaId+' input[type=number]');
+      const ultimo=inputs[inputs.length-1];
+      if(ultimo){ ultimo.focus(); ultimo.select(); ultimo.scrollIntoView({behavior:'smooth',block:'center'}); }
+    },140);
+  },80);
+}
+window.apAdicionar=apAdicionar;
 
 function atualizarQtdPlano(dia,idx,val){
   if(planoAtual.itens[dia]&&planoAtual.itens[dia][idx]){
