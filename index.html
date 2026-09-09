@@ -2567,7 +2567,9 @@
         <div class="mc-page-title" id="container-item-title">Item</div>
         <div class="mc-page-sub" id="container-item-sub"></div>
       </div>
-      
+      <div class="mc-header-actions">
+        <button class="mc-act-btn-secondary" onclick="contAbrirHistorico()" title="Histórico do estoque por dia">📊 Histórico</button>
+      </div>
     </div>
     <div class="content" id="container-item-content"></div>
   </div>
@@ -10052,6 +10054,86 @@ async function _contExcluirItem(i){
   await _contSalvarItens(CONTAINER_ITENS.filter((x,j)=>j!==i));
 }
 window._contExcluirItem=_contExcluirItem;
+
+/* ══════════════════════════════════════════════════════════════════
+   HISTÓRICO DIÁRIO DO CONTÊINER DE MATÉRIA-PRIMA (setor do Rafael)
+   Reconstrói dia a dia o estoque de um item a partir do que já existe:
+   as entradas são os lotes (data + qtdEntrada) e as saídas são os
+   movimentos. Mostra saldo do início, o que entrou, o que saiu e como
+   o dia terminou.
+   ══════════════════════════════════════════════════════════════════ */
+function contHistoricoDiario(item){
+  const entradas={}, saidas={};
+  (containerLotes||[]).forEach(l=>{
+    if(l.item!==item) return;
+    const d=l.data; if(!d) return;
+    entradas[d]=(entradas[d]||0)+(parseFloat(l.qtdEntrada)||0);
+  });
+  (containerMovs||[]).forEach(m=>{
+    if(m.item!==item || m.tipo!=='saida') return;
+    const d=m.data; if(!d) return;
+    saidas[d]=(saidas[d]||0)+(parseFloat(m.qtd)||0);
+  });
+  const dias=[...new Set([...Object.keys(entradas),...Object.keys(saidas)])]
+    .filter(Boolean)
+    .sort((a,b)=>estDataNum(a)-estDataNum(b));      // do mais antigo para o mais novo
+  let saldo=0;
+  const linhas=dias.map(d=>{
+    const ent=entradas[d]||0, sai=saidas[d]||0;
+    const inicio=saldo;
+    saldo=inicio+ent-sai;
+    return {data:d, dataNum:estDataNum(d), inicio, entrada:ent, saida:sai, fim:saldo};
+  });
+  return linhas.reverse();                          // mais recente primeiro
+}
+
+function _contKg(v){
+  const n=Number(v)||0;
+  return (Math.round(n*1000)/1000).toString().replace('.',',');
+}
+
+function contAbrirHistorico(){
+  const item=containerItemAtivo;
+  if(!item){ alert('Abra um item primeiro.'); return; }
+  const linhas=contHistoricoDiario(item);
+  const atual=(containerLotes||[]).filter(l=>l.item===item).reduce((s,l)=>s+(parseFloat(l.saldo)||0),0);
+
+  const ov=document.createElement('div');
+  ov.id='cont-hist-modal';
+  ov.style.cssText='position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:3200;display:flex;align-items:center;justify-content:center;padding:16px;';
+  ov.innerHTML='<div style="background:#fff;border-radius:16px;max-width:560px;width:100%;max-height:90vh;display:flex;flex-direction:column;">'+
+    '<div style="padding:16px 18px 10px;border-bottom:1px solid var(--border);">'+
+      '<div style="font-size:17px;font-weight:800;">📊 Histórico por dia</div>'+
+      '<div style="font-size:13px;color:var(--text-secondary);margin-top:2px;">'+item+'</div>'+
+      '<div style="font-size:12px;color:var(--text-secondary);margin-top:5px;">Estoque hoje: <strong style="color:#059669;">'+_contKg(atual)+' kg</strong></div>'+
+    '</div>'+
+    '<div style="flex:1;overflow-y:auto;padding:10px 14px;">'+
+      (linhas.length
+        ? '<table style="width:100%;border-collapse:collapse;font-size:13px;">'+
+          '<thead><tr style="font-size:9px;color:var(--text-muted);font-weight:700;text-align:right;">'+
+            '<th style="text-align:left;padding:5px 4px;">DIA</th>'+
+            '<th style="padding:5px 4px;">INÍCIO</th>'+
+            '<th style="padding:5px 4px;">ENTROU</th>'+
+            '<th style="padding:5px 4px;">SAIU</th>'+
+            '<th style="padding:5px 4px;">FINAL</th></tr></thead><tbody>'+
+          linhas.map(l=>'<tr style="border-top:1px solid var(--border);text-align:right;">'+
+            '<td style="text-align:left;padding:9px 4px;font-weight:700;">'+l.data.slice(0,5)+
+              '<div style="font-size:10px;color:var(--text-muted);font-weight:400;">'+l.data.slice(6)+'</div></td>'+
+            '<td style="padding:9px 4px;color:var(--text-secondary);">'+_contKg(l.inicio)+'</td>'+
+            '<td style="padding:9px 4px;color:'+(l.entrada?'#16a34a':'var(--text-muted)')+';font-weight:'+(l.entrada?'800':'400')+';">'+(l.entrada?'+'+_contKg(l.entrada):'—')+'</td>'+
+            '<td style="padding:9px 4px;color:'+(l.saida?'#dc2626':'var(--text-muted)')+';font-weight:'+(l.saida?'800':'400')+';">'+(l.saida?'−'+_contKg(l.saida):'—')+'</td>'+
+            '<td style="padding:9px 4px;font-weight:900;color:'+(l.fim<0?'#dc2626':'var(--text-primary)')+';">'+_contKg(l.fim)+'</td>'+
+          '</tr>').join('')+
+          '</tbody></table>'+
+          '<div style="font-size:10px;color:var(--text-muted);margin-top:10px;line-height:1.5;">O saldo de cada dia começa onde o anterior terminou. Entradas vêm dos lotes cadastrados e saídas dos lançamentos do dia.</div>'
+        : '<div style="padding:24px;text-align:center;color:var(--text-secondary);font-size:13px;">Ainda não há entradas nem saídas registradas para este item.</div>')+
+    '</div>'+
+    '<div style="padding:12px 18px 16px;border-top:1px solid var(--border);">'+
+      '<button class="btn btn-secondary" style="width:100%;" onclick="document.getElementById(\'cont-hist-modal\').remove()">Fechar</button>'+
+    '</div></div>';
+  document.body.appendChild(ov);
+}
+window.contAbrirHistorico=contAbrirHistorico;
 
 function abrirContainerItem(item){
   containerItemAtivo=item;
