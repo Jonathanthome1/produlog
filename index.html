@@ -18971,6 +18971,16 @@ let _libData='';
 function libSetData(v){ _libData=v||''; libRender(); }
 window.libSetData=libSetData;
 
+// o onchange do HTML roda fora do módulo, então a conversão de data
+// precisa acontecer aqui dentro — era isso que travava a busca por dia
+function libSetDataISO(iso){
+  if(!iso){ return; }
+  const m=String(iso).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if(!m) return;
+  libSetData(m[3]+'/'+m[2]+'/'+m[1]);
+}
+window.libSetDataISO=libSetDataISO;
+
 // quem está logado, para ficar registrado quem liberou
 function _libSetor(){
   const s=window.setorAtual||'';
@@ -19023,7 +19033,7 @@ function libRender(){
 
   let h='<div class="card" style="margin-bottom:12px;">'+
     '<div style="font-size:12px;font-weight:700;color:var(--text-secondary);margin-bottom:6px;">DIA</div>'+
-    '<input type="date" value="'+(_libData.split('/').reverse().join('-'))+'" onchange="libSetData(estISOparaBR(this.value))" style="width:100%;padding:12px;min-height:48px;border:1px solid var(--border-md,#d1d5db);border-radius:9px;font-size:16px;box-sizing:border-box;">';
+    '<input type="date" value="'+(_libData.split('/').reverse().join('-'))+'" onchange="libSetDataISO(this.value)" style="width:100%;padding:12px;min-height:48px;border:1px solid var(--border-md,#d1d5db);border-radius:9px;font-size:16px;box-sizing:border-box;">';
   if(diasPend.length){
     h+='<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:9px;">'+
       diasPend.slice(0,6).map(([d,n])=>'<button onclick="libSetData(\''+d+'\')" style="background:'+(d===_libData?'var(--mc-laranja,#d97706)':'#fff')+';color:'+(d===_libData?'#fff':'var(--text-secondary)')+';border:1px solid '+(d===_libData?'var(--mc-laranja,#d97706)':'var(--border)')+';border-radius:99px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">'+d.slice(0,5)+' · '+n+'</button>').join('')+
@@ -25919,6 +25929,7 @@ function renderPlanejamento(){
     });
   });
 }
+window.renderPlanejamento=renderPlanejamento;   // usada em onchange/oninput do HTML
 
 // ============================================================
 // IMPORTAÇÃO DE VENDAS
