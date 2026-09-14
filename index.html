@@ -17349,7 +17349,21 @@ async function laAprovar(id){
     if(!confirm(msg)) return;
   }
   const instr='AJUSTE DE ENTRADA no ERP:\n• Código: '+(s.cod||'?')+'\n• Produto: '+s.produto+'\n• Quantidade: '+qtdLiberar+' pct\n• Origem: '+(alvoDia||'?')+' '+laTipoLabel(alvoTipo||'salgado');
-  if(!confirm('Aprovar e registrar ajuste em aberto?\n\n'+instr+'\n\n(Você lançará no ERP manualmente por enquanto.)')) return;
+  const auto=eligoPronto();
+  if(!confirm('Aprovar'+(auto?' e LANÇAR A ENTRADA no ELIGO?':' e registrar ajuste em aberto?')+'\n\n'+instr+
+      (auto?'\n\nA entrada vai direto para o ERP agora.':'\n\n(Você lançará no ERP manualmente.)'))) return;
+
+  // lança a ENTRADA no ELIGO ANTES de gravar: não registramos algo que o ERP recusou
+  let eligoId='', eligoErro='';
+  if(auto){
+    const r=await eligoLancar(s.cod||'', qtdLiberar, 'entrada', laDataHoje(),
+      'Liberacao antecipada ProduLog - '+(s.produto||'')+' - producao '+(alvoDia||'s/dia'));
+    if(r.cancelado) return;
+    if(!r.ok){
+      if(!confirm('⚠️ O ELIGO não aceitou o lançamento:\n\n'+r.erro+'\n\nQuer aprovar mesmo assim e lançar à mão depois?')) return;
+      eligoErro=r.erro;
+    } else { eligoId=r.id||'sem-id'; }
+  }
   try{
     await updateDoc(doc(db,'solicitacoes',id),{ status:'aprovada', qtdLiberada:qtdLiberar, decididoEm:agora(), decididoPor:_demAutor() });
     await addDoc(collection(db,'ajustesAbertos'),{
@@ -17357,7 +17371,9 @@ async function laAprovar(id){
       qtdSolicitada:s.qtd||0, acimaEmbalado:(qtdLiberar>c.embAntecip),
       data:alvoDia||'', tipo:alvoTipo||'salgado',
       solicitacaoId:id, solicitante:s.autor||'',
-      status:'aberto', criadoEm:agora(), criadoPor:_demAutor(), timestamp:Date.now()
+      status:'aberto', criadoEm:agora(), criadoPor:_demAutor(), timestamp:Date.now(),
+      // rastro do que foi para o ERP — impede lançar a mesma entrada duas vezes
+      eligoEntradaId:eligoId, eligoEntradaEm:eligoId?agora():'', eligoEntradaErro:eligoErro
     });
     alert(eligoId
       ? ('✓ Aprovado e ENTRADA lançada no ELIGO.\n\nLançamento nº '+eligoId+'\n\nQuando você marcar a produção de '+(alvoDia||'')+' como lançada no ERP, o app vai pedir a SAÍDA para fechar o ajuste.')
