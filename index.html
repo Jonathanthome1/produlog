@@ -16873,6 +16873,137 @@ window.renderCtrlProd=renderCtrlProd;
    ══════════════════════════════════════════════════════════════════ */
 
 let laDiasLancados = {};   // chave "DATA|tipo" -> doc
+/* ══════════════════════════════════════════════════════════════════
+   INTEGRAÇÃO COM O ELIGO
+   O app não fala direto com o ERP: o token não pode ficar num
+   repositório público. Quem conversa é a "ponte" (Cloudflare Worker),
+   que guarda o token e exige uma senha digitada na hora.
+   Config em: configuracoes/eligo
+   ══════════════════════════════════════════════════════════════════ */
+let eligoCfg={url:'', ligado:false};
+
+onSnapshot(doc(db,'configuracoes','eligo'), snap=>{
+  try{
+    const d=snap.data()||{};
+    eligoCfg={url:d.url||'', ligado:d.ligado===true};
+    const t=document.querySelector('.screen.active')?.id;
+    if(t==='s-la-ajustes'&&typeof renderLaAjustes==='function') renderLaAjustes();
+  }catch(e){ console.error('config eligo',e); }
+});
+
+function eligoPronto(){ return !!(eligoCfg.ligado && eligoCfg.url); }
+
+// dd/mm/aaaa → aaaa-mm-dd (formato que o ELIGO exige)
+function eligoData(br){
+  const m=String(br||'').match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  if(m) return m[3]+'-'+m[2]+'-'+m[1];
+  const d=new Date();
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+
+/* Envia ajustes para o ERP através da ponte.
+   itens: [{ref, produto, quantidade, tipo:'entrada'|'saida', data_movimento, observacoes}]
+   Devolve {ok, resultados:[...]} — cada item com seu próprio sucesso ou erro. */
+async function eligoEnviar(itens, senha, simular){
+  if(!eligoPronto()) return {ok:false, erro:'Integração com o ELIGO não está configurada.'};
+  if(typeof mcConexaoOk==='function' && !mcConexaoOk()) return {ok:false, erro:'Sem internet.'};
+  try{
+    const resp=await fetch(eligoCfg.url,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({senha, simular:!!simular, itens})
+    });
+    const dados=await resp.json();
+    if(!resp.ok || dados.ok===false) return {ok:false, erro:dados.erro||('HTTP '+resp.status)};
+    return dados;
+  }catch(e){
+    return {ok:false, erro:'Não consegui falar com a ponte: '+e.message};
+  }
+}
+
+// pede a senha uma vez e guarda só enquanto o app estiver aberto
+let _eligoSenha='';
+function eligoSenha(){
+  if(_eligoSenha) return _eligoSenha;
+  const s=prompt('🔒 Senha de envio ao ELIGO:');
+  if(s===null) return null;
+  _eligoSenha=String(s).trim();
+  return _eligoSenha;
+}
+function eligoEsquecerSenha(){ _eligoSenha=''; }
+window.eligoEsquecerSenha=eligoEsquecerSenha;
+
+/* Envia UM ajuste e devolve um resumo pronto para mostrar.
+   Usado tanto na entrada (aprovar) quanto na saída (estorno). */
+async function eligoLancar(produto, quantidade, tipo, dataBR, observacoes){
+  const senha=eligoSenha();
+  if(senha===null) return {ok:false, cancelado:true};
+  const r=await eligoEnviar([{
+    ref:'1', produto:String(produto||''), quantidade:Math.abs(Number(quantidade)||0),
+    tipo, data_movimento:eligoData(dataBR), observacoes:String(observacoes||'').slice(0,250)
+  }], senha, false);
+  if(!r.ok){
+    if(/senha/i.test(r.erro||'')) _eligoSenha='';   // senha errada: pede de novo na próxima
+    return {ok:false, erro:r.erro};
+  }
+  const item=(r.resultados||[])[0]||{};
+  if(!item.ok) return {ok:false, erro:item.erro||'O ELIGO recusou o lançamento.'};
+  return {ok:true, id:(item.resposta&&(item.resposta.id||(item.resposta.data&&item.resposta.data.id)))||'', enviado:item.enviado};
+}
+
+/* ── tela de configuração (só admin) ───────────────────────────── */
+function eligoAbrirConfig(){
+  if(!(window.adminMode||window.setorAtual==='admin')){ alert('Só o admin configura a integração.'); return; }
+  const ov=document.createElement('div');
+  ov.id='eligo-cfg-modal';
+  ov.style.cssText='position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:3200;display:flex;align-items:center;justify-content:center;padding:16px;';
+  ov.innerHTML='<div style="background:#fff;border-radius:16px;max-width:480px;width:100%;padding:18px;">'+
+    '<div style="font-size:17px;font-weight:800;">🔗 Integração com o ELIGO</div>'+
+    '<div style="font-size:12px;color:var(--text-secondary);margin:4px 0 12px;line-height:1.5;">Endereço da ponte (Cloudflare Worker). O token do ERP fica lá, nunca aqui.</div>'+
+    '<label style="font-size:12px;font-weight:600;color:var(--text-secondary);">Endereço da ponte</label>'+
+    '<input type="text" id="eligo-url" value="'+String(eligoCfg.url).replace(/"/g,'&quot;')+'" placeholder="https://ponte-eligo.xxx.workers.dev" autocomplete="off" style="width:100%;padding:12px;min-height:46px;border:1px solid var(--border-md,#d1d5db);border-radius:9px;font-size:15px;font-family:inherit;box-sizing:border-box;margin:4px 0 12px;">'+
+    '<label for="eligo-lig" style="display:flex;align-items:flex-start;gap:9px;padding:10px;background:var(--bg-page);border:1px solid var(--border);border-radius:9px;cursor:pointer;margin-bottom:12px;">'+
+      '<input type="checkbox" id="eligo-lig"'+(eligoCfg.ligado?' checked':'')+' style="width:20px;height:20px;margin:0;flex:0 0 auto;cursor:pointer;">'+
+      '<span style="flex:1;"><span style="display:block;font-size:13px;font-weight:600;">Lançar automaticamente no ELIGO</span>'+
+      '<span style="display:block;font-size:11px;color:var(--text-secondary);margin-top:2px;line-height:1.4;">Desligado, o app continua funcionando e mostra a instrução para lançar à mão.</span></span></label>'+
+    '<div style="display:flex;gap:8px;">'+
+      '<button class="btn btn-secondary" style="flex:1;" onclick="document.getElementById(\'eligo-cfg-modal\').remove()">Cancelar</button>'+
+      '<button class="btn btn-primary" style="flex:1;" onclick="eligoSalvarConfig()">Salvar</button></div>'+
+    '<button onclick="eligoTestar()" style="width:100%;margin-top:9px;background:none;border:1px solid var(--border);color:var(--text-secondary);border-radius:9px;padding:10px;font-size:12px;cursor:pointer;font-family:inherit;">🧪 Testar a ponte (sem lançar nada)</button>'+
+  '</div>';
+  document.body.appendChild(ov);
+}
+window.eligoAbrirConfig=eligoAbrirConfig;
+
+async function eligoSalvarConfig(){
+  const url=(document.getElementById('eligo-url').value||'').trim().replace(/\/+$/,'');
+  const ligado=!!document.getElementById('eligo-lig').checked;
+  if(ligado && !/^https:\/\//.test(url)){ alert('Informe o endereço da ponte (começa com https://).'); return; }
+  try{
+    await setDoc(doc(db,'configuracoes','eligo'),{url, ligado, atualizadoEm:agora(), autor:_demAutor()},{merge:true});
+    document.getElementById('eligo-cfg-modal')?.remove();
+    alert('Configuração salva.');
+  }catch(e){ alert('Erro: '+e.message); }
+}
+window.eligoSalvarConfig=eligoSalvarConfig;
+
+async function eligoTestar(){
+  const url=(document.getElementById('eligo-url').value||'').trim().replace(/\/+$/,'');
+  if(!/^https:\/\//.test(url)){ alert('Informe o endereço da ponte primeiro.'); return; }
+  const senha=prompt('🔒 Senha de envio ao ELIGO:');
+  if(senha===null) return;
+  try{
+    const resp=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({senha:String(senha).trim(), simular:true, itens:[
+        {ref:'teste', produto:'119', quantidade:1, tipo:'entrada',
+         data_movimento:eligoData(hoje()), observacoes:'Teste de conexao ProduLog'}]})});
+    const d=await resp.json();
+    if(d.ok) alert('✓ A ponte respondeu certo.\n\nNada foi lançado no ELIGO — era só teste.');
+    else alert('⚠️ A ponte respondeu: '+(d.erro||'erro desconhecido'));
+  }catch(e){ alert('Não consegui falar com a ponte: '+e.message); }
+}
+window.eligoTestar=eligoTestar;
+
 let laSolicitacoes = [];   // solicitações do escritório
 let laAjustes = [];        // ajustes de entrada (Excel substituto)
 
@@ -16954,6 +17085,58 @@ function _laBadge(){
 }
 
 /* ============ TELA 1: DIAS LANÇADOS (admin) ============ */
+/* Fecha os ajustes de um dia que acabou de ser lançado no ERP.
+   A produção entrou no ELIGO pelo caminho normal, então a entrada
+   antecipada que fizemos precisa sair — senão o estoque conta duas vezes. */
+async function laFecharPares(abertos, data, tipo){
+  const auto=eligoPronto();
+  const total=abertos.reduce((t,a)=>t+(parseInt(a.qtd)||0),0);
+  const linhas=abertos.map(a=>'• '+a.produto+' — '+a.qtd+' pct'+(a.cod?(' (cód '+a.cod+')'):'')).join('\n');
+
+  if(!auto){
+    alert('⚠️ Dia lançado no ERP!\n\nEste dia tem '+abertos.length+' ajuste(s) de ENTRADA em aberto que agora precisam de SAÍDA:\n\n'+
+      linhas+'\n\nTotal: '+total+' pct\n\nVá em "↩ Ajustes" e use a instrução de SAÍDA.');
+    return;
+  }
+
+  if(!confirm('⚠️ Dia lançado no ERP — precisa estornar\n\nA produção de '+data+' entrou no ELIGO. Os ajustes de entrada que adiantamos precisam sair, senão o estoque conta em dobro:\n\n'+
+      linhas+'\n\nTotal: '+total+' pct\n\nLançar a SAÍDA no ELIGO agora?')){
+    alert('Tudo bem. Os ajustes seguem em aberto — você pode fechar depois em "↩ Ajustes".');
+    return;
+  }
+
+  const senha=eligoSenha();
+  if(senha===null) return;
+
+  // só entra na lista quem teve a ENTRADA de fato lançada no ERP
+  const paraEnviar=abertos.filter(a=>a.eligoEntradaId);
+  const semEntrada=abertos.filter(a=>!a.eligoEntradaId);
+
+  let okN=0, falhaN=0, msg='';
+  for(const a of paraEnviar){
+    const r=await eligoLancar(a.cod||'', a.qtd, 'saida', laDataHoje(),
+      'Estorno liberacao antecipada ProduLog - '+(a.produto||'')+' - producao '+data+' lancada');
+    if(r.ok){
+      okN++;
+      try{
+        await updateDoc(doc(db,'ajustesAbertos',a.firestoreId),{
+          status:'fechado', fechadoEm:agora(), fechadoPor:_demAutor(),
+          eligoSaidaId:r.id||'sem-id', eligoSaidaEm:agora()
+        });
+      }catch(e){ msg+='\n• '+a.produto+': saiu no ERP mas não consegui marcar como fechado ('+e.message+')'; }
+    } else {
+      falhaN++;
+      msg+='\n• '+a.produto+': '+r.erro;
+    }
+  }
+
+  let txt=(okN?('✓ '+okN+' saída(s) lançada(s) no ELIGO e ajuste(s) fechado(s).'):'');
+  if(falhaN) txt+='\n\n⚠️ '+falhaN+' falharam:'+msg+'\n\nEles seguem em aberto para você tentar de novo.';
+  if(semEntrada.length) txt+='\n\nℹ️ '+semEntrada.length+' ajuste(s) não tinham entrada lançada no ERP pelo app — feche à mão em "↩ Ajustes".';
+  alert(txt||'Nada a estornar.');
+}
+window.laFecharPares=laFecharPares;
+
 async function laToggleDia(data, tipo){
   const id=laDiaKey(data,tipo);
   try{
@@ -16964,12 +17147,10 @@ async function laToggleDia(data, tipo){
       await deleteDoc(doc(db,'diasLancados',id));
     } else {
       await setDoc(doc(db,'diasLancados',id), { data, tipo, lancadoEm:agora(), timestamp:Date.now() });
-      // ao marcar como lançado: avisa ajustes em aberto deste dia (fechar par = saída)
+      // ao marcar como lançado: a produção entrou no ERP, então os ajustes de
+      // entrada daquele dia precisam ser estornados com uma SAÍDA igual
       const abertos=laAjustes.filter(a=>(a.status||'aberto')==='aberto' && a.data===data && a.tipo===tipo);
-      if(abertos.length){
-        const linhas=abertos.map(a=>'• '+a.produto+' — '+a.qtd+' pct (cód '+(a.cod||'?')+')').join('\n');
-        alert('⚠️ ATENÇÃO — dia lançado!\n\nEste dia tem '+abertos.length+' ajuste(s) de ENTRADA em aberto que agora precisam de AJUSTE DE SAÍDA no ERP para não duplicar estoque:\n\n'+linhas+'\n\nVá em "Ajustes em aberto" para fechar cada um.');
-      }
+      if(abertos.length) await laFecharPares(abertos, data, tipo);
     }
   }catch(e){ alert('Erro: '+e.message); }
 }
@@ -17091,7 +17272,12 @@ function laNavbar(ativa){
   return '<div style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap;">'+abas.map(a=>{
     const on=a[0]===ativa;
     return '<button onclick="goTo(\''+a[0]+'\');'+a[1]+'()" style="flex:1;min-width:80px;font-size:12px;font-weight:700;padding:9px 6px;border-radius:8px;cursor:pointer;border:1px solid '+(on?'#dc2626':'var(--border,#d1d5db)')+';background:'+(on?'#fee2e2':'#fff')+';color:'+(on?'#dc2626':'var(--text-secondary,#6b7280)')+';">'+a[2]+'</button>';
-  }).join('')+'</div>';
+  }).join('')+
+  // botão de configuração da integração (só admin)
+  ((window.adminMode||window.setorAtual==='admin')
+    ? '<button onclick="eligoAbrirConfig()" title="Integração com o ELIGO" style="flex:0 0 auto;background:'+(eligoPronto()?'#f0fdf4':'#fff')+';border:1px solid '+(eligoPronto()?'#a7f3d0':'var(--border)')+';color:'+(eligoPronto()?'#15803d':'var(--text-secondary)')+';border-radius:8px;padding:9px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">'+(eligoPronto()?'🔗 ELIGO ✓':'🔗 ELIGO')+'</button>'
+    : '')+
+  '</div>';
 }
 function renderLaDecisao(){
   const el=document.getElementById('la-decisao-content'); if(!el) return;
@@ -17173,7 +17359,9 @@ async function laAprovar(id){
       solicitacaoId:id, solicitante:s.autor||'',
       status:'aberto', criadoEm:agora(), criadoPor:_demAutor(), timestamp:Date.now()
     });
-    alert('✓ Aprovado e registrado em "Ajustes em aberto".\n\nVá em "↩ Ajustes" e use o botão "📋 Instrução ENTRADA" para copiar o passo a passo pronto e colar na extensão do Claude no ELIGO.');
+    alert(eligoId
+      ? ('✓ Aprovado e ENTRADA lançada no ELIGO.\n\nLançamento nº '+eligoId+'\n\nQuando você marcar a produção de '+(alvoDia||'')+' como lançada no ERP, o app vai pedir a SAÍDA para fechar o ajuste.')
+      : '✓ Aprovado e registrado em "Ajustes em aberto".\n\nUse o botão "📋 Instrução ENTRADA" para lançar à mão.');
   }catch(e){ alert('Erro: '+e.message); }
 }
 window.laAprovar=laAprovar;
