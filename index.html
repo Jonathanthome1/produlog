@@ -17074,7 +17074,27 @@ function laCalcular(cod, nome){
     if(porDia[k].lancado){ jaNoErp+=embalada; }
     else { embAntecip+=embalada; soProduzido+=naoEmb; porDia[k].emb+=embalada; porDia[k].naoEmb+=naoEmb; }
   });
-  return { embAntecip, soProduzido, jaNoErp, porDia:Object.values(porDia) };
+  // DESCONTA o que já foi liberado e ainda não foi estornado.
+  // Sem isso, duas solicitações do mesmo produto mostravam o saldo cheio
+  // nas duas e dava para liberar o dobro do que existe.
+  const jaLiberado=(laAjustes||[]).filter(a=>{
+    if((a.status||'aberto')!=='aberto') return false;   // fechado = dia já lançado, não ocupa mais
+    if(cod && String(a.cod||'')!=='') return String(a.cod)===String(cod);
+    return _normNome(a.produto||'')===_normNome(nome||'');
+  }).reduce((t,a)=>t+(parseInt(a.qtd)||0),0);
+
+  const embalado=embAntecip;                       // total embalado nos dias ainda não lançados
+  embAntecip=Math.max(0, embalado-jaLiberado);     // o que sobra de verdade para liberar
+
+  // desconta também dia a dia, para a lista por dia não enganar
+  let resto=jaLiberado;
+  Object.values(porDia).forEach(d=>{
+    if(resto<=0 || d.lancado) return;
+    const tira=Math.min(d.emb, resto);
+    d.liberado=tira; d.emb-=tira; resto-=tira;
+  });
+
+  return { embAntecip, embalado, jaLiberado, soProduzido, jaNoErp, porDia:Object.values(porDia) };
 }
 
 function _laBadge(){
@@ -17216,28 +17236,142 @@ function _laProdutosUnicos(){
   });
   return Object.values(m).sort((a,b)=>String(a.nome).localeCompare(String(b.nome)));
 }
+let _laBuscaProd='', _laProdSel='', _laFiltroSt='todas', _laFiltroPer='7';
+
+// digitar não redesenha a tela toda: só a lista de sugestões.
+// (o campo seria recriado a cada letra e o cursor se perderia)
+function laBuscarProd(v){
+  _laBuscaProd=v||'';
+  _laProdSel='';
+  laRenderSugProd();
+}
+window.laBuscarProd=laBuscarProd;
+
+function laRenderSugProd(){
+  const box=document.getElementById('la-sug-prod'); if(!box) return;
+  const q=_normNome(_laBuscaProd);
+  if(!q || q.length<2){ box.innerHTML=''; return; }
+  const achados=_laProdutosUnicos()
+    .filter(p=>_normNome(p.nome).includes(q) || String(p.cod||'').includes(_laBuscaProd.trim()))
+    .slice(0,8);
+  if(!achados.length){ box.innerHTML='<div style="font-size:12px;color:var(--text-secondary);margin-top:6px;">Nenhum produto encontrado.</div>'; return; }
+  box.innerHTML=achados.map(p=>{
+    const c=laCalcular(p.cod,p.nome);
+    return '<button type="button" onclick="laEscolherProd(\''+escapeJsStr(p.cod||'')+'\',\''+escapeJsStr(p.nome)+'\')" '+
+      'style="display:block;width:100%;text-align:left;background:#fff;border:1px solid var(--border);border-radius:9px;padding:10px 12px;margin-top:6px;cursor:pointer;font-family:inherit;">'+
+      '<div style="font-size:14px;font-weight:700;">'+p.nome+'</div>'+
+      '<div style="font-size:11px;color:var(--text-secondary);margin-top:2px;">'+(p.cod?('cód '+p.cod+' · '):'')+
+        '<strong style="color:'+(c.embAntecip>0?'#16a34a':'#dc2626')+';">'+c.embAntecip+' pct disponível</strong>'+
+        (c.jaLiberado>0?(' · '+c.jaLiberado+' já liberado'):'')+'</div></button>';
+  }).join('');
+}
+window.laRenderSugProd=laRenderSugProd;
+
+function laEscolherProd(cod,nome){
+  _laProdSel=(cod||'')+'|'+nome;
+  _laBuscaProd=nome;
+  const inp=document.getElementById('la-sol-prod-busca');
+  if(inp) inp.value=nome;
+  const box=document.getElementById('la-sug-prod'); if(box) box.innerHTML='';
+  const info=document.getElementById('la-prod-escolhido');
+  if(info){
+    const c=laCalcular(cod,nome);
+    info.innerHTML='<div style="background:rgba(22,163,74,.08);border:1px solid #a7f3d0;border-radius:9px;padding:9px 11px;margin-top:8px;">'+
+      '<div style="font-size:13px;font-weight:700;">✓ '+nome+'</div>'+
+      '<div style="font-size:11px;color:var(--text-secondary);margin-top:2px;">'+
+        c.embAntecip+' pct disponível'+(c.jaLiberado>0?(' (embalado '+c.embalado+' − '+c.jaLiberado+' já liberado)'):'')+'</div></div>';
+  }
+  const q=document.getElementById('la-sol-qtd'); if(q) q.focus();
+}
+window.laEscolherProd=laEscolherProd;
+
+function laSetFiltroSt(v){ _laFiltroSt=v; renderLaSolicitar(); }
+function laSetFiltroPer(v){ _laFiltroPer=v; renderLaSolicitar(); }
+window.laSetFiltroSt=laSetFiltroSt;
+window.laSetFiltroPer=laSetFiltroPer;
+
+function _laDentroPeriodo(s){
+  if(_laFiltroPer==='tudo') return true;
+  const dias={hoje:0,'7':6,'30':29}[_laFiltroPer];
+  if(dias===undefined) return true;
+  const d=new Date(); d.setHours(0,0,0,0); d.setDate(d.getDate()-dias);
+  const limite=d.getTime();
+  return (s.timestamp||0) >= limite;
+}
+
 function renderLaSolicitar(){
   const el=document.getElementById('la-solicitar-content'); if(!el) return;
-  const prods=_laProdutosUnicos();
-  const datas=sortDatas([...new Set((registros||[]).map(r=>r.data))]);
-  let html=(window.setorAtual==='comercial'?'':laNavbar('s-la-solicitar'))+'<div class="card" style="margin-bottom:12px;">'+
+  // se a pessoa está digitando, não redesenha por baixo dela
+  if(document.activeElement && document.activeElement.id==='la-sol-prod-busca'){ laRenderSugProd(); return; }
+
+  let html=(window.setorAtual==='comercial'?'':laNavbar('s-la-solicitar'));
+
+  // ── nova solicitação, com busca por nome ──
+  html+='<div class="card" style="margin-bottom:12px;">'+
     '<div style="font-size:13px;font-weight:700;margin-bottom:10px;">📝 Nova solicitação</div>'+
     '<label style="font-size:12px;color:var(--text-secondary);">Produto</label>'+
-    '<select id="la-sol-prod" style="width:100%;font-size:14px;padding:10px;border-radius:8px;border:1px solid var(--border-md,#d1d5db);margin:4px 0 10px;"><option value="">— selecione —</option>'+prods.map(p=>'<option value="'+escapeJsStr(p.cod)+'|'+escapeJsStr(p.nome)+'">'+(p.cod?'['+p.cod+'] ':'')+p.nome+'</option>').join('')+'</select>'+
-    '<label style="font-size:12px;color:var(--text-secondary);">Quantidade (pct)</label>'+
-    '<input type="number" id="la-sol-qtd" min="1" placeholder="ex: 30" style="width:100%;font-size:14px;padding:10px;border-radius:8px;border:1px solid var(--border-md,#d1d5db);margin:4px 0 10px;box-sizing:border-box;">'+
+    '<input type="text" id="la-sol-prod-busca" oninput="laBuscarProd(this.value)" placeholder="🔎 Digite o nome ou o código" autocomplete="off" style="width:100%;padding:12px;min-height:48px;border:1px solid var(--border-md,#d1d5db);border-radius:9px;font-size:16px;font-family:inherit;box-sizing:border-box;margin:4px 0 0;">'+
+    '<div id="la-sug-prod"></div>'+
+    '<div id="la-prod-escolhido"></div>'+
+    '<label style="font-size:12px;color:var(--text-secondary);display:block;margin-top:12px;">Quantidade (pct)</label>'+
+    '<input type="number" id="la-sol-qtd" min="1" placeholder="ex: 30" style="width:100%;padding:12px;min-height:48px;border:1px solid var(--border-md,#d1d5db);border-radius:9px;font-size:16px;box-sizing:border-box;margin:4px 0 12px;">'+
     '<button onclick="laEnviarSolicitacao()" class="btn btn-primary" style="width:100%;">Enviar solicitação →</button>'+
-    '</div>';
-  // minhas solicitações recentes
-  const minhas=laSolicitacoes.slice(0,10);
-  if(minhas.length){
-    html+='<div style="font-size:13px;font-weight:700;margin:14px 0 8px;">Últimas solicitações</div>';
-    html+=minhas.map(s=>{
+  '</div>';
+
+  // ── filtros ──
+  const chip=(ativo,v,txt,fn)=>'<button onclick="'+fn+'(\''+v+'\')" style="background:'+(ativo===v?'var(--mc-azul,#2563eb)':'#fff')+';color:'+(ativo===v?'#fff':'var(--text-secondary)')+';border:1px solid '+(ativo===v?'var(--mc-azul,#2563eb)':'var(--border)')+';border-radius:99px;padding:7px 13px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;">'+txt+'</button>';
+  html+='<div class="card" style="margin-bottom:12px;">'+
+    '<div style="font-size:11px;font-weight:700;color:var(--text-secondary);margin-bottom:6px;">SITUAÇÃO</div>'+
+    '<div style="display:flex;gap:6px;flex-wrap:wrap;">'+
+      chip(_laFiltroSt,'todas','Todas','laSetFiltroSt')+
+      chip(_laFiltroSt,'pendente','⏳ Pendentes','laSetFiltroSt')+
+      chip(_laFiltroSt,'aprovada','✓ Aprovadas','laSetFiltroSt')+
+      chip(_laFiltroSt,'negada','✕ Negadas','laSetFiltroSt')+
+    '</div>'+
+    '<div style="font-size:11px;font-weight:700;color:var(--text-secondary);margin:12px 0 6px;">PERÍODO</div>'+
+    '<div style="display:flex;gap:6px;flex-wrap:wrap;">'+
+      chip(_laFiltroPer,'hoje','Hoje','laSetFiltroPer')+
+      chip(_laFiltroPer,'7','7 dias','laSetFiltroPer')+
+      chip(_laFiltroPer,'30','30 dias','laSetFiltroPer')+
+      chip(_laFiltroPer,'tudo','Tudo','laSetFiltroPer')+
+    '</div></div>';
+
+  // ── lista ──
+  const lista=laSolicitacoes.filter(s=>{
+    if(_laFiltroSt!=='todas' && (s.status||'pendente')!==_laFiltroSt) return false;
+    return _laDentroPeriodo(s);
+  });
+  const nPend=lista.filter(s=>(s.status||'pendente')==='pendente').length;
+  html+='<div style="display:flex;justify-content:space-between;align-items:baseline;margin:14px 0 8px;">'+
+    '<div style="font-size:13px;font-weight:700;">'+lista.length+' solicitação(ões)</div>'+
+    (nPend?'<div style="font-size:12px;font-weight:700;color:#d97706;">⏳ '+nPend+' aguardando</div>':'')+
+  '</div>';
+
+  if(!lista.length){
+    html+='<div class="empty" style="padding:22px;text-align:center;color:var(--text-secondary);">Nenhuma solicitação nesse filtro.</div>';
+  } else {
+    html+=lista.slice(0,60).map(s=>{
       const st=_laStatusInfo(s.status||'pendente');
-      return '<div class="card" style="margin-bottom:6px;border-left:3px solid '+st.cor+';"><div style="display:flex;justify-content:space-between;"><div><div style="font-size:14px;font-weight:700;">'+(s.produto||'')+'</div><div style="font-size:11px;color:var(--text-secondary);">'+(s.qtd||0)+' pct'+(s.dia?' · dia '+s.dia:'')+' · '+(s.autor||'')+'</div>'+(s.motivoNega?'<div style="font-size:11px;color:#dc2626;margin-top:2px;">✗ '+s.motivoNega+'</div>':'')+'</div><span style="font-size:11px;font-weight:700;color:'+st.cor+';background:'+st.bg+';padding:3px 9px;border-radius:99px;height:fit-content;">'+st.label+'</span></div></div>';
+      const dec=(s.status==='aprovada'||s.status==='negada');
+      return '<div class="card" style="margin-bottom:6px;border-left:3px solid '+st.cor+';">'+
+        '<div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;">'+
+          '<div style="flex:1;min-width:0;font-size:14px;font-weight:700;">'+s.produto+'</div>'+
+          '<div style="font-size:11px;font-weight:800;color:'+st.cor+';background:'+st.bg+';border-radius:99px;padding:2px 9px;white-space:nowrap;">'+st.label+'</div>'+
+        '</div>'+
+        '<div style="font-size:12px;color:var(--text-secondary);margin-top:3px;">'+
+          'pediu <strong>'+(s.qtd||0)+'</strong> pct'+
+          (s.status==='aprovada'&&s.qtdLiberada?(' · liberado <strong style="color:#16a34a;">'+s.qtdLiberada+'</strong> pct'):'')+'</div>'+
+        // horários: quando pediu e quando foi decidido
+        '<div style="font-size:11px;color:var(--text-muted);margin-top:4px;line-height:1.5;">'+
+          '🕐 pedido em '+(s.criadoEm||s.hora||'—')+(s.autor?(' por '+s.autor):'')+
+          (dec?('<br>'+(s.status==='aprovada'?'✓':'✕')+' '+st.label.toLowerCase()+' em '+(s.decididoEm||'—')+(s.decididoPor?(' por '+s.decididoPor):'')):'')+
+        '</div>'+
+        (s.status==='negada'&&s.motivoNega?('<div style="font-size:12px;color:#b91c1c;background:#fef2f2;border-radius:7px;padding:6px 9px;margin-top:5px;">'+s.motivoNega+'</div>'):'')+
+      '</div>';
     }).join('');
   }
   el.innerHTML=html;
+  if(_laBuscaProd){ const i=document.getElementById('la-sol-prod-busca'); if(i) i.value=_laBuscaProd; }
 }
 window.renderLaSolicitar=renderLaSolicitar;
 
@@ -17248,19 +17382,26 @@ function _laStatusInfo(s){
 }
 
 async function laEnviarSolicitacao(){
-  const dia='';
-  const prodv=document.getElementById('la-sol-prod').value;
+  const prodv=_laProdSel;
   const qtd=parseInt(document.getElementById('la-sol-qtd').value)||0;
-  if(!prodv){ alert('Selecione o produto.'); return; }
+  if(!prodv){ alert('Busque e toque no produto na lista antes de enviar.'); return; }
   if(qtd<=0){ alert('Informe a quantidade.'); return; }
   const [cod,nome]=prodv.split('|');
+  // avisa se está pedindo mais do que existe, mas deixa seguir
+  const c=laCalcular(cod,nome);
+  if(qtd>c.embAntecip && !confirm('Atenção: há '+c.embAntecip+' pct disponíveis'+
+      (c.jaLiberado>0?(' (embalado '+c.embalado+' − '+c.jaLiberado+' já liberado)'):'')+
+      '.\n\nVocê está pedindo '+qtd+'. Enviar assim mesmo?')) return;
   try{
     await addDoc(collection(db,'solicitacoes'),{
-      cod:cod||'', produto:nome||'', qtd, dia:dia||'',
+      cod:cod||'', produto:nome||'', qtd, dia:'',
       autor:_demAutor(), status:'pendente',
-      data:hoje(), hora:agora(), timestamp:Date.now()
+      data:hoje(), hora:agora(), criadoEm:agora(), timestamp:Date.now()
     });
     document.getElementById('la-sol-qtd').value='';
+    _laProdSel=''; _laBuscaProd='';
+    const bi=document.getElementById('la-sol-prod-busca'); if(bi) bi.value='';
+    const be=document.getElementById('la-prod-escolhido'); if(be) be.innerHTML='';
     alert('✓ Solicitação enviada! O admin vai avaliar.');
   }catch(e){ alert('Erro: '+e.message); }
 }
@@ -17297,12 +17438,16 @@ function renderLaDecisao(){
       html+='<div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:8px;"><div><div style="font-size:16px;font-weight:800;">'+(s.produto||'')+'</div><div style="font-size:11px;color:var(--text-secondary);">'+(s.cod?'cód '+s.cod+' · ':'')+'pedido por '+(s.autor||'')+' · '+(s.hora||'')+(s.dia?' · dia '+s.dia:'')+'</div></div><div style="text-align:right;"><div style="font-size:22px;font-weight:900;color:'+cor+';">'+pedido+'</div><div style="font-size:10px;color:var(--text-secondary);">pct pedidos</div></div></div>';
       // barras de disponibilidade
       html+='<div style="display:flex;gap:6px;margin:8px 0;">'+
-        '<div style="flex:1;background:rgba(22,163,74,.10);border-radius:8px;padding:8px;text-align:center;"><div style="font-size:18px;font-weight:900;color:#16a34a;">'+c.embAntecip+'</div><div style="font-size:10px;color:var(--text-secondary);">embalado (liberável)</div></div>'+
+        '<div style="flex:1;background:rgba(22,163,74,.10);border-radius:8px;padding:8px;text-align:center;"><div style="font-size:18px;font-weight:900;color:#16a34a;">'+c.embAntecip+'</div><div style="font-size:10px;color:var(--text-secondary);">disponível p/ liberar</div></div>'+
+        (c.jaLiberado>0
+          ? '<div style="flex:1;background:rgba(37,99,235,.10);border-radius:8px;padding:8px;text-align:center;"><div style="font-size:18px;font-weight:900;color:#2563eb;">'+c.jaLiberado+'</div><div style="font-size:10px;color:var(--text-secondary);">já liberado</div></div>'
+          : '')+
         '<div style="flex:1;background:rgba(217,119,6,.10);border-radius:8px;padding:8px;text-align:center;"><div style="font-size:18px;font-weight:900;color:#d97706;">'+c.soProduzido+'</div><div style="font-size:10px;color:var(--text-secondary);">produzido, falta embalar</div></div>'+
         '<div style="flex:1;background:rgba(107,114,128,.10);border-radius:8px;padding:8px;text-align:center;"><div style="font-size:18px;font-weight:900;color:#6b7280;">'+c.jaNoErp+'</div><div style="font-size:10px;color:var(--text-secondary);">já no ERP</div></div>'+
         '</div>';
       // veredito
-      if(cabe) html+='<div style="font-size:13px;font-weight:700;color:#16a34a;margin:6px 0;">✅ Pode liberar — cabe nos '+c.embAntecip+' pct já embalados.</div>';
+      const detalhe = c.jaLiberado>0 ? (' (embalado '+c.embalado+' − '+c.jaLiberado+' já liberado)') : '';
+      if(cabe) html+='<div style="font-size:13px;font-weight:700;color:#16a34a;margin:6px 0;">✅ Pode liberar — cabe nos '+c.embAntecip+' pct disponíveis'+detalhe+'.</div>';
       else if(c.embAntecip>0) html+='<div style="font-size:13px;font-weight:700;color:#d97706;margin:6px 0;">⚠️ Só '+c.embAntecip+' embalados. Faltam '+falta+' pct'+(c.soProduzido>0?' — há '+c.soProduzido+' produzidos que PRECISAM SER EMBALADOS antes.':'.')+'</div>';
       else html+='<div style="font-size:13px;font-weight:700;color:#dc2626;margin:6px 0;">🚫 Nada embalado disponível'+(c.soProduzido>0?' — '+c.soProduzido+' pct produzidos PRECISAM SER EMBALADOS.':'.')+'</div>';
       // detalhe por dia não lançado
