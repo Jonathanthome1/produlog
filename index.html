@@ -4358,6 +4358,16 @@
 </div>
 
 <!-- TELA 4: Ajustes em aberto (admin) -->
+<div class="screen" id="s-la-resumo">
+  <div class="mc-header">
+    <button class="mc-header-back" onclick="window.adminMode?goTo('s-adm-hub'):goTo('s-inicio')">‹</button>
+    <div class="mc-brand"><div class="mc-brand-logo"></div><div class="mc-brand-text"><div class="mc-brand-name">Monte Castelo</div><div class="mc-brand-sub">Liberação</div></div></div>
+    <div class="mc-divider-v"></div>
+    <div class="mc-page-info"><div class="mc-page-title">📊 Resumo dos ajustes</div><div class="mc-page-sub">Soma do que está em aberto, por produto</div></div>
+  </div>
+  <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;" id="la-resumo-content"></div>
+</div>
+
 <div class="screen" id="s-la-ajustes">
   <div class="mc-header">
     <button class="mc-header-back" onclick="goTo('s-adm-hub')">‹</button>
@@ -5213,6 +5223,7 @@ function goTo(id){
   if(id==='s-la-decisao') renderLaDecisao();
   if(id==='s-la-dias') renderLaDias();
   if(id==='s-la-ajustes') renderLaAjustes();
+  if(id==='s-la-resumo') renderLaResumo();
   if(id==='s-cpm') renderCpm();
   if(id==='s-cdc') renderCDC();
   if(id==='s-perdas') renderPerdas();
@@ -17034,6 +17045,7 @@ onSnapshot(collection(db,'ajustesAbertos'), snap=>{
       .sort((a,b)=>(b.timestamp||0)-(a.timestamp||0));
     const t=document.querySelector('.screen.active')?.id;
     if(t==='s-la-ajustes') renderLaAjustes();
+    if(t==='s-la-resumo') renderLaResumo();
     if(t==='s-la-dias') renderLaDias();
     _laBadge();
   }catch(e){ console.error('ajustesAbertos snap',e); }
@@ -17409,7 +17421,7 @@ window.laEnviarSolicitacao=laEnviarSolicitacao;
 
 /* ============ TELA 3: DECISÃO (admin) ============ */
 function laNavbar(ativa){
-  const abas=[['s-la-decisao','renderLaDecisao','⚖️ Decidir'],['s-la-dias','renderLaDias','✅ Dias ERP'],['s-la-ajustes','renderLaAjustes','↩ Ajustes'],['s-la-solicitar','renderLaSolicitar','📝 Solicitar']];
+  const abas=[['s-la-decisao','renderLaDecisao','⚖️ Decidir'],['s-la-dias','renderLaDias','✅ Dias ERP'],['s-la-ajustes','renderLaAjustes','↩ Ajustes'],['s-la-resumo','renderLaResumo','📊 Resumo'],['s-la-solicitar','renderLaSolicitar','📝 Solicitar']];
   return '<div style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap;">'+abas.map(a=>{
     const on=a[0]===ativa;
     return '<button onclick="goTo(\''+a[0]+'\');'+a[1]+'()" style="flex:1;min-width:80px;font-size:12px;font-weight:700;padding:9px 6px;border-radius:8px;cursor:pointer;border:1px solid '+(on?'#dc2626':'var(--border,#d1d5db)')+';background:'+(on?'#fee2e2':'#fff')+';color:'+(on?'#dc2626':'var(--text-secondary,#6b7280)')+';">'+a[2]+'</button>';
@@ -17535,6 +17547,97 @@ async function laNegar(id){
 window.laNegar=laNegar;
 
 /* ============ TELA 4: AJUSTES EM ABERTO (Excel substituto) ============ */
+/* ── RESUMO DOS AJUSTES EM ABERTO ─────────────────────────────────
+   Mesma leitura do resumo de refazimento, mas alimentado pelos ajustes
+   que o próprio app lançou no ELIGO. Tudo que está em aberto (entrada
+   feita, saída pendente) soma por produto. */
+function laResumoPorProduto(){
+  const mapa={};
+  (laAjustes||[]).forEach(a=>{
+    if((a.status||'aberto')!=='aberto') return;
+    const cod=String(a.cod||'').trim();
+    const k=cod || ('n:'+_normNome(a.produto||''));
+    if(!mapa[k]) mapa[k]={cod:cod||'—', nome:a.produto||'', saldo:0, itens:0, dias:{}, semErp:0};
+    const q=parseInt(a.qtd)||0;
+    mapa[k].saldo+=q;
+    mapa[k].itens++;
+    if(a.data) mapa[k].dias[a.data]=(mapa[k].dias[a.data]||0)+q;
+    if(!a.eligoEntradaId) mapa[k].semErp+=q;
+  });
+  return Object.values(mapa).sort((a,b)=>b.saldo-a.saldo);
+}
+
+function renderLaResumo(){
+  const el=document.getElementById('la-resumo-content'); if(!el) return;
+  const lista=laResumoPorProduto();
+  let html=laNavbar('s-la-resumo');
+
+  if(!lista.length){
+    el.innerHTML=html+'<div style="background:var(--bg-primary);border:1px solid #a7f3d0;border-radius:12px;padding:26px;text-align:center;">'+
+      '<div style="font-size:38px;">✅</div>'+
+      '<div style="font-size:16px;font-weight:800;margin-top:8px;">Nenhum ajuste em aberto</div>'+
+      '<div style="font-size:12px;color:var(--text-secondary);margin-top:5px;line-height:1.5;">Todas as entradas liberadas já tiveram a saída lançada.</div></div>';
+    return;
+  }
+
+  const total=lista.reduce((t,p)=>t+p.saldo,0);
+  const semErp=lista.reduce((t,p)=>t+p.semErp,0);
+
+  html+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">'+
+    '<div class="card" style="text-align:center;padding:12px 8px;border-top:3px solid #d97706;">'+
+      '<div style="font-size:10px;font-weight:800;color:var(--text-secondary);">A ESTORNAR</div>'+
+      '<div style="font-size:28px;font-weight:900;color:#d97706;line-height:1.1;">'+total+'</div>'+
+      '<div style="font-size:10px;color:var(--text-muted);">pacotes em '+lista.length+' produto(s)</div></div>'+
+    '<div class="card" style="text-align:center;padding:12px 8px;border-top:3px solid '+(semErp?'#dc2626':'#16a34a')+';">'+
+      '<div style="font-size:10px;font-weight:800;color:var(--text-secondary);">SEM ENTRADA NO ERP</div>'+
+      '<div style="font-size:28px;font-weight:900;color:'+(semErp?'#dc2626':'#16a34a')+';line-height:1.1;">'+semErp+'</div>'+
+      '<div style="font-size:10px;color:var(--text-muted);">'+(semErp?'lançados à mão':'tudo pelo app')+'</div></div>'+
+  '</div>';
+
+  // separa pães de salgados, igual ao resumo do refazimento
+  const grupos={pao:[], salgado:[], outro:[]};
+  lista.forEach(p=>{
+    const t = (typeof _ajRefTipoProduto==='function' && p.cod!=='—') ? _ajRefTipoProduto(p.cod) : 'outro';
+    grupos[t].push(p);
+  });
+
+  const tabela=(titulo, emoji, arr, corHeader)=>{
+    if(!arr.length) return '';
+    const soma=arr.reduce((t,p)=>t+p.saldo,0);
+    let s='<div style="flex:1;min-width:280px;">'+
+      '<div style="background:'+corHeader+';color:#fff;font-weight:800;font-size:13px;padding:8px 12px;border-radius:9px 9px 0 0;text-align:center;">'+emoji+' '+titulo+' · '+soma+' pct</div>'+
+      '<table style="width:100%;border-collapse:collapse;font-size:12px;background:#fff;border:1px solid var(--border);border-top:none;border-radius:0 0 9px 9px;overflow:hidden;">'+
+      '<thead><tr style="background:#f1f5f9;">'+
+        '<th style="text-align:left;padding:6px 8px;font-weight:700;color:var(--text-secondary);width:44px;">Cód</th>'+
+        '<th style="text-align:left;padding:6px 8px;font-weight:700;color:var(--text-secondary);">Produto</th>'+
+        '<th style="text-align:right;padding:6px 8px;font-weight:700;color:var(--text-secondary);width:70px;">A estornar</th>'+
+      '</tr></thead><tbody>';
+    arr.forEach((p,i)=>{
+      const dias=Object.keys(p.dias).sort((a,b)=>estDataNum(a)-estDataNum(b));
+      s+='<tr style="border-top:1px solid #f1f5f9;background:'+(i%2?'#fafbfc':'#fff')+';">'+
+        '<td style="padding:7px 8px;font-weight:700;">'+p.cod+'</td>'+
+        '<td style="padding:7px 8px;">'+(p.nome||'')+
+          (dias.length?('<div style="font-size:10px;color:var(--text-muted);margin-top:1px;">'+dias.map(d=>d.slice(0,5)+': '+p.dias[d]).join(' · ')+'</div>'):'')+
+          (p.semErp?('<div style="font-size:10px;color:#b91c1c;font-weight:700;margin-top:1px;">⚠ '+p.semErp+' sem entrada no ERP</div>'):'')+
+        '</td>'+
+        '<td style="padding:7px 8px;text-align:right;font-weight:800;color:#d97706;">'+p.saldo+'</td>'+
+      '</tr>';
+    });
+    s+='</tbody></table></div>';
+    return s;
+  };
+
+  html+='<div style="font-size:12px;color:var(--text-secondary);margin-bottom:12px;line-height:1.5;">Soma de todas as entradas liberadas que ainda esperam a saída. Quando o dia da produção for lançado no ERP, o app estorna e o produto sai desta lista.</div>';
+  html+='<div style="display:flex;flex-wrap:wrap;gap:14px;align-items:flex-start;">';
+  html+=tabela('Salgados / Confeitaria','🥐',grupos.salgado,'var(--mc-azul)');
+  html+=tabela('Pães','🍞',grupos.pao,'#92400e');
+  html+='</div>';
+  if(grupos.outro.length) html+='<div style="margin-top:14px;">'+tabela('Não identificados','❓',grupos.outro,'#dc2626')+'</div>';
+
+  el.innerHTML=html;
+}
+window.renderLaResumo=renderLaResumo;
+
 function renderLaAjustes(){
   const el=document.getElementById('la-ajustes-content'); if(!el) return;
   const abertos=laAjustes.filter(a=>(a.status||'aberto')==='aberto');
