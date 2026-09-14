@@ -17409,7 +17409,7 @@ function renderLaAjustes(){
         '<button onclick="laCopiarInstrucao(\'entrada\',\''+escapeJsStr(a.cod||'')+'\',\''+escapeJsStr(a.produto||'')+'\','+(a.qtd||0)+')" class="btn" style="flex:1;background:#2563eb;color:#fff;border:none;font-size:12px;">📋 Instrução ENTRADA</button>'+
         (diaJaLancado?'<button onclick="laCopiarInstrucao(\'saida\',\''+escapeJsStr(a.cod||'')+'\',\''+escapeJsStr(a.produto||'')+'\','+(a.qtd||0)+')" class="btn" style="flex:1;background:#7c3aed;color:#fff;border:none;font-size:12px;">📋 Instrução SAÍDA</button>':'')+
         '</div>'+
-        '<button onclick="laFecharAjuste(\''+a.firestoreId+'\')" class="btn" style="width:100%;margin-top:6px;background:'+(diaJaLancado?'#dc2626':'#fff')+';color:'+(diaJaLancado?'#fff':'#dc2626')+';border:1px solid #dc2626;">↩ Fiz o ajuste de SAÍDA (fechar par)</button>'+
+        '<button onclick="laFecharAjuste(\''+a.firestoreId+'\')" class="btn" style="width:100%;margin-top:6px;background:'+(diaJaLancado?'#dc2626':'#fff')+';color:'+(diaJaLancado?'#fff':'#dc2626')+';border:1px solid #dc2626;">'+(eligoPronto()?'↩ Lançar SAÍDA no ELIGO e fechar':'↩ Fiz o ajuste de SAÍDA (fechar par)')+'</button>'+
         '</div>';
     }).join('');
   }
@@ -17423,10 +17423,49 @@ window.renderLaAjustes=renderLaAjustes;
 
 async function laFecharAjuste(id){
   const a=laAjustes.find(x=>x.firestoreId===id); if(!a) return;
-  const instr='AJUSTE DE SAÍDA no ERP:\n• Código: '+(a.cod||'?')+'\n• Produto: '+a.produto+'\n• Quantidade: '+a.qtd+' pct\n\n(Desfaz a entrada antecipada. Confirme só depois de lançar a saída no ERP.)';
-  if(!confirm(instr)) return;
-  try{ await updateDoc(doc(db,'ajustesAbertos',id),{ status:'fechado', fechadoEm:agora(), fechadoPor:_demAutor() }); }
-  catch(e){ alert('Erro: '+e.message); }
+  const auto=eligoPronto();
+
+  // sem integração: continua como antes, a pessoa lança à mão e só marca aqui
+  if(!auto){
+    const instr='AJUSTE DE SAÍDA no ERP:\n• Código: '+(a.cod||'?')+'\n• Produto: '+a.produto+'\n• Quantidade: '+a.qtd+' pct\n\n(Desfaz a entrada que foi liberada.)\n\nJá lançou a saída no ERP?';
+    if(!confirm(instr)) return;
+    try{ await updateDoc(doc(db,'ajustesAbertos',id),{ status:'fechado', fechadoEm:agora(), fechadoPor:_demAutor() }); }
+    catch(e){ alert('Erro: '+e.message); }
+    return;
+  }
+
+  // se a entrada não passou pelo app, não temos o que estornar automaticamente
+  if(!a.eligoEntradaId){
+    if(!confirm('Este ajuste não teve a ENTRADA lançada pelo app — ela foi feita à mão.\n\n'+
+        'Produto: '+a.produto+'\nQuantidade: '+a.qtd+' pct\n\n'+
+        'Quer que eu lance a SAÍDA no ELIGO agora mesmo assim?\n'+
+        '(Se você já lançou a saída à mão, clique em Cancelar e me diga depois.)')){
+      if(confirm('Marcar como fechado sem lançar nada no ERP?')){
+        try{ await updateDoc(doc(db,'ajustesAbertos',id),{ status:'fechado', fechadoEm:agora(), fechadoPor:_demAutor(), fechadoManual:true }); }
+        catch(e){ alert('Erro: '+e.message); }
+      }
+      return;
+    }
+  } else {
+    if(!confirm('Lançar a SAÍDA no ELIGO?\n\n'+
+      '• Código: '+(a.cod||'?')+'\n• Produto: '+a.produto+'\n• Quantidade: '+a.qtd+' pct\n\n'+
+      'Isso desfaz a entrada nº '+a.eligoEntradaId+' que foi lançada quando você aprovou.')) return;
+  }
+
+  const r=await eligoLancar(a.cod||'', a.qtd, 'saida', laDataHoje(),
+    'Estorno liberacao antecipada ProduLog - '+(a.produto||'')+(a.data?(' - producao '+a.data):''));
+  if(r.cancelado) return;
+  if(!r.ok){
+    alert('⚠️ O ELIGO não aceitou a saída:\n\n'+r.erro+'\n\nO ajuste segue em aberto. Corrija e tente de novo, ou lance à mão.');
+    return;
+  }
+  try{
+    await updateDoc(doc(db,'ajustesAbertos',id),{
+      status:'fechado', fechadoEm:agora(), fechadoPor:_demAutor(),
+      eligoSaidaId:r.id||'sem-id', eligoSaidaEm:agora()
+    });
+    alert('✓ SAÍDA lançada no ELIGO e ajuste fechado.\n\nLançamento nº '+(r.id||'—'));
+  }catch(e){ alert('A saída foi lançada no ERP (nº '+(r.id||'—')+'), mas não consegui fechar o ajuste aqui: '+e.message); }
 }
 window.laFecharAjuste=laFecharAjuste;
 
