@@ -17640,6 +17640,42 @@ function renderLaResumo(){
 }
 window.renderLaResumo=renderLaResumo;
 
+/* Apaga os ajustes que entraram à mão ou vieram do refazimento, para
+   permitir trazer uma relação nova do zero. Só mexe nos que estão EM
+   ABERTO: os já estornados ficam, senão o app perderia o registro de
+   que a saída foi lançada e correria o risco de lançar de novo. */
+function laManuaisAbertos(){
+  return (laAjustes||[]).filter(a=>(a.status||'aberto')==='aberto' && (a.entradaManual===true || a.origemRefaz));
+}
+
+async function laLimparImportados(){
+  if(!(window.adminMode||window.setorAtual==='admin')){ alert('Só o admin pode limpar.'); return; }
+  const alvos=laManuaisAbertos();
+  if(!alvos.length){ alert('Não há ajustes importados em aberto para apagar.'); return; }
+
+  const doRefaz=alvos.filter(a=>a.origemRefaz).length;
+  const aMao=alvos.length-doRefaz;
+  const total=alvos.reduce((t,a)=>t+(parseInt(a.qtd)||0),0);
+  const fechados=(laAjustes||[]).filter(a=>a.status==='fechado' && (a.entradaManual===true||a.origemRefaz)).length;
+
+  if(!confirm('APAGAR os ajustes importados que estão em aberto?\n\n'+
+    '· '+doRefaz+' trazido(s) do refazimento\n'+
+    '· '+aMao+' lançado(s) à mão\n'+
+    '· '+total+' pacotes no total\n\n'+
+    (fechados?('Os '+fechados+' já estornados NÃO serão apagados.\n\n'):'')+
+    'As solicitações aprovadas pelo app não são tocadas.\n\nNada é lançado nem desfeito no ELIGO — isso é só aqui.')) return;
+  if(!confirm('Confirma? Depois disso você pode trazer a relação nova do refazimento.')) return;
+
+  let ok=0, erros=[];
+  for(const a of alvos){
+    try{ await deleteDoc(doc(db,'ajustesAbertos',a.firestoreId)); ok++; }
+    catch(e){ erros.push((a.produto||a.cod)+': '+e.message); }
+  }
+  alert('✓ '+ok+' ajuste(s) apagado(s).'+(erros.length?('\n\n⚠️ '+erros.length+' falharam:\n'+erros.join('\n')):'')+
+    '\n\nAgora é só usar "📋 Trazer do refazimento" com a relação atualizada.');
+}
+window.laLimparImportados=laLimparImportados;
+
 /* ── IMPORTAR OS PENDENTES DO REFAZIMENTO ─────────────────────────
    Puxa a FOTO atual dos ajustes pendentes da aba de refazimento e cria
    um ajuste em aberto para cada um. É uma cópia única: depois disso os
@@ -17877,6 +17913,9 @@ function renderLaAjustes(){
   let html=laNavbar('s-la-ajustes')+'<div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;">'+
     '<button onclick="laAbrirImportRefaz()" class="btn btn-secondary" style="flex:1;min-width:190px;">📋 Trazer do refazimento'+(laPendentesDoRefaz().length?(' ('+laPendentesDoRefaz().length+')'):'')+'</button>'+
     '<button onclick="laAbrirManual()" class="btn btn-secondary" style="flex:1;min-width:190px;">📥 Lançar um à mão</button>'+
+    ((window.adminMode||window.setorAtual==='admin') && laManuaisAbertos().length
+      ? '<button onclick="laLimparImportados()" style="flex:0 0 auto;background:#fff;border:1px solid #fecaca;color:#b91c1c;border-radius:9px;padding:11px 14px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;" title="Apagar os importados em aberto para trazer uma relação nova">🗑 Limpar importados ('+laManuaisAbertos().length+')</button>'
+      : '')+
   '</div>'+'<div class="card" style="margin-bottom:12px;border-left:4px solid '+(abertos.length?'#dc2626':'#16a34a')+';background:'+(abertos.length?'#fef2f2':'rgba(22,163,74,.06)')+';"><div style="font-size:16px;font-weight:800;color:'+(abertos.length?'#dc2626':'#16a34a')+';">'+(abertos.length?'⚠️ '+abertos.length+' ajuste(s) em aberto':'✅ Nenhum ajuste em aberto')+'</div><div style="font-size:11px;color:var(--text-secondary);margin-top:2px;">Cada entrada precisa de uma SAÍDA quando o dia for lançado no ERP.</div></div>';
   if(abertos.length){
     html+=abertos.map(a=>{
