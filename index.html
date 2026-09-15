@@ -17037,6 +17037,7 @@ onSnapshot(collection(db,'solicitacoes'), snap=>{
     if(t==='s-la-solicitar') renderLaSolicitar();
     if(t==='s-la-decisao') renderLaDecisao();
     _laBadge();
+      if(typeof laVerificarSom==='function') laVerificarSom();
   }catch(e){ console.error('solicitacoes snap',e); }
 });
 onSnapshot(collection(db,'ajustesAbertos'), snap=>{
@@ -17433,10 +17434,140 @@ function laNavbar(ativa){
     : '')+
   '</div>';
 }
+/* ══════════════════════════════════════════════════════════════════
+   ALERTA SONORO DAS SOLICITAÇÕES (admin)
+   Toca quando chega solicitação nova e insiste se ela passar do prazo
+   sem decisão. Usa o mesmo motor de áudio do elevador — som gerado no
+   próprio app, sem arquivo.
+   ══════════════════════════════════════════════════════════════════ */
+const LA_PRAZO_MIN=10;           // minutos até virar cobrança
+const LA_REPETIR_MIN=5;          // de quanto em quanto tempo insiste depois disso
+let _laSomLigado = (typeof localStorage!=='undefined' && localStorage.getItem('mc_la_som')==='0') ? false : true;
+let _laVistas=null;              // ids já conhecidos (null = ainda não carregou)
+let _laUltCobranca={};           // id -> quando cobrou pela última vez
+let _laSomTimer=null;
+
+function laSomLigado(){ return _laSomLigado; }
+function laToggleSom(){
+  _laSomLigado=!_laSomLigado;
+  try{ localStorage.setItem('mc_la_som', _laSomLigado?'1':'0'); }catch(e){}
+  if(_laSomLigado && typeof _elevLiberarAudio==='function') _elevLiberarAudio();
+  if(_laSomLigado) laSomNova();     // toca uma vez para confirmar que está funcionando
+  const t=document.querySelector('.screen.active')?.id;
+  if(t==='s-la-decisao'&&typeof renderLaDecisao==='function') renderLaDecisao();
+}
+window.laToggleSom=laToggleSom;
+
+// som de CHEGOU: dois toques curtos subindo, discreto
+function laSomNova(){
+  if(!_elevAudioCtx || _elevAudioCtx.state!=='running') return;
+  const ctx=_elevAudioCtx, t0=ctx.currentTime;
+  [[660,0],[880,0.16]].forEach(([hz,dt])=>{
+    const ini=t0+dt, osc=ctx.createOscillator(), g=ctx.createGain();
+    osc.type='sine'; osc.frequency.setValueAtTime(hz, ini);
+    g.gain.setValueAtTime(0.0001, ini);
+    g.gain.exponentialRampToValueAtTime(0.25, ini+0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001, ini+0.26);
+    osc.connect(g); g.connect(ctx.destination);
+    osc.start(ini); osc.stop(ini+0.28);
+  });
+}
+
+// som de ATRASADA: mais grave e insistente, bem diferente do primeiro
+function laSomAtrasada(){
+  if(!_elevAudioCtx || _elevAudioCtx.state!=='running') return;
+  const ctx=_elevAudioCtx, t0=ctx.currentTime;
+  for(let i=0;i<4;i++){
+    const ini=t0+i*0.34, osc=ctx.createOscillator(), g=ctx.createGain();
+    osc.type='sawtooth';
+    osc.frequency.setValueAtTime(320, ini);
+    osc.frequency.exponentialRampToValueAtTime(220, ini+0.24);
+    g.gain.setValueAtTime(0.0001, ini);
+    g.gain.exponentialRampToValueAtTime(0.28, ini+0.03);
+    g.gain.exponentialRampToValueAtTime(0.0001, ini+0.26);
+    osc.connect(g); g.connect(ctx.destination);
+    osc.start(ini); osc.stop(ini+0.28);
+  }
+}
+
+function _laEhAdmin(){ return window.adminMode===true || window.setorAtual==='admin'; }
+
+// chamado sempre que a lista de solicitações muda
+function laVerificarSom(){
+  if(!_laEhAdmin()) return;
+  const pend=(laSolicitacoes||[]).filter(s=>(s.status||'pendente')==='pendente');
+  const ids=pend.map(s=>s.firestoreId);
+
+  if(_laVistas===null){           // primeira carga: não toca por pendências antigas
+    _laVistas=new Set(ids);
+    return;
+  }
+  const novas=ids.filter(id=>!_laVistas.has(id));
+  _laVistas=new Set(ids);
+  if(novas.length && _laSomLigado){
+    if(typeof _elevLiberarAudio==='function') _elevLiberarAudio();
+    laSomNova();
+  }
+}
+
+// a cada meio minuto, cobra as que passaram do prazo
+function _laTickSom(){
+  if(!_laSomLigado || !_laEhAdmin()) return;
+  const agoraMs=Date.now();
+  const atrasadas=(laSolicitacoes||[]).filter(s=>{
+    if((s.status||'pendente')!=='pendente') return false;
+    const t=s.timestamp||0;
+    return t && (agoraMs-t) >= LA_PRAZO_MIN*60000;
+  });
+  if(!atrasadas.length) return;
+  // insiste no máximo a cada LA_REPETIR_MIN por solicitação
+  const cobrar=atrasadas.some(s=>{
+    const ult=_laUltCobranca[s.firestoreId]||0;
+    return (agoraMs-ult) >= LA_REPETIR_MIN*60000;
+  });
+  if(!cobrar) return;
+  atrasadas.forEach(s=>{ _laUltCobranca[s.firestoreId]=agoraMs; });
+  laSomAtrasada();
+}
+if(typeof window!=='undefined'){
+  _laSomTimer=setInterval(_laTickSom, 30000);
+}
+
+// quantas estão passando do prazo (para mostrar na tela)
+function laAtrasadas(){
+  const agoraMs=Date.now();
+  return (laSolicitacoes||[]).filter(s=>(s.status||'pendente')==='pendente'
+    && (s.timestamp||0) && (agoraMs-(s.timestamp||0))>=LA_PRAZO_MIN*60000);
+}
+function laMinutosEsperando(s){
+  const t=s.timestamp||0; if(!t) return null;
+  return Math.floor((Date.now()-t)/60000);
+}
+
+// cartão de controle no topo da tela de decisão
+function laSomCard(){
+  if(!_laEhAdmin()) return '';
+  const atr=laAtrasadas().length;
+  const precisaLiberar = _laSomLigado && !(typeof _elevAudioPronto==='function' && _elevAudioPronto());
+  return '<div class="card" style="margin-bottom:12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;'+
+      (atr?'border:2px solid #dc2626;background:#fef2f2;':'')+'">'+
+    '<div style="flex:1;min-width:170px;">'+
+      '<div style="font-size:13px;font-weight:700;">'+(atr?('🚨 '+atr+' esperando há mais de '+LA_PRAZO_MIN+' min'):'🔔 Aviso sonoro')+'</div>'+
+      '<div style="font-size:11px;color:var(--text-secondary);margin-top:2px;line-height:1.4;">'+
+        (_laSomLigado
+          ? ('Toca quando chega solicitação e insiste depois de '+LA_PRAZO_MIN+' min sem decisão.')
+          : 'Desligado neste aparelho.')+'</div>'+
+      (precisaLiberar?'<div style="font-size:11px;font-weight:700;color:#b45309;margin-top:3px;">toque na tela uma vez para o navegador liberar o som</div>':'')+
+    '</div>'+
+    '<button onclick="laToggleSom()" style="flex:0 0 auto;background:'+(_laSomLigado?'#16a34a':'#fff')+';color:'+(_laSomLigado?'#fff':'var(--text-secondary)')+';border:1px solid '+(_laSomLigado?'#16a34a':'var(--border)')+';border-radius:99px;padding:9px 16px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">'+
+      (_laSomLigado?'🔔 Ligado':'🔕 Desligado')+'</button>'+
+  '</div>';
+}
+
 function renderLaDecisao(){
   const el=document.getElementById('la-decisao-content'); if(!el) return;
   const pend=laSolicitacoes.filter(s=>(s.status||'pendente')==='pendente');
-  let html=laNavbar('s-la-decisao');
+  let html=laNavbar('s-la-decisao')+(typeof laSomCard==='function'?laSomCard():'');
   if(!pend.length){ el.innerHTML=html+'<div class="empty" style="padding:24px;">✅ Nenhuma solicitação pendente.</div>'; return; }
   else {
     html+='<div style="font-size:12px;color:var(--text-secondary);margin-bottom:12px;">'+pend.length+' solicitação(ões) aguardando sua decisão.</div>';
@@ -17448,7 +17579,13 @@ function renderLaDecisao(){
       const cor = cabe?'#16a34a':(c.embAntecip>0?'#d97706':'#dc2626');
       const bg  = cabe?'rgba(22,163,74,.06)':(c.embAntecip>0?'#fffbeb':'#fef2f2');
       html+='<div class="card" style="margin-bottom:12px;border-left:5px solid '+cor+';background:'+bg+';">';
-      html+='<div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:8px;"><div><div style="font-size:16px;font-weight:800;">'+(s.produto||'')+'</div><div style="font-size:11px;color:var(--text-secondary);">'+(s.cod?'cód '+s.cod+' · ':'')+'pedido por '+(s.autor||'')+' · '+(s.hora||'')+(s.dia?' · dia '+s.dia:'')+'</div></div><div style="text-align:right;"><div style="font-size:22px;font-weight:900;color:'+cor+';">'+pedido+'</div><div style="font-size:10px;color:var(--text-secondary);">pct pedidos</div></div></div>';
+      html+='<div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:8px;"><div><div style="font-size:16px;font-weight:800;">'+(s.produto||'')+'</div><div style="font-size:11px;color:var(--text-secondary);">'+(s.cod?'cód '+s.cod+' · ':'')+'pedido por '+(s.autor||'')+' · '+(s.hora||'')+(s.dia?' · dia '+s.dia:'')+'</div>'+
+        // há quanto tempo está esperando — fica vermelho depois do prazo
+        (function(){ const m=laMinutosEsperando(s); if(m===null) return '';
+          const atras=m>=LA_PRAZO_MIN;
+          return '<div style="font-size:11px;font-weight:'+(atras?'800':'600')+';color:'+(atras?'#dc2626':'var(--text-muted)')+';margin-top:2px;">'+
+            (atras?'🚨 ':'⏱ ')+'esperando há '+(m>=60?(Math.floor(m/60)+'h'+String(m%60).padStart(2,'0')):(m+' min'))+'</div>';
+        })()+'</div><div style="text-align:right;"><div style="font-size:22px;font-weight:900;color:'+cor+';">'+pedido+'</div><div style="font-size:10px;color:var(--text-secondary);">pct pedidos</div></div></div>';
       // barras de disponibilidade
       html+='<div style="display:flex;gap:6px;margin:8px 0;">'+
         '<div style="flex:1;background:rgba(22,163,74,.10);border-radius:8px;padding:8px;text-align:center;"><div style="font-size:18px;font-weight:900;color:#16a34a;">'+c.embAntecip+'</div><div style="font-size:10px;color:var(--text-secondary);">disponível p/ liberar</div></div>'+
