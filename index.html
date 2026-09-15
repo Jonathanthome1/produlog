@@ -17140,9 +17140,10 @@ async function laFecharPares(abertos, data, tipo){
   const senha=eligoSenha();
   if(senha===null) return;
 
-  // só entra na lista quem teve a ENTRADA de fato lançada no ERP
-  const paraEnviar=abertos.filter(a=>a.eligoEntradaId);
-  const semEntrada=abertos.filter(a=>!a.eligoEntradaId);
+  // entra quem teve a entrada lançada pelo app OU registrada como feita à mão
+  // (nos dois casos a entrada existe no ERP e precisa de saída)
+  const paraEnviar=abertos.filter(a=>a.eligoEntradaId || a.entradaManual);
+  const semEntrada=abertos.filter(a=>!a.eligoEntradaId && !a.entradaManual);
 
   let okN=0, falhaN=0, msg='';
   for(const a of paraEnviar){
@@ -17562,7 +17563,8 @@ function laResumoPorProduto(){
     mapa[k].saldo+=q;
     mapa[k].itens++;
     if(a.data) mapa[k].dias[a.data]=(mapa[k].dias[a.data]||0)+q;
-    if(!a.eligoEntradaId) mapa[k].semErp+=q;
+    if(!a.eligoEntradaId && !a.entradaManual) mapa[k].semErp+=q;
+    if(a.entradaManual) mapa[k].manual=(mapa[k].manual||0)+q;
   });
   return Object.values(mapa).sort((a,b)=>b.saldo-a.saldo);
 }
@@ -17638,11 +17640,239 @@ function renderLaResumo(){
 }
 window.renderLaResumo=renderLaResumo;
 
+/* ── IMPORTAR OS PENDENTES DO REFAZIMENTO ─────────────────────────
+   Puxa a FOTO atual dos ajustes pendentes da aba de refazimento e cria
+   um ajuste em aberto para cada um. É uma cópia única: depois disso os
+   dois caminhos seguem separados, e recolar a planilha lá não mexe
+   mais no que já foi importado aqui. */
+function laPendentesDoRefaz(){
+  if(typeof _ajRefPendentes==='undefined' || !_ajRefPendentes.length) return [];
+  // já importados: não oferecemos de novo
+  const jaTem={};
+  (laAjustes||[]).forEach(a=>{
+    if(a.origemRefaz) jaTem[a.origemRefaz]=true;
+  });
+  return _ajRefPendentes
+    .filter(p=>{
+      const saldo=Number(p.saldo)||0;
+      if(saldo>=0) return false;                       // só falta SAÍDA (saldo negativo = entrou a mais)
+      const chave=String(p.cod)+'|'+String(p.data);
+      if(_ajRefResolvidos && _ajRefResolvidos[chave]) return false;   // já marcado como resolvido lá
+      if(jaTem[chave]) return false;
+      return true;
+    })
+    .map(p=>({cod:String(p.cod), nome:p.nome||'', data:p.data, qtd:Math.abs(Number(p.saldo)||0),
+              chave:String(p.cod)+'|'+String(p.data)}));
+}
+
+let _laiSel={};
+function laAbrirImportRefaz(){
+  const lista=laPendentesDoRefaz();
+  _laiSel={};
+  lista.forEach(p=>_laiSel[p.chave]=true);   // já vem tudo marcado
+  const ov=document.createElement('div');
+  ov.id='lai-modal';
+  ov.style.cssText='position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:3200;display:flex;align-items:center;justify-content:center;padding:16px;';
+  ov.innerHTML='<div style="background:#fff;border-radius:16px;max-width:540px;width:100%;max-height:90vh;display:flex;flex-direction:column;">'+
+    '<div style="padding:18px 18px 10px;border-bottom:1px solid var(--border);">'+
+      '<div style="font-size:17px;font-weight:800;">📋 Trazer do refazimento</div>'+
+      '<div style="font-size:12px;color:var(--text-secondary);margin-top:4px;line-height:1.5;">Cópia única da situação atual: cada pendente vira um ajuste em aberto aqui. Depois disso, recolar a planilha no refazimento não altera mais estes.</div>'+
+    '</div>'+
+    '<div id="lai-lista" style="flex:1;overflow-y:auto;padding:10px 16px;"></div>'+
+    '<div id="lai-rodape" style="padding:12px 18px 16px;border-top:1px solid var(--border);"></div>'+
+  '</div>';
+  document.body.appendChild(ov);
+  laiRender();
+}
+window.laAbrirImportRefaz=laAbrirImportRefaz;
+
+function laiToggle(chave){ _laiSel[chave]=!_laiSel[chave]; laiRender(); }
+window.laiToggle=laiToggle;
+function laiTodos(v){ laPendentesDoRefaz().forEach(p=>_laiSel[p.chave]=v); laiRender(); }
+window.laiTodos=laiTodos;
+
+function laiRender(){
+  const box=document.getElementById('lai-lista'); if(!box) return;
+  const lista=laPendentesDoRefaz();
+  if(!lista.length){
+    box.innerHTML='<div style="padding:22px;text-align:center;color:var(--text-secondary);font-size:13px;">'+
+      'Nada a trazer.<br><br>Ou o refazimento não tem pendentes de saída, ou todos já foram importados.</div>';
+    document.getElementById('lai-rodape').innerHTML='<button class="btn btn-secondary" style="width:100%;" onclick="document.getElementById(\'lai-modal\').remove()">Fechar</button>';
+    return;
+  }
+  // agrupa por dia, igual ao refazimento
+  const porDia={};
+  lista.forEach(p=>{ (porDia[p.data]=porDia[p.data]||[]).push(p); });
+  const dias=Object.keys(porDia).sort((a,b)=>_ajRefDataNum(a)-_ajRefDataNum(b));
+
+  box.innerHTML=dias.map(d=>{
+    const itens=porDia[d].sort((a,b)=>String(a.cod).localeCompare(String(b.cod),undefined,{numeric:true}));
+    return '<div style="font-size:12px;font-weight:800;color:var(--mc-azul);margin:10px 0 5px;">📅 '+d+'</div>'+
+      itens.map(p=>{
+        const on=!!_laiSel[p.chave];
+        return '<div onclick="laiToggle(\''+escapeJsStr(p.chave)+'\')" style="cursor:pointer;display:flex;align-items:center;gap:9px;padding:8px 9px;border:1px solid '+(on?'var(--mc-azul,#2563eb)':'var(--border)')+';background:'+(on?'rgba(37,99,235,.06)':'#fff')+';border-radius:9px;margin-bottom:5px;">'+
+          '<span style="flex:0 0 auto;width:20px;height:20px;border-radius:5px;border:2px solid '+(on?'var(--mc-azul,#2563eb)':'#cbd5e1')+';background:'+(on?'var(--mc-azul,#2563eb)':'#fff')+';color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900;">'+(on?'✓':'')+'</span>'+
+          '<span style="flex:0 0 auto;font-size:11px;font-weight:700;color:var(--text-secondary);width:40px;">'+p.cod+'</span>'+
+          '<span style="flex:1;min-width:0;font-size:13px;font-weight:600;">'+p.nome+'</span>'+
+          '<span style="flex:0 0 auto;font-size:15px;font-weight:900;color:#d97706;">'+p.qtd+'</span>'+
+        '</div>';
+      }).join('');
+  }).join('');
+
+  const marcados=lista.filter(p=>_laiSel[p.chave]);
+  const total=marcados.reduce((t,p)=>t+p.qtd,0);
+  document.getElementById('lai-rodape').innerHTML=
+    '<div style="display:flex;gap:6px;margin-bottom:9px;">'+
+      '<button onclick="laiTodos(true)" style="flex:1;background:#fff;border:1px solid var(--border);color:var(--text-secondary);border-radius:8px;padding:8px;font-size:12px;cursor:pointer;font-family:inherit;">Marcar todos</button>'+
+      '<button onclick="laiTodos(false)" style="flex:1;background:#fff;border:1px solid var(--border);color:var(--text-secondary);border-radius:8px;padding:8px;font-size:12px;cursor:pointer;font-family:inherit;">Desmarcar</button>'+
+    '</div>'+
+    '<div style="font-size:12px;color:var(--text-secondary);text-align:center;margin-bottom:9px;"><strong>'+marcados.length+'</strong> selecionado(s) · <strong>'+total+'</strong> pct a estornar</div>'+
+    '<div style="display:flex;gap:8px;">'+
+      '<button class="btn btn-secondary" style="flex:1;" onclick="document.getElementById(\'lai-modal\').remove()">Cancelar</button>'+
+      '<button class="btn btn-primary" style="flex:1;" onclick="laiImportar()"'+(marcados.length?'':' disabled')+'>Trazer '+marcados.length+'</button>'+
+    '</div>';
+}
+
+async function laiImportar(){
+  const lista=laPendentesDoRefaz().filter(p=>_laiSel[p.chave]);
+  if(!lista.length) return;
+  const total=lista.reduce((t,p)=>t+p.qtd,0);
+  if(!confirm('Trazer '+lista.length+' ajuste(s) do refazimento?\n\nTotal: '+total+' pct a estornar.\n\nO app não lança nada agora — a entrada já foi feita. Ele passa a controlar a saída.')) return;
+
+  let ok=0, erros=[];
+  for(const p of lista){
+    try{
+      await addDoc(collection(db,'ajustesAbertos'),{
+        cod:p.cod, produto:p.nome, qtd:p.qtd,
+        qtdSolicitada:p.qtd, acimaEmbalado:false,
+        data:p.data||'', tipo:(typeof _ajRefTipoProduto==='function' && _ajRefTipoProduto(p.cod)==='pao')?'pao':'salgado',
+        solicitacaoId:'', solicitante:'(refazimento)',
+        status:'aberto', criadoEm:agora(), criadoPor:_demAutor(), timestamp:Date.now(),
+        entradaManual:true, eligoEntradaId:'', eligoEntradaErro:'',
+        origemRefaz:p.chave, obsManual:'importado do refazimento'
+      });
+      ok++;
+    }catch(e){ erros.push(p.cod+': '+e.message); }
+  }
+  document.getElementById('lai-modal')?.remove();
+  alert('✓ '+ok+' ajuste(s) trazido(s).'+(erros.length?('\n\n⚠️ '+erros.length+' falharam:\n'+erros.join('\n')):'')+
+    '\n\nAgora eles contam no saldo disponível e o app vai lançar a saída quando você mandar.');
+}
+window.laiImportar=laiImportar;
+
+/* ── IMPORTAR AJUSTES ANTIGOS ─────────────────────────────────────
+   Entradas que já foram lançadas no ELIGO à mão, antes da integração,
+   e que ainda esperam a saída. Registrando aqui, elas passam a contar
+   no saldo disponível e o app consegue estornar sozinho depois. */
+let _lamBusca='', _lamProd='';
+
+function laAbrirManual(){
+  _lamBusca=''; _lamProd='';
+  const ov=document.createElement('div');
+  ov.id='lam-modal';
+  ov.style.cssText='position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:3200;display:flex;align-items:center;justify-content:center;padding:16px;';
+  ov.innerHTML='<div style="background:#fff;border-radius:16px;max-width:480px;width:100%;max-height:90vh;overflow-y:auto;padding:18px;">'+
+    '<div style="font-size:17px;font-weight:800;">📥 Entrada já lançada à mão</div>'+
+    '<div style="font-size:12px;color:var(--text-secondary);margin:4px 0 14px;line-height:1.5;">Use para os ajustes que você já fez no ELIGO pelo processo antigo e que ainda precisam de saída. O app não lança a entrada de novo — só passa a controlar o estorno.</div>'+
+    '<label style="font-size:12px;font-weight:600;color:var(--text-secondary);">Produto</label>'+
+    '<input type="text" id="lam-busca" oninput="lamBuscar(this.value)" placeholder="🔎 Nome ou código" autocomplete="off" style="width:100%;padding:12px;min-height:48px;border:1px solid var(--border-md,#d1d5db);border-radius:9px;font-size:16px;font-family:inherit;box-sizing:border-box;margin:4px 0 0;">'+
+    '<div id="lam-sug"></div>'+
+    '<div id="lam-escolhido"></div>'+
+    '<label style="font-size:12px;font-weight:600;color:var(--text-secondary);display:block;margin-top:12px;">Quantidade da entrada (pct)</label>'+
+    '<input type="number" id="lam-qtd" min="1" placeholder="ex: 50" style="width:100%;padding:12px;min-height:48px;border:1px solid var(--border-md,#d1d5db);border-radius:9px;font-size:16px;box-sizing:border-box;margin:4px 0 0;">'+
+    '<div id="lam-dias" style="margin-top:12px;"></div>'+
+    '<label style="font-size:12px;font-weight:600;color:var(--text-secondary);display:block;margin-top:12px;">Observação (opcional)</label>'+
+    '<input type="text" id="lam-obs" placeholder="ex: ajuste feito em 05/09 pelo processo antigo" autocomplete="off" style="width:100%;padding:11px;border:1px solid var(--border-md,#d1d5db);border-radius:9px;font-size:15px;font-family:inherit;box-sizing:border-box;margin:4px 0 14px;">'+
+    '<div style="display:flex;gap:8px;">'+
+      '<button class="btn btn-secondary" style="flex:1;" onclick="document.getElementById(\'lam-modal\').remove()">Cancelar</button>'+
+      '<button class="btn btn-primary" style="flex:1;" onclick="lamSalvar()">Registrar</button></div>'+
+  '</div>';
+  document.body.appendChild(ov);
+  setTimeout(()=>document.getElementById('lam-busca')?.focus(),60);
+}
+window.laAbrirManual=laAbrirManual;
+
+function lamBuscar(v){
+  _lamBusca=v||''; _lamProd='';
+  const box=document.getElementById('lam-sug'); if(!box) return;
+  const q=_normNome(_lamBusca);
+  if(!q || q.length<2){ box.innerHTML=''; return; }
+  const achados=_laProdutosUnicos()
+    .filter(p=>_normNome(p.nome).includes(q)||String(p.cod||'').includes(_lamBusca.trim())).slice(0,8);
+  box.innerHTML = achados.length
+    ? achados.map(p=>'<button type="button" onclick="lamEscolher(\''+escapeJsStr(p.cod||'')+'\',\''+escapeJsStr(p.nome)+'\')" style="display:block;width:100%;text-align:left;background:#fff;border:1px solid var(--border);border-radius:9px;padding:10px 12px;margin-top:6px;cursor:pointer;font-family:inherit;"><div style="font-size:14px;font-weight:700;">'+p.nome+'</div><div style="font-size:11px;color:var(--text-secondary);">'+(p.cod?('cód '+p.cod):'')+'</div></button>').join('')
+    : '<div style="font-size:12px;color:var(--text-secondary);margin-top:6px;">Nenhum produto encontrado.</div>';
+}
+window.lamBuscar=lamBuscar;
+
+function lamEscolher(cod,nome){
+  _lamProd=(cod||'')+'|'+nome;
+  _lamBusca=nome;
+  const inp=document.getElementById('lam-busca'); if(inp) inp.value=nome;
+  const box=document.getElementById('lam-sug'); if(box) box.innerHTML='';
+  const esc=document.getElementById('lam-escolhido');
+  if(esc) esc.innerHTML='<div style="background:rgba(22,163,74,.08);border:1px solid #a7f3d0;border-radius:9px;padding:9px 11px;margin-top:8px;font-size:13px;font-weight:700;">✓ '+nome+'</div>';
+  lamRenderDias(cod,nome);
+}
+window.lamEscolher=lamEscolher;
+
+// mostra em quais produções ainda não lançadas esse ajuste pode se encaixar
+function lamRenderDias(cod,nome){
+  const box=document.getElementById('lam-dias'); if(!box) return;
+  const c=laCalcular(cod,nome);
+  const dias=(c.porDia||[]).filter(d=>!d.lancado && d.emb>0);
+  if(!dias.length){
+    box.innerHTML='<div style="font-size:12px;color:#b45309;background:#fffbeb;border:1px solid #fde68a;border-radius:9px;padding:9px 11px;">Nenhuma produção em aberto para este produto. Pode registrar sem dia — o estorno ficará no botão manual.</div>'+
+      '<input type="hidden" id="lam-dia" value="">';
+    return;
+  }
+  box.innerHTML='<label style="font-size:12px;font-weight:600;color:var(--text-secondary);">A qual produção se refere?</label>'+
+    '<div style="font-size:11px;color:var(--text-secondary);margin:2px 0 6px;">Quando esse dia for lançado no ERP, o app estorna sozinho.</div>'+
+    '<select id="lam-dia" style="width:100%;padding:12px;min-height:48px;border:1px solid var(--border-md,#d1d5db);border-radius:9px;font-size:16px;font-family:inherit;box-sizing:border-box;">'+
+      dias.map(d=>'<option value="'+d.data+'|'+d.tipo+'">'+d.data+' — '+d.emb+' pct disponível'+(d.liberado?(' ('+d.liberado+' já liberado)'):'')+'</option>').join('')+
+      '<option value="">Sem dia definido</option>'+
+    '</select>';
+}
+
+async function lamSalvar(){
+  if(!_lamProd){ alert('Busque e toque no produto na lista.'); return; }
+  const qtd=parseInt((document.getElementById('lam-qtd')||{}).value)||0;
+  if(qtd<=0){ alert('Informe a quantidade da entrada.'); return; }
+  const [cod,nome]=_lamProd.split('|');
+  const dv=(document.getElementById('lam-dia')||{}).value||'';
+  const [dia,tipo]=dv?dv.split('|'):['',''];
+  const obs=((document.getElementById('lam-obs')||{}).value||'').trim();
+
+  const c=laCalcular(cod,nome);
+  if(qtd>c.embAntecip && !confirm('Atenção: há '+c.embAntecip+' pct disponíveis deste produto.\n\nVocê está registrando '+qtd+'. Confirmar assim mesmo?')) return;
+
+  if(!confirm('Registrar entrada JÁ LANÇADA no ELIGO?\n\n'+nome+'\n'+qtd+' pct'+(dia?('\nProdução de '+dia):'')+
+    '\n\nO app NÃO vai lançar nada agora — só vai controlar a saída depois.')) return;
+
+  try{
+    await addDoc(collection(db,'ajustesAbertos'),{
+      cod:cod||'', produto:nome||'', qtd,
+      qtdSolicitada:qtd, acimaEmbalado:(qtd>c.embAntecip),
+      data:dia||'', tipo:tipo||'salgado',
+      solicitacaoId:'', solicitante:'(processo antigo)',
+      status:'aberto', criadoEm:agora(), criadoPor:_demAutor(), timestamp:Date.now(),
+      // a entrada existe no ERP, só não passou pelo app
+      entradaManual:true, eligoEntradaId:'', eligoEntradaErro:'', obsManual:obs
+    });
+    document.getElementById('lam-modal')?.remove();
+    alert('✓ Registrado.\n\nAgora ele conta no saldo disponível e o app vai pedir a SAÍDA quando a produção for lançada.');
+  }catch(e){ alert('Erro: '+e.message); }
+}
+window.lamSalvar=lamSalvar;
+
 function renderLaAjustes(){
   const el=document.getElementById('la-ajustes-content'); if(!el) return;
   const abertos=laAjustes.filter(a=>(a.status||'aberto')==='aberto');
   const fechados=laAjustes.filter(a=>a.status==='fechado').slice(0,20);
-  let html=laNavbar('s-la-ajustes')+'<div class="card" style="margin-bottom:12px;border-left:4px solid '+(abertos.length?'#dc2626':'#16a34a')+';background:'+(abertos.length?'#fef2f2':'rgba(22,163,74,.06)')+';"><div style="font-size:16px;font-weight:800;color:'+(abertos.length?'#dc2626':'#16a34a')+';">'+(abertos.length?'⚠️ '+abertos.length+' ajuste(s) em aberto':'✅ Nenhum ajuste em aberto')+'</div><div style="font-size:11px;color:var(--text-secondary);margin-top:2px;">Cada entrada precisa de uma SAÍDA quando o dia for lançado no ERP.</div></div>';
+  let html=laNavbar('s-la-ajustes')+'<div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;">'+
+    '<button onclick="laAbrirImportRefaz()" class="btn btn-secondary" style="flex:1;min-width:190px;">📋 Trazer do refazimento'+(laPendentesDoRefaz().length?(' ('+laPendentesDoRefaz().length+')'):'')+'</button>'+
+    '<button onclick="laAbrirManual()" class="btn btn-secondary" style="flex:1;min-width:190px;">📥 Lançar um à mão</button>'+
+  '</div>'+'<div class="card" style="margin-bottom:12px;border-left:4px solid '+(abertos.length?'#dc2626':'#16a34a')+';background:'+(abertos.length?'#fef2f2':'rgba(22,163,74,.06)')+';"><div style="font-size:16px;font-weight:800;color:'+(abertos.length?'#dc2626':'#16a34a')+';">'+(abertos.length?'⚠️ '+abertos.length+' ajuste(s) em aberto':'✅ Nenhum ajuste em aberto')+'</div><div style="font-size:11px;color:var(--text-secondary);margin-top:2px;">Cada entrada precisa de uma SAÍDA quando o dia for lançado no ERP.</div></div>';
   if(abertos.length){
     html+=abertos.map(a=>{
       const diaJaLancado=laDiaLancado(a.data,a.tipo);
@@ -17650,6 +17880,7 @@ function renderLaAjustes(){
         '<div style="display:flex;justify-content:space-between;align-items:start;"><div><div style="font-size:15px;font-weight:800;">'+a.produto+' <span style="font-size:12px;color:var(--text-secondary);">'+(a.cod?'#'+a.cod:'')+'</span></div>'+
         '<div style="font-size:11px;color:var(--text-secondary);">ENTRADA de '+a.qtd+' pct · '+laTipoLabel(a.tipo)+' '+(a.data||'?')+' · por '+(a.criadoPor||'')+'</div>'+
         (a.qtdSolicitada&&a.qtdSolicitada!==a.qtd?'<div style="font-size:11px;color:var(--text-secondary);">(solicitado: '+a.qtdSolicitada+' pct)</div>':'')+
+        (a.entradaManual?'<div style="font-size:11px;font-weight:700;color:#2563eb;margin-top:2px;">📥 entrada lançada à mão (processo antigo)'+(a.obsManual?(' · '+a.obsManual):'')+'</div>':'')+
         (a.acimaEmbalado?'<div style="font-size:11px;font-weight:700;color:#d97706;margin-top:2px;">⚠️ liberado acima do embalado</div>':'')+
         (diaJaLancado?'<div style="font-size:12px;font-weight:700;color:#dc2626;margin-top:4px;">🔴 Dia já lançado no ERP — faça a SAÍDA agora!</div>':'<div style="font-size:11px;color:var(--text-secondary);margin-top:4px;">Aguardando o dia ser lançado.</div>')+
         '</div><div style="font-size:20px;font-weight:900;color:#d97706;">'+a.qtd+'</div></div>'+
@@ -17682,8 +17913,14 @@ async function laFecharAjuste(id){
     return;
   }
 
-  // se a entrada não passou pelo app, não temos o que estornar automaticamente
-  if(!a.eligoEntradaId){
+  // entrada registrada como "já lançada à mão": existe no ERP, então a saída é normal
+  if(!a.eligoEntradaId && a.entradaManual){
+    if(!confirm('Lançar a SAÍDA no ELIGO?\n\n'+
+      '• Código: '+(a.cod||'?')+'\n• Produto: '+a.produto+'\n• Quantidade: '+a.qtd+' pct\n\n'+
+      'A entrada deste ajuste foi lançada à mão no processo antigo. Agora o app faz a saída.')) return;
+  }
+  // se não sabemos se existe entrada no ERP, pergunta antes
+  else if(!a.eligoEntradaId){
     if(!confirm('Este ajuste não teve a ENTRADA lançada pelo app — ela foi feita à mão.\n\n'+
         'Produto: '+a.produto+'\nQuantidade: '+a.qtd+' pct\n\n'+
         'Quer que eu lance a SAÍDA no ELIGO agora mesmo assim?\n'+
