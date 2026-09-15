@@ -17147,10 +17147,22 @@ async function laFecharPares(abertos, data, tipo){
   const semEntrada=abertos.filter(a=>!a.eligoEntradaId && !a.entradaManual);
 
   let okN=0, falhaN=0, msg='';
+  // cada item é tentado por conta própria: se um falhar (sem saldo no ERP,
+  // produto bloqueado, queda de rede), os outros continuam mesmo assim
   for(const a of paraEnviar){
-    const r=await eligoLancar(a.cod||'', a.qtd, 'saida', laDataHoje(),
-      'Estorno liberacao antecipada ProduLog - '+(a.produto||'')+' - producao '+data+' lancada');
-    if(r.ok){
+    let r;
+    try{
+      r=await eligoLancar(a.cod||'', a.qtd, 'saida', laDataHoje(),
+        'Estorno liberacao antecipada ProduLog - '+(a.produto||'')+' - producao '+data+' lancada');
+    }catch(e){
+      r={ok:false, erro:'erro inesperado: '+e.message};
+    }
+    if(r && r.cancelado){
+      falhaN++;
+      msg+='\n• '+a.produto+': envio cancelado';
+      continue;                 // segue para o próximo, não aborta o lote
+    }
+    if(r && r.ok){
       okN++;
       try{
         await updateDoc(doc(db,'ajustesAbertos',a.firestoreId),{
@@ -17160,12 +17172,13 @@ async function laFecharPares(abertos, data, tipo){
       }catch(e){ msg+='\n• '+a.produto+': saiu no ERP mas não consegui marcar como fechado ('+e.message+')'; }
     } else {
       falhaN++;
-      msg+='\n• '+a.produto+': '+r.erro;
+      msg+='\n• '+a.produto+' ('+a.qtd+' pct): '+((r&&r.erro)||'erro desconhecido');
     }
   }
 
-  let txt=(okN?('✓ '+okN+' saída(s) lançada(s) no ELIGO e ajuste(s) fechado(s).'):'');
-  if(falhaN) txt+='\n\n⚠️ '+falhaN+' falharam:'+msg+'\n\nEles seguem em aberto para você tentar de novo.';
+  let txt='Tentei os '+paraEnviar.length+' ajuste(s) deste dia.\n\n';
+  if(okN) txt+='✓ '+okN+' saída(s) lançada(s) e fechada(s).';
+  if(falhaN) txt+=(okN?'\n\n':'')+'⚠️ '+falhaN+' não passaram:'+msg+'\n\nEles seguem EM ABERTO — corrija no ELIGO e tente de novo pelo botão de cada um.';
   if(semEntrada.length) txt+='\n\nℹ️ '+semEntrada.length+' ajuste(s) não tinham entrada lançada no ERP pelo app — feche à mão em "↩ Ajustes".';
   alert(txt||'Nada a estornar.');
 }
@@ -17841,6 +17854,35 @@ function laPendentesDoRefaz(){
               chave:String(p.cod)+'|'+String(p.data)}));
 }
 
+/* Descobre a qual PRODUÇÃO um ajuste se refere.
+   O refazimento só diz quando o ajuste foi lançado no ERP; a produção que
+   ele adianta é outra data. Escolhemos o dia mais antigo ainda não lançado
+   que tenha saldo — mesma lógica do estoque, o mais velho sai primeiro. */
+function laAcharProducao(cod, nome, qtd, usado){
+  usado=usado||{};
+  let c;
+  try{ c=laCalcular(cod, nome); }catch(e){ return {data:'', tipo:''}; }
+  const dias=(c.porDia||[])
+    .filter(d=>!d.lancado)
+    .sort((a,b)=>laDataKey(a.data).localeCompare(laDataKey(b.data)));   // do mais antigo
+  for(const d of dias){
+    const chave=String(cod)+'|'+d.data;
+    const livre=(d.emb||0)-(usado[chave]||0);
+    if(livre>0){
+      usado[chave]=(usado[chave]||0)+qtd;
+      return {data:d.data, tipo:d.tipo};
+    }
+  }
+  // nenhuma produção em aberto com saldo: devolve o dia mais antigo mesmo assim,
+  // que é melhor palpite do que a data do ajuste
+  if(dias.length){
+    const d=dias[0];
+    usado[String(cod)+'|'+d.data]=(usado[String(cod)+'|'+d.data]||0)+qtd;
+    return {data:d.data, tipo:d.tipo};
+  }
+  return {data:'', tipo:''};
+}
+
 let _laiSel={};
 function laAbrirImportRefaz(){
   const lista=laPendentesDoRefaz();
@@ -17917,24 +17959,35 @@ async function laiImportar(){
   const total=lista.reduce((t,p)=>t+p.qtd,0);
   if(!confirm('Trazer '+lista.length+' ajuste(s) do refazimento?\n\nTotal: '+total+' pct a estornar.\n\nO app não lança nada agora — a entrada já foi feita. Ele passa a controlar a saída.')) return;
 
-  let ok=0, erros=[];
+  let ok=0, erros=[], semProducao=0;
+  // controla o que já foi alocado nesta rodada, para dois ajustes do mesmo
+  // produto não caírem os dois no mesmo dia de produção
+  const usado={};
   for(const p of lista){
+    // a data que vem do refazimento é a do AJUSTE no ERP, não a da produção.
+    // Aqui procuramos a qual produção ele se refere: o dia mais antigo ainda
+    // não lançado que tenha saldo, igual à lógica de estoque (o mais velho sai primeiro).
+    const alvo=laAcharProducao(p.cod, p.nome, p.qtd, usado);
     try{
       await addDoc(collection(db,'ajustesAbertos'),{
         cod:p.cod, produto:p.nome, qtd:p.qtd,
         qtdSolicitada:p.qtd, acimaEmbalado:false,
-        data:p.data||'', tipo:(typeof _ajRefTipoProduto==='function' && _ajRefTipoProduto(p.cod)==='pao')?'pao':'salgado',
+        data:alvo.data||'', tipo:alvo.tipo||((typeof _ajRefTipoProduto==='function' && _ajRefTipoProduto(p.cod)==='pao')?'pao':'salgado'),
         solicitacaoId:'', solicitante:'(refazimento)',
         status:'aberto', criadoEm:agora(), criadoPor:_demAutor(), timestamp:Date.now(),
         entradaManual:true, eligoEntradaId:'', eligoEntradaErro:'',
-        origemRefaz:p.chave, obsManual:'importado do refazimento'
+        origemRefaz:p.chave, dataAjusteErp:p.data||'',
+        obsManual:'importado do refazimento'+(p.data?(' · ajuste lançado em '+p.data):'')
       });
+      if(!alvo.data) semProducao++;
       ok++;
     }catch(e){ erros.push(p.cod+': '+e.message); }
   }
   document.getElementById('lai-modal')?.remove();
-  alert('✓ '+ok+' ajuste(s) trazido(s).'+(erros.length?('\n\n⚠️ '+erros.length+' falharam:\n'+erros.join('\n')):'')+
-    '\n\nAgora eles contam no saldo disponível e o app vai lançar a saída quando você mandar.');
+  alert('✓ '+ok+' ajuste(s) trazido(s).'+
+    (semProducao?('\n\nℹ️ '+semProducao+' sem produção em aberto correspondente — ficam para estorno pelo botão manual.'):'')+
+    (erros.length?('\n\n⚠️ '+erros.length+' falharam:\n'+erros.join('\n')):'')+
+    '\n\nCada um foi ligado ao DIA DA PRODUÇÃO, não ao dia em que o ajuste foi lançado.');
 }
 window.laiImportar=laiImportar;
 
