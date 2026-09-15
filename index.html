@@ -17655,13 +17655,16 @@ function laPendentesDoRefaz(){
   return _ajRefPendentes
     .filter(p=>{
       const saldo=Number(p.saldo)||0;
-      if(saldo>=0) return false;                       // só falta SAÍDA (saldo negativo = entrou a mais)
+      // saldo POSITIVO = entrou mais do que saiu = FALTA DAR SAÍDA (é o que importamos).
+      // Saldo negativo é falta de entrada, que não é o par que o app controla.
+      if(saldo<=0) return false;
       const chave=String(p.cod)+'|'+String(p.data);
       if(_ajRefResolvidos && _ajRefResolvidos[chave]) return false;   // já marcado como resolvido lá
       if(jaTem[chave]) return false;
       return true;
     })
-    .map(p=>({cod:String(p.cod), nome:p.nome||'', data:p.data, qtd:Math.abs(Number(p.saldo)||0),
+    .map(p=>({cod:String(p.cod), nome:p.nome||'', data:p.data, qtd:Number(p.saldo)||0,
+              entrada:Number(p.entrada)||0, saida:Number(p.saida)||0,
               chave:String(p.cod)+'|'+String(p.data)}));
 }
 
@@ -17713,8 +17716,10 @@ function laiRender(){
         return '<div onclick="laiToggle(\''+escapeJsStr(p.chave)+'\')" style="cursor:pointer;display:flex;align-items:center;gap:9px;padding:8px 9px;border:1px solid '+(on?'var(--mc-azul,#2563eb)':'var(--border)')+';background:'+(on?'rgba(37,99,235,.06)':'#fff')+';border-radius:9px;margin-bottom:5px;">'+
           '<span style="flex:0 0 auto;width:20px;height:20px;border-radius:5px;border:2px solid '+(on?'var(--mc-azul,#2563eb)':'#cbd5e1')+';background:'+(on?'var(--mc-azul,#2563eb)':'#fff')+';color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900;">'+(on?'✓':'')+'</span>'+
           '<span style="flex:0 0 auto;font-size:11px;font-weight:700;color:var(--text-secondary);width:40px;">'+p.cod+'</span>'+
-          '<span style="flex:1;min-width:0;font-size:13px;font-weight:600;">'+p.nome+'</span>'+
-          '<span style="flex:0 0 auto;font-size:15px;font-weight:900;color:#d97706;">'+p.qtd+'</span>'+
+          '<span style="flex:1;min-width:0;"><span style="font-size:13px;font-weight:600;display:block;">'+p.nome+'</span>'+
+            '<span style="font-size:10px;color:var(--text-muted);">entrou '+p.entrada+' · saiu '+p.saida+'</span></span>'+
+          '<span style="flex:0 0 auto;text-align:right;"><span style="font-size:15px;font-weight:900;color:#d97706;display:block;">'+p.qtd+'</span>'+
+            '<span style="font-size:9px;color:var(--text-muted);">falta sair</span></span>'+
         '</div>';
       }).join('');
   }).join('');
