@@ -1184,6 +1184,14 @@
           </div>
           <span class="mc-sector-arrow">›</span>
         </button>
+        <button class="mc-sector-card" style="border-left:3px solid #dc2626;" onclick="goTo('s-ret-val')">
+          <div class="mc-sector-icon" style="background:#fee2e2;">↩️</div>
+          <div class="mc-sector-info">
+            <div class="mc-sector-title">Validar retornos <span id="ret-badge-conf" style="display:none;background:var(--mc-vermelho,#dc2626);color:#fff;font-size:11px;font-weight:700;border-radius:99px;padding:1px 8px;margin-left:4px;">0</span></div>
+            <div class="mc-sector-desc">Dar destino ao que voltou das rotas</div>
+          </div>
+          <span class="mc-sector-arrow">›</span>
+        </button>
         <button class="mc-sector-card" style="border-left:3px solid var(--mc-laranja,#d97706);" onclick="goTo('s-lib')">
           <div class="mc-sector-icon" style="background:#fef3c7;">🚚</div>
           <div class="mc-sector-info">
@@ -2422,6 +2430,62 @@
     <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;" id="lib-content"></div>
   </div>
 
+  <div class="screen" id="s-emb-alt">
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="goTo(window.adminMode?'s-adm-hub':'s-inicio')">‹</button>
+      <div class="mc-brand"><div class="mc-brand-logo"></div><div class="mc-brand-text"><div class="mc-brand-name">Monte Castelo</div><div class="mc-brand-sub">Admin</div></div></div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info"><div class="mc-page-title">✏️ Alterações do embalado</div><div class="mc-page-sub">Mudanças depois de finalizado</div></div>
+    </div>
+    <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;" id="emb-alt-content"></div>
+  </div>
+
+  <!-- ============ RETORNO DE MERCADORIAS ============ -->
+  <div class="screen" id="s-ret">
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="retVoltar()">‹</button>
+      <div class="mc-brand"><div class="mc-brand-logo"></div><div class="mc-brand-text"><div class="mc-brand-name">Monte Castelo</div><div class="mc-brand-sub">Retornos</div></div></div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info"><div class="mc-page-title">↩️ Retorno de Mercadorias</div><div class="mc-page-sub">Produtos que voltaram das rotas</div></div>
+      <div class="mc-header-actions">
+        <button class="mc-act-btn-secondary" onclick="goTo('s-ret-hist')" title="Histórico">📚</button>
+        <button class="mc-act-btn-secondary" onclick="retAbrirConfigDestinos()" title="Destinos">⚙️</button>
+        <button class="mc-act-btn-primary" onclick="retNovo()">+ Novo retorno</button>
+      </div>
+    </div>
+    <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;" id="ret-content"></div>
+  </div>
+
+  <div class="screen" id="s-ret-form">
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="retSairForm()">‹</button>
+      <div class="mc-brand"><div class="mc-brand-logo"></div><div class="mc-brand-text"><div class="mc-brand-name">Monte Castelo</div><div class="mc-brand-sub">Retornos</div></div></div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info"><div class="mc-page-title">↩️ Novo retorno</div><div class="mc-page-sub" id="ret-form-sub">Dados da rota</div></div>
+    </div>
+    <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;" id="ret-form-content"></div>
+  </div>
+
+  <div class="screen" id="s-ret-val">
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="retVoltar()">‹</button>
+      <div class="mc-brand"><div class="mc-brand-logo"></div><div class="mc-brand-text"><div class="mc-brand-name">Monte Castelo</div><div class="mc-brand-sub">Confeitaria</div></div></div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info"><div class="mc-page-title">🔍 Validar retornos</div><div class="mc-page-sub">Dar destino ao que voltou</div></div>
+    </div>
+    <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;" id="ret-val-content"></div>
+  </div>
+
+  <div class="screen" id="s-ret-hist">
+    <div class="mc-header">
+      <button class="mc-header-back" onclick="goTo('s-ret')">‹</button>
+      <div class="mc-brand"><div class="mc-brand-logo"></div><div class="mc-brand-text"><div class="mc-brand-name">Monte Castelo</div><div class="mc-brand-sub">Retornos</div></div></div>
+      <div class="mc-divider-v"></div>
+      <div class="mc-page-info"><div class="mc-page-title">📚 Histórico de retornos</div><div class="mc-page-sub">Tudo que já foi resolvido</div></div>
+    </div>
+    <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;" id="ret-hist-content"></div>
+  </div>
+
   <!-- ============ PEDIDOS AMOSTRA ============ -->
   <div class="screen" id="s-am">
     <div class="mc-header">
@@ -3174,6 +3238,24 @@
         <div class="mc-sector-info">
           <div class="mc-sector-title">Ajustes de Refazimento</div>
           <div class="mc-sector-desc">Conferir ajustes de entrada/saída pendentes por dia</div>
+        </div>
+        <span class="mc-sector-arrow">›</span>
+      </button>
+
+      <button class="mc-sector-card" style="border-left:4px solid #2563eb;margin-bottom:10px;" onclick="goTo('s-emb-alt')">
+        <div class="mc-sector-icon" style="background:#dbeafe;">✏️</div>
+        <div class="mc-sector-info">
+          <div class="mc-sector-title">Alterações do embalado</div>
+          <div class="mc-sector-desc">Quantidades mudadas depois de finalizadas</div>
+        </div>
+        <span class="mc-sector-arrow">›</span>
+      </button>
+
+      <button class="mc-sector-card" style="border-left:4px solid #dc2626;margin-bottom:10px;" onclick="goTo('s-ret')">
+        <div class="mc-sector-icon" style="background:#fee2e2;">↩️</div>
+        <div class="mc-sector-info">
+          <div class="mc-sector-title">Retorno de Mercadorias <span id="ret-badge-adm" style="display:none;background:var(--mc-vermelho,#dc2626);color:#fff;font-size:11px;font-weight:700;border-radius:99px;padding:1px 8px;margin-left:4px;">0</span></div>
+          <div class="mc-sector-desc">Produtos que voltaram &middot; destino e histórico</div>
         </div>
         <span class="mc-sector-arrow">›</span>
       </button>
@@ -4289,6 +4371,7 @@
       <div class="mc-divider-v"></div>
       <div class="mc-page-info"><div class="mc-page-title">📦 Carregamentos</div><div class="mc-page-sub">Conferência por bipagem</div></div>
       <div class="mc-header-actions">
+        <button class="mc-act-btn-secondary" onclick="goTo('s-ret')" title="Retorno de Mercadorias">↩️ Retornos <span id="ret-badge-carreg" style="display:none;background:var(--mc-vermelho,#dc2626);color:#fff;font-size:10px;font-weight:700;border-radius:99px;padding:1px 6px;margin-left:3px;">0</span></button>
         <button class="mc-act-btn-secondary" onclick="goTo('s-pf')" title="Pedidos por fora">📄 Pedidos por fora <span id="pf-badge" style="display:none;background:var(--mc-vermelho,#dc2626);color:#fff;font-size:10px;font-weight:700;border-radius:99px;padding:1px 6px;margin-left:3px;">0</span></button>
         <button class="mc-act-btn-secondary" onclick="goTo('s-eans')" title="Cadastro de códigos de barras (EAN)">🏷️ Códigos de barras</button>
       </div>
@@ -5209,6 +5292,12 @@ function goTo(id){
   if(id==='s-pf' && typeof pfRender==='function') pfRender();
   if(id==='s-lib' && typeof libRender==='function') libRender();
   if(typeof libAtualizarBadges==='function') libAtualizarBadges();
+  if(id==='s-emb-alt' && typeof renderEmbAlt==='function') renderEmbAlt();
+  if(id==='s-ret' && typeof retRender==='function') retRender();
+  if(id==='s-ret-val' && typeof retRenderVal==='function') retRenderVal();
+  if(id==='s-ret-hist' && typeof retRenderHist==='function') retRenderHist();
+  if(id==='s-ret-form' && typeof retRenderForm==='function') retRenderForm();
+  if(typeof retAtualizarBadges==='function') retAtualizarBadges();
   if(id==='s-am' && typeof amRender==='function') amRender();
   if(id==='s-am-emb' && typeof amRenderEmb==='function') amRenderEmb();
   if(id==='s-am-form' && typeof amRenderForm==='function') amRenderForm();
@@ -6228,6 +6317,165 @@ async function marcarAmostra(fid){
 }
 window.marcarAmostra=marcarAmostra;
 
+/* ══════════════════════════════════════════════════════════════════
+   HISTÓRICO DE ALTERAÇÃO DO EMBALADO
+   Depois que a embalagem finaliza um produto, qualquer mudança na
+   quantidade fica registrada: quem mudou, quando, de quanto para
+   quanto. A expedição vê o aviso antes de liberar.
+   ══════════════════════════════════════════════════════════════════ */
+function embFoiAlterado(reg){
+  const e=(reg&&reg.embalagem)||{};
+  return Array.isArray(e.alteracoes) && e.alteracoes.length>0;
+}
+function embUltimaAlteracao(reg){
+  const a=((reg&&reg.embalagem)||{}).alteracoes||[];
+  return a.length?a[a.length-1]:null;
+}
+
+// grava a alteração — só conta depois que o produto foi finalizado
+async function embRegistrarAlteracao(fid, de, para, motivo){
+  const reg=registros.find(r=>r.firestoreId===fid); if(!reg) return;
+  const e=reg.embalagem||{};
+  if(!e.feito) return;                       // ainda não finalizou: é ajuste normal
+  if(Number(de)===Number(para)) return;      // não mudou nada
+  const alteracoes=[...(e.alteracoes||[]),{
+    de:Number(de)||0, para:Number(para)||0, diff:(Number(para)||0)-(Number(de)||0),
+    quem:_demAutor(), setor:(typeof _elevSetor==='function'?_elevSetor():(window.setorAtual||'')),
+    hora:agora(), ts:Date.now(), motivo:motivo||''
+  }];
+  try{ await updateDoc(doc(db,'registros',fid),{'embalagem.alteracoes':alteracoes}); }
+  catch(err){ console.error('registrar alteracao emb',err); }
+}
+window.embRegistrarAlteracao=embRegistrarAlteracao;
+
+// faixa de aviso para a expedição
+function embAvisoAlteracao(reg){
+  if(!embFoiAlterado(reg)) return '';
+  const a=reg.embalagem.alteracoes;
+  const u=a[a.length-1];
+  const sobe=u.diff>0;
+  return '<div style="background:'+(sobe?'#eff6ff':'#fffbeb')+';border:2px solid '+(sobe?'#2563eb':'#d97706')+';border-radius:9px;padding:8px 10px;margin-top:7px;">'+
+    '<div style="display:flex;align-items:center;gap:7px;">'+
+      '<span style="font-size:15px;">✏️</span>'+
+      '<div style="flex:1;min-width:0;">'+
+        '<div style="font-size:12px;font-weight:800;color:'+(sobe?'#1e40af':'#b45309')+';">Quantidade alterada depois de finalizada</div>'+
+        '<div style="font-size:11px;color:var(--text-secondary);margin-top:1px;">'+
+          u.de+' → <strong>'+u.para+'</strong> un ('+(sobe?'+':'')+u.diff+') · '+(u.setor||u.quem||'')+' às '+String(u.hora||'').slice(-5)+
+          (a.length>1?(' · '+a.length+' alterações'):'')+'</div>'+
+      '</div>'+
+      '<button onclick="event.stopPropagation();embVerHistorico(\''+escapeJsStr(reg.firestoreId)+'\')" style="flex:0 0 auto;background:#fff;border:1px solid '+(sobe?'#2563eb':'#d97706')+';color:'+(sobe?'#1e40af':'#b45309')+';border-radius:7px;padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;">ver</button>'+
+    '</div></div>';
+}
+window.embAvisoAlteracao=embAvisoAlteracao;
+
+function embVerHistorico(fid){
+  const reg=registros.find(r=>r.firestoreId===fid); if(!reg) return;
+  const a=((reg.embalagem||{}).alteracoes)||[];
+  const ov=document.createElement('div');
+  ov.id='emb-hist-modal';
+  ov.style.cssText='position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:3300;display:flex;align-items:center;justify-content:center;padding:16px;';
+  ov.innerHTML='<div style="background:#fff;border-radius:16px;max-width:460px;width:100%;max-height:86vh;display:flex;flex-direction:column;">'+
+    '<div style="padding:16px 18px 10px;border-bottom:1px solid var(--border);">'+
+      '<div style="font-size:17px;font-weight:800;">✏️ Alterações do embalado</div>'+
+      '<div style="font-size:13px;color:var(--text-secondary);margin-top:2px;">'+(reg.produto||'')+' · '+(reg.data||'')+'</div>'+
+      '<div style="font-size:12px;color:var(--text-secondary);margin-top:4px;">Finalizado com <strong>'+(a.length?a[0].de:((reg.embalagem||{}).qtdEmbalada||0))+'</strong> un · hoje está com <strong>'+((reg.embalagem||{}).qtdEmbalada||0)+'</strong> un</div>'+
+    '</div>'+
+    '<div style="flex:1;overflow-y:auto;padding:10px 16px;">'+
+      (a.length
+        ? a.slice().reverse().map(x=>'<div style="border-left:3px solid '+(x.diff>0?'#2563eb':'#d97706')+';background:var(--bg-page);border-radius:8px;padding:9px 11px;margin-bottom:7px;">'+
+            '<div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;">'+
+              '<span style="font-size:14px;font-weight:800;">'+x.de+' → '+x.para+' un</span>'+
+              '<span style="font-size:14px;font-weight:900;color:'+(x.diff>0?'#2563eb':'#d97706')+';">'+(x.diff>0?'+':'')+x.diff+'</span></div>'+
+            '<div style="font-size:11px;color:var(--text-secondary);margin-top:3px;">'+(x.setor||x.quem||'—')+' · '+(x.hora||'')+'</div>'+
+            (x.motivo?'<div style="font-size:11px;color:var(--text-muted);margin-top:2px;">'+x.motivo+'</div>':'')+
+          '</div>').join('')
+        : '<div style="padding:20px;text-align:center;color:var(--text-secondary);font-size:13px;">Nenhuma alteração depois de finalizado.</div>')+
+    '</div>'+
+    '<div style="padding:12px 18px 16px;border-top:1px solid var(--border);">'+
+      '<button class="btn btn-secondary" style="width:100%;" onclick="document.getElementById(\'emb-hist-modal\').remove()">Fechar</button></div>'+
+  '</div>';
+  document.body.appendChild(ov);
+}
+window.embVerHistorico=embVerHistorico;
+
+/* Painel do admin: tudo que foi alterado depois de finalizado */
+function embTodasAlteracoes(dias){
+  const limite=Date.now()-(dias||30)*86400000;
+  const out=[];
+  (registros||[]).forEach(r=>{
+    (((r.embalagem||{}).alteracoes)||[]).forEach(a=>{
+      if((a.ts||0)<limite) return;
+      out.push({reg:r, alt:a});
+    });
+  });
+  return out.sort((a,b)=>(b.alt.ts||0)-(a.alt.ts||0));
+}
+window.embTodasAlteracoes=embTodasAlteracoes;
+
+/* Painel do admin: todas as mudanças de quantidade feitas depois que a
+   embalagem finalizou o produto. */
+let _embAltDias=30;
+function embSetDias(d){ _embAltDias=d; renderEmbAlt(); }
+window.embSetDias=embSetDias;
+
+function renderEmbAlt(){
+  const el=document.getElementById('emb-alt-content'); if(!el) return;
+  const lista=embTodasAlteracoes(_embAltDias);
+
+  const chip=(v,txt)=>'<button onclick="embSetDias('+v+')" style="background:'+(_embAltDias===v?'var(--mc-azul,#2563eb)':'#fff')+';color:'+(_embAltDias===v?'#fff':'var(--text-secondary)')+';border:1px solid '+(_embAltDias===v?'var(--mc-azul,#2563eb)':'var(--border)')+';border-radius:99px;padding:7px 13px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;">'+txt+'</button>';
+  let h='<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;">'+
+    chip(1,'Hoje')+chip(7,'7 dias')+chip(30,'30 dias')+chip(90,'90 dias')+'</div>';
+
+  if(!lista.length){
+    h+='<div style="background:var(--bg-primary);border:1px solid #a7f3d0;border-radius:12px;padding:26px;text-align:center;">'+
+      '<div style="font-size:38px;">✅</div>'+
+      '<div style="font-size:15px;font-weight:800;margin-top:8px;">Nenhuma alteração no período</div>'+
+      '<div style="font-size:12px;color:var(--text-secondary);margin-top:5px;line-height:1.5;">Aparece aqui toda vez que alguém muda a quantidade depois de finalizar o produto.</div></div>';
+    el.innerHTML=h; return;
+  }
+
+  // quem mais altera
+  const porSetor={}; let subiu=0, desceu=0;
+  lista.forEach(({alt})=>{
+    const k=alt.setor||alt.quem||'—';
+    porSetor[k]=(porSetor[k]||0)+1;
+    if(alt.diff>0) subiu++; else desceu++;
+  });
+  h+='<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px;">'+
+    '<div class="card" style="text-align:center;padding:12px 6px;border-top:3px solid var(--mc-azul,#2563eb);">'+
+      '<div style="font-size:10px;font-weight:800;color:var(--text-secondary);">ALTERAÇÕES</div>'+
+      '<div style="font-size:26px;font-weight:900;color:var(--mc-azul,#2563eb);line-height:1.1;">'+lista.length+'</div></div>'+
+    '<div class="card" style="text-align:center;padding:12px 6px;border-top:3px solid #16a34a;">'+
+      '<div style="font-size:10px;font-weight:800;color:var(--text-secondary);">AUMENTOU</div>'+
+      '<div style="font-size:26px;font-weight:900;color:#16a34a;line-height:1.1;">'+subiu+'</div></div>'+
+    '<div class="card" style="text-align:center;padding:12px 6px;border-top:3px solid #d97706;">'+
+      '<div style="font-size:10px;font-weight:800;color:var(--text-secondary);">DIMINUIU</div>'+
+      '<div style="font-size:26px;font-weight:900;color:#d97706;line-height:1.1;">'+desceu+'</div></div>'+
+  '</div>';
+
+  const setores=Object.entries(porSetor).sort((a,b)=>b[1]-a[1]);
+  if(setores.length>1){
+    h+='<div class="card" style="margin-bottom:12px;">'+
+      '<div style="font-size:11px;font-weight:800;color:var(--text-secondary);margin-bottom:6px;">QUEM ALTEROU</div>'+
+      setores.map(([k,n])=>'<div style="display:flex;justify-content:space-between;font-size:13px;padding:3px 0;">'+
+        '<span>'+k+'</span><strong>'+n+'</strong></div>').join('')+'</div>';
+  }
+
+  h+=lista.slice(0,80).map(({reg,alt})=>{
+    const sobe=alt.diff>0;
+    return '<div class="card" style="margin-bottom:7px;border-left:4px solid '+(sobe?'#2563eb':'#d97706')+';">'+
+      '<div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;">'+
+        '<div style="flex:1;min-width:0;font-size:14px;font-weight:700;">'+(reg.produto||'')+'</div>'+
+        '<div style="font-size:16px;font-weight:900;color:'+(sobe?'#2563eb':'#d97706')+';white-space:nowrap;">'+(sobe?'+':'')+alt.diff+'</div>'+
+      '</div>'+
+      '<div style="font-size:12px;color:var(--text-secondary);margin-top:2px;">'+alt.de+' → <strong>'+alt.para+'</strong> un · produção de '+(reg.data||'')+'</div>'+
+      '<div style="font-size:11px;color:var(--text-muted);margin-top:3px;">'+(alt.setor||alt.quem||'—')+' · '+(alt.hora||'')+'</div>'+
+    '</div>';
+  }).join('');
+  el.innerHTML=h;
+}
+window.renderEmbAlt=renderEmbAlt;
+
 async function subtrairParcialEmb(fid){
   const inp=document.getElementById('emb-parc-inp-'+fid);
   const val=parseInt(inp?.value)||0;
@@ -6263,7 +6511,9 @@ async function toggleEmb(fid,qtdProd){
   const emb=reg.embalagem||{feito:false,qtdEmbalada:0};
   const novoFeito=!emb.feito;
   const novaQtd=novoFeito?(emb.qtdEmbalada>0?emb.qtdEmbalada:qtdProd):0;
-  await updateDoc(doc(db,'registros',fid),{embalagem:{feito:novoFeito,qtdEmbalada:novaQtd,qtdProduzida:qtdProd}});
+  // preserva o histórico de alterações ao desmarcar/remarcar
+  const alteracoes=emb.alteracoes||[];
+  await updateDoc(doc(db,'registros',fid),{embalagem:{feito:novoFeito,qtdEmbalada:novaQtd,qtdProduzida:qtdProd,alteracoes}});
 }
 function toggleAjuste(fid,qtdProd,qtdAtual){
   const el=document.getElementById('ajuste-'+fid);
@@ -6277,6 +6527,8 @@ function toggleAjuste(fid,qtdProd,qtdAtual){
   }
 }
 async function confirmarAjuste(fid,qtdProd){
+  // quantidade antes da alteração, para o histórico
+  const qtdAntes=((registros.find(r=>r.firestoreId===fid)||{}).embalagem||{}).qtdEmbalada||0;
   const val=parseInt(document.getElementById('input-emb-'+fid).value)||0;
   if(val<=0){alert('Informe uma quantidade válida.');return;}
   const reg=registros.find(r=>r.firestoreId===fid);
@@ -6305,6 +6557,8 @@ async function confirmarAjuste(fid,qtdProd){
       'embalagem.qtdProduzida':qtdProd
     });
   }
+  // guarda quem mudou o embalado depois de finalizado, e de quanto para quanto
+  if(typeof embRegistrarAlteracao==='function') await embRegistrarAlteracao(fid, qtdAntes, val, '');
   // Close ajuste panel
   const el=document.getElementById('ajuste-'+fid);
   if(el)el.style.display='none';
@@ -6478,7 +6732,8 @@ function renderExpedicao(){
       const totalLib=exp.totalLiberado||0;
       const restante=qtdEmb-totalLib;
       const concluido=totalLib>=qtdEmb;
-      return `<div class="emb-item ${concluido?'done':totalLib>0?'done-parcial':''}">
+      const alterado=(typeof embFoiAlterado==='function')&&embFoiAlterado(r);
+      return `<div class="emb-item ${concluido?'done':totalLib>0?'done-parcial':''}" ${alterado?'style="border:2px solid #2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.12);"':''}>
         <div class="emb-item-header">
           <div class="emb-check-btn ${concluido?'done':totalLib>0?'laranja':''}" style="font-size:12px;">${concluido?'✓':totalLib>0?totalLib:''}</div>
           <div class="emb-item-info">
@@ -6490,6 +6745,7 @@ function renderExpedicao(){
             ${r.embalagem&&r.embalagem.obs?`<div style="margin-top:4px;font-size:11px;color:var(--text-secondary);font-style:italic;">📝 ${r.embalagem.obs}</div>`:''}
           </div>
         </div>
+        ${typeof embAvisoAlteracao==='function'?embAvisoAlteracao(r):''}
         ${exp.parciais&&exp.parciais.length>0?`
           <div class="exp-parcial-list">
             ${exp.parciais.map((p,i)=>`<div class="exp-parcial-item" id="parcial-row-${r.firestoreId}-${i}">
@@ -17342,6 +17598,8 @@ function renderLaSolicitar(){
     '<div id="la-prod-escolhido"></div>'+
     '<label style="font-size:12px;color:var(--text-secondary);display:block;margin-top:12px;">Quantidade (pct)</label>'+
     '<input type="number" id="la-sol-qtd" min="1" placeholder="ex: 30" style="width:100%;padding:12px;min-height:48px;border:1px solid var(--border-md,#d1d5db);border-radius:9px;font-size:16px;box-sizing:border-box;margin:4px 0 12px;">'+
+    '<label style="font-size:12px;color:var(--text-secondary);display:block;">Observação <span style="color:var(--text-muted);font-weight:400;">(opcional)</span></label>'+
+    '<textarea id="la-sol-obs" rows="2" placeholder="ex: cliente vai buscar hoje às 15h" style="width:100%;padding:11px;border:1px solid var(--border-md,#d1d5db);border-radius:9px;font-size:16px;font-family:inherit;box-sizing:border-box;margin:4px 0 12px;resize:vertical;"></textarea>'+
     '<button onclick="laEnviarSolicitacao()" class="btn btn-primary" style="width:100%;">Enviar solicitação →</button>'+
   '</div>';
 
@@ -17393,6 +17651,7 @@ function renderLaSolicitar(){
           '🕐 pedido em '+(s.criadoEm||s.hora||'—')+(s.autor?(' por '+s.autor):'')+
           (dec?('<br>'+(s.status==='aprovada'?'✓':'✕')+' '+st.label.toLowerCase()+' em '+(s.decididoEm||'—')+(s.decididoPor?(' por '+s.decididoPor):'')):'')+
         '</div>'+
+        (s.obs?('<div style="font-size:12px;color:var(--text-primary);background:var(--bg-page);border-radius:7px;padding:6px 9px;margin-top:5px;">📝 '+s.obs+'</div>'):'')+
         (s.status==='negada'&&s.motivoNega?('<div style="font-size:12px;color:#b91c1c;background:#fef2f2;border-radius:7px;padding:6px 9px;margin-top:5px;">'+s.motivoNega+'</div>'):'')+
       '</div>';
     }).join('');
@@ -17422,10 +17681,12 @@ async function laEnviarSolicitacao(){
   try{
     await addDoc(collection(db,'solicitacoes'),{
       cod:cod||'', produto:nome||'', qtd, dia:'',
+      obs:((document.getElementById('la-sol-obs')||{}).value||'').trim(),
       autor:_demAutor(), status:'pendente',
       data:hoje(), hora:agora(), criadoEm:agora(), timestamp:Date.now()
     });
     document.getElementById('la-sol-qtd').value='';
+    const ob=document.getElementById('la-sol-obs'); if(ob) ob.value='';
     _laProdSel=''; _laBuscaProd='';
     const bi=document.getElementById('la-sol-prod-busca'); if(bi) bi.value='';
     const be=document.getElementById('la-prod-escolhido'); if(be) be.innerHTML='';
@@ -17593,6 +17854,7 @@ function renderLaDecisao(){
       const bg  = cabe?'rgba(22,163,74,.06)':(c.embAntecip>0?'#fffbeb':'#fef2f2');
       html+='<div class="card" style="margin-bottom:12px;border-left:5px solid '+cor+';background:'+bg+';">';
       html+='<div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:8px;"><div><div style="font-size:16px;font-weight:800;">'+(s.produto||'')+'</div><div style="font-size:11px;color:var(--text-secondary);">'+(s.cod?'cód '+s.cod+' · ':'')+'pedido por '+(s.autor||'')+' · '+(s.hora||'')+(s.dia?' · dia '+s.dia:'')+'</div>'+
+        (s.obs?'<div style="font-size:12px;color:var(--text-primary);background:var(--bg-page);border-radius:7px;padding:6px 9px;margin-top:5px;">📝 '+s.obs+'</div>':'')+
         // há quanto tempo está esperando — fica vermelho depois do prazo
         (function(){ const m=laMinutosEsperando(s); if(m===null) return '';
           const atras=m>=LA_PRAZO_MIN;
@@ -20077,6 +20339,724 @@ async function _libGravar(fid, qtdEmb, val){
 }
 
 /* ══════════════════════════════════════════════════════════════════
+   RETORNO DE MERCADORIAS
+   O carregamento registra o que voltou da rota (cliente, motivo,
+   motorista, quem recebeu) e bipa os produtos. A confeitaria depois
+   confere e dá destino a cada item — podendo dividir a mesma
+   quantidade entre destinos diferentes.
+   Coleções: retornos · configuracoes/retornoDestinos
+   ══════════════════════════════════════════════════════════════════ */
+let retornos=[];
+let retDestinos=[
+  {id:'estoque',   nome:'Volta ao estoque', icone:'📦', cor:'#16a34a'},
+  {id:'descarte',  nome:'Descarte',         icone:'🗑️', cor:'#dc2626'},
+  {id:'refeitorio',nome:'Refeitório',       icone:'🍽️', cor:'#d97706'}
+];
+
+onSnapshot(collection(db,'retornos'), snap=>{
+  try{
+    retornos=snap.docs.map(d=>({firestoreId:d.id,...d.data()}))
+      .sort((a,b)=>(b.ts||0)-(a.ts||0));
+    retRenderAtual();
+  }catch(e){ console.error('retornos snap',e); }
+});
+onSnapshot(doc(db,'configuracoes','retornoDestinos'), snap=>{
+  try{
+    const d=snap.data()||{};
+    if(Array.isArray(d.lista) && d.lista.length) retDestinos=d.lista;
+    retRenderAtual();
+  }catch(e){ console.error('destinos snap',e); }
+});
+
+function retRenderAtual(){
+  const t=document.querySelector('.screen.active')?.id;
+  if(t==='s-ret') retRender();
+  if(t==='s-ret-val') retRenderVal();
+  if(t==='s-ret-hist') retRenderHist();
+  retAtualizarBadges();
+}
+function retVoltar(){
+  if(window.adminMode) return goTo('s-adm-hub');
+  goTo((typeof DESTINOS!=='undefined' && DESTINOS[window.setorAtual]) || 's-inicio');
+}
+window.retVoltar=retVoltar;
+
+function retDestino(id){ return retDestinos.find(d=>d.id===id)||{id, nome:id, icone:'•', cor:'#64748b'}; }
+function retAguardando(){ return retornos.filter(r=>(r.status||'aguardando')==='aguardando'); }
+function retValidados(){ return retornos.filter(r=>r.status==='validado'); }
+
+// quanto de um item já recebeu destino
+function retItemDestinado(it){
+  return (it.destinacoes||[]).reduce((t,d)=>t+(Number(d.qtd)||0),0);
+}
+function retItemResta(it){ return Math.max(0, (Number(it.pacotes)||0) - retItemDestinado(it)); }
+function retFaltaDestinar(r){
+  return (r.itens||[]).reduce((t,it)=>t+retItemResta(it),0);
+}
+function retDiasParado(r){
+  if(!r.ts) return 0;
+  return Math.floor((Date.now()-r.ts)/86400000);
+}
+
+function retAtualizarBadges(){
+  const n=retAguardando().length;
+  ['ret-badge-conf','ret-badge-carreg','ret-badge-adm'].forEach(id=>{
+    const el=document.getElementById(id); if(!el) return;
+    el.textContent=n; el.style.display=n?'inline-block':'none';
+  });
+}
+window.retAtualizarBadges=retAtualizarBadges;
+
+/* ── NOVO RETORNO: dados da rota e depois a bipagem ─────────────── */
+let _retNovo=null;
+
+function retNovo(){
+  _retNovo={cliente:'', motivo:'', motorista:'', responsavel:'', itens:[]};
+  goTo('s-ret-form'); retRenderForm();
+}
+window.retNovo=retNovo;
+
+function retSairForm(){
+  if(_retNovo && (_retNovo.itens.length || _retNovo.cliente)){
+    if(!confirm('Sair sem finalizar? O que você preencheu será perdido.')) return;
+  }
+  _retNovo=null; goTo('s-ret');
+}
+window.retSairForm=retSairForm;
+
+function retRenderForm(){
+  const el=document.getElementById('ret-form-content'); if(!el) return;
+  if(!_retNovo){ goTo('s-ret'); return; }
+  // digitando no campo de bipagem, não redesenha a tela por baixo
+  if(document.activeElement && document.activeElement.id==='ret-bip'){ retRenderItens(); return; }
+
+  const r=_retNovo;
+  const sub=document.getElementById('ret-form-sub');
+  if(sub) sub.textContent = r.itens.length ? (r.itens.length+' produto(s) bipado(s)') : 'Dados da rota';
+
+  let h='<div class="card" style="margin-bottom:12px;">'+
+    '<div style="font-size:14px;font-weight:800;margin-bottom:10px;">Dados do retorno</div>'+
+    _retCampo('ret-cliente','Cliente','Nome do cliente', r.cliente, true)+
+    _retCampo('ret-motivo','Motivo do retorno','ex: recusa, produto trocado, cliente fechado', r.motivo, true)+
+    _retCampo('ret-motorista','Motorista da rota','Nome do motorista', r.motorista, true)+
+    _retCampo('ret-resp','Responsável pelo recebimento','Quem recebeu aqui', r.responsavel, true)+
+  '</div>';
+
+  // bipagem
+  h+='<div class="card" style="margin-bottom:12px;">'+
+    '<div style="font-size:14px;font-weight:800;margin-bottom:4px;">📷 Bipe os produtos</div>'+
+    '<div style="font-size:11px;color:var(--text-secondary);margin-bottom:9px;line-height:1.5;">Passe o leitor no código de barras. Se não tiver código, use a busca pelo nome.</div>'+
+    '<input type="text" id="ret-bip" placeholder="Bipe ou digite o código de barras" autocomplete="off" '+
+      'onkeydown="if(event.key===\'Enter\'){event.preventDefault();retBipar(this.value);this.value=\'\';}" '+
+      'style="width:100%;padding:14px;min-height:52px;border:2px solid var(--mc-azul,#2563eb);border-radius:10px;font-size:17px;font-family:inherit;box-sizing:border-box;">'+
+    '<div id="ret-bip-aviso" style="font-size:12px;font-weight:700;min-height:18px;margin-top:5px;"></div>'+
+    '<button onclick="retBuscarPorNome()" style="width:100%;margin-top:6px;background:#fff;border:1px solid var(--border);color:var(--text-secondary);border-radius:9px;padding:10px;font-size:13px;cursor:pointer;font-family:inherit;">🔎 Buscar pelo nome</button>'+
+  '</div>';
+
+  h+='<div id="ret-itens"></div>';
+
+  h+='<button onclick="retFinalizar()" class="btn btn-primary" style="width:100%;margin-top:6px;padding:15px;font-size:16px;">✓ Finalizar retorno</button>'+
+     '<button onclick="retSairForm()" class="btn btn-secondary" style="width:100%;margin-top:8px;">Cancelar</button>';
+
+  el.innerHTML=h;
+  retRenderItens();
+  setTimeout(()=>document.getElementById('ret-bip')?.focus(), 80);
+}
+window.retRenderForm=retRenderForm;
+
+function _retCampo(id,label,ph,val,obrig){
+  return '<label style="font-size:12px;font-weight:600;color:var(--text-secondary);">'+label+(obrig?' <span style="color:#dc2626;">*</span>':'')+'</label>'+
+    '<input type="text" id="'+id+'" value="'+String(val||'').replace(/"/g,'&quot;')+'" placeholder="'+ph+'" autocomplete="off" oninput="retGuardarCampo()" '+
+    'style="width:100%;padding:12px;min-height:48px;border:1px solid var(--border-md,#d1d5db);border-radius:9px;font-size:16px;font-family:inherit;box-sizing:border-box;margin:4px 0 12px;">';
+}
+// guarda o que foi digitado, para não perder ao redesenhar a lista
+function retGuardarCampo(){
+  if(!_retNovo) return;
+  const v=id=>((document.getElementById(id)||{}).value||'').trim();
+  _retNovo.cliente=v('ret-cliente'); _retNovo.motivo=v('ret-motivo');
+  _retNovo.motorista=v('ret-motorista'); _retNovo.responsavel=v('ret-resp');
+}
+window.retGuardarCampo=retGuardarCampo;
+
+function retAviso(txt, cor){
+  const el=document.getElementById('ret-bip-aviso'); if(!el) return;
+  el.innerHTML='<span style="color:'+(cor||'var(--text-secondary)')+';">'+txt+'</span>';
+  if(cor==='#16a34a') setTimeout(()=>{ if(el.innerHTML.includes(txt)) el.innerHTML=''; }, 2500);
+}
+
+function retBipar(codBarras){
+  const ean=String(codBarras||'').trim();
+  if(!ean) return;
+  const achado=(typeof eanMap!=='undefined') ? eanMap[ean] : null;
+  if(!achado){
+    retAviso('❌ Código '+ean+' não cadastrado. Use a busca pelo nome ou cadastre em Códigos de barras.', '#dc2626');
+    return;
+  }
+  retAdicionarItem(achado.codigo, achado.nome, ean);
+}
+window.retBipar=retBipar;
+
+function retAdicionarItem(cod, nome, ean){
+  if(!_retNovo) return;
+  retGuardarCampo();
+  const ja=_retNovo.itens.find(i=>String(i.cod)===String(cod));
+  if(ja){
+    ja.pacotes=(Number(ja.pacotes)||0)+1;
+    retAviso('✓ '+nome+' — agora '+ja.pacotes+' pct', '#16a34a');
+  } else {
+    _retNovo.itens.push({cod:String(cod||''), nome:nome||'', ean:ean||'', pacotes:1, validade:'', obs:''});
+    retAviso('✓ '+nome+' adicionado', '#16a34a');
+  }
+  retRenderItens();
+}
+window.retAdicionarItem=retAdicionarItem;
+
+function retSetItem(idx, campo, valor){
+  if(!_retNovo || !_retNovo.itens[idx]) return;
+  if(campo==='pacotes'){
+    const n=parseInt(valor)||0;
+    _retNovo.itens[idx].pacotes=Math.max(0,n);
+  } else {
+    _retNovo.itens[idx][campo]=valor;
+  }
+}
+window.retSetItem=retSetItem;
+
+function retRemoverItem(idx){
+  if(!_retNovo) return;
+  retGuardarCampo();
+  _retNovo.itens.splice(idx,1);
+  retRenderItens();
+}
+window.retRemoverItem=retRemoverItem;
+
+function retRenderItens(){
+  const box=document.getElementById('ret-itens'); if(!box || !_retNovo) return;
+  const itens=_retNovo.itens;
+  if(!itens.length){
+    box.innerHTML='<div class="card" style="margin-bottom:12px;text-align:center;padding:22px;color:var(--text-secondary);font-size:13px;">Nenhum produto bipado ainda.</div>';
+    return;
+  }
+  const total=itens.reduce((t,i)=>t+(Number(i.pacotes)||0),0);
+  box.innerHTML='<div style="display:flex;justify-content:space-between;align-items:baseline;margin:4px 0 8px;">'+
+      '<div style="font-size:13px;font-weight:800;">'+itens.length+' produto(s)</div>'+
+      '<div style="font-size:13px;font-weight:800;color:var(--mc-azul);">'+total+' pacote(s)</div></div>'+
+    itens.map((it,i)=>
+      '<div class="card" style="margin-bottom:8px;">'+
+        '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">'+
+          '<div style="flex:1;min-width:0;">'+
+            '<div style="font-size:14px;font-weight:700;">'+it.nome+'</div>'+
+            '<div style="font-size:11px;color:var(--text-muted);">cód '+(it.cod||'—')+(it.ean?(' · '+it.ean):'')+'</div>'+
+          '</div>'+
+          '<button onclick="retRemoverItem('+i+')" style="flex:0 0 auto;background:none;border:1px solid #fecaca;color:#dc2626;border-radius:7px;padding:5px 10px;font-size:13px;cursor:pointer;font-family:inherit;">✕</button>'+
+        '</div>'+
+        '<div style="display:flex;gap:8px;margin-top:9px;flex-wrap:wrap;">'+
+          '<div style="flex:1;min-width:110px;"><div style="font-size:11px;font-weight:700;color:var(--text-secondary);margin-bottom:3px;">PACOTES</div>'+
+            '<input type="number" min="0" value="'+(it.pacotes||0)+'" inputmode="numeric" onchange="retSetItem('+i+',\'pacotes\',this.value)" style="width:100%;padding:11px;min-height:46px;border:1px solid var(--border-md,#d1d5db);border-radius:9px;font-size:16px;text-align:center;box-sizing:border-box;"></div>'+
+          '<div style="flex:1;min-width:140px;"><div style="font-size:11px;font-weight:700;color:var(--text-secondary);margin-bottom:3px;">VALIDADE</div>'+
+            '<input type="date" value="'+(it.validade||'')+'" onchange="retSetItem('+i+',\'validade\',this.value)" style="width:100%;padding:11px;min-height:46px;border:1px solid var(--border-md,#d1d5db);border-radius:9px;font-size:15px;box-sizing:border-box;"></div>'+
+        '</div>'+
+        '<input type="text" value="'+String(it.obs||'').replace(/"/g,'&quot;')+'" placeholder="Observação deste produto (opcional)" autocomplete="off" onchange="retSetItem('+i+',\'obs\',this.value)" style="width:100%;padding:10px;border:1px solid var(--border-md,#d1d5db);border-radius:9px;font-size:15px;font-family:inherit;box-sizing:border-box;margin-top:8px;">'+
+      '</div>').join('');
+}
+window.retRenderItens=retRenderItens;
+
+// busca pelo nome, para produto sem código de barras
+function retBuscarPorNome(){
+  const ov=document.createElement('div');
+  ov.id='ret-busca-modal';
+  ov.style.cssText='position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:3200;display:flex;align-items:center;justify-content:center;padding:16px;';
+  ov.innerHTML='<div style="background:#fff;border-radius:16px;max-width:460px;width:100%;max-height:85vh;display:flex;flex-direction:column;">'+
+    '<div style="padding:18px 18px 10px;">'+
+      '<div style="font-size:17px;font-weight:800;">🔎 Buscar produto</div>'+
+      '<input type="text" id="ret-busca-inp" oninput="retBuscaLista(this.value)" placeholder="Nome ou código" autocomplete="off" style="width:100%;padding:12px;min-height:48px;border:1px solid var(--border-md,#d1d5db);border-radius:9px;font-size:16px;font-family:inherit;box-sizing:border-box;margin-top:10px;"></div>'+
+    '<div id="ret-busca-lista" style="flex:1;overflow-y:auto;padding:0 18px;"></div>'+
+    '<div style="padding:12px 18px 18px;"><button class="btn btn-secondary" style="width:100%;" onclick="document.getElementById(\'ret-busca-modal\').remove()">Fechar</button></div>'+
+  '</div>';
+  document.body.appendChild(ov);
+  setTimeout(()=>document.getElementById('ret-busca-inp')?.focus(),60);
+}
+window.retBuscarPorNome=retBuscarPorNome;
+
+function retBuscaLista(v){
+  const box=document.getElementById('ret-busca-lista'); if(!box) return;
+  const q=_normNome(v||'');
+  if(!q || q.length<2){ box.innerHTML=''; return; }
+  const todos=[].concat(
+    (typeof PRODUTOS!=='undefined'?PRODUTOS:[]),
+    (typeof QUADRA_PRODUTOS!=='undefined'?QUADRA_PRODUTOS:[])
+  ).filter(p=>p&&p.nome);
+  const achados=todos.filter(p=>_normNome(p.nome).includes(q)||String(p.cod||'').includes(String(v).trim())).slice(0,12);
+  box.innerHTML = achados.length
+    ? achados.map(p=>'<button type="button" onclick="retAdicionarItem(\''+escapeJsStr(p.cod||'')+'\',\''+escapeJsStr(p.nome)+'\',\'\');document.getElementById(\'ret-busca-modal\').remove();" style="display:block;width:100%;text-align:left;background:#fff;border:1px solid var(--border);border-radius:9px;padding:11px 12px;margin-bottom:6px;cursor:pointer;font-family:inherit;"><div style="font-size:14px;font-weight:700;">'+p.nome+'</div><div style="font-size:11px;color:var(--text-secondary);">cód '+(p.cod||'—')+'</div></button>').join('')
+    : '<div style="font-size:13px;color:var(--text-secondary);padding:10px 0;">Nenhum produto encontrado.</div>';
+}
+window.retBuscaLista=retBuscaLista;
+
+async function retFinalizar(){
+  if(typeof mcExigirInternet==='function' && !mcExigirInternet('retorno')) return;
+  retGuardarCampo();
+  const r=_retNovo; if(!r) return;
+  if(!r.cliente){ alert('Informe o cliente.'); return; }
+  if(!r.motivo){ alert('Informe o motivo do retorno.'); return; }
+  if(!r.motorista){ alert('Informe o motorista da rota.'); return; }
+  if(!r.responsavel){ alert('Informe quem recebeu o retorno.'); return; }
+  const itens=r.itens.filter(i=>(Number(i.pacotes)||0)>0);
+  if(!itens.length){ alert('Bipe pelo menos um produto com quantidade.'); return; }
+  const semVal=itens.filter(i=>!i.validade).length;
+  if(semVal && !confirm(semVal+' produto(s) sem validade preenchida.\n\nFinalizar assim mesmo?')) return;
+
+  const total=itens.reduce((t,i)=>t+(Number(i.pacotes)||0),0);
+  if(!confirm('Finalizar o retorno?\n\nCliente: '+r.cliente+'\n'+itens.length+' produto(s) · '+total+' pacote(s)\n\nVai para a confeitaria dar destino.')) return;
+
+  try{
+    await addDoc(collection(db,'retornos'),{
+      cliente:r.cliente, motivo:r.motivo, motorista:r.motorista, responsavel:r.responsavel,
+      itens:itens.map(i=>({cod:i.cod, nome:i.nome, ean:i.ean||'', pacotes:Number(i.pacotes)||0,
+                           validade:i.validade||'', obs:i.obs||'', destinacoes:[]})),
+      totalPacotes:total, totalItens:itens.length,
+      status:'aguardando',
+      criadoPor:_demAutor(), criadoEm:agora(), data:hoje(), ts:Date.now()
+    });
+    _retNovo=null;
+    alert('✓ Retorno registrado!\n\nA confeitaria já pode conferir e dar destino.');
+    goTo('s-ret');
+  }catch(e){ alert('Erro ao salvar: '+e.message); }
+}
+window.retFinalizar=retFinalizar;
+
+/* ── VALIDAÇÃO PELA CONFEITARIA ─────────────────────────────────── */
+function retRenderVal(){
+  const el=document.getElementById('ret-val-content'); if(!el) return;
+  const fila=retAguardando().slice().sort((a,b)=>(a.ts||0)-(b.ts||0));   // mais antigo primeiro
+  let h='';
+
+  // painel do que está esperando — o que a confeitaria precisa bater o olho
+  const totPct=fila.reduce((t,r)=>t+retFaltaDestinar(r),0);
+  const antigo=fila.length?retDiasParado(fila[0]):0;
+  h+='<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px;">'+
+    '<div class="card" style="text-align:center;padding:12px 6px;border-top:3px solid '+(fila.length?'#d97706':'#16a34a')+';">'+
+      '<div style="font-size:10px;font-weight:800;color:var(--text-secondary);">RETORNOS</div>'+
+      '<div style="font-size:28px;font-weight:900;color:'+(fila.length?'#d97706':'#16a34a')+';line-height:1.1;">'+fila.length+'</div>'+
+      '<div style="font-size:10px;color:var(--text-muted);">aguardando</div></div>'+
+    '<div class="card" style="text-align:center;padding:12px 6px;border-top:3px solid var(--mc-azul,#2563eb);">'+
+      '<div style="font-size:10px;font-weight:800;color:var(--text-secondary);">PACOTES</div>'+
+      '<div style="font-size:28px;font-weight:900;color:var(--mc-azul,#2563eb);line-height:1.1;">'+totPct+'</div>'+
+      '<div style="font-size:10px;color:var(--text-muted);">sem destino</div></div>'+
+    '<div class="card" style="text-align:center;padding:12px 6px;border-top:3px solid '+(antigo>=3?'#dc2626':'var(--border)')+';">'+
+      '<div style="font-size:10px;font-weight:800;color:var(--text-secondary);">MAIS ANTIGO</div>'+
+      '<div style="font-size:28px;font-weight:900;color:'+(antigo>=3?'#dc2626':'var(--text-primary)')+';line-height:1.1;">'+antigo+'</div>'+
+      '<div style="font-size:10px;color:var(--text-muted);'+(antigo>=3?'color:#dc2626;font-weight:700;':'')+'">dia(s) parado</div></div>'+
+  '</div>';
+
+  if(!fila.length){
+    h+='<div style="background:var(--bg-primary);border:1px solid #a7f3d0;border-radius:12px;padding:26px;text-align:center;">'+
+      '<div style="font-size:40px;">✅</div>'+
+      '<div style="font-size:16px;font-weight:800;margin-top:8px;">Nenhum retorno esperando</div>'+
+      '<div style="font-size:12px;color:var(--text-secondary);margin-top:5px;">Tudo que voltou já recebeu destino.</div></div>';
+  } else {
+    h+=fila.map(r=>retCardVal(r)).join('');
+  }
+
+  const val=retValidados().slice(0,12);
+  if(val.length){
+    h+='<div class="mc-section-header">✓ Já resolvidos</div>'+
+      val.map(r=>'<div onclick="retAbrirDetalhe(\''+r.firestoreId+'\')" style="cursor:pointer;background:var(--bg-primary);border:1px solid var(--border);border-left:3px solid #16a34a;border-radius:10px;padding:10px 12px;margin-bottom:6px;">'+
+        '<div style="display:flex;justify-content:space-between;gap:8px;">'+
+          '<div style="flex:1;min-width:0;font-size:13px;font-weight:700;">'+r.cliente+'</div>'+
+          '<div style="font-size:11px;color:var(--text-muted);white-space:nowrap;">'+(r.validadoEm||r.criadoEm||'')+'</div></div>'+
+        '<div style="font-size:11px;color:var(--text-secondary);margin-top:2px;">'+retResumoDestinos(r)+'</div></div>').join('');
+  }
+  el.innerHTML=h;
+}
+window.retRenderVal=retRenderVal;
+
+// resumo em texto de para onde foi cada coisa
+function retResumoDestinos(r){
+  const soma={};
+  (r.itens||[]).forEach(it=>(it.destinacoes||[]).forEach(d=>{
+    soma[d.destino]=(soma[d.destino]||0)+(Number(d.qtd)||0);
+  }));
+  const partes=Object.entries(soma).map(([id,q])=>{ const d=retDestino(id); return d.icone+' '+q+' '+d.nome.toLowerCase(); });
+  return partes.length?partes.join(' · '):'sem destinos';
+}
+
+function retCardVal(r){
+  const dias=retDiasParado(r);
+  const falta=retFaltaDestinar(r);
+  const total=r.totalPacotes||0;
+  const pronto=total-falta;
+  const pct=total?Math.round(pronto/total*100):0;
+  const urgente=dias>=3;
+  return '<div class="card" style="margin-bottom:10px;border-left:4px solid '+(urgente?'#dc2626':'#d97706')+';'+(urgente?'background:#fef2f2;':'')+'">'+
+    '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">'+
+      '<div style="flex:1;min-width:0;">'+
+        '<div style="font-size:16px;font-weight:800;">'+r.cliente+'</div>'+
+        '<div style="font-size:12px;color:var(--text-secondary);margin-top:2px;">'+(r.motivo||'')+'</div>'+
+      '</div>'+
+      '<div style="text-align:right;white-space:nowrap;">'+
+        '<div style="font-size:12px;font-weight:800;color:'+(urgente?'#dc2626':'var(--text-secondary)')+';">'+(dias===0?'hoje':(dias===1?'ontem':'há '+dias+' dias'))+'</div>'+
+        '<div style="font-size:10px;color:var(--text-muted);">'+(r.data||'')+'</div></div>'+
+    '</div>'+
+    '<div style="font-size:11px;color:var(--text-muted);margin-top:5px;">🚚 '+(r.motorista||'—')+' · recebido por '+(r.responsavel||'—')+'</div>'+
+    '<div style="display:flex;align-items:center;gap:9px;margin-top:9px;">'+
+      '<div style="flex:1;height:9px;background:var(--bg-page);border-radius:5px;overflow:hidden;">'+
+        '<div style="height:100%;width:'+pct+'%;background:#16a34a;"></div></div>'+
+      '<div style="font-size:12px;font-weight:800;white-space:nowrap;color:'+(falta?'#d97706':'#16a34a')+';">'+
+        (falta?(falta+' de '+total+' sem destino'):('tudo destinado'))+'</div>'+
+    '</div>'+
+    '<button onclick="retAbrirDetalhe(\''+r.firestoreId+'\')" class="btn btn-primary" style="width:100%;margin-top:10px;">'+
+      (falta?'🔍 Conferir e dar destino':'✓ Revisar e finalizar')+'</button>'+
+  '</div>';
+}
+
+/* ── detalhe: dar destino item a item, podendo dividir ──────────── */
+let _retAberto=null;
+
+function retAbrirDetalhe(id){
+  _retAberto=id;
+  const r=retornos.find(x=>x.firestoreId===id); if(!r) return;
+  const ov=document.createElement('div');
+  ov.id='ret-det-modal';
+  ov.style.cssText='position:fixed;inset:0;background:rgba(15,23,42,.6);z-index:3200;display:flex;align-items:center;justify-content:center;padding:12px;';
+  ov.innerHTML='<div style="background:#fff;border-radius:16px;max-width:620px;width:100%;max-height:94vh;display:flex;flex-direction:column;">'+
+    '<div id="ret-det-topo" style="padding:16px 18px 10px;border-bottom:1px solid var(--border);"></div>'+
+    '<div id="ret-det-itens" style="flex:1;overflow-y:auto;padding:10px 14px;"></div>'+
+    '<div id="ret-det-rodape" style="padding:12px 18px 16px;border-top:1px solid var(--border);"></div>'+
+  '</div>';
+  document.body.appendChild(ov);
+  retRenderDetalhe();
+}
+window.retAbrirDetalhe=retAbrirDetalhe;
+
+function retRenderDetalhe(){
+  const r=retornos.find(x=>x.firestoreId===_retAberto); if(!r) return;
+  const topo=document.getElementById('ret-det-topo');
+  const box=document.getElementById('ret-det-itens');
+  const rod=document.getElementById('ret-det-rodape');
+  if(!topo||!box||!rod) return;
+  const validado=r.status==='validado';
+  const falta=retFaltaDestinar(r);
+
+  topo.innerHTML='<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">'+
+      '<div style="flex:1;min-width:0;"><div style="font-size:18px;font-weight:900;">'+r.cliente+'</div>'+
+      '<div style="font-size:12px;color:var(--text-secondary);margin-top:2px;">'+(r.motivo||'')+'</div></div>'+
+      '<div style="font-size:11px;font-weight:800;color:'+(validado?'#16a34a':'#d97706')+';white-space:nowrap;">'+(validado?'✓ RESOLVIDO':'⏳ AGUARDANDO')+'</div>'+
+    '</div>'+
+    '<div style="font-size:11px;color:var(--text-muted);margin-top:5px;">🚚 '+(r.motorista||'—')+' · recebido por '+(r.responsavel||'—')+' · '+(r.data||'')+'</div>'+
+    (falta?'<div style="font-size:12px;font-weight:700;color:#d97706;margin-top:6px;">Faltam '+falta+' pacote(s) sem destino</div>':'');
+
+  box.innerHTML=(r.itens||[]).map((it,i)=>{
+    const resta=retItemResta(it);
+    const dest=it.destinacoes||[];
+    return '<div style="border:1px solid '+(resta?'#fde68a':'#a7f3d0')+';background:'+(resta?'#fffbeb':'#f0fdf4')+';border-radius:11px;padding:11px;margin-bottom:9px;">'+
+      '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">'+
+        '<div style="flex:1;min-width:0;">'+
+          '<div style="font-size:14px;font-weight:800;">'+it.nome+'</div>'+
+          '<div style="font-size:11px;color:var(--text-secondary);margin-top:1px;">'+(it.cod?('cód '+it.cod+' · '):'')+
+            (it.validade?('val '+estISOparaBR(it.validade)):'sem validade')+'</div>'+
+          (it.obs?'<div style="font-size:11px;color:var(--text-muted);margin-top:1px;">📝 '+it.obs+'</div>':'')+
+        '</div>'+
+        '<div style="text-align:right;white-space:nowrap;">'+
+          '<div style="font-size:20px;font-weight:900;">'+(it.pacotes||0)+'</div>'+
+          '<div style="font-size:10px;color:var(--text-muted);">pacotes</div></div>'+
+      '</div>'+
+      // o que já foi destinado
+      (dest.length?'<div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:8px;">'+
+        dest.map((d,di)=>{ const dd=retDestino(d.destino);
+          return '<span style="display:inline-flex;align-items:center;gap:5px;background:#fff;border:1px solid '+dd.cor+';color:'+dd.cor+';border-radius:99px;padding:4px 10px;font-size:12px;font-weight:700;">'+
+            dd.icone+' '+d.qtd+' '+dd.nome+
+            (validado?'':'<button onclick="retTirarDestino('+i+','+di+')" style="background:none;border:none;color:'+dd.cor+';cursor:pointer;font-size:14px;padding:0 0 0 3px;font-family:inherit;">✕</button>')+
+          '</span>'; }).join('')+'</div>':'')+
+      // botões para destinar o que falta
+      (!validado && resta>0
+        ? '<div style="margin-top:9px;">'+
+            '<div style="font-size:11px;font-weight:700;color:#b45309;margin-bottom:5px;">Faltam '+resta+' — para onde vão?</div>'+
+            '<div style="display:flex;gap:5px;flex-wrap:wrap;">'+
+              retDestinos.map(d=>'<button onclick="retDarDestino('+i+',\''+escapeJsStr(d.id)+'\')" style="flex:1;min-width:104px;background:#fff;border:2px solid '+d.cor+';color:'+d.cor+';border-radius:9px;padding:9px 6px;font-size:12px;font-weight:800;cursor:pointer;font-family:inherit;">'+d.icone+' '+d.nome+'</button>').join('')+
+            '</div></div>'
+        : '')+
+    '</div>';
+  }).join('');
+
+  rod.innerHTML=(validado
+      ? '<div style="font-size:12px;color:var(--text-secondary);text-align:center;margin-bottom:9px;">Validado por '+(r.validadoPor||'')+' em '+(r.validadoEm||'')+'</div>'
+      : (falta
+          ? '<div style="font-size:12px;color:#b45309;font-weight:700;text-align:center;margin-bottom:9px;">Destine todos os pacotes para finalizar</div>'
+          : '<button onclick="retFinalizarValidacao()" class="btn btn-primary" style="width:100%;margin-bottom:9px;">✓ Finalizar validação</button>'))+
+    '<button class="btn btn-secondary" style="width:100%;" onclick="document.getElementById(\'ret-det-modal\').remove()">Fechar</button>'+
+    ((window.adminMode||window.setorAtual==='admin')
+      ? '<button onclick="retExcluir(\''+r.firestoreId+'\')" style="width:100%;margin-top:8px;background:none;border:1px solid #fecaca;color:#dc2626;border-radius:9px;padding:10px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">🗑 Excluir este retorno</button>'
+      : '');
+}
+window.retRenderDetalhe=retRenderDetalhe;
+
+// destinar uma quantidade — permite dividir o mesmo item entre destinos
+async function retDarDestino(idx, destinoId){
+  const r=retornos.find(x=>x.firestoreId===_retAberto); if(!r) return;
+  const it=(r.itens||[])[idx]; if(!it) return;
+  const resta=retItemResta(it);
+  const d=retDestino(destinoId);
+  let qtd=resta;
+  if(resta>1){
+    const v=prompt('Quantos pacotes de "'+it.nome+'" vão para '+d.nome+'?\n\n(faltam '+resta+' — deixe como está para mandar tudo)', String(resta));
+    if(v===null) return;
+    qtd=parseInt(v)||0;
+  }
+  if(qtd<=0){ alert('Quantidade inválida.'); return; }
+  if(qtd>resta){ alert('Só faltam '+resta+' pacote(s) deste produto.'); return; }
+
+  const itens=JSON.parse(JSON.stringify(r.itens||[]));
+  const alvo=itens[idx];
+  alvo.destinacoes=alvo.destinacoes||[];
+  const ja=alvo.destinacoes.find(x=>x.destino===destinoId);
+  if(ja) ja.qtd=(Number(ja.qtd)||0)+qtd;
+  else alvo.destinacoes.push({destino:destinoId, qtd, em:agora(), por:_demAutor()});
+
+  try{
+    await updateDoc(doc(db,'retornos',_retAberto),{itens});
+    const i=retornos.findIndex(x=>x.firestoreId===_retAberto);
+    if(i>=0) retornos[i]={...r, itens};
+    retRenderDetalhe();
+  }catch(e){ alert('Erro: '+e.message); }
+}
+window.retDarDestino=retDarDestino;
+
+async function retTirarDestino(idx, di){
+  const r=retornos.find(x=>x.firestoreId===_retAberto); if(!r) return;
+  const itens=JSON.parse(JSON.stringify(r.itens||[]));
+  if(!itens[idx] || !itens[idx].destinacoes) return;
+  itens[idx].destinacoes.splice(di,1);
+  try{
+    await updateDoc(doc(db,'retornos',_retAberto),{itens});
+    const i=retornos.findIndex(x=>x.firestoreId===_retAberto);
+    if(i>=0) retornos[i]={...r, itens};
+    retRenderDetalhe();
+  }catch(e){ alert('Erro: '+e.message); }
+}
+window.retTirarDestino=retTirarDestino;
+
+async function retFinalizarValidacao(){
+  const r=retornos.find(x=>x.firestoreId===_retAberto); if(!r) return;
+  if(retFaltaDestinar(r)>0){ alert('Ainda há pacotes sem destino.'); return; }
+  if(!confirm('Finalizar a validação deste retorno?\n\n'+retResumoDestinos(r))) return;
+  try{
+    await updateDoc(doc(db,'retornos',_retAberto),{
+      status:'validado', validadoPor:_demAutor(), validadoEm:agora(), validadoTs:Date.now()
+    });
+    document.getElementById('ret-det-modal')?.remove();
+    alert('✓ Retorno resolvido.');
+  }catch(e){ alert('Erro: '+e.message); }
+}
+window.retFinalizarValidacao=retFinalizarValidacao;
+
+/* ── LISTA DOS RETORNOS (carregamento) ──────────────────────────── */
+let _retFiltro='todos';
+function retSetFiltro(v){ _retFiltro=v; retRender(); }
+window.retSetFiltro=retSetFiltro;
+
+function retRender(){
+  const el=document.getElementById('ret-content'); if(!el) return;
+  const lista=retAguardando().slice().sort((a,b)=>(a.ts||0)-(b.ts||0));   // mais antigo primeiro
+  const nHist=retValidados().length;
+  let h='';
+
+  if(lista.length){
+    const pct=lista.reduce((t,r)=>t+retFaltaDestinar(r),0);
+    const antigo=retDiasParado(lista[0]);
+    h+='<div class="card" style="margin-bottom:12px;background:'+(antigo>=3?'#fef2f2':'#fffbeb')+';border:1px solid '+(antigo>=3?'#fecaca':'#fde68a')+';">'+
+      '<div style="font-size:14px;font-weight:800;color:'+(antigo>=3?'#b91c1c':'#b45309')+';">⏳ '+lista.length+' retorno(s) aguardando a confeitaria</div>'+
+      '<div style="font-size:12px;color:'+(antigo>=3?'#7f1d1d':'#78350f')+';margin-top:3px;">'+pct+' pacote(s) sem destino'+
+        (antigo>0?(' · o mais antigo está parado há '+antigo+' dia(s)'):'')+'</div></div>';
+  }
+
+  if(!lista.length){
+    h+='<div style="background:var(--bg-primary);border:1px solid #a7f3d0;border-radius:12px;padding:26px;text-align:center;">'+
+      '<div style="font-size:40px;">✅</div>'+
+      '<div style="font-size:16px;font-weight:800;margin-top:8px;">Nenhum retorno pendente</div>'+
+      '<div style="font-size:12px;color:var(--text-secondary);margin-top:5px;">Toque em "+ Novo retorno" quando algo voltar da rota.</div></div>';
+  } else {
+    h+=lista.map(r=>retCardLista(r)).join('');
+  }
+
+  if(nHist){
+    h+='<button onclick="goTo(\'s-ret-hist\')" class="btn btn-secondary" style="width:100%;margin-top:14px;">📚 Ver histórico ('+nHist+' resolvido(s))</button>';
+  }
+  el.innerHTML=h;
+}
+window.retRender=retRender;
+
+function retCardLista(r){
+  const validado=r.status==='validado';
+  const falta=retFaltaDestinar(r);
+  const dias=retDiasParado(r);
+  return '<div onclick="retAbrirDetalhe(\''+r.firestoreId+'\')" class="card" '+
+    'style="cursor:pointer;margin-bottom:8px;border-left:4px solid '+(validado?'#16a34a':(dias>=3?'#dc2626':'#d97706'))+';">'+
+    '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">'+
+      '<div style="flex:1;min-width:0;">'+
+        '<div style="font-size:15px;font-weight:800;">'+r.cliente+'</div>'+
+        '<div style="font-size:12px;color:var(--text-secondary);margin-top:2px;">'+(r.motivo||'')+'</div>'+
+      '</div>'+
+      '<div style="text-align:right;white-space:nowrap;">'+
+        '<div style="font-size:11px;font-weight:800;color:'+(validado?'#16a34a':(dias>=3?'#dc2626':'#d97706'))+';">'+
+          (validado?'✓ resolvido':(dias===0?'hoje':(dias===1?'ontem':'há '+dias+' dias')))+'</div>'+
+        '<div style="font-size:10px;color:var(--text-muted);">'+(r.data||'')+'</div></div>'+
+    '</div>'+
+    '<div style="font-size:12px;color:var(--text-secondary);margin-top:4px;">'+
+      (r.totalItens||0)+' produto(s) · '+(r.totalPacotes||0)+' pacote(s)'+
+      (falta?(' · <strong style="color:#d97706;">'+falta+' sem destino</strong>'):'')+'</div>'+
+    '<div style="font-size:11px;color:var(--text-muted);margin-top:3px;">🚚 '+(r.motorista||'—')+' · por '+(r.criadoPor||'')+'</div>'+
+    (validado?'<div style="font-size:11px;color:#15803d;margin-top:3px;">'+retResumoDestinos(r)+'</div>':'')+
+  '</div>';
+}
+
+/* Excluir um retorno — só admin, valendo para pendente ou já resolvido. */
+async function retExcluir(id){
+  if(!(window.adminMode||window.setorAtual==='admin')){ alert('Só o admin pode excluir retornos.'); return; }
+  const r=retornos.find(x=>x.firestoreId===id); if(!r) return;
+  const validado=r.status==='validado';
+  if(!confirm('EXCLUIR este retorno?\n\n'+r.cliente+'\n'+(r.totalItens||0)+' produto(s) · '+(r.totalPacotes||0)+' pacote(s)\n'+(r.data||'')+
+    (validado?('\n\n⚠️ Ele JÁ FOI RESOLVIDO: '+retResumoDestinos(r)+'\nO histórico vai perder esse registro.'):'')+
+    '\n\nNão dá para desfazer.')) return;
+  if(validado && !confirm('Confirma mesmo apagar um retorno já resolvido?')) return;
+  try{
+    await deleteDoc(doc(db,'retornos',id));
+    document.getElementById('ret-det-modal')?.remove();
+    alert('Retorno excluído.');
+  }catch(e){ alert('Erro ao excluir: '+e.message); }
+}
+window.retExcluir=retExcluir;
+
+/* ── HISTÓRICO ──────────────────────────────────────────────────── */
+let _retHistBusca='', _retHistPer='30';
+function retHistBusca(v){ _retHistBusca=v||''; retRenderHist(true); }
+window.retHistBusca=retHistBusca;
+function retHistPeriodo(v){ _retHistPer=v; retRenderHist(); }
+window.retHistPeriodo=retHistPeriodo;
+
+function retRenderHist(soLista){
+  const el=document.getElementById('ret-hist-content'); if(!el) return;
+  // digitando na busca, redesenha só a lista para não perder o cursor
+  if(!soLista && document.activeElement && document.activeElement.id==='ret-hist-busca'){ soLista=true; }
+
+  const dias={hoje:0,'7':6,'30':29,'90':89}[_retHistPer];
+  let limite=0;
+  if(dias!==undefined){ const d=new Date(); d.setHours(0,0,0,0); d.setDate(d.getDate()-dias); limite=d.getTime(); }
+  const q=_normNome(_retHistBusca);
+  const lista=retValidados().filter(r=>{
+    if(limite && (r.validadoTs||r.ts||0)<limite) return false;
+    if(!q) return true;
+    return _normNome(r.cliente||'').includes(q) || _normNome(r.motorista||'').includes(q)
+        || (r.itens||[]).some(it=>_normNome(it.nome||'').includes(q));
+  }).sort((a,b)=>(b.validadoTs||b.ts||0)-(a.validadoTs||a.ts||0));
+
+  // totais por destino no período
+  const soma={}; let totPct=0;
+  lista.forEach(r=>(r.itens||[]).forEach(it=>(it.destinacoes||[]).forEach(d=>{
+    soma[d.destino]=(soma[d.destino]||0)+(Number(d.qtd)||0); totPct+=Number(d.qtd)||0;
+  })));
+
+  let corpo='<div style="display:flex;justify-content:space-between;align-items:baseline;margin:14px 0 8px;">'+
+      '<div style="font-size:13px;font-weight:800;">'+lista.length+' retorno(s)</div>'+
+      '<div style="font-size:13px;font-weight:800;color:var(--mc-azul);">'+totPct+' pacote(s)</div></div>';
+  corpo += lista.length
+    ? lista.slice(0,80).map(r=>retCardLista(r)).join('')
+    : '<div class="empty" style="padding:22px;text-align:center;color:var(--text-secondary);">Nenhum retorno nesse filtro.</div>';
+
+  if(soLista){
+    const box=document.getElementById('ret-hist-lista');
+    if(box){ box.innerHTML=corpo; return; }
+  }
+
+  const chip=(v,txt)=>'<button onclick="retHistPeriodo(\''+v+'\')" style="background:'+(_retHistPer===v?'var(--mc-azul,#2563eb)':'#fff')+';color:'+(_retHistPer===v?'#fff':'var(--text-secondary)')+';border:1px solid '+(_retHistPer===v?'var(--mc-azul,#2563eb)':'var(--border)')+';border-radius:99px;padding:7px 13px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;">'+txt+'</button>';
+
+  let h='<div class="card" style="margin-bottom:12px;">'+
+    '<input type="text" id="ret-hist-busca" value="'+String(_retHistBusca).replace(/"/g,'&quot;')+'" oninput="retHistBusca(this.value)" placeholder="🔎 Cliente, motorista ou produto" autocomplete="off" style="width:100%;padding:12px;min-height:46px;border:1px solid var(--border-md,#d1d5db);border-radius:9px;font-size:16px;font-family:inherit;box-sizing:border-box;">'+
+    '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:9px;">'+
+      chip('hoje','Hoje')+chip('7','7 dias')+chip('30','30 dias')+chip('90','90 dias')+chip('tudo','Tudo')+
+    '</div></div>';
+
+  // para onde foi a mercadoria no período
+  if(Object.keys(soma).length){
+    h+='<div class="card" style="margin-bottom:12px;">'+
+      '<div style="font-size:12px;font-weight:800;color:var(--text-secondary);margin-bottom:8px;">PARA ONDE FOI</div>'+
+      Object.entries(soma).sort((a,b)=>b[1]-a[1]).map(([id,q])=>{
+        const d=retDestino(id), pc=totPct?Math.round(q/totPct*100):0;
+        return '<div style="display:flex;align-items:center;gap:9px;padding:5px 0;">'+
+          '<span style="flex:0 0 auto;font-size:16px;">'+d.icone+'</span>'+
+          '<span style="flex:0 0 auto;width:120px;font-size:12px;font-weight:600;">'+d.nome+'</span>'+
+          '<span style="flex:1;min-width:30px;height:10px;background:var(--bg-page);border-radius:5px;overflow:hidden;">'+
+            '<span style="display:block;height:100%;width:'+pc+'%;background:'+d.cor+';border-radius:5px;"></span></span>'+
+          '<span style="flex:0 0 auto;width:62px;text-align:right;font-size:13px;font-weight:800;color:'+d.cor+';">'+q+'</span>'+
+          '<span style="flex:0 0 auto;width:34px;text-align:right;font-size:11px;color:var(--text-muted);">'+pc+'%</span></div>';
+      }).join('')+'</div>';
+  }
+
+  h+='<div id="ret-hist-lista">'+corpo+'</div>';
+  el.innerHTML=h;
+}
+window.retRenderHist=retRenderHist;
+
+/* ── configuração dos destinos (admin) ──────────────────────────── */
+function retAbrirConfigDestinos(){
+  if(!(window.adminMode||window.setorAtual==='admin')){ alert('Só o admin altera os destinos.'); return; }
+  const ov=document.createElement('div');
+  ov.id='ret-dest-modal';
+  ov.style.cssText='position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:3200;display:flex;align-items:center;justify-content:center;padding:16px;';
+  ov.innerHTML='<div style="background:#fff;border-radius:16px;max-width:460px;width:100%;max-height:88vh;display:flex;flex-direction:column;">'+
+    '<div style="padding:18px 18px 10px;"><div style="font-size:17px;font-weight:800;">⚙️ Destinos do retorno</div>'+
+    '<div style="font-size:12px;color:var(--text-secondary);margin-top:3px;">Opções que a confeitaria pode escolher para cada produto.</div></div>'+
+    '<div id="ret-dest-lista" style="flex:1;overflow-y:auto;padding:0 18px;"></div>'+
+    '<div style="padding:12px 18px 18px;">'+
+      '<label style="font-size:12px;font-weight:600;color:var(--text-secondary);">Novo destino</label>'+
+      '<input type="text" id="ret-dest-novo" placeholder="ex: Doação para instituição" autocomplete="off" '+
+        'onkeydown="if(event.key===\'Enter\'){event.preventDefault();retAddDestino();}" '+
+        'style="width:100%;padding:13px;min-height:48px;border:1px solid var(--border-md,#d1d5db);border-radius:9px;font-size:16px;font-family:inherit;box-sizing:border-box;margin:4px 0 8px;">'+
+      '<button onclick="retAddDestino()" class="btn btn-primary" style="width:100%;margin-bottom:9px;">+ Adicionar destino</button>'+
+      '<button class="btn btn-secondary" style="width:100%;" onclick="document.getElementById(\'ret-dest-modal\').remove()">Fechar</button></div>'+
+  '</div>';
+  document.body.appendChild(ov);
+  retRenderDestinos();
+}
+window.retAbrirConfigDestinos=retAbrirConfigDestinos;
+
+function retRenderDestinos(){
+  const box=document.getElementById('ret-dest-lista'); if(!box) return;
+  box.innerHTML=retDestinos.map((d,i)=>
+    '<div style="display:flex;align-items:center;gap:9px;padding:10px;border:1px solid var(--border);border-radius:9px;margin-bottom:6px;">'+
+      '<span style="font-size:20px;">'+d.icone+'</span>'+
+      '<span style="flex:1;min-width:0;font-size:14px;font-weight:700;color:'+d.cor+';">'+d.nome+'</span>'+
+      (retDestinos.length>1?'<button onclick="retRemoverDestino('+i+')" style="background:none;border:1px solid #fecaca;color:#dc2626;border-radius:7px;padding:5px 10px;font-size:12px;cursor:pointer;font-family:inherit;">✕</button>':'')+
+    '</div>').join('');
+}
+
+async function retSalvarDestinos(lista){
+  try{
+    await setDoc(doc(db,'configuracoes','retornoDestinos'),{lista, atualizadoEm:agora(), autor:_demAutor()},{merge:true});
+    retDestinos=lista;
+    retRenderDestinos();
+  }catch(e){ alert('Erro: '+e.message); }
+}
+async function retAddDestino(){
+  const nome=((document.getElementById('ret-dest-novo')||{}).value||'').trim();
+  if(!nome){ alert('Informe o nome do destino.'); return; }
+  const id=_normNome(nome).replace(/[^a-z0-9]/g,'').slice(0,20)||('d'+Date.now());
+  if(retDestinos.some(d=>d.id===id)){ alert('Já existe um destino com esse nome.'); return; }
+  const cores=['#0891b2','#7c3aed','#db2777','#4f46e5','#0d9488','#92400e'];
+  await retSalvarDestinos([...retDestinos,{id, nome, icone:'📌', cor:cores[retDestinos.length%cores.length]}]);
+  document.getElementById('ret-dest-novo').value='';
+}
+window.retAddDestino=retAddDestino;
+
+async function retRemoverDestino(i){
+  const d=retDestinos[i]; if(!d) return;
+  const usado=retornos.some(r=>(r.itens||[]).some(it=>(it.destinacoes||[]).some(x=>x.destino===d.id)));
+  if(usado && !confirm('"'+d.nome+'" já foi usado em retornos anteriores.\n\nEles continuam com o registro, mas a opção some das próximas validações. Remover?')) return;
+  await retSalvarDestinos(retDestinos.filter((_,idx)=>idx!==i));
+}
+window.retRemoverDestino=retRemoverDestino;
+
+/* ══════════════════════════════════════════════════════════════════
    PEDIDOS AMOSTRA
    O comercial pede amostras para um cliente, em UNIDADES. A embalagem
    produz. Quando o prazo é curto (menos que o mínimo configurado), a
@@ -21139,8 +22119,23 @@ onSnapshot(doc(db,'configuracoes','estoqueControlado'), snap=>{
   }catch(e){ console.error('estConfig snap',e); }
 });
 
+/* Cinco coleções diferentes avisam quando mudam (movimentos, lotes,
+   baixas, produtos, configuração). Sem isso, abrir a tela redesenhava
+   tudo cinco vezes seguidas e a informação piscava. Aqui os avisos que
+   chegam juntos viram um único redesenho. */
+let _estRenderTimer=null;
 function estRenderAtual(){
+  if(_estRenderTimer) clearTimeout(_estRenderTimer);
+  _estRenderTimer=setTimeout(_estRenderAgora, 120);
+}
+function _estRenderAgora(){
+  _estRenderTimer=null;
   const t=document.querySelector('.screen.active')?.id;
+  // não redesenha por baixo de quem está digitando
+  const ativo=document.activeElement;
+  if(ativo && (ativo.tagName==='INPUT'||ativo.tagName==='TEXTAREA') && ativo.type!=='checkbox'){
+    if(t==='s-est-mov' && typeof estRenderMovLista==='function'){ estRenderMovLista(); estAtualizarBadge(); return; }
+  }
   if(t==='s-est-hub') estRenderHub();
   if(t==='s-est-interno') estRenderInterno();
   if(t==='s-est-container') estRenderContainer();
@@ -21901,24 +22896,29 @@ async function estSalvarEntrada(){
 window.estSalvarEntrada=estSalvarEntrada;
 
 // ── MIGRAÇÃO contêiner → empresa (com senha) ─────────────────────
-// mostra na hora se a quantidade passa do que existe no lote escolhido
-function _estAvisoQtdLote(pacotes){
-  const out=document.getElementById('est-q-prev'); if(!out) return;
-  const lote=estLotes.find(l=>String(l.firestoreId)===String(_estLoteSel));
-  if(!lote) return;
-  const saldo=Number(lote.saldo)||0;
-  if(pacotes>saldo){
-    out.insertAdjacentHTML('beforeend',
-      '<div style="font-size:11px;font-weight:700;color:#dc2626;margin-top:4px;">⚠️ este lote só tem '+saldo+' pct — traga '+saldo+' aqui e '+(pacotes-saldo)+' de outro lote</div>');
-  }
-}
 
-let _estLoteSel='';
+let _estLotesSel=[];   // lotes marcados para a migração (pode ser mais de um)
+let _estMigCod='';     // produto da migração aberta
 
 // lotes do produto que ainda têm saldo, do mais velho para o mais novo
 function _estLotesDe(cod){
   return estLotes.filter(l=>String(l.codigo)===String(cod) && (Number(l.saldo)||0)>0)
     .slice().sort((a,b)=>(a.validadeNum||estDataNum(a.validade))-(b.validadeNum||estDataNum(b.validade)));
+}
+
+/* Distribui a quantidade pedida entre os lotes marcados, sempre do mais
+   velho para o mais novo. É isso que permite tirar 50 de um lote e 100 de
+   outro numa operação só. */
+function _estDistribuir(cod, total){
+  const lotes=_estLotesDe(cod).filter(l=>_estLotesSel.includes(String(l.firestoreId)));
+  const plano=[]; let resta=total;
+  for(const l of lotes){
+    if(resta<=0) break;
+    const tira=Math.min(Number(l.saldo)||0, resta);
+    if(tira>0){ plano.push({lote:l, qtd:tira}); resta-=tira; }
+  }
+  const disponivel=lotes.reduce((t,l)=>t+(Number(l.saldo)||0),0);
+  return {plano, resta, disponivel, lotes};
 }
 
 function estAbrirMigrar(cod){
@@ -21927,13 +22927,15 @@ function estAbrirMigrar(cod){
   const lotes=_estLotesDe(cod);
   if(!lotes.length){ alert('Não há saldo deste produto no contêiner.'); return; }
   _estUnid='cx';
-  _estLoteSel=lotes[0].firestoreId;          // já vem no mais antigo
+  _estMigCod=String(cod);
+  _estLotesSel=[String(lotes[0].firestoreId)];      // começa no mais antigo
   _estModal('🚚 Trazer do contêiner — '+p.nome,
-    '<div style="font-size:12px;color:var(--text-secondary);margin-bottom:12px;line-height:1.5;">Na empresa há <strong>'+st.interno+'</strong> pct (ideal '+st.ideal+'). Escolha de qual lote vai sair.</div>'+
-    '<label style="font-size:12px;font-weight:600;color:var(--text-secondary);">Lote</label>'+
+    '<div style="font-size:12px;color:var(--text-secondary);margin-bottom:12px;line-height:1.5;">Na empresa há <strong>'+st.interno+'</strong> pct (ideal '+st.ideal+'). Marque de quais lotes pode sair — o mais antigo é usado primeiro.</div>'+
+    '<label style="font-size:12px;font-weight:600;color:var(--text-secondary);">Lotes</label>'+
     '<div id="est-g-lotes" style="margin:6px 0 4px;"></div>'+
     '<div id="est-g-aviso" style="margin-bottom:10px;"></div>'+
     _estCampoQtd(cod,'Quantidade trazida')+
+    '<div id="est-g-plano" style="margin-bottom:10px;"></div>'+
     (estConfig.senhaMigracao
       ? '<label style="font-size:12px;font-weight:600;color:var(--text-secondary);">🔒 Senha da migração</label>'+
         '<input type="password" id="est-g-senha" inputmode="numeric" autocomplete="off" style="width:100%;padding:13px;min-height:48px;border:1px solid var(--border-md,#d1d5db);border-radius:9px;font-size:16px;box-sizing:border-box;margin:4px 0 10px;">'
@@ -21944,21 +22946,47 @@ function estAbrirMigrar(cod){
 }
 window.estAbrirMigrar=estAbrirMigrar;
 
-function estSelLote(cod,id){ _estLoteSel=id; estRenderLotes(cod); estPreviewQtd(cod); }
+function estSelLote(cod,id){
+  id=String(id);
+  const i=_estLotesSel.indexOf(id);
+  if(i>=0){
+    if(_estLotesSel.length===1){ alert('Deixe pelo menos um lote marcado.'); return; }
+    _estLotesSel.splice(i,1);
+  } else {
+    _estLotesSel.push(id);
+  }
+  estRenderLotes(cod); estPreviewQtd(cod);
+}
 window.estSelLote=estSelLote;
+
+// marca tudo o que for preciso, do mais velho para o mais novo, até cobrir a quantidade
+function estMarcarAteCobrir(cod){
+  const total=_estLerQtd(cod);
+  const lotes=_estLotesDe(cod);
+  _estLotesSel=[]; let resta=total;
+  for(const l of lotes){
+    _estLotesSel.push(String(l.firestoreId));
+    resta-=(Number(l.saldo)||0);
+    if(resta<=0) break;
+  }
+  if(!_estLotesSel.length && lotes.length) _estLotesSel=[String(lotes[0].firestoreId)];
+  estRenderLotes(cod); estPreviewQtd(cod);
+}
+window.estMarcarAteCobrir=estMarcarAteCobrir;
 
 function estRenderLotes(cod){
   const box=document.getElementById('est-g-lotes'); if(!box) return;
   const p=estProd(cod), lotes=_estLotesDe(cod);
   box.innerHTML=lotes.map((l,i)=>{
-    const sel=(String(l.firestoreId)===String(_estLoteSel));
+    const id=String(l.firestoreId);
+    const sel=_estLotesSel.includes(id);
     const dias=estDiasAte(l.validade);
     const corV = dias===null?'#64748b':(dias<0?'#dc2626':(dias<=10?'#d97706':'#16a34a'));
     const txtV = dias===null?'sem validade':(dias<0?('vencido há '+Math.abs(dias)+'d'):(dias===0?'vence hoje':('faltam '+dias+'d')));
-    return '<button type="button" onclick="estSelLote(\''+escapeJsStr(cod)+'\',\''+escapeJsStr(l.firestoreId)+'\')" '+
+    return '<button type="button" onclick="estSelLote(\''+escapeJsStr(cod)+'\',\''+escapeJsStr(id)+'\')" '+
       'style="display:block;width:100%;text-align:left;background:'+(sel?'rgba(37,99,235,.08)':'#fff')+';border:2px solid '+(sel?'var(--mc-azul,#2563eb)':'var(--border)')+';border-radius:10px;padding:10px 12px;margin-bottom:6px;cursor:pointer;font-family:inherit;">'+
       '<div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;">'+
-        '<span style="font-size:13px;font-weight:800;">'+(sel?'◉':'○')+' Validade '+(l.validade||'—')+
+        '<span style="font-size:13px;font-weight:800;">'+(sel?'☑':'☐')+' Validade '+(l.validade||'—')+
           (i===0?' <span style="font-size:10px;font-weight:700;color:#16a34a;">⏱ mais antigo</span>':'')+'</span>'+
         '<span style="font-size:15px;font-weight:900;color:#7c3aed;white-space:nowrap;">'+l.saldo+' pct</span>'+
       '</div>'+
@@ -21967,32 +22995,55 @@ function estRenderLotes(cod){
     '</button>';
   }).join('');
 
-  // avisa quando o escolhido não é o de validade mais próxima
+  // avisa se deixou de fora um lote que vence antes de algum marcado
   const aviso=document.getElementById('est-g-aviso'); if(!aviso) return;
-  const idx=lotes.findIndex(l=>String(l.firestoreId)===String(_estLoteSel));
-  if(idx>0){
-    const velho=lotes[0];
+  const idxSel=lotes.map((l,i)=>_estLotesSel.includes(String(l.firestoreId))?i:-1).filter(i=>i>=0);
+  const maiorSel=idxSel.length?Math.max(...idxSel):-1;
+  const pulados=lotes.filter((l,i)=>i<maiorSel && !_estLotesSel.includes(String(l.firestoreId)));
+  if(pulados.length){
     aviso.innerHTML='<div style="background:#fef2f2;border:2px solid #dc2626;border-radius:9px;padding:10px;">'+
-      '<div style="font-size:13px;font-weight:800;color:#b91c1c;">⚠️ Existe um lote que vence antes</div>'+
-      '<div style="font-size:12px;color:#7f1d1d;margin-top:3px;line-height:1.45;">O lote de <strong>'+velho.validade+'</strong> ('+velho.saldo+' pct) vence primeiro e deveria sair antes deste. Só siga se tiver certeza.</div>'+
-      '<button type="button" onclick="estSelLote(\''+escapeJsStr(cod)+'\',\''+escapeJsStr(velho.firestoreId)+'\')" style="width:100%;margin-top:8px;background:#dc2626;border:none;color:#fff;border-radius:8px;padding:9px;font-size:12px;font-weight:800;cursor:pointer;font-family:inherit;">Usar o lote de '+velho.validade+'</button>'+
+      '<div style="font-size:13px;font-weight:800;color:#b91c1c;">⚠️ Lote mais antigo fora da seleção</div>'+
+      '<div style="font-size:12px;color:#7f1d1d;margin-top:3px;line-height:1.45;">'+
+        pulados.map(l=>l.validade+' ('+l.saldo+' pct)').join(' · ')+' vence antes de algum que você marcou.</div>'+
+      '<button type="button" onclick="estSelLote(\''+escapeJsStr(cod)+'\',\''+escapeJsStr(pulados[0].firestoreId)+'\')" style="width:100%;margin-top:8px;background:#dc2626;border:none;color:#fff;border-radius:8px;padding:9px;font-size:12px;font-weight:800;cursor:pointer;font-family:inherit;">Incluir o lote de '+pulados[0].validade+'</button>'+
     '</div>';
   } else aviso.innerHTML='';
 }
 window.estRenderLotes=estRenderLotes;
 
+// mostra de qual lote sai cada parte, enquanto a pessoa digita
+function _estAvisoQtdLote(pacotes){
+  const box=document.getElementById('est-g-plano'); if(!box) return;
+  const alvo=_estMigCod||'';
+  if(!alvo || pacotes<=0){ box.innerHTML=''; return; }
+  const {plano, resta, disponivel}=_estDistribuir(alvo, pacotes);
+  const p=estProd(alvo);
+  if(resta>0){
+    box.innerHTML='<div style="background:#fffbeb;border:1px solid #fde68a;border-radius:9px;padding:10px;">'+
+      '<div style="font-size:12px;font-weight:800;color:#b45309;">Faltam '+resta+' pct nos lotes marcados</div>'+
+      '<div style="font-size:11px;color:#78350f;margin-top:3px;">Marcados somam '+disponivel+' pct. Marque outro lote ou reduza a quantidade.</div>'+
+      '<button type="button" onclick="estMarcarAteCobrir(\''+escapeJsStr(alvo)+'\')" style="width:100%;margin-top:7px;background:#d97706;border:none;color:#fff;border-radius:8px;padding:9px;font-size:12px;font-weight:800;cursor:pointer;font-family:inherit;">Marcar os lotes necessários</button></div>';
+    return;
+  }
+  box.innerHTML='<div style="background:#f0fdf4;border:1px solid #a7f3d0;border-radius:9px;padding:10px;">'+
+    '<div style="font-size:12px;font-weight:800;color:#15803d;">Vai sair assim</div>'+
+    plano.map(x=>'<div style="display:flex;justify-content:space-between;font-size:12px;color:#166534;padding:3px 0;">'+
+      '<span>val '+(x.lote.validade||'—')+'</span>'+
+      '<span style="font-weight:800;">'+x.qtd+' pct'+(p&&p.pctCaixa?(' · '+estCaixas(x.qtd,p.pctCaixa)+' cx'):'')+'</span></div>').join('')+
+  '</div>';
+}
+
 async function estConfirmarMigrar(cod){
   const p=estProd(cod); if(!p) return;
-  const lote=estLotes.find(l=>String(l.firestoreId)===String(_estLoteSel));
-  if(!lote){ alert('Escolha o lote que vai sair.'); return; }
+  if(typeof mcExigirInternet==='function' && !mcExigirInternet('migração')) return;
   const total=_estLerQtd(cod);
   if(total<=0){ alert('Informe a quantidade trazida.'); return; }
-  const saldoLote=Number(lote.saldo)||0;
-  if(total>saldoLote){
-    const falta=total-saldoLote;
-    alert('O lote de '+lote.validade+' só tem '+saldoLote+' pacote(s).\n\n'+
-          'Lance '+saldoLote+' aqui e depois faça outra migração com os '+falta+' restantes, escolhendo outro lote.\n\n'+
-          'É assim que a conta de cada lote fecha certo.');
+  if(!_estLotesSel.length){ alert('Marque pelo menos um lote.'); return; }
+
+  const {plano, resta, disponivel}=_estDistribuir(cod, total);
+  if(resta>0){
+    alert('Os lotes marcados somam '+disponivel+' pacote(s), mas você pediu '+total+'.\n\n'+
+          'Marque outro lote (o botão "Marcar os lotes necessários" faz isso) ou reduza a quantidade.');
     return;
   }
   if(estConfig.senhaMigracao){
@@ -22000,18 +23051,22 @@ async function estConfirmarMigrar(cod){
     if(String(senha).trim()!==String(estConfig.senhaMigracao)){ alert('Senha incorreta. A migração não foi registrada.'); return; }
   }
   const cx=estCaixas(total,p.pctCaixa);
-  if(!confirm('Trazer '+total+' pacote(s) ('+cx+' cx) de '+p.nome+'\ndo lote com validade '+lote.validade+'?')) return;
+  const resumo=plano.map(x=>'· '+x.qtd+' pct do lote de '+(x.lote.validade||'sem validade')).join('\n');
+  if(!confirm('Trazer '+total+' pacote(s) ('+cx+' cx) de '+p.nome+'?\n\n'+resumo)) return;
+
   try{
-    await updateDoc(doc(db,'estoqueCtrlLotes',lote.firestoreId),{saldo:saldoLote-total});
-    const desc=cx+' cx ('+total+' pct) · lote val '+lote.validade;
+    // baixa cada lote na parte que lhe cabe
+    for(const x of plano){
+      await updateDoc(doc(db,'estoqueCtrlLotes',x.lote.firestoreId),
+        {saldo:(Number(x.lote.saldo)||0)-x.qtd});
+    }
+    const desc=plano.map(x=>x.qtd+' pct val '+(x.lote.validade||'—')).join(' + ');
     await estGravarMov({local:'container', codigo:String(cod), nome:p.nome, pacotes:-total,
-      tipo:'migracao', motivo:'Migrado para a empresa', obs:desc});
+      tipo:'migracao', motivo:'Migrado para a empresa', obs:cx+' cx · '+desc});
     await estGravarMov({local:'interno', codigo:String(cod), nome:p.nome, pacotes:total,
-      tipo:'migracao', motivo:'Recebido do contêiner', obs:desc});
+      tipo:'migracao', motivo:'Recebido do contêiner', obs:cx+' cx · '+desc});
     _estFecharModal();
-    const resta=saldoLote-total;
-    alert('Migração registrada: '+total+' pacotes ('+cx+' caixas).'+
-      (resta>0?('\n\nAinda restam '+resta+' pacote(s) neste lote.'):'\n\nEste lote foi zerado.'));
+    alert('Migração registrada: '+total+' pacotes ('+cx+' caixas).\n\n'+resumo);
   }catch(e){ alert('Erro na migração: '+e.message); }
 }
 window.estConfirmarMigrar=estConfirmarMigrar;
@@ -22432,14 +23487,25 @@ function estSaldoInternoAte(cod, dataNum){
 // saldo do CONTÊINER no fim de um dia (entradas de lote menos migrações)
 function estSaldoContainerAte(cod, dataNum){
   const c=String(cod);
+  // A fonte da verdade do contêiner são os LOTES, não os movimentos:
+  // quando um lote é excluído, o movimento de entrada fica órfão e o
+  // histórico passava a mostrar saldo que não existe mais.
   let s=0;
+  estLotes.forEach(l=>{
+    if(String(l.codigo)!==c) return;
+    const dn=estDataNum(l.dataEntrada);
+    if(dn && dn>dataNum) return;          // lote ainda não tinha entrado
+    s+=Number(l.pacotes)||0;              // quantidade original da entrada
+  });
+  // tira o que já saiu do contêiner (migração para a empresa) até essa data
   estMovs.forEach(m=>{
     if(m.local!=='container' || String(m.codigo)!==c) return;
+    if(m.tipo!=='migracao') return;       // entradas já vieram dos lotes
     const dn=estDataNum(m.data);
     if(dn && dn>dataNum) return;
-    s+=Number(m.pacotes)||0;
+    s+=Number(m.pacotes)||0;              // migração é negativa
   });
-  return s;
+  return Math.max(0, s);
 }
 function estSaldoContainerTotalAte(dataNum){
   return estAtivos().reduce((t,p)=>t+estSaldoContainerAte(p.codigo,dataNum),0);
@@ -23297,7 +24363,7 @@ function acPrioBadge(n){
 
 // alça de arrastar (só aparece para quem pode reordenar)
 function acPrioAlca(){
-  return '<span data-ac-handle="1" onclick="event.stopPropagation();" title="Segure e arraste para mudar a prioridade" '+
+  return '<span data-ac-handle="1" onclick="event.stopPropagation();" title="Segure por 1 segundo e arraste para mudar a prioridade" '+
     'style="flex:0 0 auto;touch-action:none;cursor:grab;user-select:none;-webkit-user-select:none;font-size:17px;line-height:1;color:var(--text-muted,#94a3b8);padding:4px 6px;margin:-4px 0;">⠿</span>';
 }
 
@@ -23312,24 +24378,62 @@ function acPrioAlca(){
     el.style.zIndex=''; el.style.position=''; el.style.transition='';
   }
 
+  /* O arrastar só começa depois de SEGURAR meio segundo na alça.
+     Antes disso, encostar na alça enquanto rolava a tela já bastava para
+     mudar a prioridade sem querer. Se o dedo deslizar antes do tempo, a
+     rolagem segue normal e nada é reordenado. */
+  let espera=null, pendente=null;
+
+  function cancelarEspera(){
+    if(espera){ clearTimeout(espera); espera=null; }
+    if(pendente){
+      pendente.h.style.transform=''; pendente.h.style.color='';
+      pendente=null;
+    }
+  }
+
+  function comecarArraste(){
+    if(!pendente) return;
+    const {item, cont, h, y, pointerId}=pendente;
+    pendente=null; espera=null;
+    _acDragAtivo=true;
+    st={item, cont, startY:y};
+    item.style.transition='none';
+    item.style.position='relative';
+    item.style.zIndex='50';
+    item.style.opacity='0.95';
+    item.style.boxShadow='0 8px 22px rgba(15,23,42,.28)';
+    item.style.outline='2px solid var(--mc-azul,#2563eb)';
+    h.style.color='var(--mc-azul,#2563eb)';
+    h.style.transform='scale(1.25)';
+    try{ navigator.vibrate && navigator.vibrate(30); }catch(_){}   // avisa que travou
+    try{ h.setPointerCapture(pointerId); }catch(_){}
+  }
+
   document.addEventListener('pointerdown', function(e){
     const h = e.target && e.target.closest ? e.target.closest('[data-ac-handle]') : null;
     if(!h) return;
     const item = h.closest('[data-ac-item]');
     const cont = item && item.closest('[data-ac-lista]');
     if(!item || !cont) return;
-    e.preventDefault(); e.stopPropagation();
-    _acDragAtivo=true;
-    st={item, cont, startY:e.clientY};
-    item.style.transition='none';
-    item.style.position='relative';
-    item.style.zIndex='50';
-    item.style.opacity='0.95';
-    item.style.boxShadow='0 8px 20px rgba(15,23,42,.22)';
-    try{ h.setPointerCapture(e.pointerId); }catch(_){}
+    cancelarEspera();
+    pendente={item, cont, h, y:e.clientY, x:e.clientX, pointerId:e.pointerId};
+    h.style.transition='transform .18s, color .18s';
+    h.style.transform='scale(1.12)';
+    espera=setTimeout(comecarArraste, 450);
   }, true);
 
+  // soltou antes de completar o tempo: cancela a espera, senão o arrastar
+  // ativava sozinho depois que o dedo já tinha saído
+  ['pointerup','pointercancel','pointerleave','touchend','scroll'].forEach(ev=>
+    document.addEventListener(ev, function(){ if(pendente) cancelarEspera(); }, true));
+
   document.addEventListener('pointermove', function(e){
+    // deslizou antes de completar o tempo: era rolagem, não reordenação
+    if(pendente){
+      if(Math.abs(e.clientY-pendente.y)>9 || Math.abs(e.clientX-pendente.x)>9) cancelarEspera();
+      return;
+    }
     if(!st) return;
     e.preventDefault();
     const dy=e.clientY-st.startY;
@@ -23366,6 +24470,7 @@ function acPrioAlca(){
     const nomes=Array.from(cont.querySelectorAll('[data-ac-item]')).map(x=>x.getAttribute('data-ac-item'));
     const semana=cont.getAttribute('data-ac-semana'), dia=cont.getAttribute('data-ac-dia');
     st=null; _acDragAtivo=false;
+    cancelarEspera();
     if(semana && dia && nomes.length) acPrioSalvar(semana,dia,nomes);
   }
   document.addEventListener('pointerup', soltar);
