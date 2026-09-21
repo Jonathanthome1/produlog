@@ -21411,7 +21411,12 @@ function amCard(a, paraEmbalagem){
     '<div style="font-size:12px;color:var(--text-secondary);margin-top:2px;">'+
       (a.itens||[]).length+' produto(s) · '+(a.totalUn||0)+' unidade(s)'+
       (a.status==='pendente'&&feitos?(' · <strong>'+feitos+'/'+total+' conferidos</strong>'):'')+'</div>'+
-    (a.obs?'<div style="font-size:11px;color:var(--text-muted);margin-top:3px;">📝 '+a.obs+'</div>':'')+
+    // a observação é instrução de produção: destacada em qualquer lista
+    (a.obs
+      ? '<div style="background:#fffbeb;border:2px solid #d97706;border-radius:10px;padding:10px 12px;margin-top:8px;">'+
+          '<div style="font-size:10px;font-weight:900;color:#b45309;letter-spacing:1.5px;">📝 OBSERVAÇÃO</div>'+
+          '<div style="font-size:18px;font-weight:800;color:#78350f;line-height:1.35;margin-top:3px;">'+a.obs+'</div></div>'
+      : '')+
     '<div style="font-size:10px;color:var(--text-muted);margin-top:4px;">'+(a.solicitadoPor||'')+' · '+(a.solicitadoEm||'')+'</div>'+
   '</div>';
 }
@@ -21499,7 +21504,14 @@ function amAbrir(id, paraEmbalagem){
           '<button onclick="amImprimir(\''+a.firestoreId+'\')" title="Imprimir amostra" style="background:#fff;border:1px solid var(--border);border-radius:8px;padding:7px 11px;font-size:16px;cursor:pointer;font-family:inherit;">🖨️</button>'+
         '</div></div>'+
       '<div style="font-size:13px;color:var(--text-secondary);margin-top:3px;">📅 Entrega '+a.entrega+' · '+total+' produto(s) · '+(a.totalUn||0)+' un · '+amFmtPct(a.totalPct||0)+' pct</div>'+
-      (a.obs?'<div style="font-size:12px;color:var(--text-primary);background:var(--bg-page);border-radius:8px;padding:7px 9px;margin-top:7px;">📝 '+a.obs+'</div>':'')+
+      (a.obs
+        ? '<div style="background:#fffbeb;border:3px solid #d97706;border-radius:12px;padding:12px 14px;margin-top:10px;">'+
+            '<div style="display:flex;align-items:center;gap:7px;margin-bottom:5px;">'+
+              '<span style="font-size:20px;">📝</span>'+
+              '<span style="font-size:12px;font-weight:900;color:#b45309;letter-spacing:1px;">OBSERVAÇÃO</span></div>'+
+            '<div style="font-size:19px;font-weight:800;color:#78350f;line-height:1.35;">'+a.obs+'</div>'+
+          '</div>'
+        : '')+
       '<div style="font-size:10px;color:var(--text-muted);margin-top:5px;">Pedido por '+(a.solicitadoPor||'')+' em '+(a.solicitadoEm||'')+'</div>'+
       (podeMarcar?'<div style="font-size:12px;font-weight:700;color:var(--mc-azul);margin-top:6px;">'+nFeitos+' de '+total+' conferidos</div>':'')+
     '</div>'+
@@ -21623,7 +21635,7 @@ function amImprimir(id){
     '.lin{display:flex;gap:26px;flex-wrap:wrap;}'+
     '.lb{font-size:10px;color:#64748b;font-weight:700;text-transform:uppercase;}'+
     '.vl{font-size:15px;font-weight:800;}'+
-    '.obs{background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:10px 12px;margin-bottom:12px;}'+
+    '.obs{background:#fffbeb;border:3px solid #d97706;border-radius:8px;padding:12px 14px;margin-bottom:12px;}'+
     'h3{font-size:13px;margin:14px 0 6px;padding:5px 8px;background:#1e3a8a;color:#fff;border-radius:5px;}'+
     'table{width:100%;border-collapse:collapse;margin-bottom:6px;}'+
     'th{background:#e2e8f0;font-size:10px;text-transform:uppercase;padding:5px 6px;text-align:left;border:1px solid #cbd5e1;}'+
@@ -21648,7 +21660,7 @@ function amImprimir(id){
       '<div><div class="lb">Unidades</div><div class="vl">'+(a.totalUn||0)+'</div></div>'+
       '<div><div class="lb">Pacotes (ERP)</div><div class="vl">'+amFmtPct(a.totalPct||0)+'</div></div>'+
     '</div></div>'+
-    (a.obs?'<div class="obs"><div class="lb">Observação</div><div style="font-size:13px;font-weight:600;margin-top:3px;">'+a.obs+'</div></div>':'')+
+    (a.obs?'<div class="obs"><div class="lb" style="font-size:11px;font-weight:800;color:#b45309;">📝 OBSERVAÇÃO</div><div style="font-size:17px;font-weight:800;color:#78350f;margin-top:4px;line-height:1.35;">'+a.obs+'</div></div>':'')+
     tabela('🥖 PÃES', paes)+
     tabela('🥟 SALGADOS', salg)+
     '<div class="tot"><span>Total de unidades: '+(a.totalUn||0)+'</span>'+
