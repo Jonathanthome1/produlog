@@ -17960,6 +17960,97 @@ async function laNegar(id){
 window.laNegar=laNegar;
 
 /* ============ TELA 4: AJUSTES EM ABERTO (Excel substituto) ============ */
+/* ══════════════════════════════════════════════════════════════════
+   ANÁLISE DIÁRIA — antecipar a falta antes do comercial pedir
+   Junta o estoque de hoje, a média de venda daquele dia da semana e o
+   que ainda dá para liberar das produções não lançadas no ERP.
+   Guarda em: configuracoes/laAnalise
+   ══════════════════════════════════════════════════════════════════ */
+let laEstoqueAtual={};      // {cod: qtd} colado pelo admin
+let laAnaliseCfg={diaSemana:'auto', margem:25, semanas:8, atualizadoEm:''};
+
+onSnapshot(doc(db,'configuracoes','laAnalise'), snap=>{
+  try{
+    const d=snap.data()||{};
+    laEstoqueAtual=d.estoque||{};
+    laAnaliseCfg={diaSemana:d.diaSemana||'auto', margem:(d.margem===undefined?25:Number(d.margem)),
+                  semanas:Number(d.semanas)||8, atualizadoEm:d.atualizadoEm||''};
+    if(document.querySelector('.screen.active')?.id==='s-la-resumo') renderLaResumo();
+  }catch(e){ console.error('laAnalise snap',e); }
+});
+
+const LA_DIAS=['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
+function laDiaSemanaDe(dataBR){
+  const m=String(dataBR||'').match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  if(!m) return null;
+  return new Date(+m[3], +m[2]-1, +m[1]).getDay();
+}
+function laDiaAlvo(){
+  if(laAnaliseCfg.diaSemana==='auto') return new Date().getDay();
+  return Number(laAnaliseCfg.diaSemana);
+}
+
+/* Média de venda de um produto num dia da semana.
+   Soma carregamento + pedidos por fora, olhando as últimas N semanas.
+   Dias sem nenhuma venda daquele produto não entram na média — senão um
+   feriado ou um dia sem rota puxaria o número para baixo. */
+function laMediaVenda(cod, diaSemana, semanas){
+  const c=String(cod);
+  const limite=Date.now()-(semanas||8)*7*86400000;
+  const porDia={};
+
+  (carregamentos||[]).forEach(cr=>{
+    const dn=estDataNum(cr.data);
+    if(!dn) return;
+    const d=laDiaSemanaDe(cr.data);
+    if(d!==diaSemana) return;
+    const ts=new Date(+String(cr.data).slice(6), +String(cr.data).slice(3,5)-1, +String(cr.data).slice(0,2)).getTime();
+    if(ts<limite) return;
+    let q=0;
+    (cr.itens||[]).forEach(it=>{ if(String(it.codigo)===c) q+=parseInt(it.qtdBipada)||0; });
+    if(q>0) porDia[cr.data]=(porDia[cr.data]||0)+q;
+  });
+
+  if(typeof pfDias!=='undefined'){
+    Object.values(pfDias).forEach(dia=>{
+      Object.entries(dia.porEntrega||{}).forEach(([entrega,itens])=>{
+        const d=laDiaSemanaDe(entrega);
+        if(d!==diaSemana) return;
+        const ts=new Date(+String(entrega).slice(6), +String(entrega).slice(3,5)-1, +String(entrega).slice(0,2)).getTime();
+        if(ts<limite) return;
+        const q=Number(itens[c])||0;
+        if(q>0) porDia[entrega]=(porDia[entrega]||0)+q;
+      });
+    });
+  }
+
+  const vals=Object.values(porDia);
+  if(!vals.length) return {media:0, dias:0, valores:[]};
+  const soma=vals.reduce((a,b)=>a+b,0);
+  return {media:Math.round(soma/vals.length), dias:vals.length, valores:vals};
+}
+
+/* Monta a linha de análise de um produto */
+function laAnaliseProduto(cod, nome){
+  const dia=laDiaAlvo();
+  const m=laMediaVenda(cod, dia, laAnaliseCfg.semanas);
+  const margem=Number(laAnaliseCfg.margem)||0;
+  const previsto=Math.round(m.media*(1+margem/100));
+  const estoque=Number(laEstoqueAtual[String(cod)])||0;
+  const diferenca=estoque-previsto;
+  let c={embAntecip:0, jaLiberado:0, porDia:[]};
+  try{ c=laCalcular(cod, nome); }catch(e){}
+  const podeLiberar=c.embAntecip||0;
+  const falta=Math.max(0, -diferenca);
+  return {
+    cod:String(cod), nome, estoque, media:m.media, diasMedia:m.dias, previsto, margem,
+    diferenca, falta, podeLiberar, jaLiberado:c.jaLiberado||0,
+    // cobre a falta com o que já está embalado e não lançado?
+    resolve: falta===0 ? 'ok' : (podeLiberar>=falta ? 'libera' : (podeLiberar>0 ? 'parcial' : 'produzir')),
+    sobra: podeLiberar-falta
+  };
+}
+
 /* ── RESUMO DOS AJUSTES EM ABERTO ─────────────────────────────────
    Mesma leitura do resumo de refazimento, mas alimentado pelos ajustes
    que o próprio app lançou no ELIGO. Tudo que está em aberto (entrada
@@ -17981,10 +18072,123 @@ function laResumoPorProduto(){
   return Object.values(mapa).sort((a,b)=>b.saldo-a.saldo);
 }
 
+/* ── tela de análise: colar estoque, escolher o dia e a margem ──── */
+function laAbrirEstoque(){
+  const ov=document.createElement('div');
+  ov.id='la-est-modal';
+  ov.style.cssText='position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:3200;display:flex;align-items:center;justify-content:center;padding:16px;';
+  ov.innerHTML='<div style="background:#fff;border-radius:16px;max-width:520px;width:100%;max-height:90vh;display:flex;flex-direction:column;">'+
+    '<div style="padding:18px 18px 10px;">'+
+      '<div style="font-size:17px;font-weight:800;">📦 Colar o estoque atual</div>'+
+      '<div style="font-size:12px;color:var(--text-secondary);margin:4px 0 10px;line-height:1.5;">Mesmo formato do planejamento: código, TAB, quantidade. Uma linha por produto.</div>'+
+      '<textarea id="la-est-txt" placeholder="119&#9;150&#10;208&#9;20&#10;210&#9;85" style="width:100%;height:170px;padding:11px;border:1px solid var(--border-md,#d1d5db);border-radius:9px;font-size:14px;font-family:monospace;box-sizing:border-box;"></textarea>'+
+      '<div id="la-est-result" style="font-size:12px;margin-top:8px;min-height:18px;"></div>'+
+    '</div>'+
+    '<div style="padding:8px 18px 18px;">'+
+      '<button onclick="laSalvarEstoque()" class="btn btn-primary" style="width:100%;">Importar</button>'+
+      (Object.keys(laEstoqueAtual).length
+        ? '<button onclick="laLimparEstoque()" style="width:100%;margin-top:8px;background:none;border:1px solid #fecaca;color:#dc2626;border-radius:9px;padding:10px;font-size:12px;cursor:pointer;font-family:inherit;">Apagar o estoque importado ('+Object.keys(laEstoqueAtual).length+' produtos)</button>'
+        : '')+
+      '<button class="btn btn-secondary" style="width:100%;margin-top:8px;" onclick="document.getElementById(\'la-est-modal\').remove()">Fechar</button>'+
+    '</div></div>';
+  document.body.appendChild(ov);
+  setTimeout(()=>document.getElementById('la-est-txt')?.focus(),60);
+}
+window.laAbrirEstoque=laAbrirEstoque;
+
+async function laSalvarEstoque(){
+  const txt=(document.getElementById('la-est-txt')||{}).value||'';
+  const linhas=txt.split('\n').map(l=>l.trim()).filter(Boolean);
+  const estoque={}; let ok=0, ruins=[];
+  linhas.forEach(l=>{
+    const p=l.split(/\t|;|\s{2,}|,/).map(x=>x.trim()).filter(Boolean);
+    if(p.length<2){ ruins.push(l); return; }
+    const cod=String(p[0]).replace(/\D/g,'');
+    const qtd=parseInt(String(p[1]).replace(/[^\d-]/g,''));
+    if(!cod || isNaN(qtd)){ ruins.push(l); return; }
+    estoque[cod]=(estoque[cod]||0)+qtd; ok++;
+  });
+  if(!ok){ document.getElementById('la-est-result').innerHTML='<span style="color:#dc2626;">Nada reconhecido. Use código, TAB, quantidade.</span>'; return; }
+  try{
+    await setDoc(doc(db,'configuracoes','laAnalise'),
+      {estoque, atualizadoEm:agora(), autor:_demAutor()},{merge:true});
+    document.getElementById('la-est-modal')?.remove();
+    alert('✓ '+ok+' produto(s) importado(s).'+(ruins.length?('\n\n'+ruins.length+' linha(s) ignorada(s).'):''));
+  }catch(e){ alert('Erro: '+e.message); }
+}
+window.laSalvarEstoque=laSalvarEstoque;
+
+async function laLimparEstoque(){
+  if(!confirm('Apagar o estoque importado?')) return;
+  try{
+    await setDoc(doc(db,'configuracoes','laAnalise'),{estoque:{}, atualizadoEm:agora()},{merge:true});
+    document.getElementById('la-est-modal')?.remove();
+  }catch(e){ alert('Erro: '+e.message); }
+}
+window.laLimparEstoque=laLimparEstoque;
+
+async function laSetAnalise(campo, valor){
+  const novo={...laAnaliseCfg, [campo]:valor};
+  laAnaliseCfg=novo;                       // resposta imediata na tela
+  renderLaResumo();
+  try{ await setDoc(doc(db,'configuracoes','laAnalise'),
+    {diaSemana:novo.diaSemana, margem:novo.margem, semanas:novo.semanas},{merge:true}); }
+  catch(e){ console.error(e); }
+}
+window.laSetAnalise=laSetAnalise;
+
+let _laExpandido=false;
+function laToggleExpandir(){ _laExpandido=!_laExpandido; renderLaResumo(); }
+window.laToggleExpandir=laToggleExpandir;
+
+/* Controles da análise, mostrados só quando a tabela está expandida */
+function laControlesAnalise(){
+  const dia=laDiaAlvo();
+  const temEstoque=Object.keys(laEstoqueAtual).length;
+  const opt=(v,t)=>'<option value="'+v+'"'+(String(laAnaliseCfg.diaSemana)===String(v)?' selected':'')+'>'+t+'</option>';
+  return '<div class="card" style="margin-bottom:12px;">'+
+    '<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">'+
+      '<div style="flex:1;min-width:150px;">'+
+        '<div style="font-size:11px;font-weight:700;color:var(--text-secondary);margin-bottom:4px;">DIA DA SEMANA</div>'+
+        '<select onchange="laSetAnalise(\'diaSemana\',this.value)" style="width:100%;padding:11px;min-height:46px;border:1px solid var(--border-md,#d1d5db);border-radius:9px;font-size:15px;font-family:inherit;box-sizing:border-box;">'+
+          opt('auto','Hoje ('+LA_DIAS[new Date().getDay()]+')')+
+          [1,2,3,4,5,6].map(d=>opt(d,LA_DIAS[d])).join('')+
+        '</select></div>'+
+      '<div style="flex:1;min-width:130px;">'+
+        '<div style="font-size:11px;font-weight:700;color:var(--text-secondary);margin-bottom:4px;">MARGEM ACIMA DA MÉDIA</div>'+
+        '<select onchange="laSetAnalise(\'margem\',Number(this.value))" style="width:100%;padding:11px;min-height:46px;border:1px solid var(--border-md,#d1d5db);border-radius:9px;font-size:15px;font-family:inherit;box-sizing:border-box;">'+
+          [0,10,15,20,25,30,40,50].map(v=>'<option value="'+v+'"'+(Number(laAnaliseCfg.margem)===v?' selected':'')+'>+'+v+'%</option>').join('')+
+        '</select></div>'+
+      '<div style="flex:1;min-width:130px;">'+
+        '<div style="font-size:11px;font-weight:700;color:var(--text-secondary);margin-bottom:4px;">HISTÓRICO</div>'+
+        '<select onchange="laSetAnalise(\'semanas\',Number(this.value))" style="width:100%;padding:11px;min-height:46px;border:1px solid var(--border-md,#d1d5db);border-radius:9px;font-size:15px;font-family:inherit;box-sizing:border-box;">'+
+          [4,8,12,26].map(v=>'<option value="'+v+'"'+(Number(laAnaliseCfg.semanas)===v?' selected':'')+'>'+v+' semanas</option>').join('')+
+        '</select></div>'+
+    '</div>'+
+    '<button onclick="laAbrirEstoque()" class="btn '+(temEstoque?'btn-secondary':'btn-primary')+'" style="width:100%;margin-top:10px;">'+
+      (temEstoque?('📦 Estoque importado: '+temEstoque+' produtos'+(laAnaliseCfg.atualizadoEm?(' · '+laAnaliseCfg.atualizadoEm):'')):'📦 Colar o estoque atual')+'</button>'+
+    (temEstoque?'':'<div style="font-size:11px;color:#b45309;margin-top:6px;text-align:center;">Sem o estoque, as colunas de diferença ficam em branco.</div>')+
+  '</div>';
+}
+
+/* Situação: o que fazer com este produto */
+function _laSituacao(a){
+  if(a.resolve==='ok')      return {txt:'✓ ok',                cor:'#16a34a', det:'estoque cobre a média'};
+  if(a.resolve==='libera')  return {txt:'⚡ liberar '+a.falta,  cor:'#2563eb', det:'tem '+a.podeLiberar+' embalado'};
+  if(a.resolve==='parcial') return {txt:'⚠ só '+a.podeLiberar, cor:'#d97706', det:'falta '+(a.falta-a.podeLiberar)+' para produzir'};
+  return {txt:'🔴 produzir '+a.falta, cor:'#dc2626', det:'nada embalado para liberar'};
+}
+
 function renderLaResumo(){
   const el=document.getElementById('la-resumo-content'); if(!el) return;
   const lista=laResumoPorProduto();
   let html=laNavbar('s-la-resumo');
+
+  // botão de expandir: fechado mostra só os ajustes; aberto vira a análise do dia
+  html+='<button onclick="laToggleExpandir()" class="btn btn-secondary" style="width:100%;margin-bottom:12px;">'+
+    (_laExpandido?'▲ Ver só os ajustes':'▼ Expandir — analisar o dia (estoque × venda média)')+'</button>';
+
+  if(_laExpandido) return renderLaAnalise(el, html, lista);
 
   if(!lista.length){
     el.innerHTML=html+'<div style="background:var(--bg-primary);border:1px solid #a7f3d0;border-radius:12px;padding:26px;text-align:center;">'+
@@ -17996,7 +18200,6 @@ function renderLaResumo(){
 
   const total=lista.reduce((t,p)=>t+p.saldo,0);
   const semErp=lista.reduce((t,p)=>t+p.semErp,0);
-
   html+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">'+
     '<div class="card" style="text-align:center;padding:12px 8px;border-top:3px solid #d97706;">'+
       '<div style="font-size:10px;font-weight:800;color:var(--text-secondary);">A ESTORNAR</div>'+
@@ -18008,49 +18211,134 @@ function renderLaResumo(){
       '<div style="font-size:10px;color:var(--text-muted);">'+(semErp?'lançados à mão':'tudo pelo app')+'</div></div>'+
   '</div>';
 
-  // separa pães de salgados, igual ao resumo do refazimento
   const grupos={pao:[], salgado:[], outro:[]};
   lista.forEach(p=>{
-    const t = (typeof _ajRefTipoProduto==='function' && p.cod!=='—') ? _ajRefTipoProduto(p.cod) : 'outro';
+    const t=(typeof _ajRefTipoProduto==='function' && p.cod!=='—') ? _ajRefTipoProduto(p.cod) : 'outro';
     grupos[t].push(p);
   });
-
   const tabela=(titulo, emoji, arr, corHeader)=>{
     if(!arr.length) return '';
     const soma=arr.reduce((t,p)=>t+p.saldo,0);
-    let s='<div style="flex:1;min-width:280px;">'+
+    return '<div style="flex:1;min-width:280px;">'+
       '<div style="background:'+corHeader+';color:#fff;font-weight:800;font-size:13px;padding:8px 12px;border-radius:9px 9px 0 0;text-align:center;">'+emoji+' '+titulo+' · '+soma+' pct</div>'+
       '<table style="width:100%;border-collapse:collapse;font-size:12px;background:#fff;border:1px solid var(--border);border-top:none;border-radius:0 0 9px 9px;overflow:hidden;">'+
       '<thead><tr style="background:#f1f5f9;">'+
         '<th style="text-align:left;padding:6px 8px;font-weight:700;color:var(--text-secondary);width:44px;">Cód</th>'+
         '<th style="text-align:left;padding:6px 8px;font-weight:700;color:var(--text-secondary);">Produto</th>'+
         '<th style="text-align:right;padding:6px 8px;font-weight:700;color:var(--text-secondary);width:70px;">A estornar</th>'+
-      '</tr></thead><tbody>';
-    arr.forEach((p,i)=>{
-      const dias=Object.keys(p.dias).sort((a,b)=>estDataNum(a)-estDataNum(b));
-      s+='<tr style="border-top:1px solid #f1f5f9;background:'+(i%2?'#fafbfc':'#fff')+';">'+
-        '<td style="padding:7px 8px;font-weight:700;">'+p.cod+'</td>'+
-        '<td style="padding:7px 8px;">'+(p.nome||'')+
-          (dias.length?('<div style="font-size:10px;color:var(--text-muted);margin-top:1px;">'+dias.map(d=>d.slice(0,5)+': '+p.dias[d]).join(' · ')+'</div>'):'')+
-          (p.semErp?('<div style="font-size:10px;color:#b91c1c;font-weight:700;margin-top:1px;">⚠ '+p.semErp+' sem entrada no ERP</div>'):'')+
-        '</td>'+
-        '<td style="padding:7px 8px;text-align:right;font-weight:800;color:#d97706;">'+p.saldo+'</td>'+
-      '</tr>';
-    });
-    s+='</tbody></table></div>';
-    return s;
+      '</tr></thead><tbody>'+
+      arr.map((p,i)=>{
+        const dias=Object.keys(p.dias).sort((a,b)=>estDataNum(a)-estDataNum(b));
+        return '<tr style="border-top:1px solid #f1f5f9;background:'+(i%2?'#fafbfc':'#fff')+';">'+
+          '<td style="padding:7px 8px;font-weight:700;">'+p.cod+'</td>'+
+          '<td style="padding:7px 8px;">'+(p.nome||'')+
+            (dias.length?('<div style="font-size:10px;color:var(--text-muted);margin-top:1px;">'+dias.map(d=>d.slice(0,5)+': '+p.dias[d]).join(' · ')+'</div>'):'')+
+            (p.semErp?('<div style="font-size:10px;color:#b91c1c;font-weight:700;margin-top:1px;">⚠ '+p.semErp+' sem entrada no ERP</div>'):'')+
+          '</td>'+
+          '<td style="padding:7px 8px;text-align:right;font-weight:800;color:#d97706;">'+p.saldo+'</td>'+
+        '</tr>';
+      }).join('')+'</tbody></table></div>';
   };
-
-  html+='<div style="font-size:12px;color:var(--text-secondary);margin-bottom:12px;line-height:1.5;">Soma de todas as entradas liberadas que ainda esperam a saída. Quando o dia da produção for lançado no ERP, o app estorna e o produto sai desta lista.</div>';
-  html+='<div style="display:flex;flex-wrap:wrap;gap:14px;align-items:flex-start;">';
-  html+=tabela('Salgados / Confeitaria','🥐',grupos.salgado,'var(--mc-azul)');
-  html+=tabela('Pães','🍞',grupos.pao,'#92400e');
-  html+='</div>';
+  html+='<div style="font-size:12px;color:var(--text-secondary);margin-bottom:12px;line-height:1.5;">Soma de todas as entradas liberadas que ainda esperam a saída.</div>';
+  html+='<div style="display:flex;flex-wrap:wrap;gap:14px;align-items:flex-start;">'+
+    tabela('Salgados / Confeitaria','🥐',grupos.salgado,'var(--mc-azul)')+
+    tabela('Pães','🍞',grupos.pao,'#92400e')+'</div>';
   if(grupos.outro.length) html+='<div style="margin-top:14px;">'+tabela('Não identificados','❓',grupos.outro,'#dc2626')+'</div>';
-
   el.innerHTML=html;
 }
 window.renderLaResumo=renderLaResumo;
+
+/* ── TABELA EXPANDIDA: a análise do dia ─────────────────────────── */
+function renderLaAnalise(el, html, ajustes){
+  html+=laControlesAnalise();
+
+  // produtos a analisar: os que têm estoque colado, ajuste em aberto ou produção pendente
+  const mapa={};
+  Object.keys(laEstoqueAtual).forEach(cod=>{ mapa[cod]={cod, nome:''}; });
+  ajustes.forEach(a=>{ if(a.cod!=='—') mapa[a.cod]={cod:a.cod, nome:a.nome}; });
+  (typeof _laProdutosUnicos==='function'?_laProdutosUnicos():[]).forEach(p=>{
+    const c=String(p.cod||'');
+    if(!c) return;
+    if(mapa[c]) mapa[c].nome=mapa[c].nome||p.nome;
+    else{
+      // sem estoque e sem ajuste: só entra se tiver produção esperando
+      try{ const cc=laCalcular(c,p.nome); if((cc.embAntecip||0)>0) mapa[c]={cod:c, nome:p.nome}; }catch(e){}
+    }
+  });
+
+  const linhas=Object.values(mapa).map(p=>{
+    const nome=p.nome||((typeof _laProdutosUnicos==='function'?_laProdutosUnicos():[]).find(x=>String(x.cod)===p.cod)||{}).nome||('cód '+p.cod);
+    const a=laAnaliseProduto(p.cod, nome);
+    const aj=ajustes.find(x=>String(x.cod)===String(p.cod));
+    a.nome=nome; a.estornar=aj?aj.saldo:0;
+    return a;
+  }).filter(a=>a.estoque>0 || a.media>0 || a.estornar>0 || a.podeLiberar>0);
+
+  // problema primeiro: quem vai faltar e não tem como liberar
+  const peso={produzir:0, parcial:1, libera:2, ok:3};
+  linhas.sort((a,b)=> (peso[a.resolve]-peso[b.resolve]) || (a.diferenca-b.diferenca));
+
+  const vaiFaltar=linhas.filter(a=>a.falta>0);
+  const soLiberar=vaiFaltar.filter(a=>a.resolve==='libera');
+  const temProduzir=vaiFaltar.filter(a=>a.resolve!=='libera');
+
+  html+='<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px;">'+
+    '<div class="card" style="text-align:center;padding:12px 6px;border-top:3px solid '+(vaiFaltar.length?'#d97706':'#16a34a')+';">'+
+      '<div style="font-size:10px;font-weight:800;color:var(--text-secondary);">VAI FALTAR</div>'+
+      '<div style="font-size:26px;font-weight:900;color:'+(vaiFaltar.length?'#d97706':'#16a34a')+';line-height:1.1;">'+vaiFaltar.length+'</div>'+
+      '<div style="font-size:10px;color:var(--text-muted);">produto(s)</div></div>'+
+    '<div class="card" style="text-align:center;padding:12px 6px;border-top:3px solid #2563eb;">'+
+      '<div style="font-size:10px;font-weight:800;color:var(--text-secondary);">DÁ PARA LIBERAR</div>'+
+      '<div style="font-size:26px;font-weight:900;color:#2563eb;line-height:1.1;">'+soLiberar.length+'</div>'+
+      '<div style="font-size:10px;color:var(--text-muted);">resolve antecipando</div></div>'+
+    '<div class="card" style="text-align:center;padding:12px 6px;border-top:3px solid '+(temProduzir.length?'#dc2626':'#16a34a')+';">'+
+      '<div style="font-size:10px;font-weight:800;color:var(--text-secondary);">PRECISA PRODUZIR</div>'+
+      '<div style="font-size:26px;font-weight:900;color:'+(temProduzir.length?'#dc2626':'#16a34a')+';line-height:1.1;">'+temProduzir.length+'</div>'+
+      '<div style="font-size:10px;color:var(--text-muted);">não tem embalado</div></div>'+
+  '</div>';
+
+  if(!linhas.length){
+    el.innerHTML=html+'<div class="empty" style="padding:24px;text-align:center;color:var(--text-secondary);">Cole o estoque atual para começar a análise.</div>';
+    return;
+  }
+
+  html+='<div style="overflow-x:auto;background:#fff;border:1px solid var(--border);border-radius:11px;">'+
+    '<table style="width:100%;border-collapse:collapse;font-size:12px;min-width:720px;">'+
+    '<thead><tr style="background:#334155;color:#fff;font-size:9px;">'+
+      '<th style="padding:7px 6px;text-align:left;">CÓD</th>'+
+      '<th style="padding:7px 6px;text-align:left;">PRODUTO</th>'+
+      '<th style="padding:7px 5px;text-align:right;">ESTOQUE</th>'+
+      '<th style="padding:7px 5px;text-align:right;">MÉDIA/DIA</th>'+
+      '<th style="padding:7px 5px;text-align:right;">DIFERENÇA</th>'+
+      '<th style="padding:7px 5px;text-align:right;">A ESTORNAR</th>'+
+      '<th style="padding:7px 8px;text-align:left;">SITUAÇÃO</th>'+
+    '</tr></thead><tbody>'+
+    linhas.map((a,i)=>{
+      const st=_laSituacao(a);
+      const corD=a.diferenca<0?'#dc2626':'#16a34a';
+      return '<tr style="border-top:1px solid #f1f5f9;background:'+(a.resolve==='produzir'?'#fef2f2':(i%2?'#fafbfc':'#fff'))+';">'+
+        '<td style="padding:8px 6px;font-weight:700;color:var(--text-secondary);">'+a.cod+'</td>'+
+        '<td style="padding:8px 6px;font-weight:600;">'+a.nome+
+          (a.jaLiberado?('<div style="font-size:10px;color:var(--text-muted);">'+a.jaLiberado+' já liberado</div>'):'')+'</td>'+
+        '<td style="padding:8px 5px;text-align:right;font-weight:700;">'+(a.estoque||'—')+'</td>'+
+        '<td style="padding:8px 5px;text-align:right;">'+
+          (a.media?('<strong>'+a.previsto+'</strong><div style="font-size:9px;color:var(--text-muted);">'+a.media+' +'+a.margem+'% · '+a.diasMedia+'x</div>'):'<span style="color:var(--text-muted);">sem dados</span>')+'</td>'+
+        '<td style="padding:8px 5px;text-align:right;font-weight:900;color:'+corD+';">'+
+          (a.estoque||a.media?((a.diferenca>0?'+':'')+a.diferenca):'—')+'</td>'+
+        '<td style="padding:8px 5px;text-align:right;font-weight:700;color:'+(a.estornar?'#d97706':'var(--text-muted)')+';">'+(a.estornar||'—')+'</td>'+
+        '<td style="padding:8px 8px;"><span style="font-size:12px;font-weight:800;color:'+st.cor+';">'+st.txt+'</span>'+
+          '<div style="font-size:9px;color:var(--text-muted);">'+st.det+'</div></td>'+
+      '</tr>';
+    }).join('')+
+    '</tbody></table></div>';
+
+  html+='<div style="font-size:11px;color:var(--text-muted);margin-top:10px;line-height:1.6;">'+
+    '<strong>MÉDIA/DIA</strong> é a venda média de '+LA_DIAS[laDiaAlvo()]+' (carregamento + pedidos por fora) das últimas '+laAnaliseCfg.semanas+' semanas, com a margem aplicada. '+
+    '<strong>DIFERENÇA</strong> é o estoque menos essa previsão. '+
+    '<strong>SITUAÇÃO</strong> diz se o que falta cabe no que já está embalado e ainda não foi lançado no ERP.</div>';
+  el.innerHTML=html;
+}
+window.renderLaAnalise=renderLaAnalise;
 
 /* Apaga os ajustes que entraram à mão ou vieram do refazimento, para
    permitir trazer uma relação nova do zero. Só mexe nos que estão EM
@@ -18059,6 +18347,50 @@ window.renderLaResumo=renderLaResumo;
 function laManuaisAbertos(){
   return (laAjustes||[]).filter(a=>(a.status||'aberto')==='aberto' && (a.entradaManual===true || a.origemRefaz));
 }
+
+/* Pede a senha do admin. Usado nas limpezas, que são raras e não podem
+   acontecer por um toque sem querer. */
+function laPedirSenhaAdmin(oque){
+  const senhaAdmin=(typeof PINS!=='undefined' && PINS.admin) ? String(PINS.admin) : '2504';
+  const s=prompt('🔒 Senha do admin para '+oque+':');
+  if(s===null) return false;
+  if(String(s).trim()!==senhaAdmin && String(s).trim()!=='250406'){
+    alert('Senha incorreta. Nada foi apagado.');
+    return false;
+  }
+  return true;
+}
+window.laPedirSenhaAdmin=laPedirSenhaAdmin;
+
+/* Limpa TUDO: importados, lançados à mão e os que o app lançou no ELIGO.
+   Não desfaz nada no ERP — é só aqui dentro. */
+async function laLimparTudo(){
+  if(!(window.adminMode||window.setorAtual==='admin')){ alert('Só o admin pode limpar.'); return; }
+  const abertos=(laAjustes||[]).filter(a=>(a.status||'aberto')==='aberto');
+  if(!abertos.length){ alert('Não há ajustes em aberto para apagar.'); return; }
+  const doApp=abertos.filter(a=>a.eligoEntradaId).length;
+  const importados=abertos.length-doApp;
+  const total=abertos.reduce((t,a)=>t+(parseInt(a.qtd)||0),0);
+  const fechados=(laAjustes||[]).filter(a=>a.status==='fechado').length;
+
+  if(!confirm('⚠️ APAGAR TODOS os ajustes em aberto?\n\n'+
+    '· '+doApp+' lançado(s) no ELIGO pelo app\n'+
+    '· '+importados+' importado(s) ou à mão\n'+
+    '· '+total+' pacotes no total\n\n'+
+    (fechados?('Os '+fechados+' já estornados NÃO serão apagados.\n\n'):'')+
+    '⚠️ ATENÇÃO: os lançados pelo app JÁ ENTRARAM no ELIGO. Apagando aqui, o app perde o controle deles e a SAÍDA terá de ser feita à mão no ERP.\n\n'+
+    'Nada é desfeito no ELIGO — isso é só aqui.')) return;
+  if(!laPedirSenhaAdmin('APAGAR TUDO')) return;
+
+  let ok=0, erros=[];
+  for(const a of abertos){
+    try{ await deleteDoc(doc(db,'ajustesAbertos',a.firestoreId)); ok++; }
+    catch(e){ erros.push((a.produto||a.cod)+': '+e.message); }
+  }
+  alert('✓ '+ok+' ajuste(s) apagado(s).'+(erros.length?('\n\n⚠️ '+erros.length+' falharam.'):'')+
+    (doApp?('\n\n⚠️ Lembre-se: '+doApp+' já tinham entrada no ELIGO. Confira o ERP.'):''));
+}
+window.laLimparTudo=laLimparTudo;
 
 async function laLimparImportados(){
   if(!(window.adminMode||window.setorAtual==='admin')){ alert('Só o admin pode limpar.'); return; }
@@ -18076,7 +18408,7 @@ async function laLimparImportados(){
     '· '+total+' pacotes no total\n\n'+
     (fechados?('Os '+fechados+' já estornados NÃO serão apagados.\n\n'):'')+
     'As solicitações aprovadas pelo app não são tocadas.\n\nNada é lançado nem desfeito no ELIGO — isso é só aqui.')) return;
-  if(!confirm('Confirma? Depois disso você pode trazer a relação nova do refazimento.')) return;
+  if(!laPedirSenhaAdmin('limpar os importados')) return;
 
   let ok=0, erros=[];
   for(const a of alvos){
@@ -18366,7 +18698,10 @@ function renderLaAjustes(){
     '<button onclick="laAbrirImportRefaz()" class="btn btn-secondary" style="flex:1;min-width:190px;">📋 Trazer do refazimento'+(laPendentesDoRefaz().length?(' ('+laPendentesDoRefaz().length+')'):'')+'</button>'+
     '<button onclick="laAbrirManual()" class="btn btn-secondary" style="flex:1;min-width:190px;">📥 Lançar um à mão</button>'+
     ((window.adminMode||window.setorAtual==='admin') && laManuaisAbertos().length
-      ? '<button onclick="laLimparImportados()" style="flex:0 0 auto;background:#fff;border:1px solid #fecaca;color:#b91c1c;border-radius:9px;padding:11px 14px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;" title="Apagar os importados em aberto para trazer uma relação nova">🗑 Limpar importados ('+laManuaisAbertos().length+')</button>'
+      ? '<button onclick="laLimparImportados()" style="flex:0 0 auto;background:#fff;border:1px solid #fecaca;color:#b91c1c;border-radius:9px;padding:11px 14px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;" title="Apagar os importados em aberto">🗑 Limpar importados ('+laManuaisAbertos().length+')</button>'
+      : '')+
+    ((window.adminMode||window.setorAtual==='admin') && (laAjustes||[]).filter(a=>(a.status||'aberto')==='aberto').length
+      ? '<button onclick="laLimparTudo()" style="flex:0 0 auto;background:#dc2626;border:1px solid #dc2626;color:#fff;border-radius:9px;padding:11px 14px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;" title="Apagar todos os ajustes em aberto, inclusive os lançados pelo app">🗑 Limpar TUDO</button>'
       : '')+
   '</div>'+'<div class="card" style="margin-bottom:12px;border-left:4px solid '+(abertos.length?'#dc2626':'#16a34a')+';background:'+(abertos.length?'#fef2f2':'rgba(22,163,74,.06)')+';"><div style="font-size:16px;font-weight:800;color:'+(abertos.length?'#dc2626':'#16a34a')+';">'+(abertos.length?'⚠️ '+abertos.length+' ajuste(s) em aberto':'✅ Nenhum ajuste em aberto')+'</div><div style="font-size:11px;color:var(--text-secondary);margin-top:2px;">Cada entrada precisa de uma SAÍDA quando o dia for lançado no ERP.</div></div>';
   if(abertos.length){
