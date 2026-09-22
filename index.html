@@ -17896,6 +17896,37 @@ function renderLaDecisao(){
 }
 window.renderLaDecisao=renderLaDecisao;
 
+/* Divide uma liberação entre os DIAS DE PRODUÇÃO, do mais antigo para o
+   mais novo. Sem isso, 100 pct eram vinculados a um único dia; quando
+   esse dia fosse lançado no ERP e tivesse produzido só 50, o estorno não
+   fechava e sobrava furo. Cada pedaço vira um ajuste próprio, que é
+   estornado junto com o seu dia. */
+function laDividirPorDia(cod, nome, total){
+  let c;
+  try{ c=laCalcular(cod, nome); }catch(e){ return {partes:[{data:'', tipo:'', qtd:total}], sobra:0}; }
+  const dias=(c.porDia||[])
+    .filter(d=>!d.lancado && (d.emb||0)>0)
+    .sort((a,b)=>laDataKey(a.data).localeCompare(laDataKey(b.data)));
+  const partes=[]; let resta=total;
+  for(const d of dias){
+    if(resta<=0) break;
+    const usa=Math.min(d.emb, resta);
+    partes.push({data:d.data, tipo:d.tipo, qtd:usa});
+    resta-=usa;
+  }
+  // o que passou do embalado fica no último dia conhecido (ou sem dia)
+  if(resta>0){
+    if(partes.length) partes[partes.length-1].qtd+=resta;
+    else {
+      const qualquer=(c.porDia||[]).filter(d=>!d.lancado)
+        .sort((a,b)=>laDataKey(a.data).localeCompare(laDataKey(b.data)))[0];
+      partes.push({data:qualquer?qualquer.data:'', tipo:qualquer?qualquer.tipo:'', qtd:resta});
+    }
+  }
+  return {partes, sobra:resta};
+}
+window.laDividirPorDia=laDividirPorDia;
+
 async function laAprovar(id){
   const s=laSolicitacoes.find(x=>x.firestoreId===id); if(!s) return;
   const c=laCalcular(s.cod, s.produto);
@@ -17920,34 +17951,54 @@ async function laAprovar(id){
   }
   const instr='AJUSTE DE ENTRADA no ERP:\n• Código: '+(s.cod||'?')+'\n• Produto: '+s.produto+'\n• Quantidade: '+qtdLiberar+' pct\n• Origem: '+(alvoDia||'?')+' '+laTipoLabel(alvoTipo||'salgado');
   const auto=eligoPronto();
+
+  // divide a liberação entre os dias de produção, respeitando o que cada
+  // um tem embalado — é isso que faz o estorno fechar depois
+  const div=laDividirPorDia(s.cod, s.produto, qtdLiberar);
+  const partes=div.partes;
+  const resumoPartes=partes.map(p=>'• '+p.qtd+' pct da produção de '+(p.data||'sem dia')).join('\n');
+
   if(!confirm('Aprovar'+(auto?' e LANÇAR A ENTRADA no ELIGO?':' e registrar ajuste em aberto?')+'\n\n'+instr+
+      (partes.length>1?('\n\nDIVIDIDO POR PRODUÇÃO:\n'+resumoPartes+'\n\nCada parte será estornada quando o seu dia for lançado no ERP.'):'')+
       (auto?'\n\nA entrada vai direto para o ERP agora.':'\n\n(Você lançará no ERP manualmente.)'))) return;
 
-  // lança a ENTRADA no ELIGO ANTES de gravar: não registramos algo que o ERP recusou
-  let eligoId='', eligoErro='';
-  if(auto){
-    const r=await eligoLancar(s.cod||'', qtdLiberar, 'entrada', laDataHoje(),
-      'Liberacao antecipada ProduLog - '+(s.produto||'')+' - producao '+(alvoDia||'s/dia'));
-    if(r.cancelado) return;
-    if(!r.ok){
-      if(!confirm('⚠️ O ELIGO não aceitou o lançamento:\n\n'+r.erro+'\n\nQuer aprovar mesmo assim e lançar à mão depois?')) return;
-      eligoErro=r.erro;
-    } else { eligoId=r.id||'sem-id'; }
+  // uma entrada no ELIGO por parte, para a saída depois casar exatamente
+  const criados=[]; let falhou=null;
+  for(const parte of partes){
+    let eligoId='', eligoErro='';
+    if(auto){
+      const r=await eligoLancar(s.cod||'', parte.qtd, 'entrada', laDataHoje(),
+        'Liberacao antecipada ProduLog - '+(s.produto||'')+' - producao '+(parte.data||'s/dia'));
+      if(r.cancelado){ falhou='cancelado'; break; }
+      if(!r.ok){
+        if(!confirm('⚠️ O ELIGO não aceitou '+parte.qtd+' pct da produção de '+(parte.data||'sem dia')+':\n\n'+r.erro+
+            '\n\nQuer registrar mesmo assim e lançar à mão depois?')){ falhou='recusado'; break; }
+        eligoErro=r.erro;
+      } else { eligoId=r.id||'sem-id'; }
+    }
+    try{
+      await addDoc(collection(db,'ajustesAbertos'),{
+        cod:s.cod||'', produto:s.produto||'', qtd:parte.qtd,
+        qtdSolicitada:s.qtd||0, acimaEmbalado:(qtdLiberar>c.embAntecip),
+        data:parte.data||'', tipo:parte.tipo||'salgado',
+        solicitacaoId:id, solicitante:s.autor||'',
+        status:'aberto', criadoEm:agora(), criadoPor:_demAutor(), timestamp:Date.now(),
+        eligoEntradaId:eligoId, eligoEntradaEm:eligoId?agora():'', eligoEntradaErro:eligoErro
+      });
+      criados.push({...parte, eligoId});
+    }catch(e){ falhou=e.message; break; }
   }
+
+  if(!criados.length){ if(falhou && falhou!=='cancelado') alert('Nada foi registrado: '+falhou); return; }
+
   try{
-    await updateDoc(doc(db,'solicitacoes',id),{ status:'aprovada', qtdLiberada:qtdLiberar, decididoEm:agora(), decididoPor:_demAutor() });
-    await addDoc(collection(db,'ajustesAbertos'),{
-      cod:s.cod||'', produto:s.produto||'', qtd:qtdLiberar,
-      qtdSolicitada:s.qtd||0, acimaEmbalado:(qtdLiberar>c.embAntecip),
-      data:alvoDia||'', tipo:alvoTipo||'salgado',
-      solicitacaoId:id, solicitante:s.autor||'',
-      status:'aberto', criadoEm:agora(), criadoPor:_demAutor(), timestamp:Date.now(),
-      // rastro do que foi para o ERP — impede lançar a mesma entrada duas vezes
-      eligoEntradaId:eligoId, eligoEntradaEm:eligoId?agora():'', eligoEntradaErro:eligoErro
-    });
-    alert(eligoId
-      ? ('✓ Aprovado e ENTRADA lançada no ELIGO.\n\nLançamento nº '+eligoId+'\n\nQuando você marcar a produção de '+(alvoDia||'')+' como lançada no ERP, o app vai pedir a SAÍDA para fechar o ajuste.')
-      : '✓ Aprovado e registrado em "Ajustes em aberto".\n\nUse o botão "📋 Instrução ENTRADA" para lançar à mão.');
+    const totalCriado=criados.reduce((t,p)=>t+p.qtd,0);
+    await updateDoc(doc(db,'solicitacoes',id),{ status:'aprovada', qtdLiberada:totalCriado, decididoEm:agora(), decididoPor:_demAutor() });
+    const comId=criados.filter(p=>p.eligoId).length;
+    alert((comId?('✓ Aprovado e '+comId+' entrada(s) lançada(s) no ELIGO.'):'✓ Aprovado e registrado em "Ajustes em aberto".')+
+      '\n\n'+criados.map(p=>'• '+p.qtd+' pct · produção de '+(p.data||'sem dia')+(p.eligoId?(' · nº '+p.eligoId):'')).join('\n')+
+      (falhou?('\n\n⚠️ O restante não foi registrado ('+falhou+').'):'')+
+      '\n\nCada parte será estornada quando o dia dela for lançado no ERP.');
   }catch(e){ alert('Erro: '+e.message); }
 }
 window.laAprovar=laAprovar;
@@ -18448,34 +18499,6 @@ function laPendentesDoRefaz(){
               chave:String(p.cod)+'|'+String(p.data)}));
 }
 
-/* Descobre a qual PRODUÇÃO um ajuste se refere.
-   O refazimento só diz quando o ajuste foi lançado no ERP; a produção que
-   ele adianta é outra data. Escolhemos o dia mais antigo ainda não lançado
-   que tenha saldo — mesma lógica do estoque, o mais velho sai primeiro. */
-function laAcharProducao(cod, nome, qtd, usado){
-  usado=usado||{};
-  let c;
-  try{ c=laCalcular(cod, nome); }catch(e){ return {data:'', tipo:''}; }
-  const dias=(c.porDia||[])
-    .filter(d=>!d.lancado)
-    .sort((a,b)=>laDataKey(a.data).localeCompare(laDataKey(b.data)));   // do mais antigo
-  for(const d of dias){
-    const chave=String(cod)+'|'+d.data;
-    const livre=(d.emb||0)-(usado[chave]||0);
-    if(livre>0){
-      usado[chave]=(usado[chave]||0)+qtd;
-      return {data:d.data, tipo:d.tipo};
-    }
-  }
-  // nenhuma produção em aberto com saldo: devolve o dia mais antigo mesmo assim,
-  // que é melhor palpite do que a data do ajuste
-  if(dias.length){
-    const d=dias[0];
-    usado[String(cod)+'|'+d.data]=(usado[String(cod)+'|'+d.data]||0)+qtd;
-    return {data:d.data, tipo:d.tipo};
-  }
-  return {data:'', tipo:''};
-}
 
 let _laiSel={};
 function laAbrirImportRefaz(){
@@ -18554,26 +18577,28 @@ async function laiImportar(){
   if(!confirm('Trazer '+lista.length+' ajuste(s) do refazimento?\n\nTotal: '+total+' pct a estornar.\n\nO app não lança nada agora — a entrada já foi feita. Ele passa a controlar a saída.')) return;
 
   let ok=0, erros=[], semProducao=0;
-  // controla o que já foi alocado nesta rodada, para dois ajustes do mesmo
-  // produto não caírem os dois no mesmo dia de produção
-  const usado={};
   for(const p of lista){
     // a data que vem do refazimento é a do AJUSTE no ERP, não a da produção.
     // Aqui procuramos a qual produção ele se refere: o dia mais antigo ainda
     // não lançado que tenha saldo, igual à lógica de estoque (o mais velho sai primeiro).
-    const alvo=laAcharProducao(p.cod, p.nome, p.qtd, usado);
+    // divide entre os dias de produção, igual à aprovação: um ajuste de 100
+    // preso a um dia que produziu 50 nunca fecharia no estorno
+    const div=laDividirPorDia(p.cod, p.nome, p.qtd);
+    const tipoPadrao=(typeof _ajRefTipoProduto==='function' && _ajRefTipoProduto(p.cod)==='pao')?'pao':'salgado';
     try{
-      await addDoc(collection(db,'ajustesAbertos'),{
-        cod:p.cod, produto:p.nome, qtd:p.qtd,
-        qtdSolicitada:p.qtd, acimaEmbalado:false,
-        data:alvo.data||'', tipo:alvo.tipo||((typeof _ajRefTipoProduto==='function' && _ajRefTipoProduto(p.cod)==='pao')?'pao':'salgado'),
-        solicitacaoId:'', solicitante:'(refazimento)',
-        status:'aberto', criadoEm:agora(), criadoPor:_demAutor(), timestamp:Date.now(),
-        entradaManual:true, eligoEntradaId:'', eligoEntradaErro:'',
-        origemRefaz:p.chave, dataAjusteErp:p.data||'',
-        obsManual:'importado do refazimento'+(p.data?(' · ajuste lançado em '+p.data):'')
-      });
-      if(!alvo.data) semProducao++;
+      for(const parte of div.partes){
+        await addDoc(collection(db,'ajustesAbertos'),{
+          cod:p.cod, produto:p.nome, qtd:parte.qtd,
+          qtdSolicitada:parte.qtd, acimaEmbalado:false,
+          data:parte.data||'', tipo:parte.tipo||tipoPadrao,
+          solicitacaoId:'', solicitante:'(refazimento)',
+          status:'aberto', criadoEm:agora(), criadoPor:_demAutor(), timestamp:Date.now(),
+          entradaManual:true, eligoEntradaId:'', eligoEntradaErro:'',
+          origemRefaz:p.chave, dataAjusteErp:p.data||'',
+          obsManual:'importado do refazimento'+(p.data?(' · ajuste lançado em '+p.data):'')
+        });
+        if(!parte.data) semProducao++;
+      }
       ok++;
     }catch(e){ erros.push(p.cod+': '+e.message); }
   }
