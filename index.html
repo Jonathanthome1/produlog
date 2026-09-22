@@ -18483,7 +18483,9 @@ function laSemEmbalar(){
   return (laAjustes||[])
     .filter(a=>(a.status||'aberto')==='aberto')
     .map(a=>({a, st:laStatusEmbalagem(a)}))
-    .filter(x=>x.st.estado==='nao' || x.st.estado==='parcial');
+    // 'sem-dia' também entra: sem dia de produção não há embalagem para conferir,
+    // e esse é justamente o caso que mais precisa de atenção
+    .filter(x=>x.st.estado==='nao' || x.st.estado==='parcial' || x.st.estado==='sem-dia');
 }
 function laJaEmbalados(){
   return (laAjustes||[])
@@ -18543,6 +18545,11 @@ window.lseToggle=lseToggle;
 function lseTodos(v){ laSemEmbalar().forEach(x=>_lseSel[x.a.firestoreId]=v); lseRender(); }
 window.lseTodos=lseTodos;
 
+window.laSemEmbalar=laSemEmbalar;
+window.laJaEmbalados=laJaEmbalados;
+window.laStatusEmbalagem=laStatusEmbalagem;
+window.laNaPrioridade=laNaPrioridade;
+
 function laAbrirSemEmbalar(){
   _lseSel={};
   laSemEmbalar().forEach(x=>_lseSel[x.a.firestoreId]=true);
@@ -18589,9 +18596,10 @@ function lseRender(){
             '<div style="font-size:14px;font-weight:700;">'+(a.produto||'')+(a.cod?(' <span style="font-size:11px;color:var(--text-muted);">#'+a.cod+'</span>'):'')+
               (a.prioridadeEm?' <span style="font-size:10px;font-weight:800;color:#2563eb;background:#dbeafe;border-radius:99px;padding:1px 7px;">⬆️ na fila</span>':'')+'</div>'+
             '<div style="font-size:11px;color:var(--text-secondary);margin-top:1px;">'+
-              'ajustado '+a.qtd+' pct · '+(st.estado==='parcial'
-                ? ('<strong style="color:#d97706;">embalado só '+st.embalado+' — falta '+st.falta+'</strong>')
-                : ('<strong style="color:#b91c1c;">nada embalado</strong>'+(st.produzido?(' · produzido '+st.produzido):'')))+
+              'ajustado '+a.qtd+' pct · '+(
+              st.estado==='parcial' ? ('<strong style="color:#d97706;">embalado só '+st.embalado+' — falta '+st.falta+'</strong>')
+              : st.estado==='sem-dia' ? '<strong style="color:#b91c1c;">sem dia de produção vinculado</strong>'
+              : ('<strong style="color:#b91c1c;">nada embalado</strong>'+(st.produzido?(' · produzido '+st.produzido):'')))+
             '</div></div>'+
           '<span style="flex:0 0 auto;font-size:16px;font-weight:900;color:#d97706;">'+st.falta+'</span>'+
         '</div>';
