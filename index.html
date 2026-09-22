@@ -9172,6 +9172,15 @@ function verDetalheContagem(fid){
             '<span style="flex:1;min-width:0;font-size:13px;font-weight:700;color:#15803d;">Tudo que foi ajustado já está embalado</span>'+
             '<span style="font-size:18px;color:#16a34a;">›</span></button>'
         : ''))+
+  (laNaPrioridade().length
+    ? '<button onclick="laAbrirNaPrioridade()" class="card" style="display:flex;align-items:center;gap:11px;width:100%;margin-bottom:12px;cursor:pointer;border:1px solid #bfdbfe;background:#eff6ff;text-align:left;font-family:inherit;">'+
+        '<span style="font-size:22px;">⬆️</span>'+
+        '<span style="flex:1;min-width:0;">'+
+          '<span style="display:block;font-size:13px;font-weight:800;color:#1e40af;">'+laNaPrioridade().length+' na fila de prioridade</span>'+
+          '<span style="display:block;font-size:11px;color:#1e3a8a;margin-top:1px;">'+
+            laNaPrioridade().filter(x=>x.st.estado==='ok').length+' já embalado(s) · toque para acompanhar</span>'+
+        '</span><span style="font-size:18px;color:#2563eb;">›</span></button>'
+    : '')+
   '<div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;">'+
     '<button onclick="renderContagemHist()" style="background:none;border:1px solid #0891b2;color:#0891b2;font-size:13px;padding:7px 14px;border-radius:8px;cursor:pointer;font-family:inherit;">← Voltar</button>'+
     '<button onclick="imprimirContagemPDF(\''+fid+'\')" style="background:#0891b2;border:none;color:#fff;font-size:13px;font-weight:600;padding:7px 14px;border-radius:8px;cursor:pointer;font-family:inherit;">🖨️ Imprimir PDF</button>'+
@@ -18506,6 +18515,51 @@ function laJaEmbalados(){
     .filter(x=>x.st.estado==='ok');
 }
 
+// ajustes que já foram mandados para a fila de prioridade
+function laNaPrioridade(){
+  return (laAjustes||[])
+    .filter(a=>(a.status||'aberto')==='aberto' && a.prioridadeEm)
+    .map(a=>({a, st:laStatusEmbalagem(a)}))
+    .sort((a,b)=>String(b.a.prioridadeEm||'').localeCompare(String(a.a.prioridadeEm||'')));
+}
+
+function laAbrirNaPrioridade(){
+  const lista=laNaPrioridade();
+  const ov=document.createElement('div');
+  ov.id='lpr-modal';
+  ov.style.cssText='position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:3200;display:flex;align-items:center;justify-content:center;padding:16px;';
+  const pend=lista.filter(x=>x.st.estado!=='ok');
+  const prontos=lista.filter(x=>x.st.estado==='ok');
+  const linha=({a,st},verde)=>'<div style="border:1px solid '+(verde?'#a7f3d0':'var(--border)')+';background:'+(verde?'#f0fdf4':'#fff')+';border-radius:10px;padding:10px 11px;margin-bottom:6px;">'+
+    '<div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;">'+
+      '<div style="flex:1;min-width:0;font-size:14px;font-weight:700;">'+(verde?'✓ ':'⬆️ ')+(a.produto||'')+'</div>'+
+      '<div style="font-size:15px;font-weight:900;color:'+(verde?'#16a34a':'#d97706')+';white-space:nowrap;">'+(verde?a.qtd:st.falta)+'</div>'+
+    '</div>'+
+    '<div style="font-size:11px;color:var(--text-secondary);margin-top:2px;">'+
+      'produção de '+(a.data||'—')+' · ajustado '+a.qtd+' pct · '+
+      (verde?('<strong style="color:#15803d;">embalado '+st.embalado+'</strong>')
+            :('embalado '+st.embalado+' · <strong style="color:#d97706;">falta '+st.falta+'</strong>'))+'</div>'+
+    '<div style="font-size:10px;color:var(--text-muted);margin-top:2px;">priorizado em '+(a.prioridadeEm||'')+(a.prioridadePor?(' por '+a.prioridadePor):'')+'</div>'+
+  '</div>';
+
+  ov.innerHTML='<div style="background:#fff;border-radius:16px;max-width:520px;width:100%;max-height:90vh;display:flex;flex-direction:column;">'+
+    '<div style="padding:18px 18px 10px;border-bottom:1px solid var(--border);">'+
+      '<div style="font-size:17px;font-weight:800;">⬆️ Enviados para a prioridade</div>'+
+      '<div style="font-size:12px;color:var(--text-secondary);margin-top:4px;line-height:1.5;">Produtos que você mandou para o topo da fila da embalagem. Somem daqui quando o ajuste for estornado.</div>'+
+    '</div>'+
+    '<div style="flex:1;overflow-y:auto;padding:10px 16px;">'+
+      (!lista.length
+        ? '<div style="padding:24px;text-align:center;color:var(--text-secondary);font-size:13px;">Nenhum produto foi mandado para a prioridade ainda.</div>'
+        : (pend.length?('<div style="font-size:12px;font-weight:800;color:#b45309;margin:4px 0 8px;">⏳ AINDA ESPERANDO ('+pend.length+')</div>'+pend.map(x=>linha(x,false)).join('')):'')+
+          (prontos.length?('<div style="font-size:12px;font-weight:800;color:#15803d;margin:14px 0 8px;">✅ JÁ EMBALADO ('+prontos.length+')</div>'+prontos.map(x=>linha(x,true)).join('')):''))+
+    '</div>'+
+    '<div style="padding:12px 18px 16px;border-top:1px solid var(--border);">'+
+      '<button class="btn btn-secondary" style="width:100%;" onclick="document.getElementById(\'lpr-modal\').remove()">Fechar</button></div>'+
+  '</div>';
+  document.body.appendChild(ov);
+}
+window.laAbrirNaPrioridade=laAbrirNaPrioridade;
+
 let _lseSel={};
 function lseToggle(id){ _lseSel[id]=!_lseSel[id]; lseRender(); }
 window.lseToggle=lseToggle;
@@ -18555,7 +18609,8 @@ function lseRender(){
         return '<div onclick="lseToggle(\''+escapeJsStr(a.firestoreId)+'\')" style="cursor:pointer;display:flex;align-items:center;gap:9px;padding:10px;border:1px solid '+(on?'var(--mc-azul,#2563eb)':'var(--border)')+';background:'+(on?'rgba(37,99,235,.06)':'#fff')+';border-radius:10px;margin-bottom:6px;">'+
           '<span style="flex:0 0 auto;width:20px;height:20px;border-radius:5px;border:2px solid '+(on?'var(--mc-azul,#2563eb)':'#cbd5e1')+';background:'+(on?'var(--mc-azul,#2563eb)':'#fff')+';color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900;">'+(on?'✓':'')+'</span>'+
           '<div style="flex:1;min-width:0;">'+
-            '<div style="font-size:14px;font-weight:700;">'+(a.produto||'')+(a.cod?(' <span style="font-size:11px;color:var(--text-muted);">#'+a.cod+'</span>'):'')+'</div>'+
+            '<div style="font-size:14px;font-weight:700;">'+(a.produto||'')+(a.cod?(' <span style="font-size:11px;color:var(--text-muted);">#'+a.cod+'</span>'):'')+
+              (a.prioridadeEm?' <span style="font-size:10px;font-weight:800;color:#2563eb;background:#dbeafe;border-radius:99px;padding:1px 7px;">⬆️ na fila</span>':'')+'</div>'+
             '<div style="font-size:11px;color:var(--text-secondary);margin-top:1px;">'+
               'ajustado '+a.qtd+' pct · '+(st.estado==='parcial'
                 ? ('<strong style="color:#d97706;">embalado só '+st.embalado+' — falta '+st.falta+'</strong>')
@@ -18623,6 +18678,13 @@ async function lseMandarPrioridade(){
         })
       );
       await acPrioSalvar(semana, dia, nomesFinais);
+      // guarda no ajuste que ele foi para a fila, para dar para acompanhar depois
+      for(const x of marcados.filter(m=>m.a.data===dia)){
+        try{
+          await updateDoc(doc(db,'ajustesAbertos',x.a.firestoreId),
+            {prioridadeEm:agora(), prioridadePor:_demAutor(), prioridadeDia:dia});
+        }catch(e){}
+      }
       ok+=novos.length;
     }catch(e){ erros.push(dia+': '+e.message); }
   }
