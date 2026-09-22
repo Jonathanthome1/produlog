@@ -25427,18 +25427,45 @@ async function configurarPremioTV(){
 }
 window.configurarPremioTV=configurarPremioTV;
 
+/* Situação da ENTREGA de um pedido de compra.
+   A entrega é marcada na requisição, não no pedido — por isso o filtro
+   de status sozinho não mostrava o que ainda falta chegar. */
+function _compEntrega(p){
+  if(!p || !p.firestoreId) return {estado:'sem-req', txt:'sem requisição'};
+  if(p.status==='cancelado') return {estado:'cancelado', txt:'cancelado'};
+  const reqs=(requisicoes||[]).filter(r=>r.pedidoId===p.firestoreId);
+  if(!reqs.length){
+    // ainda não virou requisição: só falta entregar se já foi confirmado
+    return (p.status==='solicitado')
+      ? {estado:'nao-pedido', txt:'ainda não confirmado'}
+      : {estado:'falta', txt:'aguardando entrega'};
+  }
+  const recebidas=reqs.filter(r=>r.status==='recebido');
+  if(recebidas.length===reqs.length){
+    const ult=recebidas.sort((a,b)=>String(b.recebidoEm2||'').localeCompare(String(a.recebidoEm2||'')))[0];
+    return {estado:'entregue', txt:'entregue'+(ult&&ult.recebidoEm?(' em '+ult.recebidoEm):'')};
+  }
+  const pend=reqs.filter(r=>r.status!=='recebido' && r.status!=='cancelado');
+  const prev=(pend[0]||{}).previsaoEntrega||p.previsaoEntrega||'';
+  return {estado:'falta', txt:'falta entregar'+(prev?(' · previsto '+prev):''),
+          parcial:recebidas.length>0, total:reqs.length, recebidas:recebidas.length};
+}
+window._compEntrega=_compEntrega;
+
 function renderComprasHist(){
   const el=document.getElementById('comp-hist-content'); if(!el) return;
   let lista=comprasPedidos.slice();
   if(_compHistFiltroForn!=='todos') lista=lista.filter(p=>p.fornecedorId===_compHistFiltroForn);
-  if(_compHistFiltroStatus!=='todos') lista=lista.filter(p=>(p.status||'')===_compHistFiltroStatus);
+  if(_compHistFiltroStatus==='falta_entregar') lista=lista.filter(p=>_compEntrega(p).estado==='falta');
+  else if(_compHistFiltroStatus==='entregue')    lista=lista.filter(p=>_compEntrega(p).estado==='entregue');
+  else if(_compHistFiltroStatus!=='todos')       lista=lista.filter(p=>(p.status||'')===_compHistFiltroStatus);
   if(_compHistFiltroSem!=='todas') lista=lista.filter(p=>(p.semana||'')===_compHistFiltroSem);
   lista.sort((a,b)=>(b.criadoEm2||0)-(a.criadoEm2||0));
   const semanas=[...new Set(comprasPedidos.map(p=>p.semana).filter(Boolean))].sort().reverse();
   let html='<div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap;">'+
     '<select onchange="setCompHistSem(this.value)" style="flex:1;min-width:130px;font-size:13px;padding:8px;border-radius:8px;border:1px solid var(--border-md,#d1d5db);"><option value="todas">Todas as semanas</option>'+semanas.map(s=>'<option value="'+s+'"'+(_compHistFiltroSem===s?' selected':'')+'>'+(typeof semanaLabel==='function'?semanaLabel(s):s)+'</option>').join('')+'</select>'+
     '<select onchange="setCompHistForn(this.value)" style="flex:1;min-width:130px;font-size:13px;padding:8px;border-radius:8px;border:1px solid var(--border-md,#d1d5db);"><option value="todos">Todos fornecedores</option>'+comprasFornecedores.map(f=>'<option value="'+f.firestoreId+'"'+(_compHistFiltroForn===f.firestoreId?' selected':'')+'>'+f.nome+'</option>').join('')+'</select>'+
-    '<select onchange="setCompHistStatus(this.value)" style="flex:1;min-width:130px;font-size:13px;padding:8px;border-radius:8px;border:1px solid var(--border-md,#d1d5db);">'+[['todos','Todos status'],['solicitado','Solicitado'],['confirmado','Confirmado'],['oc_gerada','OC gerada'],['arquivado','Arquivado']].map(([v,l])=>'<option value="'+v+'"'+(_compHistFiltroStatus===v?' selected':'')+'>'+l+'</option>').join('')+'</select>'+
+    '<select onchange="setCompHistStatus(this.value)" style="flex:1;min-width:130px;font-size:13px;padding:8px;border-radius:8px;border:1px solid var(--border-md,#d1d5db);">'+[['todos','Todos status'],['falta_entregar','⏳ Falta entregar'],['entregue','✓ Já entregue'],['solicitado','Solicitado'],['confirmado','Confirmado'],['oc_gerada','OC gerada'],['arquivado','Arquivado']].map(([v,l])=>'<option value="'+v+'"'+(_compHistFiltroStatus===v?' selected':'')+'>'+l+'</option>').join('')+'</select>'+
     '</div>';
   if(!lista.length){ el.innerHTML=html+'<div class="empty" style="padding:20px;">Nenhum pedido.</div>'; return; }
   // agrupar por semana
