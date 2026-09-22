@@ -9158,7 +9158,21 @@ function verDetalheContagem(fid){
   if(!c)return;
   const el=document.getElementById('cont-hist-content');
   const itensArr=Object.entries(c.itens||{});
-  el.innerHTML='<div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;">'+
+  el.innerHTML=(laSemEmbalar().length
+    ? '<button onclick="laAbrirSemEmbalar()" class="card" style="display:flex;align-items:center;gap:11px;width:100%;margin-bottom:12px;cursor:pointer;border:2px solid #d97706;background:#fffbeb;text-align:left;font-family:inherit;">'+
+        '<span style="font-size:26px;">📦</span>'+
+        '<span style="flex:1;min-width:0;">'+
+          '<span style="display:block;font-size:14px;font-weight:800;color:#b45309;">'+laSemEmbalar().length+' ajuste(s) esperando embalagem</span>'+
+          '<span style="display:block;font-size:12px;color:#78350f;margin-top:2px;">Liberado no ERP mas ainda não embalado · toque para ver e priorizar</span>'+
+        '</span>'+
+        '<span style="font-size:20px;color:#d97706;">›</span></button>'
+    : (laJaEmbalados().length
+        ? '<button onclick="laAbrirSemEmbalar()" class="card" style="display:flex;align-items:center;gap:11px;width:100%;margin-bottom:12px;cursor:pointer;border:1px solid #a7f3d0;background:#f0fdf4;text-align:left;font-family:inherit;">'+
+            '<span style="font-size:22px;">✅</span>'+
+            '<span style="flex:1;min-width:0;font-size:13px;font-weight:700;color:#15803d;">Tudo que foi ajustado já está embalado</span>'+
+            '<span style="font-size:18px;color:#16a34a;">›</span></button>'
+        : ''))+
+  '<div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;">'+
     '<button onclick="renderContagemHist()" style="background:none;border:1px solid #0891b2;color:#0891b2;font-size:13px;padding:7px 14px;border-radius:8px;cursor:pointer;font-family:inherit;">← Voltar</button>'+
     '<button onclick="imprimirContagemPDF(\''+fid+'\')" style="background:#0891b2;border:none;color:#fff;font-size:13px;font-weight:600;padding:7px 14px;border-radius:8px;cursor:pointer;font-family:inherit;">🖨️ Imprimir PDF</button>'+
     '</div>'+
@@ -17408,7 +17422,7 @@ async function laFecharPares(abertos, data, tipo){
   for(const a of paraEnviar){
     let r;
     try{
-      r=await eligoLancar(a.cod||'', a.qtd, 'saida', laDataHoje(),
+      r=await eligoLancar(a.cod||'', a.qtd, 'saida', a.data||laDataHoje(),
         'Estorno liberacao antecipada ProduLog - '+(a.produto||'')+' - producao '+data+' lancada');
     }catch(e){
       r={ok:false, erro:'erro inesperado: '+e.message};
@@ -17904,13 +17918,20 @@ window.renderLaDecisao=renderLaDecisao;
 function laDividirPorDia(cod, nome, total){
   let c;
   try{ c=laCalcular(cod, nome); }catch(e){ return {partes:[{data:'', tipo:'', qtd:total}], sobra:0}; }
-  const dias=(c.porDia||[])
-    .filter(d=>!d.lancado && (d.emb||0)>0)
+  const naoLancados=(c.porDia||[]).filter(d=>!d.lancado)
     .sort((a,b)=>laDataKey(a.data).localeCompare(laDataKey(b.data)));
+  // primeiro tenta pelo que está EMBALADO; se não houver nada embalado
+  // (liberação adiantada, confiando que a embalagem vai fechar), usa o que
+  // foi PRODUZIDO naquele dia — melhor que jogar tudo num dia só
+  let dias=naoLancados.filter(d=>(d.emb||0)>0).map(d=>({...d, cap:d.emb}));
+  if(!dias.length){
+    dias=naoLancados.filter(d=>((d.emb||0)+(d.naoEmb||0))>0)
+      .map(d=>({...d, cap:(d.emb||0)+(d.naoEmb||0)}));
+  }
   const partes=[]; let resta=total;
   for(const d of dias){
     if(resta<=0) break;
-    const usa=Math.min(d.emb, resta);
+    const usa=Math.min(d.cap, resta);
     partes.push({data:d.data, tipo:d.tipo, qtd:usa});
     resta-=usa;
   }
@@ -17959,7 +17980,8 @@ async function laAprovar(id){
   const resumoPartes=partes.map(p=>'• '+p.qtd+' pct da produção de '+(p.data||'sem dia')).join('\n');
 
   if(!confirm('Aprovar'+(auto?' e LANÇAR A ENTRADA no ELIGO?':' e registrar ajuste em aberto?')+'\n\n'+instr+
-      (partes.length>1?('\n\nDIVIDIDO POR PRODUÇÃO:\n'+resumoPartes+'\n\nCada parte será estornada quando o seu dia for lançado no ERP.'):'')+
+      (partes.length>1?('\n\nDIVIDIDO POR PRODUÇÃO:\n'+resumoPartes+'\n\nCada parte entra no ERP com a data do seu dia de produção e será estornada quando aquele dia for lançado.'):'')+
+      (partes.length===1&&!partes[0].data?('\n\n⚠️ SEM DIA DE PRODUÇÃO: não há nada embalado para vincular. O ajuste entra com a data de hoje e o estorno terá de ser feito pelo botão manual.'):'')+
       (auto?'\n\nA entrada vai direto para o ERP agora.':'\n\n(Você lançará no ERP manualmente.)'))) return;
 
   // uma entrada no ELIGO por parte, para a saída depois casar exatamente
@@ -17967,7 +17989,10 @@ async function laAprovar(id){
   for(const parte of partes){
     let eligoId='', eligoErro='';
     if(auto){
-      const r=await eligoLancar(s.cod||'', parte.qtd, 'entrada', laDataHoje(),
+      // lança na data da PRODUÇÃO: assim a entrada e a saída caem no mesmo
+      // dia do ERP e o efeito no estoque daquele dia se anula certinho
+      const dataMov=parte.data||laDataHoje();
+      const r=await eligoLancar(s.cod||'', parte.qtd, 'entrada', dataMov,
         'Liberacao antecipada ProduLog - '+(s.produto||'')+' - producao '+(parte.data||'s/dia'));
       if(r.cancelado){ falhou='cancelado'; break; }
       if(!r.ok){
@@ -18443,6 +18468,170 @@ async function laLimparTudo(){
 }
 window.laLimparTudo=laLimparTudo;
 
+/* ══════════════════════════════════════════════════════════════════
+   AJUSTES SEM EMBALAR
+   Ajuste liberado sobre produção que ainda não foi embalada. Enquanto
+   a embalagem não fechar aquele dia, o pacote existe no ERP mas não
+   existe na prateleira — é o que mais gera furo. Aqui dá para ver a
+   lista e mandar os produtos para a fila de prioridade da embalagem.
+   ══════════════════════════════════════════════════════════════════ */
+
+// Situação de um ajuste em relação à embalagem daquele dia
+function laStatusEmbalagem(a){
+  if(!a.data) return {estado:'sem-dia', embalado:0, produzido:0, falta:a.qtd||0};
+  let embalado=0, produzido=0;
+  (registros||[]).forEach(r=>{
+    if(r.data!==a.data) return;
+    const mesmo = (a.cod && String(r.cod||'')===String(a.cod)) || (_normNome(r.produto||'')===_normNome(a.produto||''));
+    if(!mesmo) return;
+    embalado += laEmbalado(r.embalagem||{});
+    produzido += (parseInt(r.qtd)||0);
+  });
+  const qtd=parseInt(a.qtd)||0;
+  if(embalado>=qtd) return {estado:'ok', embalado, produzido, falta:0};
+  return {estado: embalado>0 ? 'parcial' : 'nao', embalado, produzido, falta:qtd-embalado};
+}
+
+// ajustes em aberto que ainda dependem da embalagem
+function laSemEmbalar(){
+  return (laAjustes||[])
+    .filter(a=>(a.status||'aberto')==='aberto')
+    .map(a=>({a, st:laStatusEmbalagem(a)}))
+    .filter(x=>x.st.estado==='nao' || x.st.estado==='parcial');
+}
+function laJaEmbalados(){
+  return (laAjustes||[])
+    .filter(a=>(a.status||'aberto')==='aberto')
+    .map(a=>({a, st:laStatusEmbalagem(a)}))
+    .filter(x=>x.st.estado==='ok');
+}
+
+let _lseSel={};
+function lseToggle(id){ _lseSel[id]=!_lseSel[id]; lseRender(); }
+window.lseToggle=lseToggle;
+function lseTodos(v){ laSemEmbalar().forEach(x=>_lseSel[x.a.firestoreId]=v); lseRender(); }
+window.lseTodos=lseTodos;
+
+function laAbrirSemEmbalar(){
+  _lseSel={};
+  laSemEmbalar().forEach(x=>_lseSel[x.a.firestoreId]=true);
+  const ov=document.createElement('div');
+  ov.id='lse-modal';
+  ov.style.cssText='position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:3200;display:flex;align-items:center;justify-content:center;padding:16px;';
+  ov.innerHTML='<div style="background:#fff;border-radius:16px;max-width:560px;width:100%;max-height:92vh;display:flex;flex-direction:column;">'+
+    '<div style="padding:18px 18px 10px;border-bottom:1px solid var(--border);">'+
+      '<div style="font-size:17px;font-weight:800;">📦 Ajustes esperando embalagem</div>'+
+      '<div style="font-size:12px;color:var(--text-secondary);margin-top:4px;line-height:1.5;">O pacote já foi liberado no ERP, mas a produção daquele dia ainda não foi embalada. Marque e mande para a fila de prioridade da embalagem.</div>'+
+    '</div>'+
+    '<div id="lse-lista" style="flex:1;overflow-y:auto;padding:10px 16px;"></div>'+
+    '<div id="lse-rodape" style="padding:12px 18px 16px;border-top:1px solid var(--border);"></div>'+
+  '</div>';
+  document.body.appendChild(ov);
+  lseRender();
+}
+window.laAbrirSemEmbalar=laAbrirSemEmbalar;
+
+function lseRender(){
+  const box=document.getElementById('lse-lista'); if(!box) return;
+  const pend=laSemEmbalar();
+  const prontos=laJaEmbalados();
+
+  if(!pend.length && !prontos.length){
+    box.innerHTML='<div style="padding:24px;text-align:center;color:var(--text-secondary);font-size:13px;">Nenhum ajuste em aberto.</div>';
+    document.getElementById('lse-rodape').innerHTML='<button class="btn btn-secondary" style="width:100%;" onclick="document.getElementById(\'lse-modal\').remove()">Fechar</button>';
+    return;
+  }
+
+  let h='';
+  if(pend.length){
+    // agrupa por dia de produção
+    const porDia={};
+    pend.forEach(x=>{ const d=x.a.data||'sem dia'; (porDia[d]=porDia[d]||[]).push(x); });
+    const dias=Object.keys(porDia).sort((a,b)=>laDataKey(a).localeCompare(laDataKey(b)));
+    h+='<div style="font-size:12px;font-weight:800;color:#b45309;margin:4px 0 8px;">⏳ FALTA EMBALAR ('+pend.length+')</div>';
+    h+=dias.map(d=>'<div style="font-size:12px;font-weight:800;color:var(--mc-azul);margin:10px 0 5px;">📅 '+d+'</div>'+
+      porDia[d].map(({a,st})=>{
+        const on=!!_lseSel[a.firestoreId];
+        return '<div onclick="lseToggle(\''+escapeJsStr(a.firestoreId)+'\')" style="cursor:pointer;display:flex;align-items:center;gap:9px;padding:10px;border:1px solid '+(on?'var(--mc-azul,#2563eb)':'var(--border)')+';background:'+(on?'rgba(37,99,235,.06)':'#fff')+';border-radius:10px;margin-bottom:6px;">'+
+          '<span style="flex:0 0 auto;width:20px;height:20px;border-radius:5px;border:2px solid '+(on?'var(--mc-azul,#2563eb)':'#cbd5e1')+';background:'+(on?'var(--mc-azul,#2563eb)':'#fff')+';color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900;">'+(on?'✓':'')+'</span>'+
+          '<div style="flex:1;min-width:0;">'+
+            '<div style="font-size:14px;font-weight:700;">'+(a.produto||'')+(a.cod?(' <span style="font-size:11px;color:var(--text-muted);">#'+a.cod+'</span>'):'')+'</div>'+
+            '<div style="font-size:11px;color:var(--text-secondary);margin-top:1px;">'+
+              'ajustado '+a.qtd+' pct · '+(st.estado==='parcial'
+                ? ('<strong style="color:#d97706;">embalado só '+st.embalado+' — falta '+st.falta+'</strong>')
+                : ('<strong style="color:#b91c1c;">nada embalado</strong>'+(st.produzido?(' · produzido '+st.produzido):'')))+
+            '</div></div>'+
+          '<span style="flex:0 0 auto;font-size:16px;font-weight:900;color:#d97706;">'+st.falta+'</span>'+
+        '</div>';
+      }).join('')).join('');
+  }
+
+  if(prontos.length){
+    h+='<div style="font-size:12px;font-weight:800;color:#15803d;margin:16px 0 8px;">✅ JÁ EMBALADO ('+prontos.length+')</div>'+
+      prontos.map(({a,st})=>'<div style="display:flex;align-items:center;gap:9px;padding:9px 10px;border:1px solid #a7f3d0;background:#f0fdf4;border-radius:10px;margin-bottom:5px;">'+
+        '<span style="flex:0 0 auto;font-size:15px;">✓</span>'+
+        '<div style="flex:1;min-width:0;"><div style="font-size:13px;font-weight:700;">'+(a.produto||'')+'</div>'+
+        '<div style="font-size:11px;color:var(--text-secondary);">'+(a.data||'')+' · ajustado '+a.qtd+' · embalado '+st.embalado+'</div></div>'+
+      '</div>').join('');
+  }
+  box.innerHTML=h;
+
+  const marcados=pend.filter(x=>_lseSel[x.a.firestoreId]);
+  document.getElementById('lse-rodape').innerHTML=
+    (pend.length
+      ? '<div style="display:flex;gap:6px;margin-bottom:9px;">'+
+          '<button onclick="lseTodos(true)" style="flex:1;background:#fff;border:1px solid var(--border);color:var(--text-secondary);border-radius:8px;padding:8px;font-size:12px;cursor:pointer;font-family:inherit;">Marcar todos</button>'+
+          '<button onclick="lseTodos(false)" style="flex:1;background:#fff;border:1px solid var(--border);color:var(--text-secondary);border-radius:8px;padding:8px;font-size:12px;cursor:pointer;font-family:inherit;">Desmarcar</button></div>'+
+        '<button onclick="lseMandarPrioridade()" class="btn btn-primary" style="width:100%;margin-bottom:8px;"'+(marcados.length?'':' disabled')+'>⬆️ Mandar '+marcados.length+' para a prioridade da embalagem</button>'
+      : '')+
+    '<button class="btn btn-secondary" style="width:100%;" onclick="document.getElementById(\'lse-modal\').remove()">Fechar</button>';
+}
+window.lseRender=lseRender;
+
+/* Põe os produtos marcados no TOPO da fila de prioridade do dia deles */
+async function lseMandarPrioridade(){
+  const marcados=laSemEmbalar().filter(x=>_lseSel[x.a.firestoreId]);
+  if(!marcados.length) return;
+
+  // agrupa por dia: a prioridade é por dia de produção
+  const porDia={};
+  marcados.forEach(({a})=>{
+    if(!a.data) return;
+    (porDia[a.data]=porDia[a.data]||[]).push(a.produto);
+  });
+  const semDia=marcados.filter(x=>!x.a.data).length;
+  const dias=Object.keys(porDia);
+  if(!dias.length){ alert('Os marcados não têm dia de produção, então não há fila para priorizar.'); return; }
+
+  const resumo=dias.map(d=>'• '+d+': '+porDia[d].join(', ')).join('\n');
+  if(!confirm('Mandar para o topo da prioridade da embalagem?\n\n'+resumo+
+    (semDia?('\n\n'+semDia+' sem dia ficam de fora.'):'')+
+    '\n\nEles passam a aparecer primeiro no acompanhamento.')) return;
+
+  let ok=0, erros=[];
+  for(const dia of dias){
+    try{
+      const semana=(typeof semanaAtual==='function')?semanaAtual():'';
+      const atual=acPrioOrdem(semana, dia);          // nomes normalizados
+      const novos=porDia[dia].filter(Boolean);
+      // os marcados vão para o começo, sem duplicar quem já estava
+      const restante=atual.filter(n=>!novos.some(p=>_normNome(p)===n));
+      const nomesFinais=novos.concat(
+        restante.map(n=>{
+          const r=(registros||[]).find(x=>_normNome(x.produto||'')===n);
+          return r?r.produto:n;
+        })
+      );
+      await acPrioSalvar(semana, dia, nomesFinais);
+      ok+=novos.length;
+    }catch(e){ erros.push(dia+': '+e.message); }
+  }
+  document.getElementById('lse-modal')?.remove();
+  alert('✓ '+ok+' produto(s) no topo da prioridade.'+(erros.length?('\n\n⚠️ '+erros.join('\n')):'')+
+    '\n\nA embalagem já vê a nova ordem no acompanhamento.');
+}
+window.lseMandarPrioridade=lseMandarPrioridade;
+
 async function laLimparImportados(){
   if(!(window.adminMode||window.setorAtual==='admin')){ alert('Só o admin pode limpar.'); return; }
   const alvos=laManuaisAbertos();
@@ -18793,7 +18982,7 @@ async function laFecharAjuste(id){
       'Isso desfaz a entrada nº '+a.eligoEntradaId+' que foi lançada quando você aprovou.')) return;
   }
 
-  const r=await eligoLancar(a.cod||'', a.qtd, 'saida', laDataHoje(),
+  const r=await eligoLancar(a.cod||'', a.qtd, 'saida', a.data||laDataHoje(),
     'Estorno liberacao antecipada ProduLog - '+(a.produto||'')+(a.data?(' - producao '+a.data):''));
   if(r.cancelado) return;
   if(!r.ok){
