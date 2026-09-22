@@ -9158,30 +9158,7 @@ function verDetalheContagem(fid){
   if(!c)return;
   const el=document.getElementById('cont-hist-content');
   const itensArr=Object.entries(c.itens||{});
-  el.innerHTML=(laSemEmbalar().length
-    ? '<button onclick="laAbrirSemEmbalar()" class="card" style="display:flex;align-items:center;gap:11px;width:100%;margin-bottom:12px;cursor:pointer;border:2px solid #d97706;background:#fffbeb;text-align:left;font-family:inherit;">'+
-        '<span style="font-size:26px;">📦</span>'+
-        '<span style="flex:1;min-width:0;">'+
-          '<span style="display:block;font-size:14px;font-weight:800;color:#b45309;">'+laSemEmbalar().length+' ajuste(s) esperando embalagem</span>'+
-          '<span style="display:block;font-size:12px;color:#78350f;margin-top:2px;">Liberado no ERP mas ainda não embalado · toque para ver e priorizar</span>'+
-        '</span>'+
-        '<span style="font-size:20px;color:#d97706;">›</span></button>'
-    : (laJaEmbalados().length
-        ? '<button onclick="laAbrirSemEmbalar()" class="card" style="display:flex;align-items:center;gap:11px;width:100%;margin-bottom:12px;cursor:pointer;border:1px solid #a7f3d0;background:#f0fdf4;text-align:left;font-family:inherit;">'+
-            '<span style="font-size:22px;">✅</span>'+
-            '<span style="flex:1;min-width:0;font-size:13px;font-weight:700;color:#15803d;">Tudo que foi ajustado já está embalado</span>'+
-            '<span style="font-size:18px;color:#16a34a;">›</span></button>'
-        : ''))+
-  (laNaPrioridade().length
-    ? '<button onclick="laAbrirNaPrioridade()" class="card" style="display:flex;align-items:center;gap:11px;width:100%;margin-bottom:12px;cursor:pointer;border:1px solid #bfdbfe;background:#eff6ff;text-align:left;font-family:inherit;">'+
-        '<span style="font-size:22px;">⬆️</span>'+
-        '<span style="flex:1;min-width:0;">'+
-          '<span style="display:block;font-size:13px;font-weight:800;color:#1e40af;">'+laNaPrioridade().length+' na fila de prioridade</span>'+
-          '<span style="display:block;font-size:11px;color:#1e3a8a;margin-top:1px;">'+
-            laNaPrioridade().filter(x=>x.st.estado==='ok').length+' já embalado(s) · toque para acompanhar</span>'+
-        '</span><span style="font-size:18px;color:#2563eb;">›</span></button>'
-    : '')+
-  '<div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;">'+
+  el.innerHTML='<div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;">'+
     '<button onclick="renderContagemHist()" style="background:none;border:1px solid #0891b2;color:#0891b2;font-size:13px;padding:7px 14px;border-radius:8px;cursor:pointer;font-family:inherit;">← Voltar</button>'+
     '<button onclick="imprimirContagemPDF(\''+fid+'\')" style="background:#0891b2;border:none;color:#fff;font-size:13px;font-weight:600;padding:7px 14px;border-radius:8px;cursor:pointer;font-family:inherit;">🖨️ Imprimir PDF</button>'+
     '</div>'+
@@ -18970,7 +18947,31 @@ function renderLaAjustes(){
   const el=document.getElementById('la-ajustes-content'); if(!el) return;
   const abertos=laAjustes.filter(a=>(a.status||'aberto')==='aberto');
   const fechados=laAjustes.filter(a=>a.status==='fechado').slice(0,20);
-  let html=laNavbar('s-la-ajustes')+'<div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;">'+
+  let html=laNavbar('s-la-ajustes')+
+  // avisos de acompanhamento: o que espera embalagem e o que já foi priorizado
+  (laSemEmbalar().length
+    ? '<button onclick="laAbrirSemEmbalar()" class="card" style="display:flex;align-items:center;gap:11px;width:100%;margin-bottom:10px;cursor:pointer;border:2px solid #d97706;background:#fffbeb;text-align:left;font-family:inherit;">'+
+        '<span style="font-size:26px;">📦</span>'+
+        '<span style="flex:1;min-width:0;">'+
+          '<span style="display:block;font-size:14px;font-weight:800;color:#b45309;">'+laSemEmbalar().length+' ajuste(s) esperando embalagem</span>'+
+          '<span style="display:block;font-size:12px;color:#78350f;margin-top:2px;">Liberado no ERP mas ainda não embalado · toque para ver e priorizar</span>'+
+        '</span><span style="font-size:20px;color:#d97706;">›</span></button>'
+    : (laJaEmbalados().length
+        ? '<button onclick="laAbrirSemEmbalar()" class="card" style="display:flex;align-items:center;gap:11px;width:100%;margin-bottom:10px;cursor:pointer;border:1px solid #a7f3d0;background:#f0fdf4;text-align:left;font-family:inherit;">'+
+            '<span style="font-size:22px;">✅</span>'+
+            '<span style="flex:1;min-width:0;font-size:13px;font-weight:700;color:#15803d;">Tudo que foi ajustado já está embalado</span>'+
+            '<span style="font-size:18px;color:#16a34a;">›</span></button>'
+        : ''))+
+  (laNaPrioridade().length
+    ? '<button onclick="laAbrirNaPrioridade()" class="card" style="display:flex;align-items:center;gap:11px;width:100%;margin-bottom:12px;cursor:pointer;border:1px solid #bfdbfe;background:#eff6ff;text-align:left;font-family:inherit;">'+
+        '<span style="font-size:22px;">⬆️</span>'+
+        '<span style="flex:1;min-width:0;">'+
+          '<span style="display:block;font-size:13px;font-weight:800;color:#1e40af;">'+laNaPrioridade().length+' na fila de prioridade</span>'+
+          '<span style="display:block;font-size:11px;color:#1e3a8a;margin-top:1px;">'+
+            laNaPrioridade().filter(x=>x.st.estado==='ok').length+' já embalado(s) · toque para acompanhar</span>'+
+        '</span><span style="font-size:18px;color:#2563eb;">›</span></button>'
+    : '')+
+  '<div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;">'+
     '<button onclick="laAbrirImportRefaz()" class="btn btn-secondary" style="flex:1;min-width:190px;">📋 Trazer do refazimento'+(laPendentesDoRefaz().length?(' ('+laPendentesDoRefaz().length+')'):'')+'</button>'+
     '<button onclick="laAbrirManual()" class="btn btn-secondary" style="flex:1;min-width:190px;">📥 Lançar um à mão</button>'+
     ((window.adminMode||window.setorAtual==='admin') && laManuaisAbertos().length
