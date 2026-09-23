@@ -15359,6 +15359,27 @@ function _compPedidoEmMontagem(fornId){
 }
 window._compPedidoEmMontagem=_compPedidoEmMontagem;
 
+/* Lê a previsão de entrega em qualquer formato usado no app:
+   "16/09/2026", "16/09" (assume o ano corrente) ou um intervalo
+   "16/09 - 18/09" (vale a última data, que é o limite do prazo).
+   Sem isso, previsão sem ano ou em intervalo nunca virava atraso. */
+function _compPrevEmDias(prev){
+  const txt=String(prev||'').trim();
+  if(!txt) return null;
+  const datas=txt.match(/(\d{1,2})\/(\d{1,2})(?:\/(\d{2,4}))?/g);
+  if(!datas || !datas.length) return null;
+  const ultima=datas[datas.length-1];          // no intervalo, o prazo é o fim
+  const m=ultima.match(/(\d{1,2})\/(\d{1,2})(?:\/(\d{2,4}))?/);
+  const dia=+m[1], mes=+m[2]-1;
+  let ano = m[3] ? +m[3] : new Date().getFullYear();
+  if(ano<100) ano+=2000;
+  const alvo=new Date(ano, mes, dia); alvo.setHours(0,0,0,0);
+  if(isNaN(alvo.getTime())) return null;
+  const hj=new Date(); hj.setHours(0,0,0,0);
+  return Math.round((hj-alvo)/86400000);
+}
+window._compPrevEmDias=_compPrevEmDias;
+
 let _compAba='pedir';   // pedir | aguardando | historico
 function setCompAba(v){ _compAba=v; renderCompras(); }
 window.setCompAba=setCompAba;
@@ -15398,13 +15419,23 @@ function _compAguardando(){
   return (comprasPedidos||[]).map(p=>({p, e:_compEntregaSit(p)}))
     .filter(x=>x.e.estado==='falta')
     .map(x=>{
-      const prev=(x.e.prev||'').trim(); let atraso=null;
-      if(prev){ const q=prev.split('/');
-        if(q.length===3){ const alvo=new Date(+q[2],+q[1]-1,+q[0]); alvo.setHours(0,0,0,0);
-          const hj=new Date(); hj.setHours(0,0,0,0); atraso=Math.round((hj-alvo)/86400000); } }
-      return {...x, prev, atraso};
+      const prev=(x.e.prev||'').trim();
+      const atraso=_compPrevEmDias(prev);
+      // sem previsão preenchida, medimos há quanto tempo o pedido espera.
+      // Antes esses ficavam eternamente como "sem previsão" e nunca apareciam
+      // como atrasados, mesmo parados há semanas.
+      let espera=null;
+      const base=x.p.confirmadoEm||x.p.criadoEm||'';
+      const b=String(base).match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+      if(b){ const d=new Date(+b[3],+b[2]-1,+b[1]); d.setHours(0,0,0,0);
+        const hj=new Date(); hj.setHours(0,0,0,0); espera=Math.round((hj-d)/86400000); }
+      return {...x, prev, atraso, espera};
     })
-    .sort((a,b)=>(b.atraso===null?-99:b.atraso)-(a.atraso===null?-99:a.atraso));
+    .sort((a,b)=>{
+      const va=(a.atraso!==null?a.atraso:(a.espera!==null?a.espera-7:-99));
+      const vb=(b.atraso!==null?b.atraso:(b.espera!==null?b.espera-7:-99));
+      return vb-va;
+    });
 }
 
 function renderCompras(){
@@ -15550,20 +15581,32 @@ function _compAbaAguardando(aguard){
     '<div style="font-size:38px;">✅</div><div style="font-size:15px;font-weight:800;margin-top:8px;">Nada aguardando entrega</div>'+
     '<div style="font-size:12px;color:var(--text-secondary);margin-top:5px;">Tudo que foi pedido já chegou.</div></div>';
   const total=aguard.reduce((t,x)=>t+(x.p.totalRS||0),0);
+  const ehAdmin=(window.adminMode||window.setorAtual==='admin');
   return '<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px;">'+
     '<div style="font-size:13px;font-weight:800;">'+aguard.length+' pedido(s) a caminho</div>'+
     '<div style="font-size:13px;font-weight:800;color:var(--mc-verde);">'+_fmtRS(total)+'</div></div>'+
-  aguard.map(({p,e,prev,atraso})=>{
-    const atrasado=atraso!==null&&atraso>0, hj=atraso===0;
+  aguard.map(({p,e,prev,atraso,espera})=>{
+    // com previsão: atraso de verdade. Sem previsão: quanto tempo já espera.
+    const atrasado = atraso!==null ? atraso>0 : (espera!==null && espera>7);
+    const hj = atraso===0;
     const cor=atrasado?'#dc2626':(hj?'#d97706':'var(--mc-azul,#2563eb)');
-    const txt=atraso===null?'sem previsão':(atrasado?('atrasado '+atraso+' dia(s)'):(hj?'chega hoje':'chega em '+Math.abs(atraso)+' dia(s)'));
-    return '<div onclick="compAbrirPedido(\''+escapeJsStr(p.fornecedorId||'')+'\')" class="card" style="cursor:pointer;margin-bottom:8px;border-left:4px solid '+cor+';'+(atrasado?'background:#fef2f2;':'')+'">'+
-      '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">'+
-        '<div style="flex:1;min-width:0;"><div style="font-size:15px;font-weight:800;">'+(p.fornecedorNome||'—')+'</div>'+
-        '<div style="font-size:12px;color:var(--text-secondary);margin-top:2px;">'+((p.itens||[]).length)+' item(ns) · '+_fmtRS(p.totalRS||0)+'</div></div>'+
-        '<div style="text-align:right;white-space:nowrap;"><div style="font-size:12px;font-weight:800;color:'+cor+';">'+(atrasado?'⏰ ':'')+txt+'</div>'+
-        '<div style="font-size:10px;color:var(--text-muted);">'+(prev?('previsto '+prev):'')+'</div></div></div>'+
-      (e.parcial?'<div style="font-size:11px;font-weight:700;color:#d97706;margin-top:4px;">📦 parcial · '+e.recebidas+' de '+e.total+' recebida(s)</div>':'')+
+    const txt = atraso!==null
+      ? (atrasado?('atrasado '+atraso+' dia(s)'):(hj?'chega hoje':'chega em '+Math.abs(atraso)+' dia(s)'))
+      : (espera!==null
+          ? (espera===0?'pedido hoje':('esperando há '+espera+' dia(s)'))
+          : 'sem previsão');
+    const rodape = prev ? ('previsto '+prev)
+                        : (espera!==null?('pedido em '+(p.confirmadoEm||p.criadoEm)):'sem data de pedido');
+    return '<div class="card" style="margin-bottom:8px;border-left:4px solid '+cor+';'+(atrasado?'background:#fef2f2;':'')+'">'+
+      '<div onclick="compAbrirPedido(\''+escapeJsStr(p.fornecedorId||'')+'\')" style="cursor:pointer;">'+
+        '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">'+
+          '<div style="flex:1;min-width:0;"><div style="font-size:15px;font-weight:800;">'+(p.fornecedorNome||'—')+'</div>'+
+          '<div style="font-size:12px;color:var(--text-secondary);margin-top:2px;">'+((p.itens||[]).length)+' item(ns) · '+_fmtRS(p.totalRS||0)+'</div></div>'+
+          '<div style="text-align:right;white-space:nowrap;"><div style="font-size:12px;font-weight:800;color:'+cor+';">'+(atrasado?'⏰ ':'')+txt+'</div>'+
+          '<div style="font-size:10px;color:var(--text-muted);">'+rodape+'</div></div></div>'+
+        (e.parcial?'<div style="font-size:11px;font-weight:700;color:#d97706;margin-top:4px;">📦 parcial · '+e.recebidas+' de '+e.total+' recebida(s)</div>':'')+
+      '</div>'+
+      (ehAdmin?'<button onclick="event.stopPropagation();compExcluirPedido(\''+escapeJsStr(p.firestoreId)+'\')" style="width:100%;margin-top:8px;background:#fff;border:1px solid #fecaca;color:#dc2626;border-radius:8px;padding:7px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;">🗑 Excluir este pedido</button>':'')+
     '</div>';
   }).join('');
 }
@@ -16101,10 +16144,20 @@ function setCompHistStatus(v){ _compHistFiltroStatus=v; renderComprasHist(); }
 function setCompHistSem(v){ _compHistFiltroSem=v; renderComprasHist(); }
 window.setCompHistForn=setCompHistForn; window.setCompHistStatus=setCompHistStatus; window.setCompHistSem=setCompHistSem;
 async function compExcluirPedido(id){
-  if(window.adminMode!==true){ alert('Apenas o Admin pode excluir itens do histórico.'); return; }
+  if(window.adminMode!==true){ alert('Apenas o Admin pode excluir pedidos.'); return; }
   const p=comprasPedidos.find(x=>x.firestoreId===id);
-  if(!confirm('Excluir este pedido do histórico'+(p?' ('+(p.fornecedorNome||'')+' · '+(p.criadoEm||'')+')':'')+'? Esta ação não pode ser desfeita.')) return;
-  try{ await deleteDoc(doc(db,'comprasPedidos',id)); }catch(e){ alert('Erro: '+e.message); }
+  // a requisição vai junto: sozinha, viraria um pedido fantasma na tela do Rafael
+  const reqs=(requisicoes||[]).filter(r=>r.pedidoId===id);
+  const recebidas=reqs.filter(r=>r.status==='recebido').length;
+  if(!confirm('Excluir este pedido'+(p?' ('+(p.fornecedorNome||'')+' · '+(p.criadoEm||'')+')':'')+'?'+
+    (p?('\n'+((p.itens||[]).length)+' item(ns) · '+_fmtRS(p.totalRS||0)):'')+
+    (reqs.length?('\n\nA requisição do Rafael também será apagada'+(recebidas?(' — ⚠️ '+recebidas+' já recebida(s)'):'')+'.'):'')+
+    '\n\nEsta ação não pode ser desfeita.')) return;
+  if(recebidas && !confirm('Atenção: parte desse pedido já foi recebida.\n\nConfirma mesmo assim?')) return;
+  try{
+    for(const r of reqs){ if(r.firestoreId) await deleteDoc(doc(db,'requisicoes',r.firestoreId)); }
+    await deleteDoc(doc(db,'comprasPedidos',id));
+  }catch(e){ alert('Erro: '+e.message); }
 }
 window.compExcluirPedido=compExcluirPedido;
 
