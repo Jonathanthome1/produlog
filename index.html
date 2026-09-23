@@ -4315,6 +4315,9 @@
       <div class="mc-brand"><div class="mc-brand-logo"></div><div class="mc-brand-text"><div class="mc-brand-name">Monte Castelo</div><div class="mc-brand-sub">Compras</div></div></div>
       <div class="mc-divider-v"></div>
       <div class="mc-page-info"><div class="mc-page-title">🛒 Pedidos de Matéria-Prima</div><div class="mc-page-sub">Por fornecedor</div></div>
+      <div class="mc-header-actions">
+        <button class="mc-act-btn-secondary" onclick="compAbrirConfig()" title="Fornecedores e catálogo">⚙️</button>
+      </div>
     </div>
     <div style="flex:1;padding:18px 16px;background:var(--bg-page);overflow-y:auto;" id="comp-hub-content"></div>
   </div>
@@ -5864,6 +5867,124 @@ async function salvarEmbManual(){
     btn.textContent='Adicionar ao checklist ✓';btn.disabled=false;
   }
 }
+
+/* ══════════════════════════════════════════════════════════════════
+   ASSINATURA / RUBRICA
+   O traço é guardado como SVG (uma lista de pontos), não como imagem
+   de canvas. Além de gerar um arquivo bem menor, evita a captura de
+   tela do canvas — que alguns antivírus marcam como suspeita quando
+   convive com campos de senha na mesma página.
+   ══════════════════════════════════════════════════════════════════ */
+let _assCallback=null, _assTracos=[], _assAtual=null, _assW=400, _assH=190;
+
+function assPedir(titulo, subtitulo, callback){
+  _assCallback=callback; _assTracos=[]; _assAtual=null;
+  const ov=document.createElement('div');
+  ov.id='ass-modal';
+  ov.style.cssText='position:fixed;inset:0;background:rgba(15,23,42,.65);z-index:3400;display:flex;align-items:center;justify-content:center;padding:14px;';
+  ov.innerHTML='<div style="background:#fff;border-radius:16px;max-width:520px;width:100%;padding:18px;">'+
+    '<div style="font-size:17px;font-weight:800;">✍️ '+(titulo||'Assinatura')+'</div>'+
+    (subtitulo?'<div style="font-size:12px;color:var(--text-secondary);margin-top:3px;">'+subtitulo+'</div>':'')+
+    '<label style="font-size:12px;font-weight:600;color:var(--text-secondary);display:block;margin-top:12px;">Nome de quem assina</label>'+
+    '<input type="text" id="ass-nome" placeholder="Nome completo" autocomplete="off" style="width:100%;padding:12px;min-height:48px;border:1px solid var(--border-md,#d1d5db);border-radius:9px;font-size:16px;font-family:inherit;box-sizing:border-box;margin:4px 0 12px;">'+
+    '<div style="font-size:12px;font-weight:600;color:var(--text-secondary);margin-bottom:5px;">Assine no quadro abaixo</div>'+
+    '<div id="ass-area" style="position:relative;border:2px dashed var(--border-md,#cbd5e1);border-radius:12px;background:#fafbfc;touch-action:none;height:190px;overflow:hidden;">'+
+      '<svg id="ass-svg" viewBox="0 0 400 190" preserveAspectRatio="none" style="width:100%;height:100%;display:block;touch-action:none;cursor:crosshair;"></svg>'+
+      '<div id="ass-dica" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;color:#94a3b8;font-size:14px;">assine aqui com o dedo ou o mouse</div>'+
+    '</div>'+
+    '<button onclick="assLimpar()" style="width:100%;margin-top:8px;background:#fff;border:1px solid var(--border);color:var(--text-secondary);border-radius:9px;padding:9px;font-size:12px;cursor:pointer;font-family:inherit;">🧹 Limpar e assinar de novo</button>'+
+    '<div style="display:flex;gap:8px;margin-top:12px;">'+
+      '<button class="btn btn-secondary" style="flex:1;" onclick="assFechar()">Cancelar</button>'+
+      '<button class="btn btn-primary" style="flex:1;" onclick="assConfirmar()">Confirmar</button>'+
+    '</div></div>';
+  document.body.appendChild(ov);
+  setTimeout(assIniciarTracado, 40);
+}
+window.assPedir=assPedir;
+
+function assIniciarTracado(){
+  const area=document.getElementById('ass-area'); if(!area) return;
+  const svg=document.getElementById('ass-svg');
+  let desenhando=false;
+
+  // converte o toque na tela para a escala do desenho (400x190)
+  const pos=e=>{
+    const b=area.getBoundingClientRect();
+    return { x:Math.round((e.clientX-b.left)/b.width*_assW*10)/10,
+             y:Math.round((e.clientY-b.top)/b.height*_assH*10)/10 };
+  };
+  const linha=()=>{
+    const el=document.createElementNS('http://www.w3.org/2000/svg','polyline');
+    el.setAttribute('fill','none'); el.setAttribute('stroke','#0f172a');
+    el.setAttribute('stroke-width','2.4'); el.setAttribute('stroke-linecap','round');
+    el.setAttribute('stroke-linejoin','round');
+    svg.appendChild(el); return el;
+  };
+  const pintar=(el,pts)=>el.setAttribute('points', pts.map(p=>p.x+','+p.y).join(' '));
+
+  const comecar=e=>{ e.preventDefault(); desenhando=true;
+    _assAtual={pontos:[pos(e)], el:linha()};
+    const d=document.getElementById('ass-dica'); if(d) d.style.display='none'; };
+  const mover=e=>{ if(!desenhando||!_assAtual) return; e.preventDefault();
+    _assAtual.pontos.push(pos(e)); pintar(_assAtual.el,_assAtual.pontos); };
+  const parar=()=>{ if(_assAtual && _assAtual.pontos.length>1) _assTracos.push(_assAtual.pontos);
+    _assAtual=null; desenhando=false; };
+
+  area.addEventListener('pointerdown', comecar);
+  area.addEventListener('pointermove', mover);
+  area.addEventListener('pointerup', parar);
+  area.addEventListener('pointerleave', parar);
+  area.addEventListener('pointercancel', parar);
+}
+
+function assLimpar(){
+  _assTracos=[]; _assAtual=null;
+  const svg=document.getElementById('ass-svg'); if(svg) svg.innerHTML='';
+  const d=document.getElementById('ass-dica'); if(d) d.style.display='flex';
+}
+window.assLimpar=assLimpar;
+
+function assFechar(){ document.getElementById('ass-modal')?.remove(); _assCallback=null; _assTracos=[]; }
+window.assFechar=assFechar;
+
+// monta o SVG final a partir dos traços guardados
+function assSvg(tracos, alturaPx){
+  const linhas=(tracos||[]).map(t=>{
+    // aceita o traço como string pronta ou como lista de pontos
+    const pts = (typeof t==='string') ? t : (Array.isArray(t)?t.map(p=>p.x+','+p.y).join(' '):'');
+    if(!pts) return '';
+    return '<polyline fill="none" stroke="#0f172a" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" points="'+pts+'"/>';
+  }).join('');
+  return '<svg viewBox="0 0 400 190" xmlns="http://www.w3.org/2000/svg" style="width:auto;height:'+(alturaPx||70)+'px;max-width:100%;">'+linhas+'</svg>';
+}
+window.assSvg=assSvg;
+
+function assConfirmar(){
+  const nome=((document.getElementById('ass-nome')||{}).value||'').trim();
+  if(!nome){ alert('Informe o nome de quem está assinando.'); return; }
+  if(!_assTracos.length){ alert('Faça a assinatura no quadro antes de confirmar.'); return; }
+  // cada traço vira uma string "x,y x,y ..." porque o Firestore recusa
+  // lista dentro de lista (Nested arrays are not supported)
+  const dados={nome, tracos:_assTracos.map(pts=>pts.map(p=>p.x+','+p.y).join(' ')), em:agora(), por:_demAutor()};
+  const cb=_assCallback;
+  assFechar();
+  if(typeof cb==='function') cb(dados);
+}
+window.assConfirmar=assConfirmar;
+
+// exibe uma assinatura guardada
+function assHtml(a, compacto){
+  if(!a || (!a.tracos && !a.imagem)) return '';
+  const desenho = a.tracos ? assSvg(a.tracos, compacto?54:80)
+                           : '<img src="'+a.imagem+'" alt="assinatura" style="display:block;max-width:100%;height:'+(compacto?'54px':'80px')+';object-fit:contain;object-position:left;">';
+  return '<div style="border:1px solid var(--border);border-radius:10px;padding:'+(compacto?'8px 10px':'10px 12px')+';background:#fafbfc;">'+
+    '<div style="font-size:10px;font-weight:800;color:var(--text-secondary);letter-spacing:1px;">✍️ ASSINATURA</div>'+
+    '<div style="margin:4px 0;">'+desenho+'</div>'+
+    '<div style="font-size:12px;font-weight:700;">'+(a.nome||'')+'</div>'+
+    '<div style="font-size:10px;color:var(--text-muted);">'+(a.em||'')+(a.por?(' · registrado por '+a.por):'')+'</div>'+
+  '</div>';
+}
+window.assHtml=assHtml;
 
 // ===== CLIENTE C&F =====
 let cfPedidos = [];
@@ -15198,7 +15319,7 @@ function _slug(s){ return _normNome(s).replace(/[^A-Z0-9]+/g,'_').replace(/^_|_$
 function _compForn(id){ return comprasFornecedores.find(f=>f.firestoreId===id)||null; }
 function _compCatalogoDo(fornId){ return comprasMP.filter(m=>m.fornecedorId===fornId && m.ativo!==false).sort((a,b)=>_normNome(a.nome).localeCompare(_normNome(b.nome))); }
 function _compStatusInfo(s){
-  if(s==='confirmado') return {label:'Confirmado p/ gerar OC',cor:'#2563eb',bg:'rgba(37,99,235,.10)',emoji:'✅'};
+  if(s==='confirmado') return {label:'Confirmado · aguardando entrega',cor:'#2563eb',bg:'rgba(37,99,235,.10)',emoji:'✅'};
   if(s==='oc_gerada'||s==='recebido') return {label:'OC gerada',cor:'#16a34a',bg:'rgba(22,163,74,.10)',emoji:'📄'};
   return {label:'Solicitado',cor:'#d97706',bg:'rgba(217,119,6,.10)',emoji:'📝'}; // solicitado / rascunho / pronto (legado)
 }
@@ -15229,74 +15350,174 @@ function _compFornCardHtml(f){
 }
 function setCompHubBusca(v){ _compHubBusca=v; renderCompras(); const inp=document.getElementById('comp-hub-busca'); if(inp){ inp.focus(); const n=inp.value.length; try{inp.setSelectionRange(n,n);}catch(e){} } }
 window.setCompHubBusca=setCompHubBusca;
+let _compAba='pedir';   // pedir | aguardando | historico
+function setCompAba(v){ _compAba=v; renderCompras(); }
+window.setCompAba=setCompAba;
+
+/* Situação da ENTREGA de um pedido: ela é marcada na requisição, não no
+   pedido, por isso o status sozinho não mostra o que falta chegar. */
+function _compEntregaSit(p){
+  if(!p || !p.firestoreId) return {estado:'sem-req', txt:'sem requisição'};
+  if(p.status==='cancelado') return {estado:'cancelado', txt:'cancelado'};
+  const reqs=(requisicoes||[]).filter(r=>r.pedidoId===p.firestoreId);
+  if(!reqs.length){
+    return (p.status==='solicitado'||p.status==='rascunho')
+      ? {estado:'nao-pedido', txt:'ainda não confirmado'}
+      : {estado:'falta', txt:'aguardando entrega'};
+  }
+  const receb=reqs.filter(r=>r.status==='recebido');
+  if(receb.length===reqs.length){
+    const u=receb.slice().sort((a,b)=>String(b.recebidoEm2||'').localeCompare(String(a.recebidoEm2||'')))[0];
+    return {estado:'entregue', txt:'entregue'+(u&&u.recebidoEm?(' em '+u.recebidoEm):'')};
+  }
+  const pend=reqs.filter(r=>r.status!=='recebido'&&r.status!=='cancelado');
+  return {estado:'falta', txt:'falta entregar', parcial:receb.length>0, total:reqs.length, recebidas:receb.length,
+          prev:(pend[0]||{}).previsaoEntrega||p.previsaoEntrega||''};
+}
+window._compEntregaSit=_compEntregaSit;
+
+function _compDiasAteEntrega(f){
+  const prox=(typeof _compProximaEntrega==='function') ? _compProximaEntrega(f.diaEntrega||'') : '';
+  if(!prox) return 99;
+  const p=String(prox).split('/'); if(p.length!==3) return 99;
+  const alvo=new Date(+p[2], +p[1]-1, +p[0]); alvo.setHours(0,0,0,0);
+  const hj=new Date(); hj.setHours(0,0,0,0);
+  return Math.round((alvo-hj)/86400000);
+}
+
+function _compAguardando(){
+  return (comprasPedidos||[]).map(p=>({p, e:_compEntregaSit(p)}))
+    .filter(x=>x.e.estado==='falta')
+    .map(x=>{
+      const prev=(x.e.prev||'').trim(); let atraso=null;
+      if(prev){ const q=prev.split('/');
+        if(q.length===3){ const alvo=new Date(+q[2],+q[1]-1,+q[0]); alvo.setHours(0,0,0,0);
+          const hj=new Date(); hj.setHours(0,0,0,0); atraso=Math.round((hj-alvo)/86400000); } }
+      return {...x, prev, atraso};
+    })
+    .sort((a,b)=>(b.atraso===null?-99:b.atraso)-(a.atraso===null?-99:a.atraso));
+}
+
 function renderCompras(){
   const el=document.getElementById('comp-hub-content'); if(!el) return;
-  let html='';
-  html+='<div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;">'+
-    '<button class="btn btn-secondary" style="flex:1;min-width:130px;" onclick="goTo(\'s-compras-fornlist\')">🏢 Fornecedores</button>'+
-    '<button class="btn btn-secondary" style="flex:1;min-width:130px;" onclick="goTo(\'s-compras-hist\')">📋 Histórico</button>'+
-    '<button class="btn btn-secondary" style="flex:1;min-width:130px;" onclick="compCarregarCatalogo()">📦 Carregar catálogo</button>'+
-    '<label class="btn btn-secondary" style="flex:1;min-width:130px;text-align:center;cursor:pointer;">📥 Importar planilha<input type="file" accept=".xlsx,.xls" style="display:none" onchange="importarComprasPlanilha(this)"></label>'+
-    '</div>';
 
   if(!comprasFornecedores.length){
-    el.innerHTML=html+'<div class="card" style="text-align:center;padding:24px;"><div style="font-size:15px;font-weight:700;margin-bottom:6px;">Nenhum fornecedor ainda</div><div style="font-size:13px;color:var(--text-secondary);margin-bottom:12px;">Clique em "📦 Carregar catálogo" para cadastrar os fornecedores e produtos, ou importe sua planilha.</div><button class="btn btn-primary" onclick="compCarregarCatalogo()">📦 Carregar catálogo</button></div>';
+    el.innerHTML='<div class="card" style="text-align:center;padding:26px;">'+
+      '<div style="font-size:15px;font-weight:700;margin-bottom:6px;">Nenhum fornecedor ainda</div>'+
+      '<div style="font-size:13px;color:var(--text-secondary);margin-bottom:14px;">Cadastre os fornecedores e o catálogo para começar a pedir.</div>'+
+      '<button class="btn btn-primary" style="width:100%;" onclick="goTo(\'s-compras-fornlist\')">🏢 Cadastrar fornecedores</button>'+
+      '<button class="btn btn-secondary" style="width:100%;margin-top:8px;" onclick="compCarregarCatalogo()">📦 Carregar catálogo padrão</button></div>';
     return;
   }
 
-  // busca por fornecedor OU produto
-  html+='<input type="text" id="comp-hub-busca" value="'+(_compHubBusca||'').replace(/"/g,'&quot;')+'" oninput="setCompHubBusca(this.value)" placeholder="🔍 Buscar fornecedor ou produto..." style="width:100%;font-size:15px;padding:12px 14px;border-radius:10px;border:1px solid var(--border-md,#d1d5db);box-sizing:border-box;margin-bottom:12px;">';
+  const aguard=_compAguardando();
+  const atrasados=aguard.filter(x=>x.atraso!==null && x.atraso>0);
+  const emAberto=comprasFornecedores.filter(f=>_compPedidoAberto(f.firestoreId)).length;
 
-  const q=_compHubBusca?_normNome(_compHubBusca):'';
-  if(q){
-    // Fornecedores que batem no nome
-    const fornMatch=comprasFornecedores.filter(f=>_normNome(f.nome+' '+(f.codigo||'')).includes(q)).sort((a,b)=>_normNome(a.nome).localeCompare(_normNome(b.nome)));
-    // Produtos que batem — mostra todos os fornecedores que têm aquele produto
-    const itMatch=comprasMP.filter(m=>m.ativo!==false && _normNome(m.nome+' '+m.codigo).includes(q))
-      .sort((a,b)=>_normNome(a.nome).localeCompare(_normNome(b.nome))||_normNome(a.fornecedorNome).localeCompare(_normNome(b.fornecedorNome)));
-    if(fornMatch.length){
-      html+='<div style="font-size:12px;font-weight:800;color:var(--mc-azul);margin:6px 0 6px;">🏢 Fornecedores ('+fornMatch.length+')</div>';
-      html+=fornMatch.map(_compFornCardHtml).join('');
-    }
-    if(itMatch.length){
-      html+='<div style="font-size:12px;font-weight:800;color:var(--mc-verde);margin:14px 0 6px;">📦 Produtos ('+itMatch.length+') — toque para pedir no fornecedor</div>';
-      html+=itMatch.slice(0,60).map(m=>{
-        const f=_compForn(m.fornecedorId)||{};
-        return '<div class="card" style="margin-bottom:6px;cursor:pointer;padding:10px 12px;" onclick="compAbrirPedido(\''+m.fornecedorId+'\')">'+
-          '<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;">'+
-          '<div style="flex:1;min-width:0;"><div style="font-size:14px;font-weight:600;">'+m.nome+'</div>'+
-          '<div style="font-size:11px;color:var(--text-secondary);margin-top:1px;">🏢 '+(m.fornecedorNome||f.nome||'')+' · cód '+m.codigo+(m.unidade?' · '+m.unidade:'')+'</div></div>'+
-          (m.precoKg?'<div style="text-align:right;white-space:nowrap;"><div style="font-size:13px;font-weight:700;color:var(--mc-verde);">'+_fmtRS(m.precoKg)+'</div><div style="font-size:9px;color:var(--text-muted);">por kg</div></div>':'')+
-          '<span style="color:var(--text-muted);font-size:18px;">›</span>'+
-          '</div></div>';
-      }).join('');
-      if(itMatch.length>60) html+='<div style="font-size:11px;color:var(--text-secondary);text-align:center;padding:6px;">Mostrando 60 de '+itMatch.length+'. Refine a busca.</div>';
-    }
-    if(!fornMatch.length && !itMatch.length) html+='<div class="empty" style="padding:24px;">Nada encontrado para "'+_compHubBusca+'".</div>';
-    el.innerHTML=html;
-    return;
+  const aba=(v,emoji,txt,n,cor)=>'<button onclick="setCompAba(\''+v+'\')" style="flex:1;min-width:104px;background:'+(_compAba===v?(cor||'var(--mc-azul,#2563eb)'):'#fff')+';color:'+(_compAba===v?'#fff':'var(--text-secondary)')+';border:1px solid '+(_compAba===v?(cor||'var(--mc-azul,#2563eb)'):'var(--border)')+';border-radius:10px;padding:10px 8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">'+
+    emoji+' '+txt+(n?('<span style="display:inline-block;background:'+(_compAba===v?'rgba(255,255,255,.28)':(cor||'var(--mc-azul,#2563eb)'))+';color:#fff;border-radius:99px;padding:0 7px;margin-left:5px;font-size:11px;">'+n+'</span>'):'')+'</button>';
+
+  let html='<div style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap;">'+
+    aba('pedir','🛒','Pedir',emAberto)+
+    aba('aguardando','🚚','Chegando',aguard.length, atrasados.length?'#dc2626':'#d97706')+
+    aba('historico','📚','Histórico',0)+
+  '</div>';
+
+  if(atrasados.length && _compAba!=='aguardando'){
+    html+='<button onclick="setCompAba(\'aguardando\')" class="card" style="display:flex;align-items:center;gap:10px;width:100%;margin-bottom:12px;cursor:pointer;border:2px solid #dc2626;background:#fef2f2;text-align:left;font-family:inherit;">'+
+      '<span style="font-size:22px;">⏰</span>'+
+      '<span style="flex:1;min-width:0;font-size:13px;font-weight:800;color:#b91c1c;">'+atrasados.length+' pedido(s) com entrega atrasada</span>'+
+      '<span style="font-size:18px;color:#dc2626;">›</span></button>';
   }
 
-  // sem busca: avisos + lista de fornecedores
-  const diaSemana=['domingo','segunda','terça','quarta','quinta','sexta','sábado'];
-  const hojeDia=diaSemana[new Date().getDay()];
-  const amanhaDia=diaSemana[(new Date().getDay()+1)%7];
-  // Avisos: apenas pedidos EM ANDAMENTO (não concluídos) com entrega próxima (previsão ou dia fixo hoje/amanhã)
-  const abertos=comprasPedidos.filter(p=>p.status!=='oc_gerada'&&p.status!=='recebido'&&p.status!=='cancelado'&&(p.itens||[]).length>0);
-  const avisos=abertos.filter(p=>{
-    if(_compPrevisaoProxima(p.previsaoEntrega)) return true;
-    const f=_compForn(p.fornecedorId)||{}; const d=_normNome(f.diaEntrega||'');
-    return d && (d.includes(_normNome(hojeDia))||d.includes(_normNome(amanhaDia)));
-  });
-  if(avisos.length){
-    html+='<div class="card" style="border-left:3px solid var(--mc-dourado);background:rgba(217,119,6,.06);margin-bottom:12px;"><div style="font-size:12px;font-weight:700;color:#d97706;">🔔 Entrega próxima</div><div style="font-size:12px;color:var(--text-secondary);margin-top:3px;">'+avisos.map(p=>{ const f=_compForn(p.fornecedorId)||{}; return (p.fornecedorNome||f.nome||'')+' ('+(p.previsaoEntrega||f.diaEntrega||'')+')'; }).join(' · ')+'</div></div>';
-  }
-  const nPronto=_compPendentesReq();
-  if(nPronto) html+='<div class="card" style="border-left:3px solid var(--mc-azul);margin-bottom:12px;"><div style="font-size:13px;font-weight:700;color:var(--mc-azul);">📝 '+nPronto+' pedido(s) em andamento nesta semana</div></div>';
-
-  html+=comprasFornecedores.slice().sort((a,b)=>_normNome(a.nome).localeCompare(_normNome(b.nome))).map(_compFornCardHtml).join('');
+  if(_compAba==='pedir')      html+=_compAbaPedir();
+  if(_compAba==='aguardando') html+=_compAbaAguardando(aguard);
+  if(_compAba==='historico')  html+=_compAbaHistorico();
   el.innerHTML=html;
 }
+
+/* ── ABA PEDIR ──────────────────────────────────────────────────── */
+function _compAbaPedir(){
+  const q=_compHubBusca?_normNome(_compHubBusca):'';
+  let html='<input type="text" id="comp-hub-busca" value="'+(_compHubBusca||'').replace(/"/g,'&quot;')+'" oninput="setCompHubBusca(this.value)" placeholder="🔍 Fornecedor ou produto..." style="width:100%;font-size:15px;padding:12px 14px;border-radius:10px;border:1px solid var(--border-md,#d1d5db);box-sizing:border-box;margin-bottom:12px;">';
+  if(q){
+    const fornMatch=comprasFornecedores.filter(f=>_normNome(f.nome+' '+(f.codigo||'')).includes(q))
+      .sort((a,b)=>_normNome(a.nome).localeCompare(_normNome(b.nome)));
+    const itMatch=(comprasMP||[]).filter(m=>m.ativo!==false && _normNome(m.nome+' '+m.codigo).includes(q))
+      .sort((a,b)=>_normNome(a.nome).localeCompare(_normNome(b.nome)));
+    if(fornMatch.length) html+='<div style="font-size:11px;font-weight:800;color:var(--text-secondary);margin:4px 0 6px;letter-spacing:1px;">FORNECEDORES</div>'+fornMatch.map(f=>_compFornCardHtml(f)).join('');
+    if(itMatch.length) html+='<div style="font-size:11px;font-weight:800;color:var(--text-secondary);margin:14px 0 6px;letter-spacing:1px;">PRODUTOS</div>'+
+      itMatch.slice(0,40).map(m=>'<button onclick="compAbrirPedido(\''+escapeJsStr(m.fornecedorId)+'\')" class="card" style="display:flex;align-items:center;gap:10px;width:100%;margin-bottom:6px;cursor:pointer;text-align:left;font-family:inherit;">'+
+        '<span style="flex:1;min-width:0;"><span style="display:block;font-size:14px;font-weight:700;">'+m.nome+'</span>'+
+        '<span style="display:block;font-size:11px;color:var(--text-secondary);">'+(m.codigo||'')+' · '+(m.fornecedorNome||'')+'</span></span>'+
+        '<span style="font-size:18px;color:var(--text-muted);">›</span></button>').join('')+
+      (itMatch.length>40?'<div style="font-size:11px;color:var(--text-muted);text-align:center;padding:6px;">mostrando 40 de '+itMatch.length+'</div>':'');
+    if(!fornMatch.length && !itMatch.length) html+='<div class="empty" style="padding:24px;text-align:center;color:var(--text-secondary);">Nada encontrado para "'+_compHubBusca+'".</div>';
+    return html;
+  }
+  const lista=comprasFornecedores.slice().map(f=>({f, dias:_compDiasAteEntrega(f), aberto:_compPedidoAberto(f.firestoreId)?1:0}))
+    .sort((a,b)=> (b.aberto-a.aberto) || (a.dias-b.dias) || _normNome(a.f.nome).localeCompare(_normNome(b.f.nome)));
+  const comPed=lista.filter(x=>x.aberto>0), prox=lista.filter(x=>!x.aberto && x.dias<=3), resto=lista.filter(x=>!x.aberto && x.dias>3);
+  if(comPed.length) html+='<div style="font-size:11px;font-weight:800;color:#d97706;margin:4px 0 6px;letter-spacing:1px;">📝 PEDIDO EM ABERTO ('+comPed.length+')</div>'+comPed.map(x=>_compFornCardHtml(x.f)).join('');
+  if(prox.length)   html+='<div style="font-size:11px;font-weight:800;color:var(--mc-azul);margin:14px 0 6px;letter-spacing:1px;">🗓 ENTREGA NOS PRÓXIMOS DIAS ('+prox.length+')</div>'+prox.map(x=>_compFornCardHtml(x.f)).join('');
+  if(resto.length)  html+='<div style="font-size:11px;font-weight:800;color:var(--text-secondary);margin:14px 0 6px;letter-spacing:1px;">🏢 DEMAIS FORNECEDORES ('+resto.length+')</div>'+resto.map(x=>_compFornCardHtml(x.f)).join('');
+  return html;
+}
+
+/* ── ABA CHEGANDO ───────────────────────────────────────────────── */
+function _compAbaAguardando(aguard){
+  if(!aguard.length) return '<div style="background:var(--bg-primary);border:1px solid #a7f3d0;border-radius:12px;padding:26px;text-align:center;">'+
+    '<div style="font-size:38px;">✅</div><div style="font-size:15px;font-weight:800;margin-top:8px;">Nada aguardando entrega</div>'+
+    '<div style="font-size:12px;color:var(--text-secondary);margin-top:5px;">Tudo que foi pedido já chegou.</div></div>';
+  const total=aguard.reduce((t,x)=>t+(x.p.totalRS||0),0);
+  return '<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px;">'+
+    '<div style="font-size:13px;font-weight:800;">'+aguard.length+' pedido(s) a caminho</div>'+
+    '<div style="font-size:13px;font-weight:800;color:var(--mc-verde);">'+_fmtRS(total)+'</div></div>'+
+  aguard.map(({p,e,prev,atraso})=>{
+    const atrasado=atraso!==null&&atraso>0, hj=atraso===0;
+    const cor=atrasado?'#dc2626':(hj?'#d97706':'var(--mc-azul,#2563eb)');
+    const txt=atraso===null?'sem previsão':(atrasado?('atrasado '+atraso+' dia(s)'):(hj?'chega hoje':'chega em '+Math.abs(atraso)+' dia(s)'));
+    return '<div onclick="compAbrirPedido(\''+escapeJsStr(p.fornecedorId||'')+'\')" class="card" style="cursor:pointer;margin-bottom:8px;border-left:4px solid '+cor+';'+(atrasado?'background:#fef2f2;':'')+'">'+
+      '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">'+
+        '<div style="flex:1;min-width:0;"><div style="font-size:15px;font-weight:800;">'+(p.fornecedorNome||'—')+'</div>'+
+        '<div style="font-size:12px;color:var(--text-secondary);margin-top:2px;">'+((p.itens||[]).length)+' item(ns) · '+_fmtRS(p.totalRS||0)+'</div></div>'+
+        '<div style="text-align:right;white-space:nowrap;"><div style="font-size:12px;font-weight:800;color:'+cor+';">'+(atrasado?'⏰ ':'')+txt+'</div>'+
+        '<div style="font-size:10px;color:var(--text-muted);">'+(prev?('previsto '+prev):'')+'</div></div></div>'+
+      (e.parcial?'<div style="font-size:11px;font-weight:700;color:#d97706;margin-top:4px;">📦 parcial · '+e.recebidas+' de '+e.total+' recebida(s)</div>':'')+
+    '</div>';
+  }).join('');
+}
+
+/* ── ABA HISTÓRICO ──────────────────────────────────────────────── */
+function _compAbaHistorico(){
+  const ult=(comprasPedidos||[]).filter(p=>_compEntregaSit(p).estado==='entregue')
+    .slice().sort((a,b)=>(b.criadoEm2||0)-(a.criadoEm2||0)).slice(0,8);
+  let html='<button onclick="goTo(\'s-compras-hist\')" class="btn btn-primary" style="width:100%;margin-bottom:12px;">📚 Abrir histórico completo</button>';
+  if(!ult.length) return html+'<div class="empty" style="padding:22px;text-align:center;color:var(--text-secondary);">Nenhum pedido entregue ainda.</div>';
+  return html+'<div style="font-size:11px;font-weight:800;color:var(--text-secondary);margin:4px 0 6px;letter-spacing:1px;">ÚLTIMOS RECEBIDOS</div>'+
+    ult.map(p=>'<div class="card" style="margin-bottom:6px;border-left:3px solid #16a34a;">'+
+      '<div style="display:flex;justify-content:space-between;gap:8px;">'+
+        '<div style="flex:1;min-width:0;font-size:14px;font-weight:700;">'+(p.fornecedorNome||'—')+'</div>'+
+        '<div style="font-size:13px;font-weight:700;color:var(--mc-verde);white-space:nowrap;">'+_fmtRS(p.totalRS||0)+'</div></div>'+
+      '<div style="font-size:11px;color:var(--text-secondary);margin-top:2px;">'+((p.itens||[]).length)+' item(ns) · '+_compEntregaSit(p).txt+'</div></div>').join('');
+}
+
+/* Cadastros saem da tela principal e ficam na engrenagem */
+function compAbrirConfig(){
+  const ov=document.createElement('div');
+  ov.id='comp-cfg-modal';
+  ov.style.cssText='position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:3200;display:flex;align-items:center;justify-content:center;padding:16px;';
+  ov.innerHTML='<div style="background:#fff;border-radius:16px;max-width:440px;width:100%;padding:18px;">'+
+    '<div style="font-size:17px;font-weight:800;margin-bottom:4px;">⚙️ Cadastros</div>'+
+    '<div style="font-size:12px;color:var(--text-secondary);margin-bottom:14px;">Fornecedores, catálogo e importação.</div>'+
+    '<button class="btn btn-secondary" style="width:100%;margin-bottom:8px;" onclick="document.getElementById(\'comp-cfg-modal\').remove();goTo(\'s-compras-fornlist\')">🏢 Fornecedores ('+(comprasFornecedores||[]).length+')</button>'+
+    '<button class="btn btn-secondary" style="width:100%;margin-bottom:8px;" onclick="document.getElementById(\'comp-cfg-modal\').remove();compCarregarCatalogo()">📦 Carregar catálogo padrão</button>'+
+    '<label class="btn btn-secondary" style="width:100%;margin-bottom:14px;text-align:center;cursor:pointer;display:block;box-sizing:border-box;">📥 Importar planilha'+
+      '<input type="file" accept=".xlsx,.xls" style="display:none" onchange="document.getElementById(\'comp-cfg-modal\').remove();importarComprasPlanilha(this)"></label>'+
+    '<button class="btn btn-secondary" style="width:100%;" onclick="document.getElementById(\'comp-cfg-modal\').remove()">Fechar</button></div>';
+  document.body.appendChild(ov);
+}
+window.compAbrirConfig=compAbrirConfig;
 
 // ---------- FORNECEDORES (cadastro) ----------
 function renderCompFornList(){
@@ -15601,8 +15822,9 @@ function compRenderFooter(){
            '<button class="btn btn-secondary" style="flex:1;" onclick="compExportar()">📲 Enviar ao vendedor</button>';
     linha2='<button class="btn btn-secondary" style="width:100%;margin-top:6px;border-color:var(--mc-azul);color:var(--mc-azul);" onclick="compConfirmarComprador()">✅ Confirmar compra (comprador)</button>';
   } else if(st==='confirmado'){
-    linha1='<button class="btn btn-secondary" style="flex:1;" onclick="compExportar()">📄 Gerar/enviar OC</button>';
-    linha2='<div style="text-align:center;font-size:12px;color:var(--mc-verde);font-weight:700;margin-top:6px;">✅ Compra confirmada · requisição gerada para o Rafael</div>'+
+    // a requisição já foi criada ao confirmar: não faz sentido oferecer "gerar OC"
+    linha1='<button class="btn btn-secondary" style="flex:1;" onclick="compExportar()">📲 Enviar ao fornecedor</button>';
+    linha2='<div style="text-align:center;font-size:12px;color:var(--mc-verde);font-weight:700;margin-top:6px;">✅ Compra confirmada · requisição já enviada ao Rafael</div>'+
            '<button class="btn btn-secondary" style="width:100%;margin-top:6px;font-size:12px;" onclick="compReabrir()">↩️ Voltar p/ solicitado</button>';
   } else {
     linha1='<button class="btn btn-secondary" style="flex:1;" onclick="compExportar()">📲 Exportar OC</button>'+
@@ -22124,6 +22346,7 @@ function amAbrir(id, paraEmbalagem){
           '<button onclick="amImprimir(\''+a.firestoreId+'\')" title="Imprimir amostra" style="background:#fff;border:1px solid var(--border);border-radius:8px;padding:7px 11px;font-size:16px;cursor:pointer;font-family:inherit;">🖨️</button>'+
         '</div></div>'+
       '<div style="font-size:13px;color:var(--text-secondary);margin-top:3px;">📅 Entrega '+a.entrega+' · '+total+' produto(s) · '+(a.totalUn||0)+' un · '+amFmtPct(a.totalPct||0)+' pct</div>'+
+      (a.assinatura ? '<div style="margin-top:10px;">'+assHtml(a.assinatura,true)+'</div>' : '')+
       (a.obs
         ? '<div style="background:#fffbeb;border:3px solid #d97706;border-radius:12px;padding:12px 14px;margin-top:10px;">'+
             '<div style="display:flex;align-items:center;gap:7px;margin-bottom:5px;">'+
@@ -22195,9 +22418,18 @@ async function amFinalizar(id){
   const total=(a.itens||[]).length, feitos=Object.keys(a.feitos||{}).length;
   if(feitos<total && !confirm('Faltam '+(total-feitos)+' item(ns) sem conferir.\n\nFinalizar assim mesmo?')) return;
   try{
-    await updateDoc(doc(db,'amostras',id),{status:'feita', finalizadoPor:_elevSetor(), finalizadoEm:agora(), finalizadoTs:Date.now()});
-    document.getElementById('am-modal')?.remove();
-    alert('Amostra finalizada! O comercial já vê como pronta.');
+    // a assinatura é pedida antes de fechar; sem ela, nada é gravado
+    assPedir('Assinatura da amostra',
+      a.cliente+' · '+total+' produto(s) · '+(a.totalUn||0)+' unidade(s)',
+      async (ass)=>{
+        try{
+          await updateDoc(doc(db,'amostras',id),{status:'feita', finalizadoPor:_elevSetor(),
+            finalizadoEm:agora(), finalizadoTs:Date.now(), assinatura:ass});
+          document.getElementById('am-modal')?.remove();
+          alert('✓ Amostra finalizada e assinada por '+ass.nome+'.');
+        }catch(e){ alert('Erro: '+e.message); }
+      });
+    return;
   }catch(e){ alert('Erro: '+e.message); }
 }
 window.amFinalizar=amFinalizar;
@@ -22285,7 +22517,13 @@ function amImprimir(id){
     tabela('🥟 SALGADOS', salg)+
     '<div class="tot"><span>Total de unidades: '+(a.totalUn||0)+'</span>'+
       '<span>Total de pacotes: '+amFmtPct(a.totalPct||0)+'</span></div>'+
-    '<div class="ass"><div>Separado por</div><div>Conferido por</div><div>Recebido por</div></div>'+
+    (a.assinatura&&(a.assinatura.tracos||a.assinatura.imagem)
+      ? '<div style="margin-top:26px;border:1px solid #cbd5e1;border-radius:8px;padding:10px 12px;max-width:340px;">'+
+          '<div style="font-size:10px;color:#64748b;font-weight:700;">ASSINATURA</div>'+
+          (a.assinatura.tracos?assSvg(a.assinatura.tracos,70):'<img src="'+a.assinatura.imagem+'" style="height:70px;object-fit:contain;object-position:left;display:block;margin:4px 0;">')+
+          '<div style="font-size:12px;font-weight:700;">'+(a.assinatura.nome||'')+'</div>'+
+          '<div style="font-size:9px;color:#94a3b8;">'+(a.assinatura.em||'')+'</div></div>'
+      : '<div class="ass"><div>Separado por</div><div>Conferido por</div><div>Recebido por</div></div>')+
     '<div class="pe">Solicitado por '+(a.solicitadoPor||'')+' em '+(a.solicitadoEm||'')+
       (finalizada?(' · Finalizado por '+(a.finalizadoPor||'')+' em '+(a.finalizadoEm||'')):'')+
       ' · impresso em '+agora()+'</div>'+
