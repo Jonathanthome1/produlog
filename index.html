@@ -15380,6 +15380,87 @@ function _compPrevEmDias(prev){
 }
 window._compPrevEmDias=_compPrevEmDias;
 
+/* Abre UM pedido específico, pelo id.
+   compAbrirPedido recebe o fornecedor e escolhe o mais recente — o que
+   dava confusão quando o mesmo fornecedor tinha mais de um pedido em
+   aberto: o card mostrava um e a tela abria outro. */
+/* Todos os pedidos de um fornecedor ainda em jogo (montagem ou a caminho).
+   Serve para avisar quando há mais de um — senão é fácil mexer no errado. */
+function _compPedidosAtivosDo(fornId){
+  return (comprasPedidos||[])
+    .filter(p=>p.fornecedorId===fornId && p.status!=='cancelado' && p.status!=='arquivado'
+      && _compEntregaSit(p).estado!=='entregue')
+    .sort((a,b)=>(a.criadoEm2||0)-(b.criadoEm2||0));
+}
+window._compPedidosAtivosDo=_compPedidosAtivosDo;
+
+/* Selo de alerta quando o fornecedor tem mais de um pedido aberto */
+function _compSeloVarios(p){
+  const irmaos=_compPedidosAtivosDo(p.fornecedorId);
+  if(irmaos.length<2) return '';
+  const pos=irmaos.findIndex(x=>x.firestoreId===p.firestoreId)+1;
+  const outros=irmaos.filter(x=>x.firestoreId!==p.firestoreId);
+  return '<div style="display:flex;align-items:center;gap:6px;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:6px 9px;margin-top:7px;">'+
+    '<span style="font-size:13px;">⚠️</span>'+
+    '<span style="flex:1;min-width:0;font-size:11px;font-weight:700;color:#b45309;">'+
+      'Este fornecedor tem '+irmaos.length+' pedidos em aberto · este é o '+pos+'º'+
+      '<span style="display:block;font-weight:400;color:#78350f;margin-top:1px;">'+
+        'outro(s): '+outros.map(o=>(o.criadoEm||'sem data')+' · '+_fmtRS(o.totalRS||0)).join(' | ')+'</span></span>'+
+  '</div>';
+}
+window._compSeloVarios=_compSeloVarios;
+
+/* Mostra os outros pedidos abertos do mesmo fornecedor, para trocar */
+function compVerOutrosPedidos(){
+  if(!_compAvisoVarios) return;
+  const todos=_compPedidosAtivosDo(_compPedido.fornecedorId);
+  const ov=document.createElement('div');
+  ov.id='comp-outros-modal';
+  ov.style.cssText='position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:3200;display:flex;align-items:center;justify-content:center;padding:16px;';
+  ov.innerHTML='<div style="background:#fff;border-radius:16px;max-width:460px;width:100%;max-height:85vh;display:flex;flex-direction:column;">'+
+    '<div style="padding:18px 18px 10px;border-bottom:1px solid var(--border);">'+
+      '<div style="font-size:17px;font-weight:800;">Pedidos de '+(_compPedido.fornecedorNome||'')+'</div>'+
+      '<div style="font-size:12px;color:var(--text-secondary);margin-top:3px;">'+todos.length+' em aberto. Toque para abrir.</div></div>'+
+    '<div style="flex:1;overflow-y:auto;padding:10px 16px;">'+
+      todos.map((o,i)=>{
+        const atual=o.firestoreId===_compPedido.firestoreId;
+        const e=_compEntregaSit(o);
+        return '<button onclick="document.getElementById(\'comp-outros-modal\').remove();'+(atual?'':'compAbrirPedidoId(\''+escapeJsStr(o.firestoreId)+'\')')+'" '+
+          'style="display:block;width:100%;text-align:left;background:'+(atual?'rgba(37,99,235,.08)':'#fff')+';border:2px solid '+(atual?'var(--mc-azul,#2563eb)':'var(--border)')+';border-radius:10px;padding:11px 12px;margin-bottom:6px;cursor:pointer;font-family:inherit;">'+
+          '<div style="display:flex;justify-content:space-between;gap:8px;">'+
+            '<span style="font-size:13px;font-weight:800;">'+(i+1)+'º · '+(o.criadoEm||'sem data')+(atual?' <span style="font-size:10px;color:var(--mc-azul);">(você está aqui)</span>':'')+'</span>'+
+            '<span style="font-size:13px;font-weight:800;color:var(--mc-verde);white-space:nowrap;">'+_fmtRS(o.totalRS||0)+'</span></div>'+
+          '<div style="font-size:11px;color:var(--text-secondary);margin-top:2px;">'+((o.itens||[]).length)+' item(ns) · '+e.txt+
+            (o.previsaoEntrega?(' · previsto '+o.previsaoEntrega):'')+'</div></button>';
+      }).join('')+
+    '</div>'+
+    '<div style="padding:12px 18px 16px;border-top:1px solid var(--border);">'+
+      '<button class="btn btn-secondary" style="width:100%;" onclick="document.getElementById(\'comp-outros-modal\').remove()">Fechar</button></div>'+
+  '</div>';
+  document.body.appendChild(ov);
+}
+window.compVerOutrosPedidos=compVerOutrosPedidos;
+
+let _compAvisoVarios=null;
+function compAbrirPedidoId(pedidoId){
+  const ped=(comprasPedidos||[]).find(x=>x.firestoreId===pedidoId);
+  if(!ped){ alert('Pedido não encontrado.'); return; }
+  // avisa quando há outros pedidos abertos do mesmo fornecedor
+  const irmaos=_compPedidosAtivosDo(ped.fornecedorId);
+  if(irmaos.length>1){
+    const pos=irmaos.findIndex(x=>x.firestoreId===pedidoId)+1;
+    _compAvisoVarios={n:irmaos.length, pos, outros:irmaos.filter(x=>x.firestoreId!==pedidoId)};
+  } else _compAvisoVarios=null;
+  const fornId=ped.fornecedorId;
+  _compFornSel=fornId; _compBusca=''; _compHistItem=null;
+  _compPedido=ped;
+  _compQtd={}; _compPreco={}; _compObs={};
+  (ped.itens||[]).forEach(it=>{ const k=it.mpKey||it.codigo; _compQtd[k]=it.qtd; _compPreco[k]=it.precoKg; _compObs[k]=it.obs||''; });
+  _compCatalogoDo(fornId).forEach(m=>{ const k=m.firestoreId; if(_compPreco[k]===undefined && m.precoKg) _compPreco[k]=m.precoKg; });
+  goTo('s-compra-forn'); renderCompraForn();
+}
+window.compAbrirPedidoId=compAbrirPedidoId;
+
 let _compAba='pedir';   // pedir | aguardando | historico
 function setCompAba(v){ _compAba=v; renderCompras(); }
 window.setCompAba=setCompAba;
@@ -15502,8 +15583,11 @@ function _compAbaPedir(){
   let html='<button onclick="compEscolherFornecedor()" class="btn btn-primary" style="width:100%;margin-bottom:12px;padding:14px;font-size:15px;">+ Novo pedido</button>';
   html+='<input type="text" id="comp-hub-busca" value="" oninput="setCompHubBusca(this.value)" placeholder="🔍 Fornecedor ou produto..." style="width:100%;font-size:15px;padding:12px 14px;border-radius:10px;border:1px solid var(--border-md,#d1d5db);box-sizing:border-box;margin-bottom:12px;">';
 
-  const montando=comprasFornecedores.map(f=>({f, ped:_compPedidoEmMontagem(f.firestoreId)}))
-    .filter(x=>x.ped)
+  // lista os PEDIDOS, não os fornecedores: o mesmo fornecedor pode ter
+  // mais de um pedido em montagem, e antes só o mais recente aparecia
+  const montando=(comprasPedidos||[])
+    .filter(p=>p.status==='solicitado'||p.status==='rascunho'||!p.status)
+    .map(ped=>({ped, f:_compForn(ped.fornecedorId)||{nome:ped.fornecedorNome||'—'}}))
     .sort((a,b)=>(b.ped.criadoEm2||0)-(a.ped.criadoEm2||0));
 
   if(!montando.length){
@@ -15516,17 +15600,17 @@ function _compAbaPedir(){
   html+='<div style="font-size:11px;font-weight:800;color:#d97706;margin:4px 0 6px;letter-spacing:1px;">📝 AGUARDANDO CONFIRMAÇÃO DO COMPRADOR ('+montando.length+')</div>';
   html+=montando.map(({f,ped})=>{
     const t=(ped.itens||[]).length;
-    return '<div onclick="compAbrirPedido(\''+escapeJsStr(f.firestoreId)+'\')" class="card" style="cursor:pointer;margin-bottom:8px;border-left:4px solid #d97706;">'+
+    return '<div onclick="compAbrirPedidoId(\''+escapeJsStr(ped.firestoreId||'')+'\')" class="card" style="cursor:pointer;margin-bottom:8px;border-left:4px solid #d97706;">'+
       '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">'+
         '<div style="flex:1;min-width:0;">'+
           '<div style="font-size:15px;font-weight:800;">'+(f.nome||'')+(f.codigo?(' <span style="font-size:11px;color:var(--text-muted);font-weight:400;">('+f.codigo+')</span>'):'')+'</div>'+
           '<div style="font-size:12px;color:var(--text-secondary);margin-top:2px;">'+t+' item(ns)'+
-            (f.diaEntrega?(' · entrega '+f.diaEntrega):'')+(ped.solicitadoPor?(' · '+ped.solicitadoPor):'')+'</div>'+
+            (ped.criadoEm?(' · pedido em '+ped.criadoEm):'')+(ped.solicitadoPor?(' · '+ped.solicitadoPor):'')+'</div>'+
         '</div>'+
         '<div style="text-align:right;white-space:nowrap;">'+
           '<div style="font-size:13px;font-weight:800;color:var(--mc-verde);">'+_fmtRS(ped.totalRS||0)+'</div>'+
           '<div style="font-size:10px;font-weight:700;color:#d97706;">a confirmar</div></div>'+
-      '</div></div>';
+      '</div>'+_compSeloVarios(ped)+'</div>';
   }).join('');
   return html;
 }
@@ -15598,13 +15682,15 @@ function _compAbaAguardando(aguard){
     const rodape = prev ? ('previsto '+prev)
                         : (espera!==null?('pedido em '+(p.confirmadoEm||p.criadoEm)):'sem data de pedido');
     return '<div class="card" style="margin-bottom:8px;border-left:4px solid '+cor+';'+(atrasado?'background:#fef2f2;':'')+'">'+
-      '<div onclick="compAbrirPedido(\''+escapeJsStr(p.fornecedorId||'')+'\')" style="cursor:pointer;">'+
+      '<div onclick="compAbrirPedidoId(\''+escapeJsStr(p.firestoreId||'')+'\')" style="cursor:pointer;">'+
         '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">'+
           '<div style="flex:1;min-width:0;"><div style="font-size:15px;font-weight:800;">'+(p.fornecedorNome||'—')+'</div>'+
-          '<div style="font-size:12px;color:var(--text-secondary);margin-top:2px;">'+((p.itens||[]).length)+' item(ns) · '+_fmtRS(p.totalRS||0)+'</div></div>'+
+          '<div style="font-size:12px;color:var(--text-secondary);margin-top:2px;">'+((p.itens||[]).length)+' item(ns) · '+_fmtRS(p.totalRS||0)+
+            (p.criadoEm?(' · de '+p.criadoEm):'')+'</div></div>'+
           '<div style="text-align:right;white-space:nowrap;"><div style="font-size:12px;font-weight:800;color:'+cor+';">'+(atrasado?'⏰ ':'')+txt+'</div>'+
           '<div style="font-size:10px;color:var(--text-muted);">'+rodape+'</div></div></div>'+
         (e.parcial?'<div style="font-size:11px;font-weight:700;color:#d97706;margin-top:4px;">📦 parcial · '+e.recebidas+' de '+e.total+' recebida(s)</div>':'')+
+        _compSeloVarios(p)+
       '</div>'+
       (ehAdmin?'<button onclick="event.stopPropagation();compExcluirPedido(\''+escapeJsStr(p.firestoreId)+'\')" style="width:100%;margin-top:8px;background:#fff;border:1px solid #fecaca;color:#dc2626;border-radius:8px;padding:7px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;">🗑 Excluir este pedido</button>':'')+
     '</div>';
@@ -15797,12 +15883,23 @@ async function compNovoPedido(){
 window.compNovoPedido=compNovoPedido;
 function compFornEditarAtual(){ if(_compFornSel) editarCompForn(_compFornSel); }
 function renderCompraForn(){
+  // quando o fornecedor tem mais de um pedido aberto, deixa claro em qual
+  // deles a pessoa está mexendo
+  const _avisoVarios = (typeof _compAvisoVarios!=='undefined' && _compAvisoVarios)
+    ? '<div class="card" style="margin-bottom:10px;border:2px solid #d97706;background:#fffbeb;">'+
+        '<div style="font-size:13px;font-weight:800;color:#b45309;">⚠️ '+_compAvisoVarios.n+' pedidos deste fornecedor em aberto</div>'+
+        '<div style="font-size:12px;color:#78350f;margin-top:3px;line-height:1.5;">Você está no '+_compAvisoVarios.pos+'º.'+
+          ' Os outros: '+_compAvisoVarios.outros.map(o=>(o.criadoEm||'sem data')+' · '+_fmtRS(o.totalRS||0)).join(' | ')+'</div>'+
+        '<button onclick="compVerOutrosPedidos()" style="width:100%;margin-top:7px;background:#fff;border:1px solid #d97706;color:#b45309;border-radius:8px;padding:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">Ver os outros pedidos</button>'+
+      '</div>'
+    : '';
+
   const el=document.getElementById('comp-forn-content'); if(!el) return;
   const f=_compForn(_compFornSel); if(!f){ el.innerHTML='<div class="empty">Fornecedor não encontrado.</div>'; return; }
   const st=_compPedido.status||'solicitado'; const si=_compStatusInfo(st);
   const bloqueado = (st==='oc_gerada'||st==='recebido');
   const semLbl = (_compPedido.semana && typeof semanaLabel==='function')?semanaLabel(_compPedido.semana):'';
-  let html='';
+  let html=_avisoVarios;
   // cabeçalho do fornecedor
   html+='<div class="card" style="margin-bottom:10px;border-left:3px solid var(--mc-azul);">'+
     '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">'+
