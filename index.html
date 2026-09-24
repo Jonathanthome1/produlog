@@ -12937,6 +12937,31 @@ function abrirNovoProduto(kitNome){
   goTo('s-adm-prod-form');
 }
 
+
+/* Unidades por pacote saem da gramatura, não de digitação.
+   peso do pacote ÷ (massa + recheios) = quantas unidades cabem.
+   Ex.: pacote de 1000g, massa 10g + recheio 10g → 50 unidades. */
+function prodUnidadesPorPacote(kgPacote, grMassa, grR1, grR2){
+  const pesoPacoteG=(parseFloat(kgPacote)||0)*1000;
+  const pesoUn=(parseFloat(grMassa)||0)+(parseFloat(grR1)||0)+(parseFloat(grR2)||0);
+  if(pesoPacoteG<=0 || pesoUn<=0) return {un:0, pesoUn, pesoPacoteG};
+  return {un:Math.round(pesoPacoteG/pesoUn), pesoUn, pesoPacoteG};
+}
+window.prodUnidadesPorPacote=prodUnidadesPorPacote;
+
+function prodCalcUnidades(){
+  const v=id=>((document.getElementById(id)||{}).value)||'';
+  const r=prodUnidadesPorPacote(v('prod-kgpct'), v('prod-grmassa'), v('prod-grr1'), v('prod-grr2'));
+  const campo=document.getElementById('prod-qtdpct');
+  const aviso=document.getElementById('prod-qtd-auto');
+  if(campo) campo.value = r.un || '';
+  if(aviso){
+    aviso.textContent = r.un ? ('· '+r.pesoPacoteG+'g ÷ '+r.pesoUn+'g')
+      : (r.pesoUn?'· informe o kg do pacote':'· informe a gramatura');
+  }
+}
+window.prodCalcUnidades=prodCalcUnidades;
+
 function abrirEditarProduto(firestoreId){
   const p=produtosCustom.find(x=>x.firestoreId===firestoreId);
   if(!p)return;
@@ -12980,7 +13005,7 @@ function renderProdutoForm(){
   html+='<div class="card-label">Detalhes do produto</div>';
   html+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px;">';
   html+='<div><label style="font-size:11px;color:var(--text-secondary);">Kg por pacote</label><input type="number" id="prod-kgpct" value="'+(p.kgPacote||'')+'" step="0.001" placeholder="Ex: 1.0" style="width:100%;font-size:16px;padding:11px;border-radius:8px;border:1px solid var(--border-md);box-sizing:border-box;" /></div>';
-  html+='<div><label style="font-size:11px;color:var(--text-secondary);">Unidades por pacote</label><input type="number" id="prod-qtdpct" value="'+(p.qtdPct||'')+'" placeholder="Ex: 40" style="width:100%;font-size:16px;padding:11px;border-radius:8px;border:1px solid var(--border-md);box-sizing:border-box;" /></div>';
+  html+='<div><label style="font-size:11px;color:var(--text-secondary);">Unidades por pacote <span id="prod-qtd-auto" style="color:var(--mc-azul,#2563eb);font-weight:700;"></span></label><input type="number" id="prod-qtdpct" readonly value="'+(p.qtdPct||'')+'" style="width:100%;font-size:15px;padding:8px;border-radius:6px;border:1px solid var(--border-md);margin-top:4px;background:#f1f5f9;color:var(--text-secondary);" title="Calculado pela gramatura" oninput="prodCalcUnidades()"></div>';
   html+='</div>';
   html+='</div>';
 
@@ -12989,12 +13014,13 @@ function renderProdutoForm(){
   html+='<div style="font-size:11px;color:var(--text-secondary);margin-top:4px;margin-bottom:8px;">Para o controle de quebra. Se o produto não tem recheio, deixe 0.</div>';
   html+='<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;">';
   html+='<div><label style="font-size:11px;color:var(--text-secondary);">Massa (gr/un)</label><input type="number" id="prod-grmassa" value="'+(p.grMassa||'')+'" step="0.01" style="width:100%;font-size:16px;padding:11px;border-radius:8px;border:1px solid var(--border-md);box-sizing:border-box;" /></div>';
-  html+='<div><label style="font-size:11px;color:var(--text-secondary);">Recheio 1 (gr/un)</label><input type="number" id="prod-grr1" value="'+(p.grRecheio||'')+'" step="0.01" style="width:100%;font-size:16px;padding:11px;border-radius:8px;border:1px solid var(--border-md);box-sizing:border-box;" /></div>';
-  html+='<div><label style="font-size:11px;color:var(--text-secondary);">Recheio 2 (gr/un)</label><input type="number" id="prod-grr2" value="'+(p.grRecheio2||'')+'" step="0.01" style="width:100%;font-size:16px;padding:11px;border-radius:8px;border:1px solid var(--border-md);box-sizing:border-box;" /></div>';
+  html+='<div><label style="font-size:11px;color:var(--text-secondary);">Recheio 1 (gr/un)</label><input type="number" id="prod-grr1" value="'+(p.grRecheio||'')+'" step="0.01" style="width:100%;font-size:16px;padding:11px;border-radius:8px;border:1px solid var(--border-md);box-sizing:border-box;" / oninput="prodCalcUnidades()"></div>';
+  html+='<div><label style="font-size:11px;color:var(--text-secondary);">Recheio 2 (gr/un)</label><input type="number" id="prod-grr2" value="'+(p.grRecheio2||'')+'" step="0.01" style="width:100%;font-size:16px;padding:11px;border-radius:8px;border:1px solid var(--border-md);box-sizing:border-box;" / oninput="prodCalcUnidades()"></div>';
   html+='</div>';
   html+='</div>';
 
   el.innerHTML=html;
+  if(typeof prodCalcUnidades==='function') prodCalcUnidades();
 }
 
 async function salvarProduto(){
@@ -21571,28 +21597,87 @@ async function libLiberar(fid, qtdEmb, resta){
   const val=parseInt((document.getElementById('lib-in-'+fid)||{}).value)||0;
   if(val<=0){ alert('Informe a quantidade a liberar.'); return; }
   if(val>resta){ alert('Só faltam '+resta+' unidade(s) para liberar.'); return; }
-  await _libGravar(fid, qtdEmb, val);
+  libPedirValidade(fid, qtdEmb, val);
 }
 window.libLiberar=libLiberar;
 
 async function libLiberarTudo(fid, qtdEmb, resta){
   if(typeof mcExigirInternet==='function' && !mcExigirInternet('liberação')) return;
-  if(!confirm('Liberar as '+resta+' unidade(s) restantes?')) return;
-  await _libGravar(fid, qtdEmb, resta);
+  libPedirValidade(fid, qtdEmb, resta);
 }
 window.libLiberarTudo=libLiberarTudo;
 
-async function _libGravar(fid, qtdEmb, val){
+/* O produto liberado entra no contêiner na hora, então a validade precisa
+   ser informada aqui — sem ela o lote não teria como ser controlado. */
+function libPedirValidade(fid, qtdEmb, val){
+  const reg=registros.find(r=>r.firestoreId===fid); if(!reg) return;
+  const prod=(typeof estProd==='function') ? estProd(reg.cod) : null;
+  const dias=(prod && prod.validadeDias) ? prod.validadeDias : ((typeof estConfig!=='undefined' && estConfig.validadeDias)||25);
+  const sug=new Date(); sug.setDate(sug.getDate()+dias);
+  const sugISO=sug.getFullYear()+'-'+String(sug.getMonth()+1).padStart(2,'0')+'-'+String(sug.getDate()).padStart(2,'0');
+
+  const ov=document.createElement('div');
+  ov.id='lib-val-modal';
+  ov.style.cssText='position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:3300;display:flex;align-items:center;justify-content:center;padding:16px;';
+  ov.innerHTML='<div style="background:#fff;border-radius:16px;max-width:440px;width:100%;padding:18px;">'+
+    '<div style="font-size:17px;font-weight:800;">🚛 Liberar para o contêiner</div>'+
+    '<div style="font-size:13px;font-weight:700;margin-top:8px;">'+(reg.produto||'')+'</div>'+
+    '<div style="font-size:12px;color:var(--text-secondary);margin-top:2px;">'+val+' pacote(s) · produção de '+(reg.data||'')+'</div>'+
+    '<label style="font-size:12px;font-weight:600;color:var(--text-secondary);display:block;margin-top:14px;">Validade deste lote <span style="color:#dc2626;">*</span></label>'+
+    '<input type="date" id="lib-val-data" value="'+sugISO+'" style="width:100%;padding:12px;min-height:48px;border:2px solid var(--mc-azul,#2563eb);border-radius:9px;font-size:16px;box-sizing:border-box;margin:4px 0 4px;">'+
+    '<div style="font-size:11px;color:var(--text-secondary);margin-bottom:12px;">Sugerido: '+dias+' dias a partir de hoje. Ajuste se for diferente.</div>'+
+    '<div style="display:flex;gap:8px;">'+
+      '<button class="btn btn-secondary" style="flex:1;" onclick="document.getElementById(\'lib-val-modal\').remove()">Cancelar</button>'+
+      '<button class="btn btn-primary" style="flex:1;" onclick="libConfirmarValidade(\''+escapeJsStr(fid)+'\','+qtdEmb+','+val+')">Liberar</button>'+
+    '</div></div>';
+  document.body.appendChild(ov);
+}
+window.libPedirValidade=libPedirValidade;
+
+async function libConfirmarValidade(fid, qtdEmb, val){
+  const iso=(document.getElementById('lib-val-data')||{}).value||'';
+  if(!iso){ alert('Informe a validade do lote.'); return; }
+  const validade=estISOparaBR(iso);
+  const hojeNum=estDataNum(hoje());
+  if(estDataNum(validade)<hojeNum && !confirm('A validade informada já passou.\n\nConfirmar assim mesmo?')) return;
+  document.getElementById('lib-val-modal')?.remove();
+  await _libGravar(fid, qtdEmb, val, validade);
+}
+window.libConfirmarValidade=libConfirmarValidade;
+
+async function _libGravar(fid, qtdEmb, val, validade){
   const reg=registros.find(r=>r.firestoreId===fid); if(!reg) return;
   const exp=reg.expedicao||{parciais:[],totalLiberado:0};
   const setor=_libSetor();
-  const parciais=[...(exp.parciais||[]),{qtd:val, hora:agora(), setor}];
+  const parciais=[...(exp.parciais||[]),{qtd:val, hora:agora(), setor, validade:validade||''}];
   const totalLiberado=Math.min((exp.totalLiberado||0)+val, qtdEmb);
   try{
     await updateDoc(doc(db,'registros',fid),{expedicao:{parciais,totalLiberado,liberadoPor:setor}});
+    // entra no contêiner na mesma hora, como um lote com validade
+    if(validade) await libEntrarNoContainer(reg, val, validade, setor);
     if(typeof _plToast==='function') _plToast('✓ '+val+' un liberadas por '+setor, '#16a34a');
   }catch(e){ alert('Erro ao liberar: '+e.message); }
 }
+
+/* Cria o lote no contêiner e registra o movimento */
+async function libEntrarNoContainer(reg, qtd, validade, setor){
+  const cod=String(reg.cod||'');
+  const p=(typeof estProd==='function') ? estProd(cod) : null;
+  if(!p){ console.warn('produto não está no controle do contêiner:', cod); return; }
+  try{
+    await addDoc(collection(db,'estoqueCtrlLotes'),{
+      codigo:cod, nome:p.nome||reg.produto||'', pacotes:qtd, saldo:qtd,
+      validade, validadeNum:estDataNum(validade),
+      dataEntrada:hoje(), responsavel:setor,
+      obs:'Liberado pela '+setor+' · produção de '+(reg.data||''),
+      autor:setor, hora:agora(), ts:Date.now(), origemLiberacao:reg.firestoreId
+    });
+    await estGravarMov({local:'container', codigo:cod, nome:p.nome||reg.produto||'', pacotes:qtd,
+      tipo:'entrada', motivo:'Liberação feita pela '+setor,
+      obs:'val '+validade+' · produção de '+(reg.data||'')});
+  }catch(e){ console.error('entrada no contêiner',e); alert('A liberação foi registrada, mas não consegui dar entrada no contêiner: '+e.message); }
+}
+window.libEntrarNoContainer=libEntrarNoContainer;
 
 /* ══════════════════════════════════════════════════════════════════
    RETORNO DE MERCADORIAS
