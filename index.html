@@ -16987,7 +16987,8 @@ function _carregResetMult(){
 function _carregRegistrar(codigo, nome, ean){
   if(_carregConf&&_carregConf.pausado){ _carregToast('⏸ Carregamento PAUSADO — bipagem bloqueada', '#d97706'); return; }
   const it=_carregConf.itens.find(i=>_codEq(i.codigo,codigo));
-  if(!it){ _carregToast('⚠️ '+(nome||'Produto')+' não faz parte deste carregamento!', '#ef4444'); _carregFocus(); return; }
+  // produto fora da lista: antes era só uma tarja e a pessoa seguia bipando
+  if(!it){ _carregForaDaLista(nome||'Produto', codigo, ean); return; }
   const cur=parseInt(it.qtdBipada)||0, sol=parseInt(it.qtdSolicitada)||0;
   let add=_carregMultAtual();
   _carregResetMult(); // one-shot: volta ao padrão (1) após este lançamento
@@ -17003,6 +17004,63 @@ function _carregRegistrar(codigo, nome, ean){
   _carregPersist();
   renderCarregConf(); _carregFocus();
 }
+/* Aviso de tela cheia quando o produto NÃO está no carregamento.
+   Antes aparecia só uma tarja vermelha e a bipagem continuava, o que
+   deixava a pessoa carregar mercadoria que não era daquela rota. */
+function _carregForaDaLista(nome, codigo, ean){
+  let ov=document.getElementById('carreg-bloqueio'); if(ov) ov.remove();
+  ov=document.createElement('div'); ov.id='carreg-bloqueio';
+  ov.style.cssText='position:fixed;inset:0;background:rgba(124,45,18,.97);z-index:10001;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center;color:#fff;';
+  ov.innerHTML='<div style="font-size:90px;line-height:1;margin-bottom:10px;">🚫</div>'+
+    '<div style="font-size:38px;font-weight:900;letter-spacing:1px;margin-bottom:8px;">NÃO É DESTA ROTA!</div>'+
+    '<div style="font-size:26px;font-weight:800;margin-bottom:6px;max-width:90%;">'+nome+'</div>'+
+    '<div style="font-size:18px;font-weight:600;opacity:.92;margin-bottom:4px;">'+(codigo?('cód '+codigo):'')+(ean?(' · '+ean):'')+'</div>'+
+    '<div style="font-size:17px;font-weight:600;opacity:.9;margin:14px 0 22px;max-width:90%;line-height:1.5;">Este produto não faz parte deste carregamento.<br>Separe ele e confira antes de continuar.</div>'+
+    '<button id="carreg-fora-ok" style="background:#fff;color:#7c2d12;border:none;font-size:24px;font-weight:900;padding:18px 50px;border-radius:14px;cursor:pointer;box-shadow:0 8px 24px rgba(0,0,0,.3);">OK, ENTENDI</button>';
+  document.body.appendChild(ov);
+  try{ navigator.vibrate && navigator.vibrate([120,60,120]); }catch(e){}
+  const btn=document.getElementById('carreg-fora-ok');
+  btn.onclick=()=>{ ov.remove(); _carregFocus(); };
+  setTimeout(()=>btn.focus(),50);
+}
+window._carregForaDaLista=_carregForaDaLista;
+
+/* Últimos lançamentos, para quando a pessoa se perde no meio da bipagem */
+function carregVerUltimos(){
+  if(!_carregConf) return;
+  // junta o log de todos os itens e ordena do mais recente
+  const todos=[];
+  (_carregConf.itens||[]).forEach(it=>{
+    (it.log||[]).forEach(l=>todos.push({nome:it.nome, codigo:it.codigo, ...l}));
+  });
+  todos.sort((a,b)=>String(b.em||'').localeCompare(String(a.em||'')));
+  const ult=todos.slice(0,10);
+
+  const ov=document.createElement('div');
+  ov.id='carreg-ultimos';
+  ov.style.cssText='position:fixed;inset:0;background:rgba(15,23,42,.6);z-index:10000;display:flex;align-items:center;justify-content:center;padding:16px;';
+  ov.innerHTML='<div style="background:#fff;border-radius:16px;max-width:480px;width:100%;max-height:85vh;display:flex;flex-direction:column;">'+
+    '<div style="padding:18px 18px 10px;border-bottom:1px solid var(--border);">'+
+      '<div style="font-size:17px;font-weight:800;">🕐 Últimos lançamentos</div>'+
+      '<div style="font-size:12px;color:var(--text-secondary);margin-top:3px;">'+
+        (ult.length?('Os '+ult.length+' mais recentes, do último para o primeiro.'):'Nada foi bipado ainda neste carregamento.')+'</div></div>'+
+    '<div style="flex:1;overflow-y:auto;padding:10px 16px;">'+
+      (ult.length
+        ? ult.map((l,i)=>'<div style="display:flex;align-items:center;gap:10px;padding:10px 11px;border:1px solid '+(i===0?'var(--mc-azul,#2563eb)':'var(--border)')+';background:'+(i===0?'rgba(37,99,235,.06)':'#fff')+';border-radius:10px;margin-bottom:6px;">'+
+            '<span style="flex:0 0 auto;font-size:20px;font-weight:900;color:var(--mc-azul,#2563eb);">+'+l.qtd+'</span>'+
+            '<span style="flex:1;min-width:0;">'+
+              '<span style="display:block;font-size:14px;font-weight:700;">'+(l.nome||'')+(i===0?' <span style="font-size:10px;color:var(--mc-azul);">último</span>':'')+'</span>'+
+              '<span style="display:block;font-size:11px;color:var(--text-secondary);">cód '+(l.codigo||'')+' · '+(l.via==='bip'?'📷 bipado':'⌨️ digitado')+' · '+(l.em||'')+'</span></span>'+
+          '</div>').join('')
+        : '<div style="padding:24px;text-align:center;color:var(--text-secondary);font-size:13px;">Nenhum lançamento.</div>')+
+    '</div>'+
+    '<div style="padding:12px 18px 16px;border-top:1px solid var(--border);">'+
+      '<button class="btn btn-secondary" style="width:100%;" onclick="document.getElementById(\'carreg-ultimos\').remove();_carregFocus()">Fechar</button></div>'+
+  '</div>';
+  document.body.appendChild(ov);
+}
+window.carregVerUltimos=carregVerUltimos;
+
 function _carregBloqueio(it, cur, sol, add){
   let ov=document.getElementById('carreg-bloqueio'); if(ov) ov.remove();
   ov=document.createElement('div'); ov.id='carreg-bloqueio';
@@ -17149,6 +17207,7 @@ function renderCarregConf(){
       '<div id="carreg-mult-aviso" style="background:#fff7ed;border:2px solid #d97706;border-radius:10px;padding:10px 12px;margin-bottom:8px;text-align:center;display:'+(_carregMult>1?'block':'none')+';">'+(_carregMult>1?'<div style="font-size:15px;font-weight:900;color:#c2410c;">⚡ PRÓXIMO PRODUTO = '+_carregMult+' pacotes</div><div style="font-size:11px;color:#9a3412;font-weight:600;">Vale para o bipe OU para o código digitado · depois volta para 1</div>':'')+'</div>'+
       '<input type="text" id="carreg-bip" readonly placeholder="📡 PODE BIPAR" autocomplete="off" style="width:100%;font-size:22px;padding:18px;border-radius:12px;border:2px solid '+(_carregMult>1?'#d97706':'var(--mc-azul)')+';box-sizing:border-box;text-align:center;font-weight:800;background:#fff;">'+
       '<div style="font-size:12px;color:#64748b;font-weight:600;margin:8px 0 6px;text-align:center;">✅ Pode bipar direto — não precisa clicar em nada</div>'+
+      '<button onclick="carregVerUltimos()" style="width:100%;background:#fff;border:1px solid var(--border);color:var(--text-secondary);border-radius:9px;padding:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;margin-bottom:8px;">🕐 Ver os últimos 10 lançamentos</button>'+
       '<div style="border-top:1px dashed #cbd5e1;padding-top:8px;">'+
         '<div style="font-size:11px;color:#64748b;font-weight:700;margin-bottom:4px;">Bip não funcionou? Digite o CÓDIGO do produto:</div>'+
         '<div style="display:flex;gap:8px;">'+
@@ -18555,13 +18614,21 @@ function laAnaliseProduto(cod, nome){
   let c={embAntecip:0, jaLiberado:0, porDia:[]};
   try{ c=laCalcular(cod, nome); }catch(e){}
   const podeLiberar=c.embAntecip||0;
+  // produzido mas ainda não embalado: dá para cobrir a falta mandando embalar
+  const soFaltaEmbalar=(c.porDia||[])
+    .filter(d=>!d.lancado)
+    .reduce((t,d)=>t+(Number(d.naoEmb)||0), 0);
   const falta=Math.max(0, -diferenca);
+  let resolve;
+  if(falta===0) resolve='ok';
+  else if(podeLiberar>=falta) resolve='libera';                       // já embalado, é só liberar
+  else if(podeLiberar+soFaltaEmbalar>=falta) resolve='embalar';       // tem produzido, falta embalar
+  else if(podeLiberar>0 || soFaltaEmbalar>0) resolve='parcial';       // cobre só uma parte
+  else resolve='produzir';                                            // não tem nada
   return {
     cod:String(cod), nome, estoque, media:m.media, diasMedia:m.dias, previsto, margem,
-    diferenca, falta, podeLiberar, jaLiberado:c.jaLiberado||0,
-    // cobre a falta com o que já está embalado e não lançado?
-    resolve: falta===0 ? 'ok' : (podeLiberar>=falta ? 'libera' : (podeLiberar>0 ? 'parcial' : 'produzir')),
-    sobra: podeLiberar-falta
+    diferenca, falta, podeLiberar, soFaltaEmbalar, jaLiberado:c.jaLiberado||0,
+    resolve, sobra: podeLiberar-falta
   };
 }
 
@@ -18687,10 +18754,16 @@ function laControlesAnalise(){
 
 /* Situação: o que fazer com este produto */
 function _laSituacao(a){
-  if(a.resolve==='ok')      return {txt:'✓ ok',                cor:'#16a34a', det:'estoque cobre a média'};
-  if(a.resolve==='libera')  return {txt:'⚡ liberar '+a.falta,  cor:'#2563eb', det:'tem '+a.podeLiberar+' embalado'};
-  if(a.resolve==='parcial') return {txt:'⚠ só '+a.podeLiberar, cor:'#d97706', det:'falta '+(a.falta-a.podeLiberar)+' para produzir'};
-  return {txt:'🔴 produzir '+a.falta, cor:'#dc2626', det:'nada embalado para liberar'};
+  if(a.resolve==='ok')      return {txt:'✓ ok', cor:'#16a34a', det:'estoque cobre a média'};
+  if(a.resolve==='libera')  return {txt:'⚡ liberar '+a.falta, cor:'#2563eb', det:'tem '+a.podeLiberar+' embalado'};
+  if(a.resolve==='embalar') return {txt:'📦 mandar embalar', cor:'#7c3aed',
+    det:(a.podeLiberar?(a.podeLiberar+' embalado + '):'')+a.soFaltaEmbalar+' produzido a embalar'};
+  if(a.resolve==='parcial'){
+    const cobre=a.podeLiberar+a.soFaltaEmbalar;
+    return {txt:'⚠ só '+cobre+' de '+a.falta, cor:'#d97706',
+      det:'falta produzir '+(a.falta-cobre)+(a.soFaltaEmbalar?(' · '+a.soFaltaEmbalar+' a embalar'):'')};
+  }
+  return {txt:'🔴 produzir '+a.falta, cor:'#dc2626', det:'nada produzido para liberar'};
 }
 
 function renderLaResumo(){
@@ -18763,6 +18836,109 @@ function renderLaResumo(){
 window.renderLaResumo=renderLaResumo;
 
 /* ── TABELA EXPANDIDA: a análise do dia ─────────────────────────── */
+/* Lançar direto da tabela de análise: escolhe de qual PRODUÇÃO sai o
+   ajuste, para o estorno ficar amarrado ao dia certo. */
+let _laLancCod='', _laLancNome='';
+function laLancarDaAnalise(cod, nome){
+  _laLancCod=String(cod); _laLancNome=nome||'';
+  let c;
+  try{ c=laCalcular(cod, nome); }catch(e){ alert('Não consegui ler as produções deste produto.'); return; }
+  const dias=(c.porDia||[]).filter(d=>!d.lancado && ((d.emb||0)+(d.naoEmb||0))>0)
+    .sort((a,b)=>laDataKey(a.data).localeCompare(laDataKey(b.data)));
+
+  const ov=document.createElement('div');
+  ov.id='la-lanc-modal';
+  ov.style.cssText='position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:3300;display:flex;align-items:center;justify-content:center;padding:16px;';
+  ov.innerHTML='<div style="background:#fff;border-radius:16px;max-width:480px;width:100%;max-height:90vh;display:flex;flex-direction:column;">'+
+    '<div style="padding:18px 18px 10px;border-bottom:1px solid var(--border);">'+
+      '<div style="font-size:17px;font-weight:800;">⚡ Liberar '+(nome||'')+'</div>'+
+      '<div style="font-size:12px;color:var(--text-secondary);margin-top:3px;">'+
+        'Disponível para liberar: <strong>'+(c.embAntecip||0)+'</strong> pct'+
+        ((c.jaLiberado||0)?(' · '+c.jaLiberado+' já liberado'):'')+'</div></div>'+
+    '<div style="flex:1;overflow-y:auto;padding:12px 16px;">'+
+      (dias.length
+        ? '<div style="font-size:12px;font-weight:700;color:var(--text-secondary);margin-bottom:7px;">De qual produção sai?</div>'+
+          dias.map((d,i)=>{
+            const emb=d.emb||0, nEmb=d.naoEmb||0;
+            return '<label style="display:flex;align-items:flex-start;gap:10px;padding:11px;border:1px solid var(--border);border-radius:10px;margin-bottom:7px;cursor:pointer;">'+
+              '<input type="radio" name="la-lanc-dia" value="'+escapeJsStr(d.data+'|'+d.tipo)+'"'+(i===0?' checked':'')+' onchange="laLancSetMax()" data-emb="'+emb+'" data-nemb="'+nEmb+'" style="width:20px;height:20px;margin:1px 0 0;flex:0 0 auto;cursor:pointer;">'+
+              '<span style="flex:1;min-width:0;">'+
+                '<span style="display:block;font-size:14px;font-weight:700;">'+d.data+(i===0?' <span style="font-size:10px;color:#16a34a;font-weight:800;">mais antigo</span>':'')+'</span>'+
+                '<span style="display:block;font-size:11px;color:var(--text-secondary);margin-top:1px;">'+
+                  (emb?('<strong style="color:#16a34a;">'+emb+' embalado</strong>'):'')+
+                  (emb&&nEmb?' · ':'')+
+                  (nEmb?('<strong style="color:#7c3aed;">'+nEmb+' produzido a embalar</strong>'):'')+
+                '</span></span></label>';
+          }).join('')
+        : '<div style="background:#fffbeb;border:1px solid #fde68a;border-radius:9px;padding:11px;font-size:12px;color:#b45309;">Nenhuma produção em aberto. O ajuste ficará sem dia e o estorno terá de ser feito à mão.</div>')+
+      '<label style="font-size:12px;font-weight:600;color:var(--text-secondary);display:block;margin-top:12px;">Quantidade a liberar (pct)</label>'+
+      '<input type="number" id="la-lanc-qtd" min="1" placeholder="quantos pacotes" style="width:100%;padding:12px;min-height:48px;border:1px solid var(--border-md,#d1d5db);border-radius:9px;font-size:16px;box-sizing:border-box;margin:4px 0 4px;">'+
+      '<div id="la-lanc-aviso" style="font-size:11px;min-height:16px;"></div>'+
+    '</div>'+
+    '<div style="padding:12px 18px 16px;border-top:1px solid var(--border);">'+
+      '<button onclick="laLancConfirmar()" class="btn btn-primary" style="width:100%;margin-bottom:8px;">'+(eligoPronto()?'Lançar entrada no ELIGO':'Registrar ajuste')+'</button>'+
+      '<button class="btn btn-secondary" style="width:100%;" onclick="document.getElementById(\'la-lanc-modal\').remove()">Cancelar</button></div>'+
+  '</div>';
+  document.body.appendChild(ov);
+  laLancSetMax();
+  setTimeout(()=>document.getElementById('la-lanc-qtd')?.focus(),60);
+}
+window.laLancarDaAnalise=laLancarDaAnalise;
+
+function laLancSetMax(){
+  const r=document.querySelector('input[name="la-lanc-dia"]:checked');
+  const av=document.getElementById('la-lanc-aviso'); if(!av) return;
+  if(!r){ av.innerHTML=''; return; }
+  const emb=parseInt(r.dataset.emb)||0, nEmb=parseInt(r.dataset.nemb)||0;
+  av.innerHTML='<span style="color:var(--text-secondary);">Esse dia tem '+emb+' embalado'+
+    (nEmb?(' e '+nEmb+' a embalar'):'')+'.</span>';
+}
+window.laLancSetMax=laLancSetMax;
+
+async function laLancConfirmar(){
+  const qtd=parseInt((document.getElementById('la-lanc-qtd')||{}).value)||0;
+  if(qtd<=0){ alert('Informe a quantidade.'); return; }
+  const r=document.querySelector('input[name="la-lanc-dia"]:checked');
+  const [dia,tipo]=r ? String(r.value).split('|') : ['',''];
+  const emb=r?(parseInt(r.dataset.emb)||0):0;
+  const nEmb=r?(parseInt(r.dataset.nemb)||0):0;
+
+  const auto=eligoPronto();
+  let aviso='';
+  if(qtd>emb+nEmb && r) aviso='\n\n⚠️ Esse dia só tem '+(emb+nEmb)+' pct (embalado + a embalar).';
+  else if(qtd>emb && r) aviso='\n\n📦 Parte ainda não está embalada — mande embalar antes de carregar.';
+
+  if(!confirm('Liberar '+qtd+' pct de '+_laLancNome+'?'+
+    (dia?('\n\nProdução de '+dia):'\n\nSem dia de produção vinculado.')+aviso+
+    (auto?'\n\nA entrada vai para o ELIGO agora.':'\n\n(Lance no ERP à mão depois.)'))) return;
+
+  let eligoId='', eligoErro='';
+  if(auto){
+    const rr=await eligoLancar(_laLancCod, qtd, 'entrada', dia||laDataHoje(),
+      'Liberacao antecipada ProduLog - '+_laLancNome+' - producao '+(dia||'s/dia'));
+    if(rr.cancelado) return;
+    if(!rr.ok){
+      if(!confirm('⚠️ O ELIGO não aceitou:\n\n'+rr.erro+'\n\nRegistrar mesmo assim e lançar à mão?')) return;
+      eligoErro=rr.erro;
+    } else eligoId=rr.id||'sem-id';
+  }
+  try{
+    await addDoc(collection(db,'ajustesAbertos'),{
+      cod:_laLancCod, produto:_laLancNome, qtd,
+      qtdSolicitada:qtd, acimaEmbalado:(qtd>emb),
+      data:dia||'', tipo:tipo||'salgado',
+      solicitacaoId:'', solicitante:'(análise diária)',
+      status:'aberto', criadoEm:agora(), criadoPor:_demAutor(), timestamp:Date.now(),
+      eligoEntradaId:eligoId, eligoEntradaEm:eligoId?agora():'', eligoEntradaErro:eligoErro,
+      entradaManual:!auto
+    });
+    document.getElementById('la-lanc-modal')?.remove();
+    alert('✓ '+qtd+' pct liberado'+(dia?(' · produção de '+dia):'')+(eligoId?('\n\nELIGO nº '+eligoId):'')+
+      (qtd>emb?'\n\n📦 Lembre: parte ainda precisa ser embalada.':''));
+  }catch(e){ alert('Erro: '+e.message); }
+}
+window.laLancConfirmar=laLancConfirmar;
+
 function renderLaAnalise(el, html, ajustes){
   html+=laControlesAnalise();
 
@@ -18793,12 +18969,13 @@ function renderLaAnalise(el, html, ajustes){
   .filter(a=>a.colado || a.media>0 || a.estornar>0 || a.podeLiberar>0);
 
   // problema primeiro: quem vai faltar e não tem como liberar
-  const peso={produzir:0, parcial:1, libera:2, ok:3};
+  const peso={produzir:0, parcial:1, embalar:2, libera:3, ok:4};
   linhas.sort((a,b)=> (peso[a.resolve]-peso[b.resolve]) || (a.diferenca-b.diferenca));
 
   const vaiFaltar=linhas.filter(a=>a.falta>0);
   const soLiberar=vaiFaltar.filter(a=>a.resolve==='libera');
-  const temProduzir=vaiFaltar.filter(a=>a.resolve!=='libera');
+  const soEmbalar=vaiFaltar.filter(a=>a.resolve==='embalar');
+  const temProduzir=vaiFaltar.filter(a=>a.resolve==='produzir'||a.resolve==='parcial');
 
   html+='<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px;">'+
     '<div class="card" style="text-align:center;padding:12px 6px;border-top:3px solid '+(vaiFaltar.length?'#d97706':'#16a34a')+';">'+
@@ -18808,7 +18985,7 @@ function renderLaAnalise(el, html, ajustes){
     '<div class="card" style="text-align:center;padding:12px 6px;border-top:3px solid #2563eb;">'+
       '<div style="font-size:10px;font-weight:800;color:var(--text-secondary);">DÁ PARA LIBERAR</div>'+
       '<div style="font-size:26px;font-weight:900;color:#2563eb;line-height:1.1;">'+soLiberar.length+'</div>'+
-      '<div style="font-size:10px;color:var(--text-muted);">resolve antecipando</div></div>'+
+      '<div style="font-size:10px;color:var(--text-muted);">'+(soEmbalar.length?('+'+soEmbalar.length+' a embalar'):'resolve antecipando')+'</div></div>'+
     '<div class="card" style="text-align:center;padding:12px 6px;border-top:3px solid '+(temProduzir.length?'#dc2626':'#16a34a')+';">'+
       '<div style="font-size:10px;font-weight:800;color:var(--text-secondary);">PRECISA PRODUZIR</div>'+
       '<div style="font-size:26px;font-weight:900;color:'+(temProduzir.length?'#dc2626':'#16a34a')+';line-height:1.1;">'+temProduzir.length+'</div>'+
@@ -18836,7 +19013,9 @@ function renderLaAnalise(el, html, ajustes){
       const corD=a.diferenca<0?'#dc2626':'#16a34a';
       return '<tr style="border-top:1px solid #f1f5f9;background:'+(a.resolve==='produzir'?'#fef2f2':(i%2?'#fafbfc':'#fff'))+';">'+
         '<td style="padding:8px 6px;font-weight:700;color:var(--text-secondary);">'+a.cod+'</td>'+
-        '<td style="padding:8px 6px;font-weight:600;">'+a.nome+
+        '<td style="padding:8px 6px;font-weight:600;">'+
+          '<button onclick="laLancarDaAnalise(\''+escapeJsStr(a.cod)+'\',\''+escapeJsStr(a.nome)+'\')" title="Liberar este produto" style="background:none;border:none;color:var(--mc-azul,#2563eb);font-size:15px;cursor:pointer;padding:0 5px 0 0;font-family:inherit;">⚡</button>'+
+          a.nome+
           (a.jaLiberado?('<div style="font-size:10px;color:var(--text-muted);">'+a.jaLiberado+' já liberado</div>'):'')+'</td>'+
         '<td style="padding:8px 5px;text-align:right;font-weight:700;'+(a.colado&&a.estoque===0?'color:#dc2626;':'')+'">'+
           (a.colado ? (a.estoque===0?'0':a.estoque) : '—')+'</td>'+
