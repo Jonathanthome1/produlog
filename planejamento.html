@@ -800,7 +800,7 @@ window.abrirProducoesAnteriores = async () => {
 
 // NOVO: Processar seleção de data
 window.selecionarDataProducao = async (data) => {
-  console.log('🔵 selecionarDataProducao() chamada com:', data);
+  console.log('🔵 window.selecionarDataProducao() chamada com:', data);
   console.log('   producoesAnteriores ANTES:', producoesAnteriores);
   
   const checkbox = document.getElementById('data-'+data);
@@ -928,7 +928,7 @@ window.abrirSimulacao = (cod) => {
 window.toggleDiaSimul = async (cod, dia) => {
   if(diasSimulIgnorar.has(dia)) diasSimulIgnorar.delete(dia);
   else diasSimulIgnorar.add(dia);
-  abrirSimulacao(cod);   // re-renderiza o modal do mesmo produto
+  window.abrirSimulacao(cod);   // re-renderiza o modal do mesmo produto
   await render();        // atualiza os indicadores 🟢/🔴 da tabela
 };
 
@@ -1208,7 +1208,7 @@ window.exportarParaExcel = async () => {
 };
 
 window.salvarPlano = async () => {
-  console.log('🔵 salvarPlano() chamada');
+  console.log('🔵 window.salvarPlano() chamada');
   
   // Verificar se tem algum planejamento
   const temPlano = Object.keys(plano).some(cod => {
@@ -1284,11 +1284,6 @@ window.salvarPlano = async () => {
 };
 
 window.abrirHistorico = async () => {
-  const snapshot = await getDocs(collection(db, 'planosHistorico'));
-  const historico = snapshot.docs.map(d => ({id: d.id, ...d.data()}));
-  historico.sort((a,b) => b.timestamp - a.timestamp);
-  
-window.abrirHistorico = async () => {
   try {
     const snapshot = await getDocs(collection(db, 'planosHistorico'));
     let historico = snapshot.docs.map(d => ({id: d.id, ...d.data()}));
@@ -1329,7 +1324,6 @@ window.abrirHistorico = async () => {
     console.error('Erro ao abrir histórico:', err);
     alert('Erro ao abrir histórico: ' + err.message);
   }
-};
 };
 
 window.carregarPlano = async (id) => {
@@ -1390,7 +1384,7 @@ window.carregarPlano = async (id) => {
     
     console.log('✅ Plano carregado completamente');
     
-    fecharModal();
+    window.fecharModal();
     render();
     alert('✓ Plano carregado!\n' + data.dataHora + '\n' + Object.keys(plano).length + ' produtos planejados\n' + produtos.length + ' produtos no snapshot');
   } catch(err) {
@@ -1402,7 +1396,7 @@ window.carregarPlano = async (id) => {
 window.excluirPlano = async (id) => {
   if(!confirm('Excluir este plano?')) return;
   await deleteDoc(doc(db, 'planosHistorico', id));
-  abrirHistorico();
+  window.abrirHistorico();
 };
 
 window.editarNomePlano = async (id, nomeAtual) => {
@@ -1411,7 +1405,7 @@ window.editarNomePlano = async (id, nomeAtual) => {
   if(!novoNome || novoNome.trim() === nomeAtual) return;
   
   await setDoc(doc(db, 'planosHistorico', id), {nome: novoNome.trim()}, {merge: true});
-  abrirHistorico(); // Recarregar lista
+  window.abrirHistorico(); // Recarregar lista
 };
 
 window.abrirDetalhe = (cod) => {
@@ -1494,7 +1488,7 @@ window.moverProduto = async (cod) => {
   try {
     await setDoc(doc(db, 'planejProdutos', String(cod)), {setor: destino}, {merge: true});
     p.setor = destino; // refletir na hora (o onSnapshot também confirma depois)
-    fecharModal();
+    window.fecharModal();
     render();
     alert('✓ "'+p.desc+'" movido para '+nomeDestino+'!');
   } catch(err){
@@ -1601,7 +1595,7 @@ window.processarVendas = async () => {
   
   await Promise.all(batch);
   alert('✓ '+Object.keys(porCodigo).length+' produtos salvos!');
-  fecharModal();
+  window.fecharModal();
 };
 
 window.processarEstoque = async () => {
@@ -1659,7 +1653,7 @@ window.processarEstoque = async () => {
   await Promise.all(batch);
   console.log('✅ Processados:', processados, '| Ignorados:', ignorados);
   alert('✓ '+processados+' estoques atualizados!');
-  fecharModal();
+  window.fecharModal();
 };
 
 window.limparTudo = async () => {
