@@ -18785,8 +18785,12 @@ function renderLaAnalise(el, html, ajustes){
     const a=laAnaliseProduto(p.cod, nome);
     const aj=ajustes.find(x=>String(x.cod)===String(p.cod));
     a.nome=nome; a.estornar=aj?aj.saldo:0;
+    // marca quem veio do estoque colado, mesmo que a quantidade seja zero
+    a.colado=Object.prototype.hasOwnProperty.call(laEstoqueAtual, String(p.cod));
     return a;
-  }).filter(a=>a.estoque>0 || a.media>0 || a.estornar>0 || a.podeLiberar>0);
+  })
+  // estoque zerado é o caso mais crítico: antes ele sumia da tabela
+  .filter(a=>a.colado || a.media>0 || a.estornar>0 || a.podeLiberar>0);
 
   // problema primeiro: quem vai faltar e não tem como liberar
   const peso={produzir:0, parcial:1, libera:2, ok:3};
@@ -18834,11 +18838,12 @@ function renderLaAnalise(el, html, ajustes){
         '<td style="padding:8px 6px;font-weight:700;color:var(--text-secondary);">'+a.cod+'</td>'+
         '<td style="padding:8px 6px;font-weight:600;">'+a.nome+
           (a.jaLiberado?('<div style="font-size:10px;color:var(--text-muted);">'+a.jaLiberado+' já liberado</div>'):'')+'</td>'+
-        '<td style="padding:8px 5px;text-align:right;font-weight:700;">'+(a.estoque||'—')+'</td>'+
+        '<td style="padding:8px 5px;text-align:right;font-weight:700;'+(a.colado&&a.estoque===0?'color:#dc2626;':'')+'">'+
+          (a.colado ? (a.estoque===0?'0':a.estoque) : '—')+'</td>'+
         '<td style="padding:8px 5px;text-align:right;">'+
           (a.media?('<strong>'+a.previsto+'</strong><div style="font-size:9px;color:var(--text-muted);">'+a.media+' +'+a.margem+'% · '+a.diasMedia+'x</div>'):'<span style="color:var(--text-muted);">sem dados</span>')+'</td>'+
         '<td style="padding:8px 5px;text-align:right;font-weight:900;color:'+corD+';">'+
-          (a.estoque||a.media?((a.diferenca>0?'+':'')+a.diferenca):'—')+'</td>'+
+          ((a.colado||a.media)?((a.diferenca>0?'+':'')+a.diferenca):'—')+'</td>'+
         '<td style="padding:8px 5px;text-align:right;font-weight:700;color:'+(a.estornar?'#d97706':'var(--text-muted)')+';">'+(a.estornar||'—')+'</td>'+
         '<td style="padding:8px 8px;"><span style="font-size:12px;font-weight:800;color:'+st.cor+';">'+st.txt+'</span>'+
           '<div style="font-size:9px;color:var(--text-muted);">'+st.det+'</div></td>'+
