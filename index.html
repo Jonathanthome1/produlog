@@ -13222,6 +13222,29 @@ function abrirEditarProdConf(firestoreId){
   goTo('s-adm-prod-conf-form');
 }
 
+
+/* Unidades por pacote saem da gramatura, nunca de digitação.
+   peso do pacote ÷ (massa + recheios) = quantas unidades cabem.
+   Ex.: 1500g, massa 100g + recheio 50g → 10 unidades. */
+function pcUnidadesPorPacote(pesoPct, grMassa, grR1, grR2){
+  const pesoPacote=parseFloat(pesoPct)||0;
+  const pesoUn=(parseFloat(grMassa)||0)+(parseFloat(grR1)||0)+(parseFloat(grR2)||0);
+  if(pesoPacote<=0 || pesoUn<=0) return {un:0, pesoUn, pesoPacote};
+  return {un:Math.round(pesoPacote/pesoUn), pesoUn, pesoPacote};
+}
+window.pcUnidadesPorPacote=pcUnidadesPorPacote;
+
+function pcCalcUnidades(){
+  const v=id=>((document.getElementById(id)||{}).value)||'';
+  const r=pcUnidadesPorPacote(v('pc-pesopct'), v('pc-grmassa'), v('pc-grrecheio'), v('pc-grrecheio2'));
+  const campo=document.getElementById('pc-qtdpct');
+  const aviso=document.getElementById('pc-qtd-auto');
+  if(campo) campo.value = r.un || '';
+  if(aviso) aviso.textContent = r.un ? ('· '+r.pesoPacote+'g ÷ '+r.pesoUn+'g')
+    : (r.pesoUn ? '· informe o peso do pacote' : '· informe a gramatura');
+}
+window.pcCalcUnidades=pcCalcUnidades;
+
 function renderProdConfForm(){
   const el=document.getElementById('adm-prod-conf-form-content');
   if(!el)return;
@@ -13253,8 +13276,8 @@ function renderProdConfForm(){
   html+='<div class="card" style="padding:14px;margin-bottom:10px;">';
   html+='<div class="card-label">Quantidade por pacote</div>';
   html+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:6px;">';
-  html+='<div><label style="font-size:11px;color:var(--text-secondary);">Unidades por pacote</label><input type="number" id="pc-qtdpct" value="'+(p.qtdPct||'')+'" placeholder="Ex: 30" style="width:100%;font-size:16px;padding:11px;border-radius:8px;border:1px solid var(--border-md);box-sizing:border-box;" /></div>';
-  html+='<div><label style="font-size:11px;color:var(--text-secondary);">Peso total do pacote (g)</label><input type="number" id="pc-pesopct" value="'+(p.pesoPct||'')+'" step="0.01" placeholder="Ex: 1500" style="width:100%;font-size:16px;padding:11px;border-radius:8px;border:1px solid var(--border-md);box-sizing:border-box;" /></div>';
+    html+='<div><label style="font-size:11px;color:var(--text-secondary);">Unidades por pacote <span id="pc-qtd-auto" style="color:var(--mc-azul,#2563eb);font-weight:700;"></span></label><input type="number" id="pc-qtdpct" readonly value="'+(p.qtdPct||'')+'" placeholder="calculado" style="width:100%;font-size:15px;padding:8px;border-radius:6px;border:1px solid var(--border-md);margin-top:4px;background:#f1f5f9;color:var(--text-secondary);" title="Calculado pelo peso do pacote dividido pela gramatura"></div>';
+  html+='<div><label style="font-size:11px;color:var(--text-secondary);">Peso total do pacote (g)</label><input type="number" id="pc-pesopct" value="'+(p.pesoPct||'')+'" step="0.01" placeholder="Ex: 1500" style="width:100%;font-size:16px;padding:11px;border-radius:8px;border:1px solid var(--border-md);box-sizing:border-box;" / oninput="pcCalcUnidades()"></div>';
   html+='</div>';
   html+='</div>';
 
@@ -13265,7 +13288,7 @@ function renderProdConfForm(){
   html+='<div><label style="font-size:11px;color:var(--text-secondary);">Tipo de massa</label><select id="pc-tipomassa" style="width:100%;font-size:16px;padding:12px;min-height:48px;border-radius:8px;border:1px solid var(--border-md);font-family:inherit;box-sizing:border-box;"><option value="">— Sem massa —</option>';
   MASSAS.forEach(m=>{ html+='<option value="'+m.replace(/"/g,'&quot;')+'"'+(_normNome(p.tipoMassa)===_normNome(m)?' selected':'')+'>'+m+'</option>'; });
   html+='</select></div>';
-  html+='<div style="margin-top:10px;max-width:220px;"><label style="font-size:11px;color:var(--text-secondary);">Gramatura (gr/un)</label><input type="number" id="pc-grmassa" value="'+(p.grMassa||'')+'" step="0.01" style="width:100%;font-size:16px;padding:11px;border-radius:8px;border:1px solid var(--border-md);box-sizing:border-box;" /></div>';
+  html+='<div style="margin-top:10px;max-width:220px;"><label style="font-size:11px;color:var(--text-secondary);">Gramatura (gr/un)</label><input type="number" id="pc-grmassa" value="'+(p.grMassa||'')+'" step="0.01" style="width:100%;font-size:16px;padding:11px;border-radius:8px;border:1px solid var(--border-md);box-sizing:border-box;" / oninput="pcCalcUnidades()"></div>';
   html+='</div>';
   html+='</div>';
 
@@ -13276,7 +13299,7 @@ function renderProdConfForm(){
   html+='<div><label style="font-size:11px;color:var(--text-secondary);">Tipo de recheio</label><select id="pc-tiporecheio" style="width:100%;font-size:16px;padding:12px;min-height:48px;border-radius:8px;border:1px solid var(--border-md);font-family:inherit;box-sizing:border-box;"><option value="">— Sem recheio —</option>';
   html+=_optionsRecheioAgrupadas(p.tipoRecheio);
   html+='</select></div>';
-  html+='<div style="margin-top:10px;max-width:220px;"><label style="font-size:11px;color:var(--text-secondary);">Gramatura (gr/un)</label><input type="number" id="pc-grrecheio" value="'+(p.grRecheio||'')+'" step="0.01" style="width:100%;font-size:16px;padding:11px;border-radius:8px;border:1px solid var(--border-md);box-sizing:border-box;" /></div>';
+  html+='<div style="margin-top:10px;max-width:220px;"><label style="font-size:11px;color:var(--text-secondary);">Gramatura (gr/un)</label><input type="number" id="pc-grrecheio" value="'+(p.grRecheio||'')+'" step="0.01" style="width:100%;font-size:16px;padding:11px;border-radius:8px;border:1px solid var(--border-md);box-sizing:border-box;" / oninput="pcCalcUnidades()"></div>';
   html+=_pcCheckOcultaCoz('pc-ocultacoz', p.ocultarRecheioCoz);
   html+='</div>';
   html+='</div>';
@@ -13288,7 +13311,7 @@ function renderProdConfForm(){
   html+='<div><label style="font-size:11px;color:var(--text-secondary);">Tipo de recheio</label><select id="pc-tiporecheio2" style="width:100%;font-size:16px;padding:12px;min-height:48px;border-radius:8px;border:1px solid var(--border-md);font-family:inherit;box-sizing:border-box;"><option value="">— Sem 2º recheio —</option>';
   html+=_optionsRecheioAgrupadas(p.tipoRecheio2);
   html+='</select></div>';
-  html+='<div style="margin-top:10px;max-width:220px;"><label style="font-size:11px;color:var(--text-secondary);">Gramatura (gr/un)</label><input type="number" id="pc-grrecheio2" value="'+(p.grRecheio2||'')+'" step="0.01" style="width:100%;font-size:16px;padding:11px;border-radius:8px;border:1px solid var(--border-md);box-sizing:border-box;" /></div>';
+  html+='<div style="margin-top:10px;max-width:220px;"><label style="font-size:11px;color:var(--text-secondary);">Gramatura (gr/un)</label><input type="number" id="pc-grrecheio2" value="'+(p.grRecheio2||'')+'" step="0.01" style="width:100%;font-size:16px;padding:11px;border-radius:8px;border:1px solid var(--border-md);box-sizing:border-box;" / oninput="pcCalcUnidades()"></div>';
   html+=_pcCheckOcultaCoz('pc-ocultacoz2', p.ocultarRecheio2Coz);
   html+='</div>';
   html+='</div>';
@@ -13307,6 +13330,7 @@ function renderProdConfForm(){
   html+='</div>';
 
   el.innerHTML=html;
+  if(typeof pcCalcUnidades==='function') pcCalcUnidades();
 }
 
 function _optionsEmbalagens(selecionado){
@@ -13355,7 +13379,9 @@ async function salvarProdConf(){
     cod, nome,
     classe:(document.getElementById('pc-classe')&&document.getElementById('pc-classe').value)||'',
     pesoPct:parseFloat(document.getElementById('pc-pesopct').value)||0,
-    qtdPct:parseFloat(document.getElementById('pc-qtdpct').value)||0,
+    // recalcula na hora de salvar: garante que o valor gravado veio da gramatura
+    qtdPct:(typeof pcCalcUnidades==='function' ? (pcCalcUnidades(), parseFloat(document.getElementById('pc-qtdpct').value)||0)
+                                               : (parseFloat(document.getElementById('pc-qtdpct').value)||0)),
     tipoMassa:document.getElementById('pc-tipomassa').value||'',
     grMassa:parseFloat(document.getElementById('pc-grmassa').value)||0,
     tipoRecheio:document.getElementById('pc-tiporecheio').value||'',
@@ -20536,6 +20562,121 @@ function _ajmRender(){
 }
 
 // ABA 1 — pendentes por dia
+/* ══════════════════════════════════════════════════════════════════
+   AJUSTAR OS PENDENTES DIRETO NO ELIGO
+   Saldo positivo = entrou mais do que saiu → falta dar SAÍDA.
+   Saldo negativo = saiu mais do que entrou → falta dar ENTRADA.
+   O lançamento vai na data do próprio pendente, para o estoque daquele
+   dia fechar certo.
+   ══════════════════════════════════════════════════════════════════ */
+let _ajRefSel={};
+
+function ajRefPendentesAbertos(){
+  return (_ajRefPendentes||[]).filter(p=>!_ajRefResolvidos[_ajRefChave(p)]);
+}
+function ajRefSelecionados(){
+  return ajRefPendentesAbertos().filter(p=>_ajRefSel[_ajRefChave(p)]);
+}
+
+function ajRefToggleSel(cod, data){
+  const k=String(cod)+'|'+String(data);
+  _ajRefSel[k]=!_ajRefSel[k];
+  renderAjRef();
+}
+window.ajRefToggleSel=ajRefToggleSel;
+
+function ajRefSelTodos(v){
+  ajRefPendentesAbertos().forEach(p=>{ _ajRefSel[_ajRefChave(p)]=v; });
+  renderAjRef();
+}
+window.ajRefSelTodos=ajRefSelTodos;
+
+function ajRefSelDia(dia){
+  const doDia=ajRefPendentesAbertos().filter(p=>String(p.data)===String(dia));
+  const todosMarcados=doDia.length && doDia.every(p=>_ajRefSel[_ajRefChave(p)]);
+  doDia.forEach(p=>{ _ajRefSel[_ajRefChave(p)]=!todosMarcados; });
+  renderAjRef();
+}
+window.ajRefSelDia=ajRefSelDia;
+
+/* Barra de ação que aparece quando há algo marcado */
+function ajRefBarraAcao(){
+  const sel=ajRefSelecionados();
+  const abertos=ajRefPendentesAbertos();
+  if(!abertos.length) return '';
+  const saidas=sel.filter(p=>p.saldo>0);
+  const entradas=sel.filter(p=>p.saldo<0);
+  const totS=saidas.reduce((t,p)=>t+Math.abs(p.saldo),0);
+  const totE=entradas.reduce((t,p)=>t+Math.abs(p.saldo),0);
+  const auto=(typeof eligoPronto==='function') && eligoPronto();
+
+  return '<div class="card" style="margin-bottom:12px;'+(sel.length?'border:2px solid var(--mc-azul,#2563eb);':'')+'">'+
+    '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:'+(sel.length?'10px':'0')+';">'+
+      '<button onclick="ajRefSelTodos(true)" style="flex:1;min-width:130px;background:#fff;border:1px solid var(--border);color:var(--text-secondary);border-radius:8px;padding:9px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;">☑ Marcar todos ('+abertos.length+')</button>'+
+      (sel.length?'<button onclick="ajRefSelTodos(false)" style="flex:1;min-width:110px;background:#fff;border:1px solid var(--border);color:var(--text-secondary);border-radius:8px;padding:9px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;">Desmarcar</button>':'')+
+    '</div>'+
+    (sel.length
+      ? '<div style="font-size:13px;font-weight:800;margin-bottom:4px;">'+sel.length+' selecionado(s)</div>'+
+        '<div style="font-size:12px;color:var(--text-secondary);line-height:1.6;margin-bottom:10px;">'+
+          (saidas.length?('🔻 <strong>'+saidas.length+'</strong> vão receber SAÍDA de <strong>'+totS+'</strong> un<br>'):'')+
+          (entradas.length?('🔺 <strong>'+entradas.length+'</strong> vão receber ENTRADA de <strong>'+totE+'</strong> un'):'')+
+        '</div>'+
+        '<button onclick="ajRefAjustarSelecionados()" class="btn btn-primary" style="width:100%;">'+
+          (auto?('⚡ Ajustar '+sel.length+' no ELIGO'):('✓ Marcar '+sel.length+' como resolvido'))+'</button>'+
+        (auto?'':'<div style="font-size:11px;color:#b45309;margin-top:6px;text-align:center;">Integração desligada — lance no ERP à mão e use isto para marcar.</div>')
+      : '<div style="font-size:12px;color:var(--text-secondary);text-align:center;">Marque os pendentes que quer ajustar.</div>')+
+  '</div>';
+}
+
+/* Lança cada selecionado no ELIGO: saída quando entrou demais,
+   entrada quando saiu demais. Um item que falha não impede os outros. */
+async function ajRefAjustarSelecionados(){
+  const sel=ajRefSelecionados();
+  if(!sel.length){ alert('Marque pelo menos um pendente.'); return; }
+  const auto=(typeof eligoPronto==='function') && eligoPronto();
+
+  const saidas=sel.filter(p=>p.saldo>0), entradas=sel.filter(p=>p.saldo<0);
+  const resumo=(saidas.length?('🔻 SAÍDA em '+saidas.length+' item(ns): '+saidas.slice(0,4).map(p=>p.cod+' ('+Math.abs(p.saldo)+')').join(', ')+(saidas.length>4?'…':'')+'\n'):'')+
+               (entradas.length?('🔺 ENTRADA em '+entradas.length+' item(ns): '+entradas.slice(0,4).map(p=>p.cod+' ('+Math.abs(p.saldo)+')').join(', ')+(entradas.length>4?'…':'')):'');
+
+  if(!auto){
+    if(!confirm('Marcar '+sel.length+' pendente(s) como resolvido?\n\n'+resumo+'\n\nNada será lançado no ERP — a integração está desligada.')) return;
+    for(const p of sel){ _ajRefResolvidos[_ajRefChave(p)]=true; }
+    _ajRefSel={};
+    await _ajRefSalvarResolvidos();
+    renderAjRef();
+    return;
+  }
+
+  if(!confirm('Ajustar '+sel.length+' pendente(s) no ELIGO?\n\n'+resumo+'\n\nCada lançamento vai na data do próprio pendente.')) return;
+
+  let ok=0, falhas=[];
+  for(const p of sel){
+    const qtd=Math.abs(Number(p.saldo)||0);
+    if(qtd<=0) continue;
+    const tipo = p.saldo>0 ? 'saida' : 'entrada';
+    let r;
+    try{
+      r=await eligoLancar(String(p.cod), qtd, tipo, p.data,
+        'Ajuste de refazimento ProduLog - '+(p.nome||'')+' - '+(tipo==='saida'?'saida':'entrada')+' de '+qtd);
+    }catch(e){ r={ok:false, erro:'erro inesperado: '+e.message}; }
+    if(r && r.cancelado){ falhas.push(p.cod+': envio cancelado'); continue; }
+    if(r && r.ok){
+      ok++;
+      _ajRefResolvidos[_ajRefChave(p)]=true;
+      delete _ajRefSel[_ajRefChave(p)];
+    } else {
+      falhas.push(p.cod+' ('+p.data+'): '+((r&&r.erro)||'erro desconhecido'));
+    }
+  }
+  try{ await _ajRefSalvarResolvidos(); }catch(e){}
+  renderAjRef();
+  alert('Tentei os '+sel.length+' pendente(s).\n\n'+
+    (ok?('✓ '+ok+' ajustado(s) no ELIGO e marcado(s) como resolvido.'):'')+
+    (falhas.length?((ok?'\n\n':'')+'⚠️ '+falhas.length+' não passaram:\n• '+falhas.join('\n• ')+'\n\nEles seguem pendentes para tentar de novo.'):''));
+}
+window.ajRefAjustarSelecionados=ajRefAjustarSelecionados;
+
 function _ajRefRenderPendentes(){
   if(!_ajRefPendentes.length){
     return '<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;padding:24px;text-align:center;">'+
@@ -20549,7 +20690,8 @@ function _ajRefRenderPendentes(){
   const dias=Object.keys(porDia).sort((a,b)=>_ajRefDataNum(a)-_ajRefDataNum(b));
   const totResolvidos = _ajRefPendentes.filter(p=>_ajRefResolvidos[String(p.cod)+'|'+String(p.data)]).length;
   const totFalta = _ajRefPendentes.length - totResolvidos;
-  let h='<div style="background:'+(totFalta===0?'#f0fdf4':'#fef2f2')+';border:1px solid '+(totFalta===0?'#bbf7d0':'#fecaca')+';border-radius:10px;padding:10px 12px;margin-bottom:14px;text-align:center;">'+
+  let h=ajRefBarraAcao()+
+    '<div style="background:'+(totFalta===0?'#f0fdf4':'#fef2f2')+';border:1px solid '+(totFalta===0?'#bbf7d0':'#fecaca')+';border-radius:10px;padding:10px 12px;margin-bottom:14px;text-align:center;">'+
     '<span style="font-size:22px;font-weight:900;color:'+(totFalta===0?'#16a34a':'#dc2626')+';">'+totFalta+'</span>'+
     '<span style="font-size:13px;color:'+(totFalta===0?'#166534':'#b91c1c')+';font-weight:600;"> pendente(s) em '+dias.length+' dia(s)</span>'+
     (totResolvidos>0?'<div style="font-size:12px;color:#16a34a;font-weight:600;margin-top:2px;">✓ '+totResolvidos+' já resolvido(s)</div>':'')+
@@ -20557,7 +20699,10 @@ function _ajRefRenderPendentes(){
   dias.forEach(dia=>{
     const itens=porDia[dia].sort((a,b)=>String(a.cod).localeCompare(String(b.cod),undefined,{numeric:true}));
     h+='<div style="margin-bottom:16px;">'+
-      '<div style="font-size:13px;font-weight:800;color:var(--mc-azul);margin-bottom:6px;padding-bottom:4px;border-bottom:2px solid var(--mc-azul-claro,#dbeafe);">📅 '+dia+' <span style="font-weight:600;color:var(--text-secondary);font-size:12px;">('+itens.length+')</span></div>';
+      '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;padding-bottom:4px;border-bottom:2px solid var(--mc-azul-claro,#dbeafe);">'+
+        '<span style="flex:1;min-width:0;font-size:13px;font-weight:800;color:var(--mc-azul);">📅 '+dia+' <span style="font-weight:600;color:var(--text-secondary);font-size:12px;">('+itens.length+')</span></span>'+
+        '<button onclick="ajRefSelDia(\''+escapeJsStr(String(dia))+'\')" style="flex:0 0 auto;background:#fff;border:1px solid var(--border);color:var(--text-secondary);border-radius:6px;padding:4px 9px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;">marcar o dia</button>'+
+      '</div>';
     itens.forEach(p=>{
       const chave = String(p.cod)+'|'+String(p.data);
       const resolvido = !!_ajRefResolvidos[chave];
@@ -20566,7 +20711,9 @@ function _ajRefRenderPendentes(){
       const bg = resolvido ? '#f0fdf4' : (p.saldo>0 ? '#fef2f2' : '#fffbeb');
       const brd = resolvido ? '#16a34a' : cor;
       const risco = resolvido ? 'text-decoration:line-through;opacity:.65;' : '';
-      h+='<div style="display:flex;align-items:center;gap:10px;background:'+bg+';border:1px solid '+brd+'33;border-radius:8px;padding:9px 11px;margin-bottom:6px;">'+
+      const marcado=!!_ajRefSel[chave];
+      h+='<div style="display:flex;align-items:center;gap:10px;background:'+(marcado&&!resolvido?'rgba(37,99,235,.07)':bg)+';border:'+(marcado&&!resolvido?'2px solid var(--mc-azul,#2563eb)':('1px solid '+brd+'33'))+';border-radius:8px;padding:9px 11px;margin-bottom:6px;">'+
+        (resolvido?'':'<button onclick="ajRefToggleSel(\''+escapeJsStr(String(p.cod))+'\',\''+escapeJsStr(String(p.data))+'\')" title="Selecionar para ajustar" style="flex-shrink:0;width:24px;height:24px;border-radius:6px;border:2px solid '+(marcado?'var(--mc-azul,#2563eb)':'#cbd5e1')+';background:'+(marcado?'var(--mc-azul,#2563eb)':'#fff')+';color:#fff;cursor:pointer;font-size:14px;font-weight:900;display:flex;align-items:center;justify-content:center;line-height:1;">'+(marcado?'✓':'')+'</button>')+
         '<button onclick="_ajRefToggleResolvido(\''+escapeJsStr(String(p.cod))+'\',\''+escapeJsStr(String(p.data))+'\')" title="Marcar como resolvido" style="flex-shrink:0;width:26px;height:26px;border-radius:7px;border:2px solid '+(resolvido?'#16a34a':'#cbd5e1')+';background:'+(resolvido?'#16a34a':'#fff')+';color:#fff;cursor:pointer;font-size:15px;font-weight:900;display:flex;align-items:center;justify-content:center;line-height:1;">'+(resolvido?'✓':'')+'</button>'+
         '<div style="min-width:0;flex:1;'+risco+'">'+
           '<div style="font-size:13px;font-weight:700;">'+p.cod+' · <span style="font-weight:500;">'+(p.nome||'')+'</span></div>'+
