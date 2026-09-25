@@ -6661,15 +6661,25 @@ async function confirmarAjuste(fid,qtdProd){
     // Already expedited - ask if wants to reopen
     const ok=confirm('Este produto já foi liberado na expedição ('+exp.totalLiberado+' un).\nAo ajustar, o produto ficará pendente novamente na expedição.\nDeseja continuar?');
     if(!ok)return;
-    // Reopen: reset expedição and update embalagem
+    // Reopen: zera as liberações normais, MAS preserva o "já peguei".
+    // O produto pego antes da embalagem terminar já saiu fisicamente —
+    // apagar esse registro fazia a quantidade voltar a aparecer como
+    // disponível e a expedição liberava de novo o que já tinha levado.
+    const antecipadas=(exp.parciais||[]).filter(x=>x.antecipada);
+    const totalAntecipado=antecipadas.reduce((t,x)=>t+(Number(x.qtd)||0),0);
     await updateDoc(doc(db,'registros',fid),{
       'embalagem.feito':true,
       'embalagem.qtdEmbalada':val,
       'embalagem.qtdProduzida':qtdProd,
       'embalagem.parciais':reg.embalagem?.parciais||[],
-      'expedicao.parciais':[],
-      'expedicao.totalLiberado':0
+      'expedicao.parciais':antecipadas,
+      'expedicao.totalLiberado':totalAntecipado
     });
+    if(totalAntecipado>0){
+      alert('As liberações da expedição foram desfeitas, mas o "já peguei" foi mantido:\n\n'+
+        totalAntecipado+' un já saíram antes da embalagem terminar.\n\n'+
+        'Restam '+Math.max(0,val-totalAntecipado)+' un para liberar.');
+    }
   } else {
     // Not yet expedited - just update embalagem, expedição picks up new value automatically
     await updateDoc(doc(db,'registros',fid),{
@@ -7006,6 +7016,25 @@ function renderExpManual(){
   el.innerHTML=html;
 }
 
+/* O "já peguei" pega o produto direto da produção, antes de ir para o
+   contêiner — então ele entra no estoque DE DENTRO, não no da rua.
+   Só vale para os produtos que estão no controle. */
+async function expManualEntrarInterno(reg, qtd, setor){
+  const cod=String(reg.cod||'');
+  if(typeof estProd!=='function') return;
+  const p=estProd(cod);
+  if(!p) return;                                  // produto fora do controle: nada a fazer
+  try{
+    await estGravarMov({local:'interno', codigo:cod, nome:p.nome||reg.produto||'', pacotes:qtd,
+      tipo:'entrada', motivo:'Já peguei · '+(setor||'Expedição'),
+      obs:'pego antes da embalagem · produção de '+(reg.data||'')});
+  }catch(e){
+    console.error('já peguei → estoque interno', e);
+    alert('O "já peguei" foi registrado, mas não consegui dar entrada no estoque interno: '+e.message);
+  }
+}
+window.expManualEntrarInterno=expManualEntrarInterno;
+
 async function lancarExpAntecipada(fid){
   const inp=document.getElementById('expman-input-'+fid);
   const val=parseInt(inp?.value)||0;
@@ -7014,10 +7043,14 @@ async function lancarExpAntecipada(fid){
   if(!reg){alert('Produção não encontrada.');return;}
   if(reg.embalagem&&reg.embalagem.feito){alert('Esse produto já foi embalado — use a tela normal da Expedição.');return;}
   const exp=reg.expedicao||{parciais:[],totalLiberado:0};
-  const parciais=[...(exp.parciais||[]),{qtd:val,hora:agora(),antecipada:true}];
+  const setor=(typeof _elevSetor==='function')?_elevSetor():'Expedição';
+  const parciais=[...(exp.parciais||[]),{qtd:val,hora:agora(),antecipada:true,setor}];
   const totalLiberado=(exp.totalLiberado||0)+val;
   try{
     await updateDoc(doc(db,'registros',fid),{expedicao:{parciais,totalLiberado}});
+    // produto controlado entra no estoque DE DENTRO na hora: ele foi pego
+    // direto da produção, não passou pelo contêiner
+    await expManualEntrarInterno(reg, val, setor);
     if(inp)inp.value='';
   }catch(e){alert('Erro: '+e.message);}
 }
@@ -7029,10 +7062,18 @@ async function removerParcialExp(fid,idx){
   const parciais=[...(exp.parciais||[])];
   if(idx<0||idx>=parciais.length)return;
   if(!confirm('Apagar esta saída antecipada de +'+parciais[idx].qtd+' un?'))return;
+  const removida=parciais[idx];
   parciais.splice(idx,1);
   const totalLiberado=parciais.reduce((s,p)=>s+(p.qtd||0),0);
   try{
     await updateDoc(doc(db,'registros',fid),{expedicao:{parciais,totalLiberado}});
+    // desfaz a entrada no estoque interno, senão o saldo fica inflado
+    if(removida && removida.antecipada && typeof estProd==='function' && estProd(String(reg.cod||''))){
+      const p=estProd(String(reg.cod||''));
+      await estGravarMov({local:'interno', codigo:String(reg.cod||''), nome:p.nome||reg.produto||'',
+        pacotes:-(Number(removida.qtd)||0), tipo:'saida',
+        motivo:'Estorno do "já peguei"', obs:'lançamento apagado · produção de '+(reg.data||'')});
+    }
   }catch(e){alert('Erro: '+e.message);}
 }
 
@@ -21759,7 +21800,8 @@ window.libLiberarTudo=libLiberarTudo;
 function libPedirValidade(fid, qtdEmb, val){
   const reg=registros.find(r=>r.firestoreId===fid); if(!reg) return;
   const prod=(typeof estProd==='function') ? estProd(reg.cod) : null;
-  const dias=(prod && prod.validadeDias) ? prod.validadeDias : ((typeof estConfig!=='undefined' && estConfig.validadeDias)||25);
+  // 4 meses é o padrão do congelado; o produto pode ter validade própria
+  const dias=(prod && prod.validadeDias) ? prod.validadeDias : ((typeof estConfig!=='undefined' && estConfig.validadeDias)||120);
   const sug=new Date(); sug.setDate(sug.getDate()+dias);
   const sugISO=sug.getFullYear()+'-'+String(sug.getMonth()+1).padStart(2,'0')+'-'+String(sug.getDate()).padStart(2,'0');
 
@@ -24308,6 +24350,10 @@ async function estSalvarBaixa(cod){
 window.estSalvarBaixa=estSalvarBaixa;
 
 // ── CONTÊINER (estoque da rua) ───────────────────────────────────
+let _estCtExpandido={};
+function estCtToggle(cod){ _estCtExpandido[cod]=!_estCtExpandido[cod]; estRenderContainer(); }
+window.estCtToggle=estCtToggle;
+
 function estRenderContainer(){
   const el=document.getElementById('est-container-content'); if(!el) return;
   const prods=estAtivos();
@@ -24323,35 +24369,69 @@ function estRenderContainer(){
 
   h+='<button class="btn btn-primary" style="width:100%;margin-bottom:12px;" onclick="estAbrirEntrada()">➕ Registrar entrada no contêiner</button>';
 
+  // agrupa por PRODUTO: o que interessa de cara é o total no contêiner,
+  // não cada lote solto — os lotes aparecem dentro de cada produto
   const comSaldo=estLotes.filter(l=>(Number(l.saldo)||0)>0);
-  h+='<div class="mc-section-header">'+comSaldo.length+' lote(s) armazenado(s)</div>';
-  if(!comSaldo.length){
+  const porProd={};
+  comSaldo.forEach(l=>{
+    const c=String(l.codigo);
+    if(!porProd[c]) porProd[c]={codigo:c, nome:l.nome||c, total:0, lotes:[]};
+    porProd[c].total+=Number(l.saldo)||0;
+    porProd[c].lotes.push(l);
+  });
+  const lista=Object.values(porProd).map(g=>{
+    g.lotes.sort((a,b)=>(a.validadeNum||estDataNum(a.validade))-(b.validadeNum||estDataNum(b.validade)));
+    g.dias=estDiasAte(g.lotes[0].validade);   // o mais próximo de vencer manda no alerta
+    return g;
+  }).sort((a,b)=>(a.dias===null?9999:a.dias)-(b.dias===null?9999:b.dias));
+
+  const totalPct=lista.reduce((t,g)=>t+g.total,0);
+  h+='<div class="mc-section-header">'+lista.length+' produto(s) · '+totalPct+' pacote(s) no contêiner</div>';
+
+  if(!lista.length){
     h+='<div class="empty" style="padding:24px;text-align:center;color:var(--text-secondary);">Contêiner vazio.</div>';
   } else {
-    h+=comSaldo.map(l=>{
-      const p=estProd(l.codigo);
-      const dias=estDiasAte(l.validade);
+    h+=lista.map(g=>{
+      const p=estProd(g.codigo);
+      const cxTot=g.lotes.reduce((t,l)=>t+estCaixas(l.saldo, p?p.pctCaixa:0), 0);
+      const dias=g.dias;
       const corV = dias===null?'var(--text-secondary)':(dias<0?'#dc2626':(dias<=5?'#d97706':'#16a34a'));
       const txtV = dias===null?'sem validade':(dias<0?('vencido há '+Math.abs(dias)+'d'):(dias===0?'vence hoje':('faltam '+dias+'d')));
-      const cx=estCaixas(l.saldo, p?p.pctCaixa:0);
-      return '<div class="card" style="margin-bottom:8px;">'+
-        '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">'+
+      const aberto=!!_estCtExpandido[g.codigo];
+      return '<div class="card" style="margin-bottom:8px;'+(dias!==null&&dias<0?'border:1px solid #fecaca;background:#fef2f2;':'')+'">'+
+        // linha do produto: o total é o que salta aos olhos
+        '<div onclick="estCtToggle(\''+escapeJsStr(g.codigo)+'\')" style="cursor:pointer;display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">'+
           '<div style="flex:1;min-width:0;">'+
-            '<div style="font-size:14px;font-weight:700;">'+(l.nome||l.codigo)+'</div>'+
-            '<div style="font-size:11px;color:var(--text-secondary);margin-top:2px;">entrou '+(l.dataEntrada||'')+' · '+(l.responsavel||'—')+'</div>'+
-            (l.obs?'<div style="font-size:11px;color:var(--text-muted);margin-top:2px;">'+l.obs+'</div>':'')+
+            '<div style="font-size:15px;font-weight:800;">'+(g.nome||g.codigo)+'</div>'+
+            '<div style="font-size:11px;color:var(--text-secondary);margin-top:2px;">'+
+              'cód '+g.codigo+' · '+g.lotes.length+' lote(s) · '+cxTot+' cx</div>'+
+            '<div style="font-size:11px;font-weight:700;color:'+corV+';margin-top:2px;">📅 vence '+(g.lotes[0].validade||'—')+' · '+txtV+'</div>'+
           '</div>'+
           '<div style="text-align:right;white-space:nowrap;">'+
-            '<div style="font-size:17px;font-weight:900;color:#7c3aed;">'+l.saldo+'</div>'+
-            '<div style="font-size:10px;color:var(--text-muted);">pct · '+cx+' cx</div></div>'+
+            '<div style="font-size:22px;font-weight:900;color:#7c3aed;">'+g.total+'</div>'+
+            '<div style="font-size:10px;color:var(--text-muted);">pacotes</div>'+
+            '<div style="font-size:14px;color:var(--text-muted);margin-top:2px;">'+(aberto?'▲':'▼')+'</div></div>'+
         '</div>'+
-        '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;padding-top:7px;border-top:1px dashed var(--border);">'+
-          '<span style="font-size:11px;font-weight:700;color:'+corV+';">📅 '+(l.validade||'—')+' · '+txtV+'</span>'+
-          '<span style="display:flex;gap:6px;">'+
-            (estEhAdmin()?'<button onclick="estExcluirLote(\''+escapeJsStr(l.firestoreId)+'\')" title="Excluir lote" style="background:none;border:1px solid #fecaca;color:#dc2626;border-radius:7px;padding:6px 10px;font-size:12px;cursor:pointer;font-family:inherit;">🗑</button>':'')+
-            '<button onclick="estAbrirMigrar(\''+escapeJsStr(l.codigo)+'\')" style="background:#16a34a;border:none;color:#fff;border-radius:7px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">🚚 Migrar</button>'+
-          '</span>'+
-        '</div></div>';
+        // lotes, só quando a pessoa abre
+        (aberto
+          ? '<div style="margin-top:9px;padding-top:9px;border-top:1px dashed var(--border);">'+
+              g.lotes.map((l,i)=>{
+                const d=estDiasAte(l.validade);
+                const cv = d===null?'var(--text-secondary)':(d<0?'#dc2626':(d<=5?'#d97706':'#16a34a'));
+                const tv = d===null?'sem validade':(d<0?('vencido há '+Math.abs(d)+'d'):(d===0?'vence hoje':('faltam '+d+'d')));
+                return '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:7px 0;'+(i?'border-top:1px solid var(--bg-page);':'')+'">'+
+                  '<div style="flex:1;min-width:0;">'+
+                    '<div style="font-size:12px;font-weight:700;color:'+cv+';">📅 '+(l.validade||'—')+' · '+tv+(i===0?' <span style="color:#16a34a;">⏱ sai primeiro</span>':'')+'</div>'+
+                    '<div style="font-size:10px;color:var(--text-muted);">entrou '+(l.dataEntrada||'')+' · '+(l.responsavel||'—')+(l.obs?(' · '+l.obs):'')+'</div>'+
+                  '</div>'+
+                  '<div style="font-size:14px;font-weight:800;color:#7c3aed;white-space:nowrap;">'+l.saldo+' pct</div>'+
+                  (estEhAdmin()?'<button onclick="event.stopPropagation();estExcluirLote(\''+escapeJsStr(l.firestoreId)+'\')" title="Excluir lote" style="background:none;border:1px solid #fecaca;color:#dc2626;border-radius:7px;padding:5px 9px;font-size:11px;cursor:pointer;font-family:inherit;">🗑</button>':'')+
+                '</div>';
+              }).join('')+
+            '</div>'
+          : '')+
+        '<button onclick="event.stopPropagation();estAbrirMigrar(\''+escapeJsStr(g.codigo)+'\')" class="btn btn-secondary" style="width:100%;margin-top:9px;">🚚 Trazer para a empresa</button>'+
+      '</div>';
     }).join('');
   }
   el.innerHTML=h;
